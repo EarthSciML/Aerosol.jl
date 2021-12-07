@@ -1,0 +1,40 @@
+module LowVOC
+
+begin
+	using PlutoUI
+	using ModelingToolkit
+	using DifferentialEquations
+	using Unitful
+	using Plots
+	using Statistics
+	using ForwardDiff
+	using CSV
+	using DataFrames
+end
+
+#naphtalene partial partition coefficient
+begin
+	γᵢ = 2.3300
+	R = 8.314
+	Mᵢ = 128.1705 
+	Hₒₓ = 103
+end
+
+T = [263.61, 267.98, 273.16, 278.22, 283.14, 288.01, 293.24, 293.25, 298.26, 303.29, 308.17, 313.24, 318.21, 323.14, 328.24, 333.39, 338.10, 343.06] #temperature range
+p = [0.23, 0.40, 0.74, 1.38, 2.41, 4.13, 6.93, 6.95, 11.35, 18.45, 28.95, 44.73, 68.82, 104.14, 158.41, 237.54, 340.76, 488.58] #vapor pressure
+
+Tp = hcat(T, p)
+
+temp = 1 ./T
+
+begin
+	Kₒₘ = fill(0, (18,1))
+	for n in 1:size(Tp,1), j in 1:size(Tp,2)
+		Kₒₘ = R .* Tp[:,1] ./ (Mᵢ .* γᵢ .* Tp[:,2] * 1000)
+	end
+	Kₒₘ
+end
+
+plot(Kₒₘ, temp, c=:blue, lab = :none, xlabel="Kₒₘ", ylabel="1/Temperature")
+
+end
