@@ -1,4 +1,4 @@
-#Citation (original paper) - Fountoukis, C., Nenes, A., 2007. ISORROPIA II: a computationally efficient thermodynamic equilibrium model for K+&ndash;Ca2+&ndash;Mg2+&ndash;NH4+&ndash;Na+&ndash;SO42&minus;&ndash;NO3&minus;&ndash;Cl&minus;&ndash;H2O aerosols. Atmospheric Chemistry and Physics 7, 4639–4659. https://doi.org/10.5194/acp-7-4639-2007
+#Citation (original paper) - Fountoukis, C., Nenes, A., 2007. ISORROPIA II: a computationally efficient thermodynamic equilibrium model for K+-Ca2+-Mg2+-NH4+-Na+-SO42--NO3--Cl--H2O aerosols. Atmospheric Chemistry and Physics 7, 4639–4659. https://doi.org/10.5194/acp-7-4639-2007
 
 #The present code follows the algorithm devised by Fountoukis and Nenes, 2007 in julia language using various packages such as Catalyst.jl and ModellingToolkit.jl. The model utilizes input values for Temperature (T), Relative Humidity and aqueous concentrations (ug/m3) of Na, H2SO4, NH3, HNO3, HCL, Ca2+, K+ AND Mg2+ and predicts the concentrations of various other chemical species (38 species in total).
 
