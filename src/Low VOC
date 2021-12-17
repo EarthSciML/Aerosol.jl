@@ -45,6 +45,8 @@ Now we can plot the equilibrium partition coefficient with the change of the tem
 
 plot(Kₒₘ, T, c=:blue, lab = :none, xlabel="Kₒₘ", ylabel="1/Temperature")
 
+The plot gives the dependance of equilibrium air partitioning coefficient with the temperature, it does not fully match the result mentioned in the paper, but the order of being 10*^-2 is as it is in the paper.
+
 Kₒₘ2 = R .* Tp[:,1] ./ (Mᵢ[1] .* γᵢ[1] .* Tp[:,2]' * 1000)
 
 heatmap(Kₒₘ2,
