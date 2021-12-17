@@ -41,11 +41,9 @@ p = [0.23, 0.40, 0.74, 1.38, 2.41, 4.13, 6.93, 6.95, 11.35, 18.45, 28.95, 44.73,
 
 Tp = hcat(T, p)
 
-temp = 1 ./T
-
 Now we can plot the equilibrium partition coefficient with the change of the temperature.
 
-plot(Kₒₘ, temp, c=:blue, lab = :none, xlabel="Kₒₘ", ylabel="1/Temperature")
+plot(Kₒₘ, T, c=:blue, lab = :none, xlabel="Kₒₘ", ylabel="1/Temperature")
 
 Kₒₘ2 = R .* Tp[:,1] ./ (Mᵢ[1] .* γᵢ[1] .* Tp[:,2]' * 1000)
 
