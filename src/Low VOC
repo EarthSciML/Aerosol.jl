@@ -1,6 +1,5 @@
 module LowVOC
 
-begin
 	using PlutoUI
 	using ModelingToolkit
 	using DifferentialEquations
@@ -10,42 +9,40 @@ begin
 	using ForwardDiff
 	using CSV
 	using DataFrames
-end
 
 # Absorptive partitioning.
 
-Kₒₘ is an equilibrium partition coefficient, which describes the partition between gas and aerosol phase for the compounds which can occurr in teh form of particles and gases.
-Naphtalene falls in the group of intermidiate volatility compounds which are more volatile than semivolatile intermidiate compounds. The partitioning between gas and aerosol phase can be calculated assuming pseudo-ideal solution and absorptive partitioning theory:
+Kₒₘ is an equilibrium partition coefficient, which describes the partition between gas and aerosol phase for the compounds which can occurr in the form of particles and gases.
+Naphtalene falls in the group of intermidiate volatile compounds which are more volatile than semivolatile intermidiate compounds. The partitioning between gas and aerosol phase can be calculated assuming pseudo-ideal solution and absorptive partitioning theory, which represents with the following equation:
+
+Here we calculate Kₒₘ for semivolatile and intermediate volatile organic compounds, which represent by the following compounds: naphtalene, benzene ... . It corresponds to the equation #1 in the Pye et al. (2010).
 
 #naphtalene partial partition coefficient
-begin
-	Kₒₘ = zeros(18)
-	for n in 1:size(Tp,1), j in 1:size(Tp,2)
-		Kₒₘ[n] = R * Tp[n,1] / (Mᵢ[1] * γᵢ[1] * Tp[j,2] * 1000)
-	end
-	Kₒₘ
-end
 
-where,
+#Kₒₘ = R * T / (Mᵢ * γᵢ * Tp * 1000), where:
 
-begin
-	R = 8.314 #unit = u"kg*m^2/(s^2*K*mol)" # gas constant
-			#T is the temperature, unit = K
-	Mᵢ = 128.1705 #unit = ug/mol" #Molecular weight
-	γᵢ = 2.3300 # activity coefficient of compound i in aerosol phase
-	
-end;
-
+R = 8.314 #unit = u"kg*m^2/(s^2*K*mol)" # gas constant
+		#T is the temperature, unit = K	
+Mᵢ = [128.1705; 78.11] #unit = ug/mol" #Molecular weight
+γᵢ = [2.3300; 4.54] #[unit = u"N*s^2/m^2"] # activity coefficient of compound i in aerosol phase
 T = [263.61, 267.98, 273.16, 278.22, 283.14, 288.01, 293.24, 293.25, 298.26, 303.29, 308.17, 313.24, 318.21, 323.14, 328.24, 333.39, 338.10, 343.06] #temperature range in K
-p = [0.23, 0.40, 0.74, 1.38, 2.41, 4.13, 6.93, 6.95, 11.35, 18.45, 28.95, 44.73, 68.82, 104.14, 158.41, 237.54, 340.76, 488.58] #vapor pressure of naphtalene in Pa
-
+p = [0.23, 0.40, 0.74, 1.38, 2.41, 4.13, 6.93, 6.95, 11.35, 18.45, 28.95, 44.73, 68.82, 104.14, 158.41, 237.54, 340.76, 488.58] #vapor pressure in Pa
 Tp = hcat(T, p)
+C_sat = df[:,4] #units saturation concentration
+	
+Kₒₘ = zeros(18)
+for n in 1:size(Tp,1), j in 1:size(Tp,2)
+	Kₒₘ[n] = R * Tp[n,1] / (Mᵢ[1] * γᵢ[1] * Tp[j,2] * 1000)
+end
+	Kₒₘ #m3/ug
+	
+Kₒₘ in m^3/ug is proportional to the gas constant, temperature, and reversely proportional to the molar mass, activity coefficient of the compound in aerosol phase, and partial vapor pressure. Here we calculate it using for loop for different temperatures. We can also plot it to see the relationship with the change of the temperature since the vapor pressure also changes with the temperature, the relationship is not that apparent. Now we can plot the equilibrium partition coefficient with the change of the temperature.
 
-Now we can plot the equilibrium partition coefficient with the change of the temperature.
-
-plot(Kₒₘ, T, c=:blue, lab = :none, xlabel="Kₒₘ", ylabel="1/Temperature")
+plot(Kₒₘ, T, c=:blue, lab = :none, xlabel="Kₒₘ", ylabel="Temperature")
 
 The plot gives the dependance of equilibrium air partitioning coefficient with the temperature, it does not fully match the result mentioned in the paper, but the order of being 10*^-2 is as it is in the paper.
+
+#I included the suggestion to see the correlation of the values obtained for each combination of temperature and pressure, and created a heatmap, but I considered it makes more sense to keep for loop since the vapor pressure is different and unique for each temperature.
 
 Kₒₘ2 = R .* Tp[:,1] ./ (Mᵢ[1] .* γᵢ[1] .* Tp[:,2]' * 1000)
 
@@ -53,7 +50,12 @@ heatmap(Kₒₘ2,
 	xlabel="Temperature", ylabel="Vapor pressure", 
 		colorbar_title="Equilibrium partition coefficient",
 		title="Kₒₘ dependance on Temperature and vapor pressure")
+		
+If we try to reproduce the same process with the saturation concentration C', which recalls the equation 2 from Pye et al. (2010), we will get following plot:
+
+Kₒₘₛₐₜ = 1 ./C_sat
+
+plot(df[:,1],Kₒₘₛₐₜ, seriestype = :scatter, c=:blue, lab = :none, xlabel="Kₒₘ")
 
 SVOCs from all sources are assumed to be emitted as two semivolatile surrogate species, SVOC1 and SVOC2, in roughly equal fractions of 0.49 and 0.51. Under most atmospherically relevant conditions, only the lower volatility component is expected to partition appreciably to the aerosol phase.
 
-end
