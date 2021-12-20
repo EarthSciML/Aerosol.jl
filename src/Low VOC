@@ -14,7 +14,7 @@ md"""
 Kₒₘ is an equilibrium partition coefficient, which describes the partition between gas and aerosol phase for the compounds which can occurr in the form of particles and gases.
 Naphtalene falls in the group of intermidiate volatile compounds in most of the cases which are more volatile than semivolatile intermidiate compounds. The partitioning between gas and aerosol phase can be calculated assuming pseudo-ideal solution and absorptive partitioning theory, which represents with the following equation:
 
-Here we calculate Kₒₘ for semivolatile and intermediate volatile organic compounds, which represent by the following compounds: naphtalene, benzene ... . It corresponds to the equation #1 in the Pye et al. (2010).
+Here we calculate Kₒₘ for semivolatile and intermediate volatile organic compounds, which represent by the following compounds: naphtalene, dibutyl phtalate, nanodecane. It corresponds to the equation #1 in the Pye et al. (2010).
 """
 
 #naphtalene partial partition coefficient
@@ -44,42 +44,37 @@ Kₒₘ in m^3/ug is proportional to the gas constant, temperature, and reversel
 
 plot(Kₒₘ, T, c=:blue, lab = :none, xlabel="Kₒₘ", ylabel="Temperature")
 
-Since the partitioning in under the highly dilute conditions found in the atmosphere, is strongly influenced by the ambient temperature. The plot gives the dependance of equilibrium air partitioning coefficient with the temperature, it does not fully match the result mentioned in the paper, but the order of being 10*^-2 is as it is in the paper.
+md """
+Since the partitioning in under the highly dilute conditions found in the atmosphere, is strongly influenced by the ambient temperature. The plot gives the dependance of equilibrium air partitioning coefficient with the temperature.
 
 SVOCs from all sources are assumed to be emitted as two semivolatile surrogate species, SVOC1 and SVOC2, in roughly equal fractions of 0.49 and 0.51. Under most atmospherically relevant conditions, only the lower volatility component is expected to partition appreciably to the aerosol phase.
+"""
 
 #dibutyl phtalate partition coefficient
 
-
 	Mdbp = 278.348 #unit = g/mol" #Molecular weight
 	ΔᵥₐₚH = 91.7 #kJ/mol
-	#p_dbp = zeros(18)
-	#for q in 1:length(T)
 	p_dbp = exp.(ΔᵥₐₚH * 1000 / R .* (1 / 298.15 .- 1 ./ T)) #vapor pressure in P
-	#C_sat = df[:,4] #units saturation concentration
-	#Hₒₓ = 103 #[unit = u"M/atm"]#Molecular weight
 	
 	Kₒₘ_dbp = zeros(18)
 	for w in 1:length(T), e in 1:length(p_dbp)
-		Kₒₘ_dbp[w] = R * T[w] / (Mdbp * 1 * p_dbp[e])
+		Kₒₘ_dbp[w] = R * T[w] / (Mdbp * 1 * p_dbp[e] * 1000000)
 	end
 	Kₒₘ_dbp #m3/ug
 	
 #nonadecane
 
+	#nonadecane
+
 	Mnd = 268.5 #unit = g/mol" #Molecular weight
 	ΔᵥₐₚH₂ = 95.8 #kJ/mol
 	p_nd = zeros(18)
-	for q in 1:18
-		p_nd = exp(ΔᵥₐₚH₂*1000/R*(1/298.15 - 1/T[q]))*101325 #vapor pressure in Pa
-	end
+		p_nd = exp.(ΔᵥₐₚH₂*1000/R .* (1/298.15 .- 1 ./ T)) #vapor pressure in Pa
 	p_nd
-	#C_sat = df[:,4] #units saturation concentration
-	#Hₒₓ = 103 #[unit = u"M/atm"]#Molecular weight
 	
 	Kₒₘ_nd = zeros(18)
-	for n in 1:size(Tp,1), j in 1:size(Tp,2)
-		Kₒₘ_nd[n] = R * Tp[n,1] / (Mnd * 1 * p_nd)
+	for n in 1:length(T), j in 1:length(p_nd)
+		Kₒₘ_nd[n] = R * T[n] / (Mnd * 1 * p_nd[j] * 1000000)
 	end
 	Kₒₘ_nd #m3/ug
 	
@@ -88,6 +83,8 @@ plot(T, Kₒₘ, c=:blue, lab = :none, xlabel="Kₒₘ", ylabel="Temperature")
 	plot!(T, Kₒₘ_nd, c=:orange, lab = :none, xlabel="Kₒₘ", ylabel="Temperature")
 	
 md """
+As we see by the plot the trends of Kₒₘ is pretty similar for all three species, with the bigger values for semivolatile organic compounds, which is consistent with the results of the paper. For the oxidation forms of the intermidiate volatile organic compounds (naphtalene used as a IVOC in the paper) increases significantly over the 10^9 times.
+
 If we try to reproduce the same process with the saturation concentration C', which recalls the equation 2 from Pye et al. (2010), we will get following plot:
 """
 
@@ -103,3 +100,7 @@ heatmap(Kₒₘ2,
 	xlabel="Temperature", ylabel="Vapor pressure", 
 		colorbar_title="Equilibrium partition coefficient",
 		title="Kₒₘ dependance on Temperature and vapor pressure")
+		
+#The calculations provided help to understand the processes occurring in ambient atmosphere, equilibrium partitioning coefficient was calculated for different species with the dependence on temperature. It can be further used for modeling partition of low volatile compounds based on the data of the emissions of the low volatile compounds. However, GEOSChem model is already existing and was used in the Pye et al.(2010), but the estimates of the emissions and the contribution of each species is still not accurate enough, so more precise modeling could be conducted.
+		
+end
