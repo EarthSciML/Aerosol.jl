@@ -7,6 +7,7 @@
 	using Statistics
 	using CSV
 	using DataFrames
+	using Markdown 
 
 # Absorptive partitioning.
 
@@ -29,8 +30,8 @@ Here we calculate Kₒₘ for semivolatile and intermediate volatile organic com
 	T = [263.61, 267.98, 273.16, 278.22, 283.14, 288.01, 293.24, 293.25, 298.26, 303.29, 308.17, 313.24, 318.21, 323.14, 328.24, 333.39, 338.10, 343.06] #temperature range in K
 	p = [0.23, 0.40, 0.74, 1.38, 2.41, 4.13, 6.93, 6.95, 11.35, 18.45, 28.95, 44.73, 68.82, 104.14, 158.41, 237.54, 340.76, 488.58] #vapor pressure in Pa
 	Tp = hcat(T, p)
-	C_sat = df[:,4] #units saturation concentration
-	#Hₒₓ = 103 #[unit = u"M/atm"]#Molecular weight
+	C_sat = [1646.0, 20.0, 16.46, 0.2, 100000, 1.69, 270.0, 0.0001] #units saturation concentration
+	species = ["SVOC1"; "SVOC2"; "O-SVOC1"; "O-SVOC2"; "IVOC"; "O-IVOC N1"; "O-IVOC N2"; "O-IVOC H1"]
 	
 	Kₒₘ = zeros(18)
 	for n in 1:size(Tp,1), j in 1:size(Tp,2)
@@ -90,7 +91,7 @@ If we try to reproduce the same process with the saturation concentration C', wh
 
 Kₒₘₛₐₜ = 1 ./C_sat
 
-plot(df[:,1],Kₒₘₛₐₜ, seriestype = :scatter, c=:blue, lab = :none, xlabel="Kₒₘ")
+plot(species,Kₒₘₛₐₜ, seriestype = :scatter, c=:blue, lab = :none, xlabel="Kₒₘ")
 
 #I included the suggestion to see the correlation of the values obtained for each combination of temperature and pressure, and created a heatmap, but I considered it makes more sense to keep for loop since the vapor pressure is different and unique for each temperature.
 
