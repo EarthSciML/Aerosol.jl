@@ -55,9 +55,9 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using AerosolMTK
-            DocMeta.setdocmeta!(AerosolMTK, :DocTestSetup, :(using AerosolMTK); recursive=true)
-            doctest(AerosolMTK)'
+            using Aerosol
+            DocMeta.setdocmeta!(Aerosol, :DocTestSetup, :(using Aerosol); recursive=true)
+            doctest(Aerosol)'
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

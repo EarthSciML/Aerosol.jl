@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = AerosolMTK
+CurrentModule = Aerosol
 ```
 
-# AerosolMTK
+# Aerosol
 
-Documentation for [AerosolMTK](https://github.com/EarthSciML/AerosolMTK.jl).
+Documentation for [Aerosol](https://github.com/EarthSciML/Aerosol.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [AerosolMTK]
+Modules = [Aerosol]
 ```

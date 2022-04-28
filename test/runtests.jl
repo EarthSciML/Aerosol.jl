@@ -1,6 +1,6 @@
-using AerosolMTK
+using Aerosol
 using Test
 
-@testset "AerosolMTK.jl" begin
+@testset "Aerosol.jl" begin
     # Write your tests here.
 end

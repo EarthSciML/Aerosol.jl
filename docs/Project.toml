@@ -1,3 +1,3 @@
 [deps]
-AerosolMTK = "8510b696-cc45-4a64-84d0-47f429ca1505"
+Aerosol = "8510b696-cc45-4a64-84d0-47f429ca1505"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"

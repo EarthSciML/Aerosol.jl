@@ -1,16 +1,16 @@
-using AerosolMTK
+using Aerosol
 using Documenter
 
-DocMeta.setdocmeta!(AerosolMTK, :DocTestSetup, :(using AerosolMTK); recursive=true)
+DocMeta.setdocmeta!(Aerosol, :DocTestSetup, :(using Aerosol); recursive=true)
 
 makedocs(;
-    modules=[AerosolMTK],
+    modules=[Aerosol],
     authors="EarthSciML authors and contributors",
-    repo="https://github.com/EarthSciML/AerosolMTK.jl/blob/{commit}{path}#{line}",
-    sitename="AerosolMTK.jl",
+    repo="https://github.com/EarthSciML/Aerosol.jl/blob/{commit}{path}#{line}",
+    sitename="Aerosol.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://EarthSciML.github.io/AerosolMTK.jl",
+        canonical="https://EarthSciML.github.io/Aerosol.jl",
         assets=String[],
     ),
     pages=[
@@ -19,5 +19,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/EarthSciML/AerosolMTK.jl",
+    repo="github.com/EarthSciML/Aerosol.jl",
 )

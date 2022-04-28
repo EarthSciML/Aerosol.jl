@@ -1,4 +1,4 @@
-module AerosolMTK
+module Aerosol
 
 # Write your package code here.
 
