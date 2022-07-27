@@ -556,30 +556,30 @@ eqs = [
 	Equilibriumconst(K11,T,H11,C11) ~ (H_aq*SO4_aq/HSO4_aq)*(ActivityCoefficient(T,"H","SO4",I)^3)/(ActivityCoefficient(T,"H","HSO4",I)^2)
 	Equilibriumconst(K12,T,H12,C12) ~ NH3_aq/P_NH3 # No activity coefficient for NH3_aq
 	Equilibriumconst(K13,T,H13,C13) ~ NH4_aq*OH_aq/NH3_aq # No activity coefficient for NH4+ and NH3_aq
-	
 	Equilibriumconst(K14,T,H14,C14) ~ H_aq*NO3_aq/P_HNO3*(ActivityCoefficient(T,"H","NO3",I)^2)
-	# Equilibriumconst(K15,T,H15,C15) ~ HNO3_aq/P_HNO3 # No activity coefficient for HNO3_aq
-	
-	# Equilibriumconst(K16,T,H16,C16) ~ H_aq*Cl_aq/P_HCl*ActivityCoefficient(T,"H","Cl",I)^2
+	Equilibriumconst(K15,T,H15,C15) ~ HNO3_aq/P_HNO3 # No activity coefficient for HNO3_aq
+	Equilibriumconst(K16,T,H16,C16) ~ H_aq*Cl_aq/P_HCl*ActivityCoefficient(T,"H","Cl",I)^2
 	Equilibriumconst(K17,T,H17,C17) ~ HCl_aq/P_HCl # No activity coefficient for HCl_aq
 	Equilibriumconst(K18,T,H18,C18) ~ H_aq*OH_aq/a_w
-	# Equilibriumconst(K19,T,H19,C19) ~ (Na_aq^2)*SO4_aq*ActivityCoefficient(T,"Na","SO4",I)^3
+	Equilibriumconst(K19,T,H19,C19) ~ (Na_aq^2)*SO4_aq*ActivityCoefficient(T,"Na","SO4",I)^3
 	Equilibriumconst(K20,T,H20,C20) ~ (NH4_aq^2)*SO4_aq*ActivityCoefficient(T,"NH4","SO4",I)^3
 	Equilibriumconst(K21,T,H21,C21) ~ P_NH3*P_HCl
-
 	Equilibriumconst(K22,T,H22,C22) ~ Na_aq*NO3_aq*ActivityCoefficient(T,"Na","NO3",I)^2
-	# Equilibriumconst(K23,T,H23,C23) ~ Na_aq*Cl_aq*ActivityCoefficient(T,"Na","Cl",I)^2
-	# Equilibriumconst(K24,T,H24,C24) ~ Na_aq*HSO4_aq*ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"Na","Cl",I)/ActivityCoefficient(T,"H","Cl",I)
-	# Equilibriumconst(K25,T,H25,C25) ~ P_NH3*P_HNO3
-	# Equilibriumconst(K26,T,H26,C26) ~ NH4_aq*HSO4_aq*ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"NH4","Cl",I)/ActivityCoefficient(T,"H","Cl",I)
-	# Equilibriumconst(K27,T,H27,C27) ~ (NH4_aq^3)*SO4_aq*HSO4_aq*(ActivityCoefficient(T,"NH4","SO4",I)^3)*(ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"NH4","Cl",I)/ActivityCoefficient(T,"H","Cl",I))^0.5 
-	
+	Equilibriumconst(K23,T,H23,C23) ~ Na_aq*Cl_aq*ActivityCoefficient(T,"Na","Cl",I)^2
+	Equilibriumconst(K24,T,H24,C24) ~ Na_aq*HSO4_aq*ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"Na","Cl",I)/ActivityCoefficient(T,"H","Cl",I)
+	Equilibriumconst(K25,T,H25,C25) ~ P_NH3*P_HNO3
+	Equilibriumconst(K26,T,H26,C26) ~ NH4_aq*HSO4_aq*ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"NH4","Cl",I)/ActivityCoefficient(T,"H","Cl",I)
+	Equilibriumconst(K27,T,H27,C27) ~ (NH4_aq^3)*SO4_aq*HSO4_aq*(ActivityCoefficient(T,"NH4","SO4",I)^3)*(ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"NH4","Cl",I)/ActivityCoefficient(T,"H","Cl",I))^0.5 
+	# runnable, if note equation 15,16,19,23-27
+
 	# Charge Conservation
 	0 ~ Na_aq + H_aq + NH4_aq + K_aq + 2*Ca_aq + 2*Mg_aq - OH_aq - NO3_aq - Cl_aq - HSO4_aq - 2*SO4_aq 
 	
 	# Water uptake kg/m3
-	# W_ ~ Wateruptake([CaNO32_s, CaCl2_s, KHSO4_s, K2SO4_s, KNO3_s, KCl_s, MgSO4_s, MgNO32_s, MgCl2_s, NaNO3_s, NaHSO4_s, NaCl_s, Na2SO4_s, NH42SO4_s, NH4Cl_s, NH4NO3_s, NH4HSO4_s, NH43HSO42_s],a_w)
-	0.5 ~ W_
+	W_ ~ Wateruptake([CaNO32_s, CaCl2_s, KHSO4_s, K2SO4_s, KNO3_s, KCl_s, MgSO4_s, MgNO32_s, MgCl2_s, NaNO3_s, NaHSO4_s, NaCl_s, Na2SO4_s, NH42SO4_s, NH4Cl_s, NH4NO3_s, NH4HSO4_s, NH43HSO42_s],a_w)
+	# 0.5 ~ W_ 
+	#runnable if note Wateruptake function
+	
 	P_H2O ~ W_/18*T*0.082*10^-5
 	
 	# Mass conservation
@@ -606,7 +606,7 @@ params = (298.15, 0.55, 0.0, 10.0, 3.4, 2.0, 0.0, 0.4, 0.33, 0.0)./M_mass_input
 # T a_w Na_i H2SO4_i NH3_i HNO3_i HCl_i Ca_i K_i Mg_i
 
 j_func = generate_jacobian(ns)[2] # second is in-place
-#	takes 20 minutes to run!!!
+#	takes 20 minutes to run!
 j! = eval(j_func)
 
 using NLsolve
