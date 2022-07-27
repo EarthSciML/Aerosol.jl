@@ -1,9 +1,19 @@
 using Markdown, OrdinaryDiffEq, DiffEqBase,Plots,StochasticDiffEq, DifferentialEquations, ModelingToolkit, NonlinearSolve
 export ISOPROPIA
 
-@variables NH4_aq Na_aq H_aq Cl_aq NO3_aq SO4_aq HNO3_aq NH3_aq HCl_aq HSO4_aq OH_aq H2O_aq Ca_aq K_aq Mg_aq P_NH3 P_HNO3 P_HCl P_H2O NH42SO4_s NH4HSO4_s NH43HSO42_s NH4NO3_s NH4Cl_s NaCl_s NaNO3_s NaHSO4_s Na2SO4_s CaSO4_s CaNO32_s CaCl2_s K2SO4_s KHSO4_s KNO3_s KCl_s MgSO4_s MgNO32_s MgCl2_s a_w T I m_all Na_i H2SO4_i NH3_i HNO3_i HCl_i Ca_i K_i Mg_i W_
-@parameters K1 K2 K3 K4 K5 K6 K7 K8 K9 K10 K11 K12 K13 K14 K15 K16 K17 K18 K19 K20 K21 K22 K23 K24 K25 K26 K27 H4 H5 H6 H7 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23 H24 H25 H26 H27 C4 C5 C6 C7 C11 C12 C13 C14 C15 C16 C17 C18 C19 C20 C21 C22 C23 C24 C25 C26 C27
+@variables NH4_aq Na_aq H_aq Cl_aq NO3_aq SO4_aq HNO3_aq NH3_aq HCl_aq HSO4_aq OH_aq H2O_aq Ca_aq K_aq Mg_aq 
+# unit: mol/kg(water)
 
+@variables P_NH3 P_HNO3 P_HCl P_H2O
+# unit: atm
+
+@variables NH42SO4_s NH4HSO4_s NH43HSO42_s NH4NO3_s NH4Cl_s NaCl_s NaNO3_s NaHSO4_s Na2SO4_s CaSO4_s CaNO32_s CaCl2_s K2SO4_s KHSO4_s KNO3_s KCl_s MgSO4_s MgNO32_s MgCl2_s 
+# unit: mol/m3(air)
+
+@variables I W_
+@parameters T a_w Na_i H2SO4_i NH3_i HNO3_i HCl_i Ca_i K_i Mg_i # m_all
+
+begin
 K1 = 6.067*10^5
 K2 = 7.974*10^11
 K3 = 4.319*10^-5
@@ -13,8 +23,6 @@ K6 = 0.872
 K7 = 8.680
 K8 = 1.079*10^5
 K9 = 2.507*10^15
-
-
 K10 = 9.557*10^21
 K11 = 1.015*10^-2
 K12 = 5.764*10^1
@@ -80,6 +88,7 @@ C24 = 14.75
 C25 = 6.025
 C26 = 15.83
 C27 = 54.40
+end
 
 function Equilibriumconst(K₀,T,H_group,c_group) # to calculate equilibrium constant at given temperature
 	# input variables：
@@ -502,25 +511,21 @@ function Wateruptake_denominator(w)
 	end
 	return r
 end
+@register_symbolic Wateruptake_denominator(w)
 
-function Wateruptake(numerator,a_w)
-	n = length(numerator)
-	denominator = Wateruptake_denominator(a_w)
-	W = 0
-	for i in 1:n
-		W += numerator[i]/denominator[i]
-	end
-	return W
+function Wateruptake(numerator::Vector{Float64},a_w::Float64) 
+	denominator = Wateruptake_denominator(a_w) #unit: mol/kg
+	return sum(numerator ./ denominator)
 end
-
-@register_symbolic @Wateruptake
-
+	
+@register_symbolic Wateruptake(numerator, a_w)
 
 z_all = [1,1,1,1,1,2,1,2,1,2,1]
 
 eqs = [
 	# Ionic strength
 	I ~ cal_I(z_all,[NH4_aq, Na_aq, H_aq, Cl_aq, NO3_aq, SO4_aq, OH_aq, Ca_aq, K_aq, Mg_aq, HSO4_aq])
+	
 	# Equilibrium Equations
 	K1 ~ Ca_aq*(NO3_aq^2)*ActivityCoefficient(T,"Ca","NO3",I)^3
 	K2 ~ Ca_aq*(Cl_aq^2)*ActivityCoefficient(T,"Ca","Cl",I)^3
@@ -535,27 +540,34 @@ eqs = [
 	Equilibriumconst(K11,T,H11,C11) ~ (H_aq*SO4_aq/HSO4_aq)*(ActivityCoefficient(T,"H","SO4",I)^3)/(ActivityCoefficient(T,"H","HSO4",I)^2)
 	Equilibriumconst(K12,T,H12,C12) ~ NH3_aq/P_NH3 # No activity coefficient for NH3_aq
 	Equilibriumconst(K13,T,H13,C13) ~ NH4_aq*OH_aq/NH3_aq # No activity coefficient for NH4+ and NH3_aq
-	Equilibriumconst(K14,T,H14,C14) ~ H_aq*NO3_aq/P_HNO3*ActivityCoefficient(T,"H","NO3",I)^2
-	Equilibriumconst(K15,T,H15,C15) ~ HNO3_aq/P_HNO3 # No activity coefficient for HNO3_aq
-	Equilibriumconst(K16,T,H16,C16) ~ H_aq*Cl_aq/P_HCl*ActivityCoefficient(T,"H","Cl",I)^2
+	
+	Equilibriumconst(K14,T,H14,C14) ~ H_aq*NO3_aq/P_HNO3*(ActivityCoefficient(T,"H","NO3",I)^2)
+	# Equilibriumconst(K15,T,H15,C15) ~ HNO3_aq/P_HNO3 # No activity coefficient for HNO3_aq
+	
+	# Equilibriumconst(K16,T,H16,C16) ~ H_aq*Cl_aq/P_HCl*ActivityCoefficient(T,"H","Cl",I)^2
 	Equilibriumconst(K17,T,H17,C17) ~ HCl_aq/P_HCl # No activity coefficient for HCl_aq
 	Equilibriumconst(K18,T,H18,C18) ~ H_aq*OH_aq/a_w
-	Equilibriumconst(K19,T,H19,C19) ~ (Na_aq^2)*SO4_aq*ActivityCoefficient(T,"Na","SO4",I)^3
+	# Equilibriumconst(K19,T,H19,C19) ~ (Na_aq^2)*SO4_aq*ActivityCoefficient(T,"Na","SO4",I)^3
 	Equilibriumconst(K20,T,H20,C20) ~ (NH4_aq^2)*SO4_aq*ActivityCoefficient(T,"NH4","SO4",I)^3
 	Equilibriumconst(K21,T,H21,C21) ~ P_NH3*P_HCl
+
 	Equilibriumconst(K22,T,H22,C22) ~ Na_aq*NO3_aq*ActivityCoefficient(T,"Na","NO3",I)^2
-	Equilibriumconst(K23,T,H23,C23) ~ Na_aq*Cl_aq*ActivityCoefficient(T,"Na","Cl",I)^2
-	Equilibriumconst(K24,T,H24,C24) ~ Na_aq*HSO4_aq*ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"Na","Cl",I)/ActivityCoefficient(T,"H","Cl",I)
-	Equilibriumconst(K25,T,H25,C25) ~ P_NH3*P_HNO3
-	Equilibriumconst(K26,T,H26,C26) ~ NH4_aq*HSO4_aq*ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"NH4","Cl",I)/ActivityCoefficient(T,"H","Cl",I)
-	Equilibriumconst(K27,T,H27,C27) ~ (NH4_aq^3)*SO4_aq*HSO4_aq*(ActivityCoefficient(T,"NH4","SO4",I)^3)*(ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"NH4","Cl",I)/ActivityCoefficient(T,"H","Cl",I))^0.5
+	# Equilibriumconst(K23,T,H23,C23) ~ Na_aq*Cl_aq*ActivityCoefficient(T,"Na","Cl",I)^2
+	# Equilibriumconst(K24,T,H24,C24) ~ Na_aq*HSO4_aq*ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"Na","Cl",I)/ActivityCoefficient(T,"H","Cl",I)
+	# Equilibriumconst(K25,T,H25,C25) ~ P_NH3*P_HNO3
+	# Equilibriumconst(K26,T,H26,C26) ~ NH4_aq*HSO4_aq*ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"NH4","Cl",I)/ActivityCoefficient(T,"H","Cl",I)
+	# Equilibriumconst(K27,T,H27,C27) ~ (NH4_aq^3)*SO4_aq*HSO4_aq*(ActivityCoefficient(T,"NH4","SO4",I)^3)*(ActivityCoefficient(T,"H","HSO4",I)*ActivityCoefficient(T,"NH4","Cl",I)/ActivityCoefficient(T,"H","Cl",I))^0.5 
+	
 	# Charge Conservation
 	0 ~ Na_aq + H_aq + NH4_aq + K_aq + 2*Ca_aq + 2*Mg_aq - OH_aq - NO3_aq - Cl_aq - HSO4_aq - 2*SO4_aq 
+	
 	# Water uptake kg/m3
-	W_ ~ Wateruptake([CaNO32_s, CaCl2_s, KHSO4_s, K2SO4_s, KNO3_s, KCl_s, MgSO4_s, MgNO32_s, MgCl2_s, NaNO3_s, NaHSO4_s, NaCl_s, Na2SO4_s, NH42SO4_s, NH4Cl_s, NH4NO3_s, NH4HSO4_s, NH43HSO42_s],a_w)
+	# W_ ~ Wateruptake([CaNO32_s, CaCl2_s, KHSO4_s, K2SO4_s, KNO3_s, KCl_s, MgSO4_s, MgNO32_s, MgCl2_s, NaNO3_s, NaHSO4_s, NaCl_s, Na2SO4_s, NH42SO4_s, NH4Cl_s, NH4NO3_s, NH4HSO4_s, NH43HSO42_s],a_w)
+	0.5 ~ W_
 	P_H2O ~ W_/18*T*0.082*10^-5
+	
 	# Mass conservation
-	Na_i ~ Na_aq*W_ + Na2SO4_s + NaHSO4_s + NaNO3_s + NaCl_s
+	Na_i ~ Na_aq*W_ + Na2SO4_s + NaHSO4_s + NaNO3_s + NaCl_s # unit: mol/m3
 	Ca_i ~ Ca_aq*W_ + CaSO4_s + CaNO32_s + CaCl2_s
 	K_i ~ K_aq*W_ + K2SO4_s + KHSO4_s + KNO3_s + KCl_s
 	Mg_i ~ Mg_aq*W_ + MgSO4_s + MgNO32_s + MgCl2_s
@@ -565,5 +577,23 @@ eqs = [
 	NH3_i ~ P_NH3/(T*0.082*10^-5) + NH4_aq+W_ + NH3_aq*W_ + NH42SO4_s + NH4HSO4_s + NH4NO3_s + NH4Cl_s
 ]
 
-ns = NonlinearSystem(eqs,[NH4_aq, Na_aq, H_aq, Cl_aq, NO3_aq, SO4_aq, HNO3_aq, NH3_aq, HCl_aq, HSO4_aq, OH_aq, H2O_aq, Ca_aq, K_aq, Mg_aq, P_NH3, P_HNO3, P_HCl, P_H2O, NH42SO4_s, NH4HSO4_s, NH43HSO42_s, NH4NO3_s, NH4Cl_s, NaCl_s, NaNO3_s, NaHSO4_s, Na2SO4_s, CaSO4_s, CaNO32_s, CaCl2_s, K2SO4_s, KHSO4_s, KNO3_s, KCl_s, MgSO4_s, MgNO32_s, MgCl2_s, a_w, T, I, m_all, Na_i, H2SO4_i, NH3_i, HNO3_i, HCl_i, Ca_i, K_i, Mg_i, W_],[K1, K2, K3, K4, K5, K6, K7, K8, K9, K10, K11, K12, K13, K14, K15, K16, K17, K18, K19, K20, K21, K22, K23, K24, K25, K26, K27, H4, H5, H6, H7, H11, H12, H13, H14, H15, H16, H17, H18, H19, H20, H21, H22, H23, H24, H25, H26, H27, C4, C5, C6, C7, C11, C12, C13, C14, C15, C16, C17, C18, C19, C20, C21, C22, C23, C24, C25, C26, C27])
+@named ns = NonlinearSystem(eqs,[NH4_aq, Na_aq, H_aq, Cl_aq, NO3_aq, SO4_aq, HNO3_aq, NH3_aq, HCl_aq, HSO4_aq, OH_aq, H2O_aq, Ca_aq, K_aq, Mg_aq, P_NH3, P_HNO3, P_HCl, P_H2O, NH42SO4_s, NH4HSO4_s, NH43HSO42_s, NH4NO3_s, NH4Cl_s, NaCl_s, NaNO3_s, NaHSO4_s, Na2SO4_s, CaSO4_s, CaNO32_s, CaCl2_s, K2SO4_s, KHSO4_s, KNO3_s, KCl_s, MgSO4_s, MgNO32_s, MgCl2_s, I, W_],[T, a_w, Na_i, H2SO4_i, NH3_i, HNO3_i, HCl_i, Ca_i, K_i, Mg_i])
 
+nlsys_func = generate_function(ns)[2]
+f = eval(nlsys_func)
+
+# [CaNO32_s, CaCl2_s, KHSO4_s, K2SO4_s, KNO3_s, KCl_s, MgSO4_s, MgNO32_s, MgCl2_s, NaNO3_s, NaHSO4_s, NaCl_s, Na2SO4_s, NH42SO4_s, NH4Cl_s, NH4NO3_s, NH4HSO4_s, NH43HSO42_s]
+# M_mass(g/mol) = [164.09, 110.98, 136.169, 174.259, 101.1032, 74.5513, 120.366, 148.3, 95.211, 84.9947, 120.06, 58.44, 142.04, 132.14, 53.491, 80.043, 115.11, 247.25] 
+
+M_mass_input = (1, 1, 22.99*10^6, 98.079*10^6, 17.031*10^6, 63.01*10^6, 36.458*10^6, 40.08*10^6, 39.1*10^6, 24.31*10^6)
+params = (298.15, 0.55, 0.0, 10.0, 3.4, 2.0, 0.0, 0.4, 0.33, 0.0)./M_mass_input
+# T a_w Na_i H2SO4_i NH3_i HNO3_i HCl_i Ca_i K_i Mg_i
+
+j_func = generate_jacobian(ns)[2] # second is in-place
+#	takes 20 minutes to run!!!
+j! = eval(j_func)
+
+using NLsolve
+guess = ones(40)
+
+nlsolve((out, x) -> f(out, x, params), (out, x) -> j!(out, x, params), ones(40))
