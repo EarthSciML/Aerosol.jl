@@ -27,7 +27,7 @@ for i ∈ 1:length(ion_names)
     n = Symbol(ion_names[i], "_ion")
     varname = Symbol(ion_names[i], "_aq")
     v = ion_default_conc[i]
-    s = "Aqueous $ion_names[$i]"
+    s = "Aqueous $(ion_names[i])"
     eval(quote
         @variables $varname = $v [unit = u"mol/kg_water", description = $s]
         push!(all_ions, $varname)

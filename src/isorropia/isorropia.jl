@@ -125,7 +125,7 @@ all_rxns = [rxn1, rxn2, rxn4, rxn5, rxn6, rxn7, rxn8, rxn9, rxn10, rxn11, rxn12,
 @variables R_3 = 1.0 [description = "Crustal species ratio from Section 3.1 of Fountoukis and Nenes (2007)"]
 
 # Simplify activity coefficient for debugging
-#logγ₁₂(s::Salt) = 0.5
+# logγ₁₂(s::Salt) = 0.5
 #all_Ions = [NO3_ion, Ca_ion, Cl_ion, K_ion, SO4_ion]
 #all_salts = [CaNO32_aqs, CaCl2_aqs, K2SO4_aqs, KNO3_aqs]#, KCl_aqs, MgSO4_aqs,
 
@@ -141,59 +141,28 @@ eqs = [
     R_2 ~ (totalCa + totalK + totalMg + totalNa) / totalSO4
     R_3 ~ (totalCa + totalK + totalMg) / totalSO4
 
-    # Mass balances from Table 3
-    totalK ~ K_aq * W + ifelse(R_1 < 1, KHSO4_s,
-        ifelse(R_1 < 2, KHSO4_s + 2K2SO4_s + KNO3_s + KCl_s,
-            ifelse(R_2 < 2, KHSO4_s + 2K2SO4_s,
-                ifelse(R_3 < 2, 2K2SO4_s,
-                    KNO3_s + KCl_s))))
+    # Mass balances
+    totalK ~ K_aq * W + KHSO4_s + 2K2SO4_s + KNO3_s + KCl_s
 
-    totalCa ~ Ca_aq * W + ifelse(R_1 < 1,CaSO4_s ,
-        ifelse(R_1 < 2, CaSO4_s,
-            ifelse(R_2 < 2, CaSO4_s,
-                ifelse(R_3 < 2, CaSO4_s,
-                CaNO32_s + CaCl2_s + CaSO4_s))))
+    totalCa ~ Ca_aq * W + CaSO4_s + CaNO32_s + CaCl2_s
 
-    totalMg ~ Mg_aq * W + ifelse(R_1 < 1, zeroConc,
-        ifelse(R_1 < 2,MgSO4_s,
-            ifelse(R_2 < 2,MgSO4_s,
-                ifelse(R_3 < 2,MgSO4_s,
-                MgSO4_s + MgNO32_s + MgCl2_s))))
+    totalMg ~ Mg_aq * W + MgSO4_s + MgNO32_s + MgCl2_s
 
-    totalNH ~ (NH4_aq + NH3_aq) * W + NH3_g / (R * T) * PaPerAtm + ifelse(R_1 < 1, NH4HSO4_s,
-        ifelse(R_1 < 2, 2NH42SO4_s + NH4HSO4_s + 3NH43HSO42_s,
-            ifelse(R_2 < 2,NH4Cl_s + NH4NO3_s + 2NH42SO4_s,
-                ifelse(R_3 < 2,NH4Cl_s + NH4NO3_s,
-                NH4Cl_s + NH4NO3_s))))
+    totalNH ~ NH4_aq * W + NH3_aq * W + NH3_g / (R * T) * PaPerAtm + NH4HSO4_s + 
+                2NH42SO4_s + 3NH43HSO42_s + NH4Cl_s + NH4NO3_s
 
+    totalNa ~ Na_aq * W + NaHSO4_s + 2Na2SO4_s + NaCl_s + NaNO3_s
 
-    totalNa ~ Na_aq * W + ifelse(R_1 < 1, NaHSO4_s,
-        ifelse(R_1 < 2, 2Na2SO4_s + NaHSO4_s,
-            ifelse(R_2 < 2, 2Na2SO4_s,
-                ifelse(R_3 < 2,NaCl_s + NaNO3_s + 2Na2SO4_s,
-                NaCl_s + NaNO3_s))))
+    totalSO4 ~ (SO4_aq + HSO4_aq) * W + SO4_g / (R * T) * PaPerAtm +
+                KHSO4_s + NaHSO4_s + NH4HSO4_s + CaSO4_s + Na2SO4_s + NH42SO4_s + 
+                2NH43HSO42_s + K2SO4_s + MgSO4_s
 
-    totalSO4 ~ (SO4_aq + HSO4_aq) * W + SO4_g / (R * T) * PaPerAtm + ifelse(R_1 < 1, KHSO4_s + NaHSO4_s + NH4HSO4_s + CaSO4_s,
-        ifelse(R_1 < 2, NaHSO4_s +NH4HSO4_s +Na2SO4_s + NH42SO4_s + 2NH43HSO42_s + CaSO4_s + KHSO4_s + K2SO4_s + MgSO4_s,
-            ifelse(R_2 < 2, Na2SO4_s+ CaSO4_s +K2SO4_s + MgSO4_s,
-                ifelse(R_3 < 2,Na2SO4_s + CaSO4_s +K2SO4_s +MgSO4_s,
-                CaSO4_s+ K2SO4_s + MgSO4_s))))
+    totalNO3 ~ NO3_aq * W + HNO3_aq * W + HNO3_g / (R * T) * PaPerAtm +  NH4NO3_s + NaNO3_s
 
-    totalNO3 ~ (NO3_aq + HNO3_aq) * W + HNO3_g / (R * T) * PaPerAtm +  ifelse(R_1 < 1, zeroConc,
-        ifelse(R_1 < 2, zeroConc,
-            ifelse(R_2 < 2, NH4NO3_s,
-                ifelse(R_3 < 2,NaNO3_s + NH4NO3_s,
-                NaNO3_s + NH4NO3_s))))
-
-    totalCl ~ (Cl_aq + HCl_aq) * W + HCl_g / (R * T) * PaPerAtm + ifelse(R_1 < 1, zeroConc,
-         ifelse(R_1 < 2, zeroConc,
-             ifelse(R_2 < 2, NH4Cl_s,
-                 ifelse(R_3 < 2,NaCl_s + NH4Cl_s ,
-                 2CaCl2_s + KCl_s + 2MgCl2_s + NaCl_s + NH4Cl_s))))
+    totalCl ~ Cl_aq * W + HCl_aq * W + HCl_g / (R * T) * PaPerAtm + 
+         NH4Cl_s + NaCl_s + 2CaCl2_s + KCl_s + 2MgCl2_s
 
     totalH ~ H_aq * W + (HNO3_g + HCl_g) / (R * T) * PaPerAtm
-
-
 
     # Calculate the ionic strength of the multicomponent solution as described by 
     # Fountoukis and Nenes (2007), between equations 8 and 9: ``I = \\frac{1}{2} \\sum_i m_i z_i^2``
@@ -201,7 +170,7 @@ eqs = [
     I ~ max(1.0e-20 * I_one, 1 / 2 * sum([ion.m * ion.z^2 for ion in all_Ions]))
 
     # Charge balance
-    # 0 ~ sum([s.cation.m * s.cation.z * s.ν_cation + s.anion.m * s.anion.z * s.ν_anion for s in all_salts])
+    0 ~ sum([s.cation.m * s.cation.z * s.ν_cation + s.anion.m * s.anion.z * s.ν_anion for s in all_salts])
 
     # Water content.
     W ~ W_eq16
@@ -214,11 +183,54 @@ render(latexify(ns))
 
 states(ns)
 
+substitute(equation(rxn5), [T => 293.15, rxn5_defaults...])
+
 # Problematic variables : K2SO4_s MgNO32_s MgSO4_s NH4HSO4_s NH4NO3_s NH42SO4_s NH43HSO42_s NaHSO4_s NaNO3_s Na2SO4_s
 
 pp = structural_simplify(ns)
 render(latexify(pp))
 observed(pp)
+
+# Skip unit enforcement for now
+# ModelingToolkit.check_units(eqs...) = nothing
+
+# TODO(CT): Missing H2O_g from table 3
+kept_vars = [
+    NaHSO4_s, NH4HSO4_s, KHSO4_s, CaSO4_s, 
+    Na_aq, NH4_aq, H_aq, HSO4_aq, SO4_aq, NO3_aq, Cl_aq, Ca_aq, K_aq, H2O_aq, # H2O_g
+    NH3_g, NO3_aq, Cl_aq, NH3_aq, HNO3_aq, HCl_aq, # Minor species
+]
+push!(kept_vars, I, W)
+
+sub_rules = [v => 0.0 for v ∈ setdiff(states(ns), kept_vars)]
+
+eqS1 = [substitute(eq, Dict(sub_rules)) for eq ∈ eqs]
+
+statevarsS1 = intersect(statevars, kept_vars)
+
+function num_variables(eq)
+    # Get the sources of each variable in the equation
+    varsource = [getmetadata(var, Symbolics.VariableSource)[1] for var ∈ get_variables(eq)]
+    # Count the number of state variables in the equation, where `varsource` is :variables and 
+    # not :parameters or :constants.
+    if length(varsource) == 0 
+        return 0
+    end
+    sum(varsource .== :variables)
+end
+
+eqs1_filtered = eqS1[[num_variables(eq) > 0 for eq ∈ eqS1]]
+
+
+@named ns = NonlinearSystem(eqs1_filtered, statevarsS1, params);
+render(latexify(ns))
+pp = structural_simplify(ns)
+states(ns)
+
+
+
+
+
 
 guess = ModelingToolkit.get_defaults(ns)
 params = ModelingToolkit.get_defaults(ns)
