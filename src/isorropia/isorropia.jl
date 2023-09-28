@@ -89,7 +89,7 @@ Is this correct?
 @named rxn13 = Reaction([NH3_ion, H2O_aq], [NH4_ion, OH_ion], 1.805e-5, u"mol/kg_water", -1.50, 26.92)
 @named rxn14 = Reaction(HNO3g, HNO3_aqs, 2.511e6, u"mol^2/kg_water^2/atm", 29.17, 16.83)
 @named rxn15 = Reaction(HNO3g, HNO3_ion, 2.1e5, u"mol/kg_water/atm", 29.17, 16.83)
-@named rxn16 = Reaction(HClg, HCl_ion, 1.971e6, u"mol/kg_water/atm", 30.20, 19.91)
+@named rxn16 = Reaction(HClg, [H_ion, Cl_ion], 1.971e6, u"mol^2/kg_water^2/atm", 30.20, 19.91)
 @named rxn17 = Reaction(HClg, HCl_ion, 2.5e3, u"mol/kg_water/atm", 30.20, 19.91)
 @named rxn18 = Reaction(H2O_aq, [H_ion, OH_ion], 1.010e-14, u"mol^2/kg_water^2", -22.52, 26.92)
 @named rxn19 = Reaction(Na2SO4s, Na2SO4_aqs, 4.799e-1, u"mol^3/kg_water^3", 0.98, 39.75)
@@ -106,7 +106,9 @@ Is this correct?
 all_rxns = [rxn1, rxn2, rxn4, rxn5, rxn6, rxn7, rxn8, rxn9, rxn10, rxn11, rxn12, rxn13, rxn14,
     rxn15, rxn16, rxn17, rxn18, rxn19, rxn20, rxn21, rxn22, rxn23, rxn24, rxn25, rxn26, rxn27]
 
-@constants R = 8.31446261815324 [unit = u"m^3*Pa/K/mol", description = "Universal gas constant"]
+regime1_rxns = [rxn5, rxn11, rxn12, rxn13, rxn14, rxn15, rxn24, rxn26] # maybe 14 and 15?
+
+@constants R = 8.31446261815324 [unit = u"m_air^3*Pa/K/mol", description = "Universal gas constant"]
 @constants PaPerAtm = 101325 [unit = u"Pa/atm", description = "Number of pascals per atmosphere"]
 @constants zeroConc = 0.0 [unit = u"mol/m_air^3", description = "Zero concentration"]
 
@@ -131,15 +133,16 @@ all_rxns = [rxn1, rxn2, rxn4, rxn5, rxn6, rxn7, rxn8, rxn9, rxn10, rxn11, rxn12,
 
 eqs = [
     # Add in all the reactions.
-    [equation(rxn) for rxn ∈ all_rxns] 
+    #[equation(rxn) for rxn ∈ all_rxns] 
+    [equation(rxn) for rxn ∈ regime1_rxns] 
     
     0 ~ SO4_g / SO4_aq # All SO4 immediately goes to aerosol phase as per Section 3.3 (item 1) of Fountoukis and Nenes (2007).
     CaSO4_s ~ 0 # No CaSO4 in solid phase as per Section 3.3 (item 4) of Fountoukis and Nenes (2007).
 
     # Ratios from Section 3.1
-    R_1 ~ (totalNH + totalCa + totalK + totalMg + totalNa) / totalSO4
-    R_2 ~ (totalCa + totalK + totalMg + totalNa) / totalSO4
-    R_3 ~ (totalCa + totalK + totalMg) / totalSO4
+    # R_1 ~ (totalNH + totalCa + totalK + totalMg + totalNa) / totalSO4
+    # R_2 ~ (totalCa + totalK + totalMg + totalNa) / totalSO4
+    # R_3 ~ (totalCa + totalK + totalMg) / totalSO4
 
     # Mass balances
     totalK ~ K_aq * W + KHSO4_s + 2K2SO4_s + KNO3_s + KCl_s
@@ -162,7 +165,7 @@ eqs = [
     totalCl ~ Cl_aq * W + HCl_aq * W + HCl_g / (R * T) * PaPerAtm + 
          NH4Cl_s + NaCl_s + 2CaCl2_s + KCl_s + 2MgCl2_s
 
-    totalH ~ H_aq * W + (HNO3_g + HCl_g) / (R * T) * PaPerAtm
+    totalH ~ H_aq * W + HNO3_g / (R * T) * PaPerAtm + HCl_g / (R * T) * PaPerAtm
 
     # Calculate the ionic strength of the multicomponent solution as described by 
     # Fountoukis and Nenes (2007), between equations 8 and 9: ``I = \\frac{1}{2} \\sum_i m_i z_i^2``
@@ -174,6 +177,8 @@ eqs = [
 
     # Water content.
     W ~ W_eq16
+
+    NH3_g ~ 0 # FIXME(CT) This is needed to make there be enough equations for region 1.
 ]
 
 statevars = [all_solids; all_ions; all_gases; I; W];
@@ -182,10 +187,6 @@ params = [T, totalK, totalCa, totalMg, totalNH, totalNa, totalSO4, totalNO3, tot
 render(latexify(ns))
 
 states(ns)
-
-substitute(equation(rxn5), [T => 293.15, rxn5_defaults...])
-
-# Problematic variables : K2SO4_s MgNO32_s MgSO4_s NH4HSO4_s NH4NO3_s NH42SO4_s NH43HSO42_s NaHSO4_s NaNO3_s Na2SO4_s
 
 pp = structural_simplify(ns)
 render(latexify(pp))
@@ -199,6 +200,7 @@ kept_vars = [
     NaHSO4_s, NH4HSO4_s, KHSO4_s, CaSO4_s, 
     Na_aq, NH4_aq, H_aq, HSO4_aq, SO4_aq, NO3_aq, Cl_aq, Ca_aq, K_aq, H2O_aq, # H2O_g
     NH3_g, NO3_aq, Cl_aq, NH3_aq, HNO3_aq, HCl_aq, # Minor species
+    HNO3_g, # Other species not listed in table 3 but still required.
 ]
 push!(kept_vars, I, W)
 
@@ -208,42 +210,44 @@ eqS1 = [substitute(eq, Dict(sub_rules)) for eq ∈ eqs]
 
 statevarsS1 = intersect(statevars, kept_vars)
 
-function num_variables(eq)
-    # Get the sources of each variable in the equation
-    varsource = [getmetadata(var, Symbolics.VariableSource)[1] for var ∈ get_variables(eq)]
-    # Count the number of state variables in the equation, where `varsource` is :variables and 
-    # not :parameters or :constants.
-    if length(varsource) == 0 
-        return 0
-    end
-    sum(varsource .== :variables)
+# function num_variables(eq)
+#     # Get the sources of each variable in the equation
+#     varsource = [getmetadata(var, Symbolics.VariableSource)[1] for var ∈ get_variables(eq)]
+#     # Count the number of state variables in the equation, where `varsource` is :variables and 
+#     # not :parameters or :constants.
+#     if length(varsource) == 0 
+#         return 0
+#     end
+#     sum(varsource .== :variables)
+# end
+function num_variables(eq, kept_vars)
+    kept_syms = Symbolics.tosymbol.(kept_vars, (escape=false))
+    eq_syms = Symbolics.tosymbol.(get_variables(eq), (escape=false))
+    in_vars = eq_syms .∈ Ref(kept_syms)
+    sum(in_vars)
 end
 
-eqs1_filtered = eqS1[[num_variables(eq) > 0 for eq ∈ eqS1]]
-
+eqs1_filtered = eqS1[[num_variables(eq, kept_vars) > 0 for eq ∈ eqS1]]
 
 @named ns = NonlinearSystem(eqs1_filtered, statevarsS1, params);
 render(latexify(ns))
 pp = structural_simplify(ns)
-states(ns)
+show(states(pp))
+observed(pp)
 
 
 
-
-
-
-guess = ModelingToolkit.get_defaults(ns)
-params = ModelingToolkit.get_defaults(ns)
-prob = NonlinearProblem(structural_simplify(ns), guess, params)
-@time sol = solve(prob, TrustRegion())
-states(pp)
+guess = ModelingToolkit.get_defaults(pp)
+params = ModelingToolkit.get_defaults(pp)
+prob = NonlinearProblem(pp, guess, params)
+@time sol = solve(prob, NewtonRaphson())
+show(states(pp))
 
 sol[Ca_aq]
+guess[Ca_aq]
 sol[Cl_aq]
 sol[NO3_aq]
 sol[I]
-sol[CaNO32_s]
-sol[CaCl2_s]
 
 render(latexify(eqs))
 
@@ -269,7 +273,9 @@ end
 
 using ModelingToolkit
 
-@variables a b c 
+@variables a [bounds=(0,1)]
+@variables b [bounds=(0,1)]
+@variables c [bounds=(0,1)] 
 
 @named sys = NonlinearSystem([
     1 ~ a + b + c,
@@ -280,6 +286,24 @@ using ModelingToolkit
 simplesys = structural_simplify(sys)
 
 equations(simplesys)
+states(simplesys)
 
 prob = NonlinearProblem(simplesys, [a=>1, b=>2, c=>3], [])
 solve(prob, TrustRegion())
+
+
+@variables t
+@variables a(t) b(t) c(t)
+D = Differential(t)
+
+@named sys = ODESystem([
+    D(a) ~ 1 - D(b)
+    a ~ b
+], t, [a,b], [], tspan=(0,1))
+
+ssys = structural_simplify(sys)
+
+using DifferentialEquations
+prob = ODEProblem(structural_simplify(sys), [a=>1, b=>2, c=>3], (0,1))
+sol = solve(prob)
+sol[b]
