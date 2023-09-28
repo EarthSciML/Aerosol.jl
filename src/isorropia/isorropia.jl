@@ -106,7 +106,7 @@ Is this correct?
 all_rxns = [rxn1, rxn2, rxn4, rxn5, rxn6, rxn7, rxn8, rxn9, rxn10, rxn11, rxn12, rxn13, rxn14,
     rxn15, rxn16, rxn17, rxn18, rxn19, rxn20, rxn21, rxn22, rxn23, rxn24, rxn25, rxn26, rxn27]
 
-regime1_rxns = [rxn5, rxn11, rxn12, rxn13, rxn14, rxn15, rxn24, rxn26] # maybe 14 and 15?
+regime1_rxns = [rxn5, rxn11, rxn12, rxn13, rxn14, rxn15, rxn16, rxn17, rxn24, rxn26]
 
 @constants R = 8.31446261815324 [unit = u"m_air^3*Pa/K/mol", description = "Universal gas constant"]
 @constants PaPerAtm = 101325 [unit = u"Pa/atm", description = "Number of pascals per atmosphere"]
@@ -177,8 +177,6 @@ eqs = [
 
     # Water content.
     W ~ W_eq16
-
-    NH3_g ~ 0 # FIXME(CT) This is needed to make there be enough equations for region 1.
 ]
 
 statevars = [all_solids; all_ions; all_gases; I; W];
@@ -200,7 +198,7 @@ kept_vars = [
     NaHSO4_s, NH4HSO4_s, KHSO4_s, CaSO4_s, 
     Na_aq, NH4_aq, H_aq, HSO4_aq, SO4_aq, NO3_aq, Cl_aq, Ca_aq, K_aq, H2O_aq, # H2O_g
     NH3_g, NO3_aq, Cl_aq, NH3_aq, HNO3_aq, HCl_aq, # Minor species
-    HNO3_g, # Other species not listed in table 3 but still required.
+    HNO3_g, SO4_g, HCl_g, # Other species not listed in table 3 but still required.
 ]
 push!(kept_vars, I, W)
 
@@ -210,16 +208,6 @@ eqS1 = [substitute(eq, Dict(sub_rules)) for eq ∈ eqs]
 
 statevarsS1 = intersect(statevars, kept_vars)
 
-# function num_variables(eq)
-#     # Get the sources of each variable in the equation
-#     varsource = [getmetadata(var, Symbolics.VariableSource)[1] for var ∈ get_variables(eq)]
-#     # Count the number of state variables in the equation, where `varsource` is :variables and 
-#     # not :parameters or :constants.
-#     if length(varsource) == 0 
-#         return 0
-#     end
-#     sum(varsource .== :variables)
-# end
 function num_variables(eq, kept_vars)
     kept_syms = Symbolics.tosymbol.(kept_vars, (escape=false))
     eq_syms = Symbolics.tosymbol.(get_variables(eq), (escape=false))
@@ -234,6 +222,8 @@ render(latexify(ns))
 pp = structural_simplify(ns)
 show(states(pp))
 observed(pp)
+render(latexify(pp))
+
 
 
 
