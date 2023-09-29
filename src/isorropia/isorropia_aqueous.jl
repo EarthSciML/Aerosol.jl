@@ -29,7 +29,7 @@ for i ∈ 1:length(ion_names)
     v = ion_default_conc[i]
     s = "Aqueous $(ion_names[i])"
     eval(quote
-        @variables $varname = $v [unit = u"mol/kg_water", description = $s]
+        @variables $varname = $v [bounds=($lbound, $ubound), unit = u"mol/kg_water", description = $s]
         push!(all_ions, $varname)
         $n = Ion($varname, $(ion_valence[i]))
         push!(all_Ions, $n)

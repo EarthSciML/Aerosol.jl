@@ -11,10 +11,13 @@ using Unitful
 end
 Unitful.register(MyUnits)
 
+# Specify concentration bounds
+ubound = 1.0e6
+lbound = 1.0e-10
 
 # Miscellaneous variables and parameters
-@variables I = 1.0 [unit = u"mol/kg_water", description = "Ionic strength"]
-@variables W = 1.0e-5 [unit = u"kg_water/m_air^3", description = "Aerosol water content"]
+@variables I = 1.0 [bounds=(lbound, ubound), unit = u"mol/kg_water", description = "Ionic strength"]
+@variables W = 1.0e-5 [bounds=(lbound, ubound), unit = u"kg_water/m_air^3", description = "Aerosol water content"]
 
 @parameters T = 293.15 [unit = u"K", description = "Temperature"]
 @parameters RH = 0.3 [description = "Relative humidity (expressed on a scale from 0 to 1)"] # unitless
@@ -128,8 +131,6 @@ regime1_rxns = [rxn5, rxn11, rxn12, rxn13, rxn14, rxn15, rxn16, rxn17, rxn24, rx
 
 # Simplify activity coefficient for debugging
 # logγ₁₂(s::Salt) = 0.5
-#all_Ions = [NO3_ion, Ca_ion, Cl_ion, K_ion, SO4_ion]
-#all_salts = [CaNO32_aqs, CaCl2_aqs, K2SO4_aqs, KNO3_aqs]#, KCl_aqs, MgSO4_aqs,
 
 eqs = [
     # Add in all the reactions.
@@ -181,14 +182,14 @@ eqs = [
 
 statevars = [all_solids; all_ions; all_gases; I; W];
 params = [T, totalK, totalCa, totalMg, totalNH, totalNa, totalSO4, totalNO3, totalCl, totalH, RH];
-@named ns = NonlinearSystem(eqs, statevars, params);
-render(latexify(ns))
+#@named ns = NonlinearSystem(eqs, statevars, params);
+#render(latexify(ns))
 
-states(ns)
+#states(ns)
 
-pp = structural_simplify(ns)
-render(latexify(pp))
-observed(pp)
+#pp = structural_simplify(ns)
+#render(latexify(pp))
+#observed(pp)
 
 # Skip unit enforcement for now
 # ModelingToolkit.check_units(eqs...) = nothing
@@ -196,13 +197,13 @@ observed(pp)
 # TODO(CT): Missing H2O_g from table 3
 kept_vars = [
     NaHSO4_s, NH4HSO4_s, KHSO4_s, CaSO4_s, 
-    Na_aq, NH4_aq, H_aq, HSO4_aq, SO4_aq, NO3_aq, Cl_aq, Ca_aq, K_aq, H2O_aq, # H2O_g
+    Na_aq, NH4_aq, H_aq, HSO4_aq, SO4_aq, NO3_aq, Cl_aq, Ca_aq, K_aq, #H2O_aq, # H2O_g Note: H2O_aq is not a @variable
     NH3_g, NO3_aq, Cl_aq, NH3_aq, HNO3_aq, HCl_aq, # Minor species
     HNO3_g, SO4_g, HCl_g, # Other species not listed in table 3 but still required.
 ]
 push!(kept_vars, I, W)
 
-sub_rules = [v => 0.0 for v ∈ setdiff(states(ns), kept_vars)]
+sub_rules = [v => 0.0 for v ∈ setdiff(statevars, kept_vars)]
 
 eqS1 = [substitute(eq, Dict(sub_rules)) for eq ∈ eqs]
 
@@ -216,6 +217,10 @@ function num_variables(eq, kept_vars)
 end
 
 eqs1_filtered = eqS1[[num_variables(eq, kept_vars) > 0 for eq ∈ eqS1]]
+
+# Try log transformation
+#exp_sub_rules = [v => exp(v) for v ∈ kept_vars]
+#eqs1_filtered2 = [substitute(eq, Dict(exp_sub_rules)) for eq ∈ eqs1_filtered]
 
 @named ns = NonlinearSystem(eqs1_filtered, statevarsS1, params);
 render(latexify(ns))
@@ -268,9 +273,9 @@ using ModelingToolkit
 @variables c [bounds=(0,1)] 
 
 @named sys = NonlinearSystem([
-    1 ~ a + b + c,
-    2 ~ 2a + b + c,
-    3 ~ 3a + b + c,
+    0.5 ~ a * b,
+    1 ~ a + b,
+    0.5 ~ a * c,
 ], [a,b,c], [])
 
 simplesys = structural_simplify(sys)
@@ -283,7 +288,9 @@ solve(prob, TrustRegion())
 
 
 @variables t
-@variables a(t) b(t) c(t)
+@variables a(t) b(t) #c(t)
+@variables xa(t) xb(t) xtot(t)
+@variables Δa(t) Δb(t)
 D = Differential(t)
 
 @named sys = ODESystem([
@@ -291,9 +298,28 @@ D = Differential(t)
     a ~ b
 ], t, [a,b], [], tspan=(0,1))
 
+@named sys = ODESystem([
+    D(a) ~ 1 + Δa * 1e2
+    D(b) ~ 0.5 + Δb * 1e2
+    xtot ~ a + b
+    xtot ~ xa + xb
+    2xa ~ xb
+    Δa ~ xa - a
+    Δb ~ xb - b
+    #a ~ xa
+    #b ~ xb
+], t, [a,b], [], tspan=(0,1))
+
 ssys = structural_simplify(sys)
 
-using DifferentialEquations
-prob = ODEProblem(structural_simplify(sys), [a=>1, b=>2, c=>3], (0,1))
+using DifferentialEquations, Plots
+prob = ODEProblem(structural_simplify(sys), [a=>1, b=>1, xa=>1, xb=>1, xtot=>1], (0,1))
 sol = solve(prob)
+plot(sol)
+plot!(sol.t, sol[xb], label="xb(t)")
+plot!(sol.t, sol[xtot], label="xtot(t)")
+
+sol[a]
 sol[b]
+sol[xa]
+sol[xb]
