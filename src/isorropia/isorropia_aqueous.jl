@@ -26,7 +26,7 @@ all_Ions = []
 for i ∈ 1:length(ion_names)
     n = Symbol(ion_names[i], "_ion")
     varname = Symbol(ion_names[i], "_aq")
-    v = ion_default_conc[i]
+v = ion_default_conc[i]
     s = "Aqueous $(ion_names[i])"
     eval(quote
         @variables $varname = $v [bounds=($lbound, $ubound), unit = u"mol/kg_water", description = $s]
@@ -142,9 +142,7 @@ C(q) = 1 + 0.055q * exp(-0.023I^3 / I_one^3)
 
 # Equation 14
 A = -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
-# Make sure that logγ is never greater than ℯ, so that γ 
-# is never greater than 1.
-logγ₁₂(s::Salt) = min(ℯ, (1.125 - c_1 * (T - T₀₂)) * logγ₁₂T⁰(s) / √I_one - (0.125 - c_1 * (T - T₀₂)) * A)
+logγ₁₂(s::Salt) = (1.125 - c_1 * (T - T₀₂)) * logγ₁₂T⁰(s) / √I_one - (0.125 - c_1 * (T - T₀₂)) * A
 
 
 """

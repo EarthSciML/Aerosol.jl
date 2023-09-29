@@ -21,7 +21,7 @@ for s = (:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl,
     solidname = Symbol(s, "s")
     description = "Solid $s"
     eval(quote
-        @variables $varname=0.0 [bounds=($lbound, $ubound), unit = u"mol/m_air^3", description=$description]
+        @variables $varname=$lbound [bounds=($lbound, $ubound), unit = u"mol/m_air^3", description=$description]
         push!($all_solids, $varname)
         $solidname = $Solid($varname)
     end)

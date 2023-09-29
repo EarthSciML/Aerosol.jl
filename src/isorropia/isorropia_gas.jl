@@ -19,7 +19,7 @@ for s ∈ (:HNO3, :HCl, :NH3, :SO4)
     gasname = Symbol(s, "g")
     description = "Gasous $s"
     eval(quote
-        @variables $varname=1.0e-7 [bounds=($lbound, $ubound), unit = u"atm", description=$description]
+        @variables $varname=$lbound [bounds=($lbound, $ubound), unit = u"atm", description=$description]
         push!($all_gases, $varname)
         $gasname = $Gas($varname)
     end)

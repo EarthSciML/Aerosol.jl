@@ -29,6 +29,6 @@ W_eq16 = sum([(salt.cation.m / salt.ν_cation * W) / sum(m_aw_coeff .* RH.^colle
 # Tests
 @test ModelingToolkit.get_unit(W_eq16) == u"kg_water/m_air^3"
 
-# TODO: This should change when we add more salts.
+# TODO: This should change when we add more salts to m_aw_coeffs.
 @test substitute(W_eq16, [unit_molality => 1.0, RH => 0.5, Ca_aq => 2,
     K_aq => 0.75, Mg_aq => 0.5, W => 1.0]) ≈ 1.8375634286814078
