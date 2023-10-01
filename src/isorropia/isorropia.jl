@@ -1,7 +1,8 @@
 #using Revise
-using ModelingToolkit, NonlinearSolve, Unitful, Latexify
+using ModelingToolkit, Catalyst, NonlinearSolve, Unitful, Latexify
 using IfElse
 using Test
+using DifferentialEquations, Plots
 
 # Register the units we'll be using
 module MyUnits
@@ -16,26 +17,42 @@ ubound = 1.0e6
 lbound = 1.0e-10
 
 # Miscellaneous variables and parameters
-@variables I = 1.0 [bounds=(lbound, ubound), unit = u"mol/kg_water", description = "Ionic strength"]
-@variables W = 1.0e-5 [bounds=(lbound, ubound), unit = u"kg_water/m_air^3", description = "Aerosol water content"]
+@variables t [unit = u"s", description = "Time"]
+@variables I(t) = 1.0 [bounds=(lbound, ubound), unit = u"mol/kg_water", description = "Ionic strength"]
+@variables W(t) = 1.0e-5 [bounds=(lbound, ubound), unit = u"kg_water/m_air^3", description = "Aerosol water content"]
+I = ParentScope(I)
+W = ParentScope(W)
 
 @parameters T = 293.15 [unit = u"K", description = "Temperature"]
 @parameters RH = 0.3 [description = "Relative humidity (expressed on a scale from 0 to 1)"] # unitless
+T = ParentScope(T)
+RH = ParentScope(RH)
+
 
 """
 A species represents a chemical species in the system.
 
-Chemical species should have an `activity` function which returns the activity
+Chemical species should have an `activity` method which returns the activity
 of the species as specified in Section 2.2 of Fountoukis and Nenes (2007). 
+They should also have a `terms` method which returns the variable(s) associated 
+with the species.
 """
 abstract type Species end
 activity(s::Species) = error("activity not defined for $(typeof(s))")
+γ(s::Species) = error("activity coefficient γ not defined for $(typeof(s))")
+terms(s::Species) = error("terms not defined for $(typeof(s))")
 
 """ 
 The activity of multiple species is the product of their activities
 as shown in Table 2 of Fountoukis and Nenes (2007).
 """
 activity(s::AbstractVector) = reduce(*, activity.(s))
+γ(s::AbstractVector) = reduce(*, γ.(s))
+function terms(s::AbstractVector) 
+    tt = terms.(s)
+    vcat([t[1] for t ∈ tt]...), vcat([t[2] for t ∈ tt]...)
+end
+
 
 # Load the other files
 include("isorropia_aqueous.jl")
@@ -46,107 +63,118 @@ include("isorropia_water.jl")
 """
 Define a reaction based on information in Table 2 of Fountoukis and Nenes (2007).
 """
-struct Reaction
+struct Rxn
     reactant
     product
     sys
 
-    function Reaction(reactant, product, K⁰::Number, K⁰units, hgroup::Number, cgroup::Number; name="rxn")
-        @constants K⁰ = K⁰ [unit = K⁰units, description = "Equilibrium constant at 298.15 K"]
-        @constants H_group = hgroup [description = "ΔH⁰ / (R * T₀)"] # unitless
-        @constants C_group = cgroup [description = "ΔC⁰ₚ / R"] # unitless
-        sys = NonlinearSystem([], [], [T₀, K⁰, H_group, C_group]; name=name)
+    function Rxn(reactant, product, K⁰::Number, K⁰units, hgroup::Number, cgroup::Number; name="rxn")
+        @constants K⁰ = K⁰ [unit = K⁰units, description = "Equilibrium constant at 298.15 K"] 
+        @constants H_group = hgroup [description = "ΔH⁰ / (R * T₀) (unitless)"]
+        @constants C_group = cgroup [description = "ΔC⁰ₚ / R (unitless)"]
+        @variables K_eq(t) [unit = K⁰units, description = "Equilibrium constant (unitless)"]
+        @variables γ_r(t) [description="Activity coefficient of reactant"]
+        @variables γ_p(t) [description="Activity coefficient of product"]
+        sys = NonlinearSystem([
+            K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
+            γ_r ~ γ(reactant)
+            γ_p ~ γ(product)
+        ], [K_eq, γ_r, γ_p], [T₀, K⁰, H_group, C_group]; name=name)
         new(reactant, product, sys)
     end
 end
 
 # Equation 5: Equilibrium constant
-@constants T₀ = 293.15 [unit = u"K", description = "Standard temperature"]
-K_eq(r::Reaction) = r.sys.K⁰ * exp(-r.sys.H_group * (r.sys.T₀ / T - 1) - r.sys.C_group * (1 + log(r.sys.T₀ / T) - r.sys.T₀ / T))
+@constants T₀ = 293.15 [unit = u"K", description = "Standard temperature"] # should be @constants
 
 """
 Assemble an equation for a reaction based on Table 2 of Fountoukis and Nenes (2007), where
 the left-hand side is the equilibrium constant and the right-hand side is the activity.
 """
-function equation(r::Reaction)
-    K_eq(r) ~ activity(r.product) / activity(r.reactant)
+function equations(r::Rxn)
+    #K_eq(r) ~ activity(r.product) / activity(r.reactant)
+    rterms = terms(r.reactant)
+    pterms = terms(r.product)
+    fwd = Reaction(r.sys.K_eq * r.sys.γ_r,  rterms[1], pterms[1], rterms[2], pterms[2])
+    rev = Reaction(r.sys.γ_p, pterms[1], rterms[1], pterms[2], rterms[2])
+    return [fwd, rev]
 end
 
 #== 
-TODO: Assuming that H_group and C_group are zero when they are left out of Table 2. 
+TODO(CT): Assuming that H_group and C_group are zero when they are left out of Table 2. 
 Is this correct?
 ==#
-@named rxn1 = Reaction(CaNO32s, CaNO32_aqs, 6.067e5, u"mol^3/kg^3", -11.299, 0.0)
-@named rxn2 = Reaction(CaCl2s, CaCl2_aqs, 7.974e11, u"mol^3/kg^3", -14.087, 0.0)
-# Ignoring reaction 3 because activity coefficient of CaSO4 is zero.
-#@named rxn3 = Reaction(CaSO4s, CaSO4_aqs, 4.319e-5, u"mol^2/kg^2", 0.0, 0.0)
-@named rxn4 = Reaction(K2SO4s, K2SO4_aqs, 1.569e-2, u"mol^3/kg_water^3", -9.589, 45.807)
-@named rxn5 = Reaction(KHSO4s, KHSO4_aqs, 24.016, u"mol^2/kg_water^2", -8.423, 17.964)
-@named rxn6 = Reaction(KNO3s, KNO3_aqs, 0.872, u"mol^2/kg_water^2", 14.075, 19.388)
-@named rxn7 = Reaction(KCls, KCl_aqs, 8.680, u"mol^2/kg_water^2", -6.167, 19.953)
-@named rxn8 = Reaction(MgSO4s, MgSO4_aqs, 1.079e5, u"mol^2/kg_water^2", 36.798, 0.0)
-@named rxn9 = Reaction(MgNO32s, MgNO32_aqs, 2.507e15, u"mol^3/kg_water^3", -8.754, 0.0)
-@named rxn10 = Reaction(MgCl2s, MgCl2_aqs, 9.557e21, u"mol^3/kg_water^3", -1.347, 0.0)
-@named rxn11 = Reaction(HSO4_ion, [H_ion, SO4_ion], 1.015e-2, u"mol/kg_water", 8.85, 25.14)
-@named rxn12 = Reaction(NH3g, NH3_ion, 5.764e1, u"mol/kg_water/atm", 13.79, -5.39)
-@named rxn13 = Reaction([NH3_ion, H2O_aq], [NH4_ion, OH_ion], 1.805e-5, u"mol/kg_water", -1.50, 26.92)
-@named rxn14 = Reaction(HNO3g, HNO3_aqs, 2.511e6, u"mol^2/kg_water^2/atm", 29.17, 16.83)
-@named rxn15 = Reaction(HNO3g, HNO3_ion, 2.1e5, u"mol/kg_water/atm", 29.17, 16.83)
-@named rxn16 = Reaction(HClg, [H_ion, Cl_ion], 1.971e6, u"mol^2/kg_water^2/atm", 30.20, 19.91)
-@named rxn17 = Reaction(HClg, HCl_ion, 2.5e3, u"mol/kg_water/atm", 30.20, 19.91)
-@named rxn18 = Reaction(H2O_aq, [H_ion, OH_ion], 1.010e-14, u"mol^2/kg_water^2", -22.52, 26.92)
-@named rxn19 = Reaction(Na2SO4s, Na2SO4_aqs, 4.799e-1, u"mol^3/kg_water^3", 0.98, 39.75)
-@named rxn20 = Reaction(NH42SO4s, NH42SO4_aqs, 1.87e0, u"mol^3/kg_water^3", -2.65, 38.57)
-@named rxn21 = Reaction(NH4Cls, [NH3g, HClg], 1.086e-16, u"atm^2", -71.00, 2.40)
-@named rxn22 = Reaction(NaNO3s, NaNO3_aqs, 1.197e1, u"mol^2/kg_water^2", -8.22, 16.01)
-@named rxn23 = Reaction(NaCls, NaCl_aqs, 3.766e1, u"mol^2/kg_water^2", -1.56, 16.90)
-@named rxn24 = Reaction(NaHSO4s, NaHSO4_aqs, 2.413e4, u"mol^2/kg_water^2", 0.79, 14.75)
-@named rxn25 = Reaction(NH4NO3s, [NH3g, HNO3g], 4.199e-17, u"atm^2", -74.375, 6.025)
-@named rxn26 = Reaction(NH4HSO4s, NH4HSO4_aqs, 1.383e0, u"mol^2/kg_water^2", -2.87, 15.83)
-@named rxn27 = Reaction(NH43HSO42s, NH43HSO42_aqs, 2.972e1, u"mol^5/kg_water^5", -5.19, 54.40)
+@named rxn1 = Rxn(CaNO32s, CaNO32_aqs, 6.067e5, u"mol^3/kg^3", -11.299, 0.0)
+@named rxn2 = Rxn(CaCl2s, CaCl2_aqs, 7.974e11, u"mol^3/kg^3", -14.087, 0.0)
+@named rxn3 = Rxn(CaSO4s, CaSO4_aqs, 4.319e-5, u"mol^2/kg^2", 0.0, 0.0)
+@named rxn4 = Rxn(K2SO4s, K2SO4_aqs, 1.569e-2, u"mol^3/kg_water^3", -9.589, 45.807)
+@named rxn5 = Rxn(KHSO4s, KHSO4_aqs, 24.016, u"mol^2/kg_water^2", -8.423, 17.964)
+@named rxn6 = Rxn(KNO3s, KNO3_aqs, 0.872, u"mol^2/kg_water^2", 14.075, 19.388)
+@named rxn7 = Rxn(KCls, KCl_aqs, 8.680, u"mol^2/kg_water^2", -6.167, 19.953)
+@named rxn8 = Rxn(MgSO4s, MgSO4_aqs, 1.079e5, u"mol^2/kg_water^2", 36.798, 0.0)
+@named rxn9 = Rxn(MgNO32s, MgNO32_aqs, 2.507e15, u"mol^3/kg_water^3", -8.754, 0.0)
+@named rxn10 = Rxn(MgCl2s, MgCl2_aqs, 9.557e21, u"mol^3/kg_water^3", -1.347, 0.0)
+@named rxn11 = Rxn(HSO4_ion, [H_ion, SO4_ion], 1.015e-2, u"mol/kg_water", 8.85, 25.14)
+@named rxn12 = Rxn(NH3g, NH3_ion, 5.764e1, u"mol/kg_water/atm", 13.79, -5.39)
+@named rxn13 = Rxn([NH3_ion, H2Oaq], [NH4_ion, OH_ion], 1.805e-5, u"mol/kg_water", -1.50, 26.92)
+@named rxn14 = Rxn(HNO3g, HNO3_aqs, 2.511e6, u"mol^2/kg_water^2/atm", 29.17, 16.83)
+@named rxn15 = Rxn(HNO3g, HNO3_ion, 2.1e5, u"mol/kg_water/atm", 29.17, 16.83)
+@named rxn16 = Rxn(HClg, [H_ion, Cl_ion], 1.971e6, u"mol^2/kg_water^2/atm", 30.20, 19.91)
+@named rxn17 = Rxn(HClg, HCl_ion, 2.5e3, u"mol/kg_water/atm", 30.20, 19.91)
+@named rxn18 = Rxn(H2Oaq, [H_ion, OH_ion], 1.010e-14, u"mol^2/kg_water^2", -22.52, 26.92)
+@named rxn19 = Rxn(Na2SO4s, Na2SO4_aqs, 4.799e-1, u"mol^3/kg_water^3", 0.98, 39.75)
+@named rxn20 = Rxn(NH42SO4s, NH42SO4_aqs, 1.87e0, u"mol^3/kg_water^3", -2.65, 38.57)
+@named rxn21 = Rxn(NH4Cls, [NH3g, HClg], 1.086e-16, u"atm^2", -71.00, 2.40)
+@named rxn22 = Rxn(NaNO3s, NaNO3_aqs, 1.197e1, u"mol^2/kg_water^2", -8.22, 16.01)
+@named rxn23 = Rxn(NaCls, NaCl_aqs, 3.766e1, u"mol^2/kg_water^2", -1.56, 16.90)
+@named rxn24 = Rxn(NaHSO4s, NaHSO4_aqs, 2.413e4, u"mol^2/kg_water^2", 0.79, 14.75)
+@named rxn25 = Rxn(NH4NO3s, [NH3g, HNO3g], 4.199e-17, u"atm^2", -74.375, 6.025)
+@named rxn26 = Rxn(NH4HSO4s, NH4HSO4_aqs, 1.383e0, u"mol^2/kg_water^2", -2.87, 15.83)
+@named rxn27 = Rxn(NH43HSO42s, NH43HSO42_aqs, 2.972e1, u"mol^5/kg_water^5", -5.19, 54.40)
 
-# leaving out rxn3 
-all_rxns = [rxn1, rxn2, rxn4, rxn5, rxn6, rxn7, rxn8, rxn9, rxn10, rxn11, rxn12, rxn13, rxn14,
+all_rxns = [rxn1, rxn2, rxn3, rxn4, rxn5, rxn6, rxn7, rxn8, rxn9, rxn10, rxn11, rxn12, rxn13, rxn14,
     rxn15, rxn16, rxn17, rxn18, rxn19, rxn20, rxn21, rxn22, rxn23, rxn24, rxn25, rxn26, rxn27]
 
 @constants R = 8.31446261815324 [unit = u"m_air^3*Pa/K/mol", description = "Universal gas constant"]
 @constants PaPerAtm = 101325 [unit = u"Pa/atm", description = "Number of pascals per atmosphere"]
 @constants zeroConc = 0.0 [unit = u"mol/m_air^3", description = "Zero concentration"]
 
-@parameters totalK = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of K"]
-@parameters totalCa = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of Ca"]
-@parameters totalMg = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of Mg"]
-@parameters totalNH = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of NH"]
-@parameters totalNa = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of Na"]
-@parameters totalSO4 = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of SO4"]
-@parameters totalNO3 = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of NO3"]
-@parameters totalCl = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of Cl"]
-@parameters totalH = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of H"]
+@variables totalK(t) = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of K"]
+@variables totalCa(t) = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of Ca"]
+@variables totalMg(t) = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of Mg"]
+@variables totalNH(t) = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of NH"]
+@variables totalNa(t) = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of Na"]
+@variables totalSO4(t) = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of SO4"]
+@variables totalNO3(t) = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of NO3"]
+@variables totalCl(t) = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of Cl"]
+@variables totalH(t) = 1.0e-5 [unit = u"mol/m_air^3", description = "Total concentration of H"]
+totals = [totalK, totalCa, totalMg, totalNH, totalNa, totalSO4, totalNO3, totalCl, totalH]
 
-@variables R_1 = 1.0 [description = "Total sulfate ratio from Section 3.1 of Fountoukis and Nenes (2007)"]
-@variables R_2 = 1.0 [description = "Crustal species and sodium ratio from Section 3.1 of Fountoukis and Nenes (2007)"]
-@variables R_3 = 1.0 [description = "Crustal species ratio from Section 3.1 of Fountoukis and Nenes (2007)"]
+@variables R_1(t) = 1.0 [description = "Total sulfate ratio from Section 3.1 of Fountoukis and Nenes (2007)"]
+@variables R_2(t) = 1.0 [description = "Crustal species and sodium ratio from Section 3.1 of Fountoukis and Nenes (2007)"]
+@variables R_3(t) = 1.0 [description = "Crustal species ratio from Section 3.1 of Fountoukis and Nenes (2007)"]
 
 # Simplify activity coefficient for debugging
-# logγ₁₂(s::Salt) = 0.5 * I
+#logγ₁₂(s::Salt) = 0.5
+#logγ₁₂(s::SpecialSalt) = 0.5
 
 
 
-statevars = [all_solids; all_ions; all_gases; I; W];
-params = [T, totalK, totalCa, totalMg, totalNH, totalNa, totalSO4, totalNO3, totalCl, totalH, RH];
+statevars = [all_solids; all_ions; all_gases; I; W; H2O_aq; totals]
+params = [T, RH]
 
-function subsystem(rxns, kept_vars)
-    eqs = [
+#function subsystem(rxns, kept_vars)
+othereqs = [
         # Add in the reactions.
-        [equation(rxn) for rxn ∈ rxns] 
+        #vcat([equations(rxn) for rxn ∈ rxns]...)
         
-        0 ~ SO4_g / SO4_aq # All SO4 immediately goes to aerosol phase as per Section 3.3 (item 1) of Fountoukis and Nenes (2007).
-        CaSO4_s ~ 0 # No CaSO4 in solid phase as per Section 3.3 (item 4) of Fountoukis and Nenes (2007).
+        #0 ~ SO4_g / SO4_aq # All SO4 immediately goes to aerosol phase as per Section 3.3 (item 1) of Fountoukis and Nenes (2007).
+        #CaSO4_s ~ 0 # No CaSO4 in solid phase as per Section 3.3 (item 4) of Fountoukis and Nenes (2007).
 
         # Ratios from Section 3.1
-        # R_1 ~ (totalNH + totalCa + totalK + totalMg + totalNa) / totalSO4
-        # R_2 ~ (totalCa + totalK + totalMg + totalNa) / totalSO4
-        # R_3 ~ (totalCa + totalK + totalMg) / totalSO4
+        R_1 ~ (totalNH + totalCa + totalK + totalMg + totalNa) / totalSO4
+        R_2 ~ (totalCa + totalK + totalMg + totalNa) / totalSO4
+        R_3 ~ (totalCa + totalK + totalMg) / totalSO4
 
         # Mass balances
         totalK ~ K_aq * W + KHSO4_s + 2K2SO4_s + KNO3_s + KCl_s
@@ -170,38 +198,77 @@ function subsystem(rxns, kept_vars)
             NH4Cl_s + NaCl_s + 2CaCl2_s + KCl_s + 2MgCl2_s
 
         totalH ~ H_aq * W + HNO3_g / (R * T) * PaPerAtm + HCl_g / (R * T) * PaPerAtm
-
+     
         # Calculate the ionic strength of the multicomponent solution as described by 
         # Fountoukis and Nenes (2007), between equations 8 and 9: ``I = \\frac{1}{2} \\sum_i m_i z_i^2``
         # Force I to always be positive to avoid attempts to take the square root of a negative number.
-        I ~ 1 / 2 * sum([ion.m * ion.z^2 for ion in all_Ions])
+        I ~ max(1.0e-20, 1 / 2 * sum([ion.m * ion.z^2 for ion in all_Ions]))
 
         # Charge balance
-        0 ~ sum([s.cation.m * s.cation.z * s.ν_cation + s.anion.m * s.anion.z * s.ν_anion for s in all_salts])
+        #0 ~ sum([s.cation.m * s.cation.z * s.ν_cation + s.anion.m * s.anion.z * s.ν_anion for s in all_salts])
 
         # Water content.
         W ~ W_eq16
     ]
+@named othersys = NonlinearSystem(othereqs, [], [])
 
-    # Set the variables we're not keeping to zero.
-    sub_rules = [v => 0.0 for v ∈ setdiff(statevars, kept_vars)]
-    eqs = [substitute(eq, Dict(sub_rules)) for eq ∈ eqs]
+    # # Set the variables we're not keeping to zero.
+    # sub_rules = [v => 0.0 for v ∈ setdiff(statevars, kept_vars)]
+    # eqs = [substitute(eq, Dict(sub_rules)) for eq ∈ eqs]
 
-    # Filter out equations that don't have any of the kept variables.
-    function num_variables(eq, kept_vars)
-        kept_syms = Symbolics.tosymbol.(kept_vars, (escape=false))
-        eq_syms = Symbolics.tosymbol.(get_variables(eq), (escape=false))
-        in_vars = eq_syms .∈ Ref(kept_syms)
-        sum(in_vars)
-    end
-    eqs = eqs[[num_variables(eq, kept_vars) > 0 for eq ∈ eqs]]
+    # # Filter out equations that don't have any of the kept variables.
+    # function num_variables(eq, kept_vars)
+    #     kept_syms = Symbolics.tosymbol.(kept_vars, (escape=false))
+    #     eq_syms = Symbolics.tosymbol.(get_variables(eq), (escape=false))
+    #     in_vars = eq_syms .∈ Ref(kept_syms)
+    #     sum(in_vars)
+    # end
+    # eqs = eqs[[num_variables(eq, kept_vars) > 0 for eq ∈ eqs]]
 
     # Always work with the absolute value of variables.
     #abs_rules = [v => abs(v) for v ∈ kept_vars]
     #eqs = [substitute(eq, Dict(abs_rules)) for eq ∈ eqs]
 
-    return eqs
+    #return eqs
+#end
+
+x = vcat([equations(x) for x in all_rxns]...)
+push!(x, Reaction(100, [SO4_g], [SO4_aq])) # All SO4 immediately goes to aerosol phase as per Section 3.3 (item 1) of Fountoukis and Nenes (2007).
+xx = ReactionSystem(x, t, statevars, params; 
+    systems=[othersys, [rxn.sys for rxn ∈ all_rxns]...], 
+    checks=false, combinatoric_ratelaws=false, name=:xx)
+render(latexify(xx))
+testsys = convert(ODESystem, xx)
+render(latexify(testsys))
+pp = structural_simplify(testsys)
+prob = ODEProblem(pp, ModelingToolkit.get_defaults(testsys), (0.0, 1.0), 
+    ModelingToolkit.get_defaults(testsys))
+@time sol = solve(prob, Rosenbrock23())
+plot(sol, size=(1000, 800))
+
+
+function plotvars(sol, vars; kwargs...)
+    p1 = plot(; kwargs...)
+    for v ∈ vars
+        plot!(p1, sol[t], sol[v], label=v)
+    end
+    p1
 end
+
+plot([
+plotvars(sol, [I, W]; title="I and W")
+plotvars(sol, states(testsys)[[occursin("aq", string(v)) && (string(v) != "H2O_aq(t)") for v ∈ states(testsys)]];
+    title="Aqueous species")
+plotvars(sol, states(testsys)[[occursin("_s", string(v)) for v ∈ states(testsys)]]; title="Solids")
+plotvars(sol, states(testsys)[[occursin("_g", string(v)) for v ∈ states(testsys)]]; title="Gases")
+#plotvars(sol, states(testsys)[[occursin("total", string(v)) for v ∈ states(testsys)]]; title="Totals")
+plotvars(sol, states(testsys)[[occursin("γ_r", string(v)) for v ∈ states(testsys)]]; title="γ_r")
+plotvars(sol, states(testsys)[[occursin("γ_p", string(v)) for v ∈ states(testsys)]]; title="γ_p")
+plotvars(sol, states(testsys)[[occursin("K_eq", string(v)) for v ∈ states(testsys)]]; title="K_eq", yscale=:log10)
+]..., size=(1500, 1000))
+
+
+show(states(testsys))
 
 # Skip unit enforcement for now
 # ModelingToolkit.check_units(eqs...) = nothing
@@ -217,8 +284,9 @@ regime1_vars = [
 ]
 
 regime1eqs = subsystem(regime1_rxns, regime1_vars);
-@named regime1sys = NonlinearSystem(regime1eqs, regime1_vars, params)
-render(latexify(regime1sys))
+@named regime1rsys = ReactionSystem(regime1eqs, t, regime1_vars, params)
+#@named regime1sys = NonlinearSystem(regime1eqs, regime1_vars, params)
+render(latexify(regime1rsys))
 guess = ModelingToolkit.get_defaults(regime1sys)
 param_defaults = ModelingToolkit.get_defaults(regime1sys)
 prob = NonlinearProblem(structural_simplify(regime1sys), guess, param_defaults)

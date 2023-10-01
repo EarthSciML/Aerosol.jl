@@ -10,8 +10,11 @@ end
 TODO: This is NOT the correct way to calculate the activity of an ion,
 but Fountoukis and Nenes (2007) don't give any details on how to calculate it.
 ==#
-logγᵢ(i::Ion) = log(0.5)
-activity(i::Ion) = i.m * exp(logγᵢ(i))
+logγᵢ(i::Ion) = log(1.0)
+γ(i::Ion) = exp(logγᵢ(i))
+activity(i::Ion) = i.m * γ(i)
+
+terms(i::Ion) = [i.m], [1]
 
 # Generate the aqueous ions.
 # Each ion has an associated MTK variable named 
@@ -19,17 +22,16 @@ activity(i::Ion) = i.m * exp(logγᵢ(i))
 # a Ion struct named <name>_ion.
 ion_names = [:NH4, :Na, :H, :Cl, :NO3, :SO4, :HNO3, :NH3, :HCl, :HSO4, :Ca, :K, :Mg, :OH]
 ion_valence = [1, 1, 1, -1, -1, -2, 0, 0, 0, -1, 2, 1, 2, -1]
-ion_default_conc = [1.5, 0.023, 10, 2, 1, 2, 1, 6, 0.04, 10, 0.1, 0.3, 0.1, 1.e-8]
 ion_charge = [1, 1, 1, -1, -1, -2, 0,]
 all_ions = []
 all_Ions = []
 for i ∈ 1:length(ion_names)
     n = Symbol(ion_names[i], "_ion")
     varname = Symbol(ion_names[i], "_aq")
-v = ion_default_conc[i]
     s = "Aqueous $(ion_names[i])"
     eval(quote
-        @variables $varname = $v [bounds=($lbound, $ubound), unit = u"mol/kg_water", description = $s]
+        @species $varname($t) = 0.0 [bounds=($lbound, $ubound), unit = u"mol/kg_water", description = $s]
+        $varname = ParentScope($varname)
         push!(all_ions, $varname)
         $n = Ion($varname, $(ion_valence[i]))
         push!(all_Ions, $n)
@@ -138,7 +140,7 @@ B(q) = 0.75 - 0.065q
 C(q) = 1 + 0.055q * exp(-0.023I^3 / I_one^3)
 
 @constants T₀₂ = 273.15 [unit = u"K", description = "Standard temperature 2"]
-@constants c_1 = 0.005 [unit = u"K^-1"]
+@constants c_1 = 0.005 [unit = u"K^-1"] 
 
 # Equation 14
 A = -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
@@ -151,6 +153,9 @@ in Fountoukis and Nenes (2007).
 """
 activity(s::Salt) = s.cation.m^s.ν_cation * s.anion.m^s.ν_anion *
                     exp(logγ₁₂(s))^(s.ν_cation + s.ν_anion)
+γ(s::Salt) = exp(logγ₁₂(s))^(s.ν_cation + s.ν_anion)
+
+terms(s::Salt) = [s.cation.m, s.anion.m], [s.ν_cation, s.ν_anion]
 
 ### Special cases
 
@@ -162,6 +167,11 @@ a special activity coefficient as defined in the footnotes to Table 4.
 """
 activity(s::SpecialSalt) = s.cation.m^s.ν_cation * s.anion.m^s.ν_anion *
                            γ₁₂(s)^(s.ν_cation + s.ν_anion)
+
+γ(s::SpecialSalt) = γ₁₂(s)^(s.ν_cation + s.ν_anion)
+
+terms(s::SpecialSalt) = [s.cation.m, s.anion.m], [s.ν_cation, s.ν_anion]
+
 
 specialsaltnames = [:CaSO4, :KHSO4, :NH4HSO4, :NaHSO4, :NH43HSO42]
 specialsalts = [Salt(Ca_ion, 1, SO4_ion, 1, NaN), Salt(K_ion, 1, HSO4_ion, 1, NaN),
@@ -283,7 +293,7 @@ end
 # TODO: Update this once we figure out how to calculate the activity of an Ion.
 @test substitute(activity(HSO4_ion), [I => 5, Aᵧ => 0.511, Cl_aq => 1, I_one => 1, H_aq => 2,
     K_aq => 0.5, Mg_aq => 1.2, NH4_aq => 2.5, NO3_aq => 3.1, Na_aq => 0.2, Ca_aq => 1.2,
-    SO4_aq => 2.0, HSO4_aq => 1.0, T => 298.15, T₀₂ => 273.15, c_1 => 0.005]) ≈ 0.5
+    SO4_aq => 2.0, HSO4_aq => 1.0, T => 298.15, T₀₂ => 273.15, c_1 => 0.005]) ≈ 1.0
 
 # Special cases
 

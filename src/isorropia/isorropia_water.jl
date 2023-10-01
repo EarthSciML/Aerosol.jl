@@ -1,10 +1,19 @@
-struct H2Oaq <: Species end
+struct H2O <: Species 
+    m
+end
 """
 From Equation 15 in Fountoukis and Nenes (2007), the activity of water is 
 equal to the relative humidity
 """
-activity(w::H2Oaq) = RH
-H2O_aq = H2Oaq()
+activity(w::H2O) = RH
+
+@species H2O_aq(t) = 55.56 [unit = u"mol/kg_water", description = "55.56 mol water per kg water"]
+H2O_aq = ParentScope(H2O_aq)
+H2Oaq = H2O(H2O_aq)
+@constants unit_molality=1.0 [unit = u"mol/kg_water", description = "Unit molality"]
+
+γ(w::H2O) = RH / w.m * unit_molality
+terms(w::H2O) = [w.m], [1]
 
 @constants unit_molality=1.0 [unit = u"mol/kg_water", description = "Unit molality"]
 

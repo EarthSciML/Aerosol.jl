@@ -9,6 +9,9 @@ From Section 2.2 in Fountoukis and Nenes (2007), the activity of a solid is 1.
 """
 activity(s::Solid) = 1.0
 
+γ(s::Solid) = 0.0
+terms(s::Solid) = [s.m], [1]
+
 # Generate the solid compounds.
 # Each solid compound has an associated MTK variable named 
 # <name>_s, where <name> is the name of the compound, and
@@ -21,7 +24,8 @@ for s = (:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl,
     solidname = Symbol(s, "s")
     description = "Solid $s"
     eval(quote
-        @variables $varname=$lbound [bounds=($lbound, $ubound), unit = u"mol/m_air^3", description=$description]
+        @species $varname($t)=0.0 [bounds=($lbound, $ubound), unit = u"mol/m_air^3", description=$description]
+        $varname = ParentScope($varname)
         push!($all_solids, $varname)
         $solidname = $Solid($varname)
     end)
