@@ -4,12 +4,14 @@ A solid with the given concentration.
 struct Solid <: Species
     m
 end
+
+@constants unit_conc=1.0 [unit = u"mol/m_air^3", description = "Unit concentration"]
+
 """
 From Section 2.2 in Fountoukis and Nenes (2007), the activity of a solid is 1.
 """
-activity(s::Solid) = 1.0
+γ(s::Solid) = 1.0 / s.m
 
-γ(s::Solid) = 0.0
 terms(s::Solid) = [s.m], [1]
 
 # Generate the solid compounds.
@@ -24,7 +26,7 @@ for s = (:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl,
     solidname = Symbol(s, "s")
     description = "Solid $s"
     eval(quote
-        @species $varname($t)=0.0 [bounds=($lbound, $ubound), unit = u"mol/m_air^3", description=$description]
+        @species $varname($t)=1.0e-10 [unit = u"mol/m_air^3", description=$description]
         $varname = ParentScope($varname)
         push!($all_solids, $varname)
         $solidname = $Solid($varname)
@@ -33,4 +35,5 @@ end
 
 # Tests
 @test length(all_solids) == 19
-@test activity(K2SO4s) === 1.0
+# Test that the activity of a solid is equal to 1.
+@test Symbolics.value(activity(K2SO4s)) == 1.0
