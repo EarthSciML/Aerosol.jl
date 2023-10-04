@@ -14,8 +14,8 @@ Unitful.register(MyUnits)
 
 # Miscellaneous variables and parameters
 @variables t [unit = u"s", description = "Time"]
-@variables I(t) = 1.0 [unit = u"mol/kg_water", description = "Ionic strength"]
-@variables W(t) = 1.0e-5 [unit = u"kg_water/m_air^3", description = "Aerosol water content"]
+@variables I(t) = 1.0e-4 [unit = u"mol/kg_water", description = "Ionic strength"]
+@variables W(t) = 1.0e-10 [unit = u"kg_water/m_air^3", description = "Aerosol water content"]
 for v ∈ (:I, :W)
     eval(:($v = ParentScope($v))) # Keep these as global MTK variables.
 end
@@ -81,12 +81,13 @@ struct Rxn
         @constants C_group = cgroup [description = "ΔC⁰ₚ / R (unitless)"]
         @variables K_eq(t) [unit = K⁰units, description = "Equilibrium constant"]
         # These are the transformed variables to turn this into a kinetic reaction rather than an equilibrium reaction.
-        # To do so we need to choose a base reaction rate constant. (We choose it to be 1.0 here.)
-        @constants γrkludge = 1 [unit = ModelingToolkit.get_unit(1/ar/t), description = "Unit conversion for γ_r"]
-        @constants γpkludge = 1 [unit = ModelingToolkit.get_unit(1/ap/t), description = "Unit conversion for γ_p"]
+        # To do so we need to choose a base reaction rate constant. (We choose it to be 1.0e-15 here.)
+        @constants fakerate = 1.e-25 [unit = u"mol/m_air^3/s", description = "Fake reaction rate constant to convert equilibrium reaction into kinetic reaction"]
+        @constants γrkludge = 1 [unit = ModelingToolkit.get_unit(1/ar), description = "Unit conversion for γ_r"]
+        @constants γpkludge = 1 [unit = ModelingToolkit.get_unit(1/ap), description = "Unit conversion for γ_p"]
         @constants Keqkludge = 1 [unit = ModelingToolkit.get_unit(ar/ap), description = "Unit conversion for K_eq"]
-        @variables k_fwd(t)=1 [unit = ModelingToolkit.get_unit(γr/ar/t), description = "Forward reaction rate constant"]
-        @variables k_rev(t)=1 [unit = ModelingToolkit.get_unit(γp/ap/t), description = "Reverse reaction rate constant"]
+        @variables k_fwd(t)=1 [unit = ModelingToolkit.get_unit(γr/ar*fakerate), description = "Forward reaction rate constant"]
+        @variables k_rev(t)=1 [unit = ModelingToolkit.get_unit(γp/ap*fakerate), description = "Reverse reaction rate constant"]
         @variables eq_ratio(t)=1 [unit = ModelingToolkit.get_unit(k_fwd/k_rev), description = "Unitless equilibrium ratio of product to reactant"]
 
         @variables γ_r(t) [unit=ModelingToolkit.get_unit(γr), description="Activity coefficient of reactant"]
@@ -97,8 +98,8 @@ struct Rxn
             K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
             γ_r ~ max(min_γr, γ(reactant)) 
             γ_p ~ max(min_γp, γ(product)) 
-            k_fwd ~ K_eq * γ_r * Keqkludge * γrkludge
-            k_rev ~ γ_p* γpkludge
+            k_fwd ~ K_eq * γ_r * Keqkludge * γrkludge * fakerate
+            k_rev ~ γ_p* γpkludge * fakerate
             eq_ratio ~ k_fwd / k_rev
         ], [K_eq, γ_r, γ_p, k_fwd, k_rev, eq_ratio], [T₀, K⁰, H_group, C_group]; name=name)
         new(reactant, product, sys)
@@ -176,37 +177,37 @@ for v ∈ Symbolics.tosymbol.(vcat(totals, regions), (escape=false))
     eval(:($(v) = ParentScope($(v))))
 end
 
-statevars = [all_solids; all_ions; all_gases; I; W; totals; regions]
+statevars = [all_solids; all_ions; all_gases; I; W] # ; totals; regions
 params = [T, RH, H2O_aq]
 
 eqs = [
         # Ratios from Section 3.1
-        R_1 ~ (totalNH + totalCa + totalK + totalMg + totalNa) / totalSO4
-        R_2 ~ (totalCa + totalK + totalMg + totalNa) / totalSO4
-        R_3 ~ (totalCa + totalK + totalMg) / totalSO4
+        # R_1 ~ (totalNH + totalCa + totalK + totalMg + totalNa) / totalSO4
+        # R_2 ~ (totalCa + totalK + totalMg + totalNa) / totalSO4
+        # R_3 ~ (totalCa + totalK + totalMg) / totalSO4
 
-        # # Mass balances
-        totalK ~ K_aq + KHSO4_s + 2K2SO4_s + KNO3_s + KCl_s
+        # # # Mass balances
+        # totalK ~ K_aq + KHSO4_s + 2K2SO4_s + KNO3_s + KCl_s
 
-        totalCa ~ Ca_aq + CaSO4_s + CaNO32_s + CaCl2_s
+        # totalCa ~ Ca_aq + CaSO4_s + CaNO32_s + CaCl2_s
 
-        totalMg ~ Mg_aq + MgSO4_s + MgNO32_s + MgCl2_s
+        # totalMg ~ Mg_aq + MgSO4_s + MgNO32_s + MgCl2_s
 
-        totalNH ~ NH4_aq + NH3_aq + NH3_g + NH4HSO4_s + 
-                    2NH42SO4_s + 3NH43HSO42_s + NH4Cl_s + NH4NO3_s
+        # totalNH ~ NH4_aq + NH3_aq + NH3_g + NH4HSO4_s + 
+        #             2NH42SO4_s + 3NH43HSO42_s + NH4Cl_s + NH4NO3_s
 
-        totalNa ~ Na_aq + NaHSO4_s + 2Na2SO4_s + NaCl_s + NaNO3_s
+        # totalNa ~ Na_aq + NaHSO4_s + 2Na2SO4_s + NaCl_s + NaNO3_s
 
-        totalSO4 ~ SO4_aq + HSO4_aq + SO4_g +
-                    KHSO4_s + NaHSO4_s + NH4HSO4_s + CaSO4_s + Na2SO4_s + NH42SO4_s + 
-                    2NH43HSO42_s + K2SO4_s + MgSO4_s
+        # totalSO4 ~ SO4_aq + HSO4_aq + SO4_g +
+        #             KHSO4_s + NaHSO4_s + NH4HSO4_s + CaSO4_s + Na2SO4_s + NH42SO4_s + 
+        #             2NH43HSO42_s + K2SO4_s + MgSO4_s
 
-        totalNO3 ~ NO3_aq + HNO3_aq + HNO3_g +  NH4NO3_s + NaNO3_s
+        # totalNO3 ~ NO3_aq + HNO3_aq + HNO3_g +  NH4NO3_s + NaNO3_s
 
-        totalCl ~ Cl_aq + HCl_aq + HCl_g + 
-            NH4Cl_s + NaCl_s + 2CaCl2_s + KCl_s + 2MgCl2_s
+        # totalCl ~ Cl_aq + HCl_aq + HCl_g + 
+        #     NH4Cl_s + NaCl_s + 2CaCl2_s + KCl_s + 2MgCl2_s
 
-        totalH ~ H_aq + HNO3_g + HCl_g
+        # totalH ~ H_aq + HNO3_g + HCl_g
      
         # Calculate the ionic strength of the multicomponent solution as described by 
         # Fountoukis and Nenes (2007), between equations 8 and 9: ``I = \\frac{1}{2} \\sum_i m_i z_i^2``
@@ -219,7 +220,7 @@ eqs = [
         # Water content.
         W ~ max(1.0e-20*W_one, W_eq16)
     ]
-@named othersys = NonlinearSystem(eqs, [I; W; totals; regions], [])  
+@named othersys = NonlinearSystem(eqs, [I; W], []) # ; totals; regions
 
 x = vcat([reactions(x) for x in all_rxns]...)
 @parameters so4rate=100 [unit = u"s^-1", description = "Rate of SO4 to aerosol phase (pseudo-instantaneous)"]
@@ -236,7 +237,6 @@ render(latexify(testsys))
 pp = structural_simplify(testsys)
 u₀ = ModelingToolkit.get_defaults(pp)
 u₀[RH] = 0.95
-u₀[W] = 1.0e-2
 prob = ODEProblem(pp, u₀, (0.0, 1.0), 
     ModelingToolkit.get_defaults(pp))
 @time sol = solve(prob, Rosenbrock23())
@@ -250,15 +250,16 @@ function plotvars(sol, vars; kwargs...)
 end
 
 plot([
-plotvars(sol, [I, W]; title="I and W")
+plotvars(sol, [I]; title="I")
+plotvars(sol, [W]; title="W")
 plotvars(sol, states(testsys)[[occursin("aq", string(v)) && (string(v) != "H2O_aq(t)") for v ∈ states(testsys)]];
     title="Aqueous species")
 plotvars(sol, states(testsys)[[occursin("_s", string(v)) for v ∈ states(testsys)]]; title="Solids")
 plotvars(sol, states(testsys)[[occursin("_g", string(v)) for v ∈ states(testsys)]]; title="Gases")
 #plotvars(sol, states(testsys)[[occursin("total", string(v)) for v ∈ states(testsys)]]; title="Totals")
-plotvars(sol, states(testsys)[[occursin("γ_r", string(v)) for v ∈ states(testsys)]]; title="γ_r")
-plotvars(sol, states(testsys)[[occursin("γ_p", string(v)) for v ∈ states(testsys)]]; title="γ_p")
-plotvars(sol, states(testsys)[[occursin("K_eq", string(v)) for v ∈ states(testsys)]]; title="K_eq", yscale=:log10)
+plotvars(sol, states(testsys)[[occursin("k_fwd", string(v)) for v ∈ states(testsys)]]; title="Forward rates", yscale=:log10)
+plotvars(sol, states(testsys)[[occursin("k_rev", string(v)) for v ∈ states(testsys)]]; title="Reverse rates", yscale=:log10)
+plotvars(sol, states(testsys)[[occursin("eq_ratio", string(v)) for v ∈ states(testsys)]]; title="Equilibrium ratios", yscale=:log10)
 ]..., size=(1500, 1000))
 
 uu = Dict([(k, 0.01) for k ∈ all_ions])
@@ -268,21 +269,9 @@ plot(rhs, [Symbolics.value(substitute(x, Dict(RH => w, unit_molality=>1))) for w
 
 
 show([(x => sol[x][1]) for x in states(testsys)])
+[(x => eval(:(sol[$x.sys.eq_ratio][1]))) for x in Symbol.("rxn".*string.(1:27))]
 
-show(states(testsys))
 
-ModelingToolkit.get_unit(rxn1.sys.K_eq)
-ModelingToolkit.get_unit(rxn1.sys.γ_r^2)
-ModelingToolkit.get_unit(rxn1.sys.γ_p)
-ModelingToolkit.get_unit(rxn1.sys.K_eq * rxn1.sys.γ_r^2)
-ModelingToolkit.get_unit(rxn1.sys.K_eq / rxn1.sys.γ_p)
-ModelingToolkit.get_unit(rxn1.sys.K_eq * rxn1.sys.γ_r * CaNO32_s)
-ModelingToolkit.get_unit(rxn1.sys.γ_p * Ca_aq * NO3_aq^2 )
-ModelingToolkit.get_unit(CaNO32_s)
-ModelingToolkit.get_unit(Ca_aq * NO3_aq^2 )
-ModelingToolkit.get_unit(activity(CaNO32s))
-ModelingToolkit.get_unit(activity(CaNO32_aqs))
-ModelingToolkit.get_unit(activity(CaNO32s)/activity(CaNO32_aqs))
 
 syms = [Symbol("rxn$i") for i in 1:27]
 vs = [eval(:(sol[$(s).sys.eq_ratio])) for s ∈ syms]

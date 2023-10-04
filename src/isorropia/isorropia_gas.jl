@@ -20,7 +20,7 @@ for s ∈ (:HNO3, :HCl, :NH3, :SO4)
     gasname = Symbol(s, "g")
     description = "Gasous $s"
     eval(quote
-        @species $varname($t)=1.0e-6 [unit = u"mol/m_air^3", description=$description]
+        @species $varname($t)=1.0e-9 [unit = u"mol/m_air^3", description=$description]
         $varname = ParentScope($varname)
         push!($all_gases, $varname)
         $gasname = $Gas($varname)

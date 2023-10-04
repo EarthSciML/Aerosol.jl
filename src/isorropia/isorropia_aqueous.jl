@@ -28,7 +28,7 @@ for i ∈ eachindex(ion_names)
     varname = Symbol(ion_names[i], "_aq")
     s = "Aqueous $(ion_names[i])"
     eval(quote
-        @species $varname($t) = 0.0 [unit = u"mol/m_air^3", description = $s]
+        @species $varname($t) = 1e-20 [unit = u"mol/m_air^3", description = $s]
         $varname = ParentScope($varname)
         push!(all_ions, $varname)
         $n = Ion($varname, $varname/W, $(ion_valence[i]))
@@ -153,7 +153,6 @@ logγ₁₂(s::Salt) = (1.125 - c_1 * (T - T₀₂)) * logγ₁₂T⁰(s) / √I
 Calculate the activity coefficient of a salt based on Section 2.2 
 in Fountoukis and Nenes (2007).
 """
-#activity(s::Salt) = reduce(*, [m^ν for (m, ν) ∈ zip(terms(s)...)]) * γ(s)
 γ(s::Salt) = exp(logγ₁₂(s))^(s.ν_cation + s.ν_anion) / W^(s.ν_cation + s.ν_anion)
 
 terms(s::Salt) = [s.cation.m, s.anion.m], [s.ν_cation, s.ν_anion]

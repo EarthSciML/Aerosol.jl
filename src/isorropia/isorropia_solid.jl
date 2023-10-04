@@ -26,7 +26,7 @@ for s = (:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl,
     solidname = Symbol(s, "s")
     description = "Solid $s"
     eval(quote
-        @species $varname($t)=1.0e-10 [unit = u"mol/m_air^3", description=$description]
+        @species $varname($t)=1e-10 [unit = u"mol/m_air^3", description=$description]
         $varname = ParentScope($varname)
         push!($all_solids, $varname)
         $solidname = $Solid($varname)

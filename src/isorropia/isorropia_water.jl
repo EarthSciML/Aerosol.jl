@@ -38,7 +38,7 @@ W_eq16 = sum([(salt.cation.m / salt.ν_cation) / sum(m_aw_coeff .* RH.^collect(0
 @testset "water content" begin
     ics = Dict([Na_aq => 0, SO4_aq => 10, NH3_aq => 3.4, NO3_aq => 2, Cl_aq => 0, 
         Ca_aq => 0.4, K_aq => 0.33, Mg_aq => 0.0]) # ug/m3
-    ics = Dict([k => ics[k] / 1e6 / mw[k] for k ∈ keys(ics)]) # ug/m3 / (1e6 ug/g) / g/mol = 
+    ics = Dict([k => ics[k] / 1e6 / mw[k] for k ∈ keys(ics)]) # ug/m3 / (1e6 ug/g) / g/mol = mol/m3
     ics[H_aq] = 2*ics[SO4_aq] + ics[NO3_aq] + ics[Cl_aq]
     w2 = ModelingToolkit.subs_constants(W_eq16)
     w3 = ModelingToolkit.substitute(w2, ics)
