@@ -11,6 +11,7 @@ H2Oaq = H2O(H2O_aq)
 
 γ(w::H2O) = RH / w.m
 terms(w::H2O) = [w.m], [1]
+min_conc(w::H2O) = unit_conc
 
 @constants unit_molality=1.0 [unit = u"mol/kg_water", description = "Unit molality"]
 

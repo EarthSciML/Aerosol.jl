@@ -13,6 +13,7 @@ activity coefficient of an ion, so we assume that it is 1.0.
 ==#
 γ(i::Ion) = 1.0 / W
 terms(i::Ion) = [i.m], [1]
+min_conc(i::Ion) = i.m
 
 # Generate the aqueous ions.
 # Each ion has an associated MTK variable named 
@@ -28,7 +29,7 @@ for i ∈ eachindex(ion_names)
     varname = Symbol(ion_names[i], "_aq")
     s = "Aqueous $(ion_names[i])"
     eval(quote
-        @species $varname($t) = 1e-20 [unit = u"mol/m_air^3", description = $s]
+        @species $varname($t) = 1e-11 [unit = u"mol/m_air^3", description = $s]
         $varname = ParentScope($varname)
         push!(all_ions, $varname)
         $n = Ion($varname, $varname/W, $(ion_valence[i]))
@@ -151,11 +152,15 @@ A = -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
 logγ₁₂(s::Salt) = (1.125 - c_1 * (T - T₀₂)) * logγ₁₂T⁰(s) / √I_one - (0.125 - c_1 * (T - T₀₂)) * A
 """
 Calculate the activity coefficient of a salt based on Section 2.2 
-in Fountoukis and Nenes (2007).
+in Fountoukis and Nenes (2007). We divide by W^(s.ν_cation + s.ν_anion)
+to account for the fact that state variables are in units of mol/m3 air but
+activity is calculated in units of mol/kg water.
 """
 γ(s::Salt) = exp(logγ₁₂(s))^(s.ν_cation + s.ν_anion) / W^(s.ν_cation + s.ν_anion)
 
 terms(s::Salt) = [s.cation.m, s.anion.m], [s.ν_cation, s.ν_anion]
+
+min_conc(s::Salt) = min(s.cation.m, s.anion.m)
 
 ### Special cases
 
@@ -170,6 +175,8 @@ a special activity coefficient as defined in the footnotes to Table 4.
 γ(s::SpecialSalt) = γ₁₂(s)^(s.ν_cation + s.ν_anion) / W^(s.ν_cation + s.ν_anion)
 
 terms(s::SpecialSalt) = [s.cation.m, s.anion.m], [s.ν_cation, s.ν_anion]
+
+min_conc(s::SpecialSalt) = min(s.cation.m, s.anion.m)
 
 specialsaltnames = [:CaSO4, :KHSO4, :NH4HSO4, :NaHSO4, :NH43HSO42]
 specialsalts = [Salt(Ca_ion, 1, SO4_ion, 1, NaN), Salt(K_ion, 1, HSO4_ion, 1, NaN),
