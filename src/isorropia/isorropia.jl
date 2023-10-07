@@ -61,10 +61,12 @@ mol2atm(p) = p / PaPerAtm * R * T
 
 # Load the other files
 include("isorropia_aqueous.jl")
+include("isorropia_deliquescence.jl")
 include("isorropia_solid.jl")
 include("isorropia_gas.jl")
-mw = Dict(Na_aq => 22.989769, SO4_aq => 96.0636, NH3_aq => 17.03052, NO3_aq => 62.0049, Cl_aq => 35.453, 
-        Ca_aq => 40.078, K_aq => 39.0983, Mg_aq => 24.305, H_aq => 1.00784, NH4_aq => 18.04) # g/mol
+mw = Dict(Na_aq => 22.989769, SO4_aq => 96.0636, SO4_g => 96.0636, NH3_aq => 17.03052, NH3_g => 17.03052, NO3_aq => 62.0049, Cl_aq => 35.453, 
+        Ca_aq => 40.078, K_aq => 39.0983, Mg_aq => 24.305, H_aq => 1.00784, NH4_aq => 18.04,
+        K2SO4_s => 174.259, KNO3_s => 101.1032, CaNO32_s => 164.1, HNO3_g => 63.01, HNO3_aq => 63.01) # g/mol
 include("isorropia_water.jl")
 
 @constants tinyrate = 1.e-99 [unit = u"mol/m_air^3/s", description = "Tiny reaction rate constant negative concentrations"]
@@ -89,28 +91,42 @@ struct Rxn
         @variables K_eq(t) [unit = K⁰units, description = "Equilibrium constant"]
         # These are the transformed variables to turn this into a kinetic reaction rather than an equilibrium reaction.
         # To do so we need to choose a base reaction rate constant. (We choose it to be 1.0e-15 here.)
-        @constants fakerate = 1.e-25 [unit = u"mol/m_air^3/s", description = "Fake reaction rate constant to convert equilibrium reaction into kinetic reaction"]
+        @constants fakerate = 1e6 [unit = u"mol/m_air^3/s", description = "Fake reaction rate constant to convert equilibrium reaction into kinetic reaction"]
         @constants γrkludge = 1 [unit = ModelingToolkit.get_unit(1/ar), description = "Unit conversion for γ_r"]
         @constants γpkludge = 1 [unit = ModelingToolkit.get_unit(1/ap), description = "Unit conversion for γ_p"]
         @constants Keqkludge = 1 [unit = ModelingToolkit.get_unit(ar/ap), description = "Unit conversion for K_eq"]
         @variables k_fwd(t)=1 [unit = ModelingToolkit.get_unit(γr/ar*fakerate), description = "Forward reaction rate constant"]
         @variables k_rev(t)=1 [unit = ModelingToolkit.get_unit(γp/ap*fakerate), description = "Reverse reaction rate constant"]
+        @constants tinyk_fwd=1e-20 [unit = ModelingToolkit.get_unit(γr/ar*fakerate), description = "Minimum forward reaction rate constant"]
+        @constants tinyk_rev=1e-20 [unit = ModelingToolkit.get_unit(γp/ap*fakerate), description = "Minimum reverse reaction rate constant"]
+        @constants unit_kfwd=1 [unit = ModelingToolkit.get_unit(γr/ar*fakerate), description = "Minimum forward reaction rate constant"]
+        @constants unit_krev=1 [unit = ModelingToolkit.get_unit(γp/ap*fakerate), description = "Unit conversion for k_rev"]
         @variables eq_ratio(t)=1 [unit = ModelingToolkit.get_unit(k_fwd/k_rev), description = "Unitless equilibrium ratio of product to reactant"]
         @variables rate_fwd = 1 [unit = u"mol/m_air^3/s", description = "Forward reaction rate law"]
         @variables rate_rev = 1 [unit = u"mol/m_air^3/s", description = "Reverse reaction rate law"]
         @variables γ_r(t) [unit=ModelingToolkit.get_unit(γr), description="Activity coefficient of reactant"]
         @variables γ_p(t) [unit=ModelingToolkit.get_unit(γp), description="Activity coefficient of product"]
         @constants min_γr = 1e-5 [unit=ModelingToolkit.get_unit(γr), description="Minimum activity coefficient of reactant"]
-        @constants min_γp = 1e-5 [unit=ModelingToolkit.get_unit(γp), description="Minimum activity coefficient of product"]
+        @constants min_γp = 1e-5 [unit=ModelingToolkit.get_unit(γp), description="Minimum activity coefficient of product"]   
+        if (typeof(product) <: SaltLike) && (reactant isa Solid) # Deliquescence
+            krev = ifelse(min_conc(product) > tiny_conc, 
+                f_deliquescence[product] * γ_p* γpkludge * fakerate, 
+                #γ_p * γpkludge * fakerate, 
+                #tinyk_rev, 
+                tinyk_rev)
+        else
+            krev = ifelse(min_conc(product) > tiny_conc, γ_p* γpkludge * fakerate, tinyk_rev)
+        end
+        kfwd = ifelse(min_conc(reactant) > tiny_conc, K_eq * γ_r * Keqkludge * γrkludge * fakerate, tinyk_fwd)
         sys = NonlinearSystem([
             K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
-            #γ_r ~ max(min_γr, γ(reactant)) 
-            #γ_p ~ max(min_γp, γ(product)) 
-            #k_fwd ~ K_eq * γ_r * Keqkludge * γrkludge * fakerate
-            #k_rev ~ γ_p* γpkludge * fakerate
+            γ_r ~ max(min_γr, γ(reactant)) 
+            γ_p ~ max(min_γp, γ(product)) 
+            k_fwd ~ max(min(kfwd / krev * unit_krev, unit_kfwd*1e10), unit_kfwd*1e-10)
+            k_rev ~ unit_krev
             # Only react if there is something to react.
-            rate_fwd ~ ifelse(min_conc(reactant) > tiny_conc, K_eq * Keqkludge * γrkludge * fakerate * ar, tinyrate)
-            rate_rev ~ ifelse(min_conc(product) > tiny_conc, γpkludge * fakerate * ap, tinyrate)
+            #rate_fwd ~ ifelse(min_conc(reactant) > tiny_conc, K_eq * Keqkludge * γrkludge * fakerate * ar, tinyrate)
+            #rate_rev ~ rrev
             #eq_ratio ~ k_fwd / k_rev
         ], [K_eq, γ_r, γ_p, k_fwd, k_rev, rate_fwd, rate_rev, eq_ratio], [T₀, K⁰, H_group, C_group]; name=name)
         new(reactant, product, sys)
@@ -118,7 +134,7 @@ struct Rxn
 end
 
 # Equation 5: Equilibrium constant
-@constants T₀ = 293.15 [unit = u"K", description = "Standard temperature"] # should be @constants
+@constants T₀ = 293.15 [unit = u"K", description = "Standard temperature"]
 
 """
 Assemble an equation for a reaction based on Table 2 of Fountoukis and Nenes (2007), where
@@ -127,8 +143,8 @@ the left-hand side is the equilibrium constant and the right-hand side is the ac
 function reactions(r::Rxn)
     rterms = terms(r.reactant)
     pterms = terms(r.product)
-    fwd = Reaction(r.sys.rate_fwd,  rterms[1], pterms[1], rterms[2], pterms[2], only_use_rate=true)
-    rev = Reaction(r.sys.rate_rev, pterms[1], rterms[1], pterms[2], rterms[2], only_use_rate=true)
+    fwd = Reaction(r.sys.k_fwd,  rterms[1], pterms[1], rterms[2], pterms[2])#, only_use_rate=true)
+    rev = Reaction(r.sys.k_rev, pterms[1], rterms[1], pterms[2], rterms[2])#, only_use_rate=true)
     return [fwd, rev]
 end
 
@@ -168,35 +184,36 @@ all_rxns = [rxn1, rxn2, rxn3, rxn4, rxn5, rxn6, rxn7, rxn8, rxn9, rxn10, rxn11, 
 @test ModelingToolkit.get_unit(mol2atm(SO4_g)) == u"atm"
 
 statevars = [all_solids; all_ions; all_gases; I; W]
-ps = [T, RH, H2O_aq]
+ps = [T, RH, H2O_aq, metastable]
 
-eqs = [     
+@named IW = NonlinearSystem([     
         # Calculate the ionic strength of the multicomponent solution as described by 
         # Fountoukis and Nenes (2007), between equations 8 and 9: ``I = \\frac{1}{2} \\sum_i m_i z_i^2``
         # Force I to always be positive to avoid attempts to take the square root of a negative number.
         I ~ max(1.0e-20*I_one, 1 / 2 * sum([ion.m * ion.z^2 for ion in all_Ions] / W))
 
         # Water content.
-        W ~ max(1.0e-20*W_one, W_eq16)
-    ]
-@named othersys = NonlinearSystem(eqs, [I; W], [])
+        W ~ max(1.0e-10*W_one, W_eq16)
+], [I; W], [])
 
 x = vcat([reactions(x) for x in all_rxns]...)
 @parameters so4rate=100 [unit = u"s^-1", description = "Rate of SO4 to aerosol phase (pseudo-instantaneous)"]
 push!(x, Reaction(ifelse(SO4_g > tiny_conc, so4rate, tinyrate/unit_conc), [SO4_g], [SO4_aq])) # All SO4 immediately goes to aerosol phase as per Section 3.3 (item 1) of Fountoukis and Nenes (2007).
 xx = ReactionSystem(x, t, statevars, [so4rate; ps]; 
-    systems=[othersys, [rxn.sys for rxn ∈ all_rxns]...], 
+    systems=[IW, DRH, [rxn.sys for rxn ∈ all_rxns]...], 
     checks=false, combinatoric_ratelaws=false, name=:xx)
-render(latexify(xx))
+#render(latexify(xx))
 testsys = convert(ODESystem, xx)
-render(latexify(testsys))
+#render(latexify(testsys))
 
 @test all([ModelingToolkit.check_units(eq) for eq in testsys.eqs])
 
 pp = structural_simplify(testsys)
 u₀ = ModelingToolkit.get_defaults(pp)
-prob = ODEProblem(pp, u₀, (0.0, 1.0), 
-    ModelingToolkit.get_defaults(pp))
+u₀[RH] = 0.1
+u₀[HNO3_g] = 2 / 1e6 / mw[HNO3_g]
+#u₀[CaNO32_s] = 2 / 1e6 / mw[CaNO32_s]
+prob = ODEProblem(pp, u₀, (0.0, 10000.0), u₀)
 @time sol = solve(prob, Rosenbrock23())
 
 function plotvars(sol, vars; kwargs...)
@@ -214,15 +231,35 @@ plotvars(sol, states(testsys)[[occursin("aq", string(v)) && (string(v) != "H2O_a
     title="Aqueous species")
 plotvars(sol, states(testsys)[[occursin("_s", string(v)) for v ∈ states(testsys)]]; title="Solids")
 plotvars(sol, states(testsys)[[occursin("_g", string(v)) for v ∈ states(testsys)]]; title="Gases")
-#plotvars(sol, states(testsys)[[occursin("total", string(v)) for v ∈ states(testsys)]]; title="Totals")
-plotvars(sol, states(testsys)[[occursin("rate_fwd", string(v)) for v ∈ states(testsys)]]; title="Forward rates", yscale=:log10)
-plotvars(sol, states(testsys)[[occursin("rate_rev", string(v)) for v ∈ states(testsys)]]; title="Reverse rates", yscale=:log10)
-#plotvars(sol, states(testsys)[[occursin("eq_ratio", string(v)) for v ∈ states(testsys)]]; title="Equilibrium ratios", yscale=:log10)
+plotvars(sol, states(testsys)[[occursin("k_fwd", string(v)) for v ∈ states(testsys)]]; title="Forward rates", yscale=:log10)
+plotvars(sol, states(testsys)[[occursin("k_rev", string(v)) for v ∈ states(testsys)]]; title="Reverse rates", yscale=:log10)
 ]..., size=(1500, 1000))
 
 
+plot(
+    plot(sol[t], sol[DRH.f_CaNO32], 
+        ylabel="f_CaNO32", xlabel="time (s)", label=:none),
+    plot(sol[t], sol[CaNO32_s] * 1e6 * mw[CaNO32_s], 
+        ylabel="CaNO32_s", xlabel="time (s)", label=:none),
+    plot(sol[t], sol[NO3_aq] * 1e6 * mw[NO3_aq], 
+        ylabel="NO3_aq", xlabel="time (s)", label=:none),
+    plot(sol[t], sol[HNO3_aq] * 1e6 * mw[HNO3_aq], 
+        ylabel="HNO3_aq", xlabel="time (s)", label=:none),
+    plot(sol[t], sol[HNO3_g] * 1e6 * mw[HNO3_g], 
+        ylabel="HNO3_g", xlabel="time (s)", label=:none),
+    plot(sol[t], sol[Ca_aq] * 1e6 * mw[Ca_aq], 
+        ylabel="Ca_aq", xlabel="time (s)", label=:none),
+    plot(sol[t], sol[rxn1.sys.k_fwd], 
+        ylabel="k_fwd", xlabel="time (s)", label=:none, yscale=:log10),
+    plot(sol[t], sol[rxn1.sys.k_rev], 
+        ylabel="k_rev", xlabel="time (s)", label=:none, yscale=:log10),
+)
 
-using Statistics
+plot([plot(sol[t], sol[ion], ylabel=ion, xlabel="time", label=:none) for ion in all_ions]..., size=(1000, 800))
+plot([plot(sol[t], sol[gas], ylabel=gas, xlabel="time", label=:none) for gas in all_gases]..., size=(1000, 800))
+plot([plot(sol[t], sol[solid], ylabel=solid, xlabel="time", label=:none) for solid in all_solids]..., size=(1000, 800))
+
+
 @testset "Mass balances" begin 
     totalK(sol) = [s * sol[x] for (s, x) in [(1, K_aq), (1, KHSO4_s), (2, K2SO4_s), (1, KNO3_s), (1, KCl_s)]]
     totalCa(sol) = [s * sol[x] for (s, x) in [(1, Ca_aq), (1, CaSO4_s),  (1, CaNO32_s), (1, CaCl2_s)]]
@@ -241,44 +278,107 @@ using Statistics
     for tot ∈ [totalK, totalCa, totalMg, totalNH, totalNa, totalSO4, totalNO3, totalCl, totalH]
         @testset "$(string(tot))" begin
             total = sum(hcat(tot(sol)...), dims=2)
-            @test (maximum(abs.(total .- mean(total)))) < 1.e-10
+            @test (maximum(abs.(total .- sum(total)/length(total)))) < 1.e-10
         end
     end
 end
 
-
-sol[W] * 1e9
-
-prob = SteadyStateProblem(pp, u₀, ModelingToolkit.get_defaults(pp))
+prob = SteadyStateProblem(pp, u₀, u₀)
 @time sol = solve(prob, DynamicSS(Rosenbrock23()))
-
+sol[CaNO32_s]  * 1e6 * mw[CaNO32_s]
 
 # Fountoukis and Nenes (2007) Figure 6
 u₀ = ModelingToolkit.get_defaults(pp)
-ics = Dict([Na_aq => 0, SO4_aq => 10, NH3_aq => 3.4, NO3_aq => 2, Cl_aq => 0, 
-    Ca_aq => 0.4, K_aq => 0.33, Mg_aq => 0.0]) # ug/m3
+ics = Dict([Na_aq => 0, SO4_g => 10, NH3_g => 3.4, HNO3_g => 2, Cl_aq => 0, 
+    Ca_aq => 0.4, K_aq => 0.33, Mg_aq => 1e-10]) # ug/m3
 for k ∈ keys(ics)
     u₀[k] = ics[k] / 1e6 / mw[k] # ug/m3 / (1e6 ug/g) / g/mol = mol/m3
 end
 u₀[H_aq] = 2*u₀[SO4_aq] + u₀[NO3_aq] + u₀[Cl_aq]
-for g ∈ all_gases
-    u₀[g] = 1e-20
+for g ∈ setdiff(all_gases, ics)
+    u₀[g] = 1e-10
 end
+u₀[metastable] = 0
 
 RHs = [10, 25, 40, 55, 65, 70, 75, 80, 85, 90] ./ 100.0
 sols = []
 for rh in RHs
     u₀[RH] = rh
-    prob = SteadyStateProblem(pp, u₀, ModelingToolkit.get_defaults(pp))
+    #prob = ODEProblem(pp, u₀, (0.0, 1.0), u₀)
+    #sol = solve(prob, Rosenbrock23())
+    prob = SteadyStateProblem(pp, u₀, u₀)
     sol = solve(prob, DynamicSS(Rosenbrock23()))
     push!(sols, sol)
 end
 
-pW = plot(RHs, [sols[i][W] * 1e9 for i ∈ 1:length(RHs)])
-pKaq = plot(RHs, [sols[i][K_aq] * 1e6 * mw[K_aq] for i ∈ 1:length(RHs)])
-pNH4aq = plot(RHs, [sols[i][NH4_aq] * 1e6 * mw[NH4_aq] for i ∈ 1:length(RHs)])
-pNO3aq = plot(RHs, [sols[i][NO3_aq] * 1e6 * mw[NO3_aq] for i ∈ 1:length(RHs)])
-plot(pW, pKaq, pNH4aq, pNO3aq)
+plot(
+    plot(RHs, [sols[i][W] * 1e9 for i ∈ 1:length(RHs)], ylim=(0, 50),
+        ylabel="H2O (ug/m3)", xlabel="Relative humidity (%)", label=:none),
+    plot(RHs, [sols[i][K_aq] * 1e6 * mw[K_aq] for i ∈ 1:length(RHs)], ylim=(0,1.2), 
+        ylabel="K+(aq) (ug/m3)", xlabel="Relative humidity (%)", label=:none),
+    plot(RHs, [sols[i][NH4_aq] * 1e6 * mw[NH4_aq] for i ∈ 1:length(RHs)], ylim=(0,3.0),
+        ylabel="NH4(aq) (ug/m3)", xlabel="Relative humidity (%)", label=:none),
+    plot(RHs, [sols[i][NO3_aq] * 1e6 * mw[NO3_aq] for i ∈ 1:length(RHs)], #ylim=(0, 0.25),
+        ylabel="NO3(aq) (ug/m3)", xlabel="Relative humidity (%)", label=:none),
+)
+
+plot(
+plot(RHs, [sols[i][DRH.f_K2SO4] for i ∈ 1:length(RHs)], 
+    ylabel="f_K2SO4", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][K2SO4_s] * 1e6 * mw[K2SO4_s] for i ∈ 1:length(RHs)], 
+    ylabel="K2SO4_s", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][SO4_aq] * 1e6 * mw[SO4_aq] for i ∈ 1:length(RHs)], 
+    ylabel="SO4_aq", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][K_aq] * 1e6 * mw[K_aq] for i ∈ 1:length(RHs)], 
+    ylabel="K_aq", xlabel="Relative humidity (%)", label=:none),
+    plot(RHs, [sols[i][rxn4.sys.k_fwd] for i ∈ 1:length(RHs)], 
+    ylabel="k_fwd", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][rxn4.sys.k_rev] for i ∈ 1:length(RHs)], 
+    ylabel="k_rev", xlabel="Relative humidity (%)", label=:none),
+)
+
+plot(
+plot(RHs, [sols[i][DRH.f_CaNO32] for i ∈ 1:length(RHs)], 
+    ylabel="f_CaNO32", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][CaNO32_s] * 1e6 * mw[CaNO32_s] for i ∈ 1:length(RHs)], 
+    ylabel="CaNO32_s", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][NO3_aq] * 1e6 * mw[NO3_aq] for i ∈ 1:length(RHs)], 
+    ylabel="NO3_aq", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][Ca_aq] * 1e6 * mw[Ca_aq] for i ∈ 1:length(RHs)], 
+    ylabel="Ca_aq", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][rxn1.sys.k_fwd] for i ∈ 1:length(RHs)], 
+    ylabel="k_fwd", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][rxn1.sys.k_rev] for i ∈ 1:length(RHs)], 
+    ylabel="k_rev", xlabel="Relative humidity (%)", label=:none),
+)
+
+plot(
+plot(RHs, [sols[i][DRH.f_KNO3] for i ∈ 1:length(RHs)], 
+    ylabel="f_KNO3", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][KNO3_s] * 1e6 * mw[KNO3_s] for i ∈ 1:length(RHs)], 
+    ylabel="KNO3_s", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][NO3_aq] * 1e6 * mw[NO3_aq] for i ∈ 1:length(RHs)], 
+    ylabel="NO3_aq", xlabel="Relative humidity (%)", label=:none),
+plot(RHs, [sols[i][K_aq] * 1e6 * mw[K_aq] for i ∈ 1:length(RHs)], 
+    ylabel="K_aq", xlabel="Relative humidity (%)", label=:none),
+    plot(RHs, [sols[i][rxn6.sys.k_fwd] for i ∈ 1:length(RHs)], 
+    ylabel="k_fwd", xlabel="Relative humidity (%)", label=:none, yscale=:log10),
+plot(RHs, [sols[i][rxn6.sys.k_rev] for i ∈ 1:length(RHs)], 
+    ylabel="k_rev", xlabel="Relative humidity (%)", label=:none, yscale=:log10),
+)
+
+
+plot([plot(RHs, [sols[i][ion] for i ∈ 1:length(RHs)], 
+    ylabel=ion, xlabel="Relative humidity (%)", label=:none) for ion in all_ions]..., size=(1000, 800))
+
+plot([plot(RHs, [sols[i][gas] for i ∈ 1:length(RHs)], 
+    ylabel=gas, xlabel="Relative humidity (%)", label=:none) for gas in all_gases]..., size=(1000, 800))
+
+plot([plot(RHs, [sols[i][solid] for i ∈ 1:length(RHs)], 
+    ylabel=solid, xlabel="Relative humidity (%)", label=:none) for solid in all_solids]..., size=(1000, 800))
+
+
+
 
 uu = Dict([(k, 0.01) for k ∈ all_ions])
 x = substitute(W_eq16, uu)

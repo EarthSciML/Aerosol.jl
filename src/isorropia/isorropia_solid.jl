@@ -20,14 +20,14 @@ min_conc(s::Solid) = s.m
 # <name>_s, where <name> is the name of the compound, and
 # a Solid struct named <name>s.
 all_solids = []
-for s = (:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl, 
+for s = (:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl,
     :MgSO4, :MgNO32, :MgCl2, :NaCl, :NaNO3, :Na2SO4, :NaHSO4, :NH4Cl, 
     :NH4NO3, :NH42SO4, :NH4HSO4, :NH43HSO42)
     varname = Symbol(s, "_s")
     solidname = Symbol(s, "s")
     description = "Solid $s"
     eval(quote
-        @species $varname($t)=1e-20 [unit = u"mol/m_air^3", description=$description]
+        @species $varname($t)=1e-21 [unit = u"mol/m_air^3", description=$description]
         $varname = ParentScope($varname)
         push!($all_solids, $varname)
         $solidname = $Solid($varname)
