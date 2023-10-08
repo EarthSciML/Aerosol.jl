@@ -15,7 +15,7 @@ sys = structural_simplify(get_mtk(model))
 
 
 mw = Dict(Na_aq => 22.989769, SO4_aq => 96.0636, SO4_g => 96.0636, NH3_aq => 17.03052, NH3_g => 17.03052,
-    NO3_aq => 62.0049, Cl_aq => 35.453,
+    NO3_aq => 62.0049, Cl_aq => 35.453, NaCl_s => 58.44,
     Ca_aq => 40.078, K_aq => 39.0983, Mg_aq => 24.305, H_aq => 1.00784, NH4_aq => 18.04, HCl_g => 36.46,
     K2SO4_s => 174.259, KNO3_s => 101.1032, CaNO32_s => 164.1, HNO3_g => 63.01, HNO3_aq => 63.01,
     KHSO4_s => 136.169, KCl_s => 74.5513, NH4NO3_s => 80.043) # g/mol
@@ -150,7 +150,7 @@ solid_activity = substitute(ModelingToolkit.subs_constants(activity(CaNO32s)), u
 # at the end of the simulation, but it seems like in practice sometimes the concentration on one
 # side or the other gets too small and the equilibrium constant blows up.
 @test isapprox(ModelingToolkit.value(aq_activity2) /
-      ModelingToolkit.value(solid_activity) / ModelingToolkit.value(eq_const), 1.0, atol=1e-2)
+               ModelingToolkit.value(solid_activity) / ModelingToolkit.value(eq_const), 1.0, atol=1e-2)
 
 # Derivative of activity with respect to concentration should be positive
 da_daq = substitute(ModelingToolkit.subs_constants(
@@ -172,63 +172,40 @@ dk_ds = expand_derivatives(Differential(CaNO32_s)(k_expr))
 @test ModelingToolkit.get_unit(activity(CaNO32_aqs) / activity(CaNO32s) / keq) isa Unitful.FreeUnits{(),NoDims,nothing}
 
 
+##### Reproducing Figures from Fountoukis and Nenes (2007)
 
+function run_rh_sweep(sys, RHs, ics; mstable=0)
+    defaults = ModelingToolkit.get_defaults(sys)
+    u₀ = Dict{Any,Float64}([s => 1.0e-15 for s ∈ states(sys)])
+    for k ∈ keys(ics)
+        u₀[k] = ics[k] / 1e6 / mw[k] # ug/m3 / (1e6 ug/g) / g/mol = mol/m3
+    end
+    u₀[H_aq] = 2 * u₀[SO4_aq]
+    p = Dict{Any,Float64}([p => defaults[p] for p ∈ parameters(sys)])
+    p[metastable] = mstable
 
-
-
-
-# Fountoukis and Nenes (2007) Figure 6
-defaults = ModelingToolkit.get_defaults(sys)
-ics = Dict([Na_aq => 0, SO4_g => 10, NH3_g => 3.4, HNO3_g => 2, HCl_g => 0,
-   Ca_aq => 0.4, K_aq => 0.33, Mg_aq => 1e-20]) # ug/m3
-for k ∈ keys(ics)
-   u₀[k] = ics[k] / 1e6 / mw[k] # ug/m3 / (1e6 ug/g) / g/mol = mol/m3
-end
-u₀[H_aq] = 2 * u₀[SO4_aq]
-
-p = Dict{Any,Float64}([p => defaults[p] for p ∈ parameters(sys)])
-
-RHs = [10, 25, 40, 55, 65, 70, 75, 80, 85, 90] ./ 100.0
-sols = []
-for rh in RHs
-    p[RH] = rh
-    local prob = ODEProblem(sys, u₀, (0, 100.0), p)
-    local sol = solve(prob, Rosenbrock23(), abstol=1e-12, reltol=1e-12)
-    push!(sols, sol)
+    sols = []
+    for rh in RHs
+        p[RH] = rh
+        local prob = ODEProblem(sys, u₀, (0, 100.0), p)
+        local sol = solve(prob, Rosenbrock23(), abstol=1e-12, reltol=1e-12)
+        push!(sols, sol)
+    end
+    return u₀, sols
 end
 
-plot(
-    plot(RHs, [sols[i][W][end] * 1e9 for i ∈ 1:length(RHs)], ylim=(0, 50),
-        ylabel="H2O (ug/m3)", xlabel="Relative humidity (%)", label=:none),
-    plot(RHs, [sols[i][K_aq][end] * 1e6 * mw[K_aq] for i ∈ 1:length(RHs)], #ylim=(0, 1.2),
-        ylabel="K+(aq) (ug/m3)", xlabel="Relative humidity (%)", label=:none),
-    plot(RHs, [sols[i][NH4_aq][end] * 1e6 * mw[NH4_aq] for i ∈ 1:length(RHs)], #ylim=(0, 3.0),
-        ylabel="NH4(aq) (ug/m3)", xlabel="Relative humidity (%)", label=:none),
-    plot(RHs, [sols[i][NO3_aq][end] * 1e6 * mw[NO3_aq] for i ∈ 1:length(RHs)], #ylim=(0, 0.25),
-        ylabel="NO3(aq) (ug/m3)", xlabel="Relative humidity (%)", label=:none),
-)
+function plot_rh_sweep(RHs, u₀, sols, plotvars)
+    p1 = plot(RHs, [sols[i][W][end] * 1e9 for i ∈ 1:length(RHs)], ylim=(0, 50),
+    ylabel="H2O (ug/m3)", xlabel="Relative humidity (%)", label=:none)
+    ps = []
+    for v in plotvars
+        push!(ps, plot(RHs, [sols[i][v][end] * 1e6 * mw[v] for i ∈ 1:length(RHs)],
+            ylabel="$v (ug/m3)", xlabel="Relative humidity (%)", label=:none))
+    end
+    plot(p1, ps...)
+end
 
-plot(
-    plot(sols[5][t], sols[5][DRH.f_CaNO32],
-        ylabel="f_CaNO32", xlabel="time (s)", label=:none),
-    plot(sols[5][t], sols[5][CaNO32_s] * 1e6 * mw[CaNO32_s],
-        ylabel="CaNO32_s", xlabel="time (s)", label=:none),
-    plot(sols[5][t], sols[5][NO3_aq] * 1e6 * mw[NO3_aq],
-        ylabel="NO3_aq", xlabel="time (s)", label=:none),
-    plot(sols[5][t], sols[5][HNO3_aq] * 1e6 * mw[HNO3_aq],
-        ylabel="HNO3_aq", xlabel="time (s)", label=:none),
-    plot(sols[5][t], sols[5][HNO3_g] * 1e6 * mw[HNO3_g],
-        ylabel="HNO3_g", xlabel="time (s)", label=:none),
-    plot(sols[5][t], sols[5][Ca_aq] * 1e6 * mw[Ca_aq],
-        ylabel="Ca_aq", xlabel="time (s)", label=:none),
-    plot(sols[5][t], sols[5][rxn1.sys.k_rev],
-        ylabel="k_rev", xlabel="time (s)", label=:none),
-    plot(sols[5][t], sols[5][W] * 1e9,
-        ylabel="W (ug/m3)", xlabel="time (s)", label=:none),
-)
-
-
-function plot_mass(RHs, molecs, u₀, title; kwargs...)
+function plot_mass(RHs, molecs, u₀, sols, title; kwargs...)
     y₀ = zeros(length(RHs))
     y = zeros(length(RHs), length(molecs))
     lab = []
@@ -242,15 +219,59 @@ function plot_mass(RHs, molecs, u₀, title; kwargs...)
     plot!(p1, RHs, y₀, label="u₀ $(title)", color=:black, linewidth=2)
 end
 
-plot(
-    plot_mass(RHs, K_molecs, u₀, "K"),
-    plot_mass(RHs, Ca_molecs, u₀, "Ca"),
-    plot_mass(RHs, Mg_molecs, u₀, "Mg"),
-    plot_mass(RHs, NH_molecs, u₀, "NH"),
-    plot_mass(RHs, Na_molecs, u₀, "Na"),
-    plot_mass(RHs, SO4_molecs, u₀, "SO4"),
-    plot_mass(RHs, NO3_molecs, u₀, "NO3"),
-    plot_mass(RHs, Cl_molecs, u₀, "Cl"),
-    plot_mass(RHs, H_molecs, u₀, "H"),
-    size=(1000, 800)
-)
+function plot_all_masses(RHs, u₀, sols)
+    plot(
+        plot_mass(RHs, K_molecs, u₀, sols, "K"),
+        plot_mass(RHs, Ca_molecs, u₀, sols, "Ca"),
+        plot_mass(RHs, Mg_molecs, u₀, sols, "Mg"),
+        plot_mass(RHs, NH_molecs, u₀, sols, "NH"),
+        plot_mass(RHs, Na_molecs, u₀, sols, "Na"),
+        plot_mass(RHs, SO4_molecs, u₀, sols, "SO4"),
+        plot_mass(RHs, NO3_molecs, u₀, sols, "NO3"),
+        plot_mass(RHs, Cl_molecs, u₀, sols, "Cl"),
+        plot_mass(RHs, H_molecs, u₀, sols, "H"),
+        size=(1000, 800)
+    )
+end
+
+# Fountoukis and Nenes (2007) Figure 6
+RHs = [10, 25, 40, 55, 65, 70, 75, 80, 85, 90] ./ 100.0
+ics = Dict([Na_aq => 0, SO4_g => 10, NH3_g => 3.4, HNO3_g => 2, HCl_g => 0,
+    Ca_aq => 0.4, K_aq => 0.33, Mg_aq => 1e-20]) # ug/m3
+u₀, sols = run_rh_sweep(sys, RHs, ics);
+plot_rh_sweep(RHs, u₀, sols, [K_aq, NH4_aq, NO3_aq])
+plot_all_masses(RHs, u₀, sols)
+
+
+# Fountoukis and Nenes (2007) Figure 7
+ics = Dict([Na_aq => 3, SO4_g => 3, NH3_g => 0.02, HNO3_g => 2, HCl_g => 3.121,
+    Ca_aq => 0.360, K_aq => 0.450, Mg_aq => 0.130]) # ug/m3
+u₀, sols = run_rh_sweep(sys, RHs, ics);
+plot_rh_sweep(RHs, u₀, sols, [K_aq, NaCl_s, Mg_aq])
+plot_all_masses(RHs, u₀, sols)
+
+# Fountoukis and Nenes (2007) Figure 8
+ics = Dict([Na_aq => 0.2, SO4_g => 2.0, NH3_g => 8.0, HNO3_g => 12, HCl_g => 0.2,
+    Ca_aq => 0.120, K_aq => 0.180, Mg_aq => 0.000]) # ug/m3
+u₀, sols = run_rh_sweep(sys, RHs, ics);
+plot_rh_sweep(RHs, u₀, sols, [NO3_aq, NH4_aq])
+plot_all_masses(RHs, u₀, sols)
+
+# Fountoukis and Nenes (2007) Figure 9
+ics = Dict([Na_aq => 0.0, SO4_g => 10.0, NH3_g => 4.250, HNO3_g => 0.145, HCl_g => 0.0,
+    Ca_aq => 0.080, K_aq => 0.090, Mg_aq => 0.000]) # ug/m3
+u₀1, sols1 = run_rh_sweep(sys, RHs, ics, mstable=0);
+#p1 = plot_rh_sweep(RHs, u₀, sols, [K_aq])
+u₀2, sols2 = run_rh_sweep(sys, RHs, ics, mstable=1);
+
+p1 = plot(RHs, [sols1[i][W][end] * 1e9 for i ∈ 1:length(RHs)], ylim=(0, 50),
+    ylabel="H2O (ug/m3)", xlabel="Relative humidity (%)", label="Stable")
+plot!(p1, RHs, [sols2[i][W][end] * 1e9 for i ∈ 1:length(RHs)], ylim=(0, 50), label="Metastable")
+ps = []
+for v in [K_aq]
+    p = plot(RHs, [sols1[i][v][end] * 1e6 * mw[v] for i ∈ 1:length(RHs)],
+        ylabel="$v (ug/m3)", xlabel="Relative humidity (%)", label="Stable")
+    plot!(p, RHs, [sols2[i][v][end] * 1e6 * mw[v] for i ∈ 1:length(RHs)], label="Metastable")
+    push!(ps, p)
+end
+plot(p1, ps..., size=(600, 300))
