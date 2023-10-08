@@ -32,7 +32,7 @@ for i ∈ eachindex(ion_names)
         @species $varname($t) = 1e-11 [unit = u"mol/m_air^3", description = $s]
         $varname = ParentScope($varname)
         push!(all_ions, $varname)
-        $n = Ion($varname, $varname/W, $(ion_valence[i]))
+        $n = Ion($varname, $varname / W, $(ion_valence[i]))
         push!(all_Ions, $n)
     end)
 end
@@ -82,7 +82,7 @@ KNO3_aqs = Salt(K_ion, 1, NO3_ion, 1, 0.9248, missing, -2.33)
 KCl_aqs = Salt(K_ion, 1, Cl_ion, 1, 0.8426, 158.9, 0.92)
 MgSO4_aqs = Salt(Mg_ion, 1, SO4_ion, 1, 0.8613, -714.5, 0.15)
 MgNO32_aqs = Salt(Mg_ion, 1, NO3_ion, 2, 0.5400, 230.2, 2.32)
-MgCl2_aqs = Salt(Mg_ion, 1, Cl_ion, 2,0.3284, 42.23, 2.90)
+MgCl2_aqs = Salt(Mg_ion, 1, Cl_ion, 2, 0.3284, 42.23, 2.90)
 NaCl_aqs = Salt(Na_ion, 1, Cl_ion, 1, 0.7528, 25.0, 2.23)
 Na2SO4_aqs = Salt(Na_ion, 2, SO4_ion, 1, 0.9300, 80.0, -0.19)
 NaNO3_aqs = Salt(Na_ion, 1, NO3_ion, 1, 0.7379, 304.0, -0.39)
@@ -150,7 +150,7 @@ B(q) = 0.75 - 0.065q
 C(q) = 1 + 0.055q * exp(-0.023I^3 / I_one^3)
 
 @constants T₀₂ = 273.15 [unit = u"K", description = "Standard temperature 2"]
-@constants c_1 = 0.005 [unit = u"K^-1"] 
+@constants c_1 = 0.005 [unit = u"K^-1"]
 
 # Equation 14
 A = -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
@@ -171,14 +171,12 @@ min_conc(s::Salt) = min(s.cation.m, s.anion.m)
 
 abstract type SpecialSalt <: SaltLike end
 
-"""
+#==
 The activity of a SpecialSalt is the same as for a salt except that it has 
 a special activity coefficient as defined in the footnotes to Table 4.
-"""
-#activity(s::SpecialSalt) = s.cation.m_water^s.ν_cation * s.anion.m_water^s.ν_anion * γ(s)
-
+==#
 γ(s::SpecialSalt) = γ₁₂(s)^(s.ν_cation + s.ν_anion) / W^(s.ν_cation + s.ν_anion)
-logγ⁰₁₂(s::SpecialSalt) = abs(s.cation.z) * abs(s.anion.z) * log(Γ⁰(1.0) / I_one)
+logγ⁰₁₂(s::SpecialSalt) = abs(s.cation.z) * abs(s.anion.z) * log(Γ⁰(0) / I_one) # Assuming q = 0 for SpecialSalts
 terms(s::SpecialSalt) = [s.cation.m, s.anion.m], [s.ν_cation, s.ν_anion]
 
 min_conc(s::SpecialSalt) = min(s.cation.m, s.anion.m)
@@ -186,11 +184,11 @@ min_conc(s::SpecialSalt) = min(s.cation.m, s.anion.m)
 specialsaltnames = [:CaSO4, :KHSO4, :NH4HSO4, :NaHSO4, :NH43HSO42]
 # Data from Fountoukis and Nenes (2007) Table 4
 specialsalts = [
-    Salt(Ca_ion, 1, SO4_ion, 1, 0.9700, missing,  NaN), 
-    Salt(K_ion, 1, HSO4_ion, 1,0.8600,  missing, NaN),
-    Salt(NH4_ion, 1, HSO4_ion, 1,0.4000, 384.0,  NaN), 
-    Salt(Na_ion, 1, HSO4_ion, 1,0.5200,-45.0,  NaN), 
-    Salt(NH4_ion, 3, HSO4_ion, 2, 0.6900,186.0, Inf)]
+    Salt(Ca_ion, 1, SO4_ion, 1, 0.9700, missing, NaN),
+    Salt(K_ion, 1, HSO4_ion, 1, 0.8600, missing, NaN),
+    Salt(NH4_ion, 1, HSO4_ion, 1, 0.4000, 384.0, NaN),
+    Salt(Na_ion, 1, HSO4_ion, 1, 0.5200, -45.0, NaN),
+    Salt(NH4_ion, 3, HSO4_ion, 2, 0.6900, 186.0, Inf)]
 
 for (i, name) ∈ enumerate(specialsaltnames)
     s = specialsalts[i]
@@ -241,85 +239,3 @@ From Table 4 footnote d, NaHSO4 has a unique activity coefficient
 From Table 4 footnote e, NH43HSO42 has a unique activity coefficient
 """
 γ₁₂(s::NH43HSO42aqs) = (exp(logγ₁₂(NH42SO4_aqs))^3 * γ₁₂(NH4HSO4_aqs))^(1 / 5)
-
-
-# Tests 
-@test length(all_ions) == 14
-@test length(all_salts) == 23
-
-@test same_cation(KCl_aqs) == [K2SO4_aqs, KNO3_aqs, KCl_aqs, KHSO4_aqs]
-@test same_anion(KCl_aqs) == [CaCl2_aqs, KCl_aqs, MgCl2_aqs, NaCl_aqs, NH4Cl_aqs, HCl_aqs]
-
-@test ModelingToolkit.get_unit(logγ₁₂T⁰(NaCl_aqs)) == u"mol^0.5/kg_water^0.5"
-@test ModelingToolkit.get_unit(F₁(NaCl_aqs)) == u"mol^0.5/kg_water^0.5"
-@test ModelingToolkit.get_unit(F₂(NaCl_aqs)) == u"mol^0.5/kg_water^0.5"
-@test ModelingToolkit.get_unit(X(NaCl_aqs)) isa Unitful.FreeUnits{(),NoDims,nothing}
-@test ModelingToolkit.get_unit(Y(NaCl_aqs)) isa Unitful.FreeUnits{(),NoDims,nothing}
-@test ModelingToolkit.get_unit(Γ⁰(NaCl_aqs.q)) == u"mol/kg_water"
-@test ModelingToolkit.get_unit(Γstar(1)) isa Unitful.FreeUnits{(),NoDims,nothing}
-@test ModelingToolkit.get_unit(C(1)) isa Unitful.FreeUnits{(),NoDims,nothing}
-@test ModelingToolkit.get_unit(logγ⁰₁₂(NaCl_aqs)) isa Unitful.FreeUnits{(),NoDims,nothing}
-@test ModelingToolkit.get_unit(logγ⁰₁₂(NaCl_aqs)) isa Unitful.FreeUnits{(),NoDims,nothing}
-@test ModelingToolkit.get_unit(logγ₁₂(NaCl_aqs)) isa Unitful.FreeUnits{(),NoDims,nothing}
-
-function sub(expr, u=nothing)
-    if !isnothing(u)
-        expr = substitute(expr, u)
-    end
-    expr = ModelingToolkit.subs_constants(expr)
-    defaults = [I => 2.5, Cl_aq => 1, H_aq => 2, T => 289,
-        K_aq => 0.5, Mg_aq => 1.2, NH4_aq => 2.5, NO3_aq => 3.1, Na_aq => 0.2, Ca_aq => 1.2,
-        SO4_aq => 2.0, HSO4_aq => 0.8, W => 0.8]
-    substitute(expr, defaults)
-end
-
-# Activity coefficients should be ≤ 1 for ions in aqueous solution
-@test sub(logγ⁰₁₂(KCl_aqs)) ≈ -0.16013845145909214
-
-@test sub(logγ₁₂T⁰(KCl_aqs)) ≈ 0.8652555822099932
-
-# Activity coefficients should decrease with increasing temperature.
-@test sub(logγ₁₂(KCl_aqs)) ≈ 0.9204767274268685
-
-@test sub(logγ₁₂(KCl_aqs)) ≈ 0.9204767274268685
-
-# Activity coefficients should decrease with increasing ionic strength.
-sub(logγ₁₂(KCl_aqs), [I => 5]) ≈ 0.8844261044982434
-
-# Test activity coefficients for all salts.
-want_vals = [1.9116878031938984, 3.140836308073397, -0.6841687355392785, -0.0013846512327548507, 
-    0.9204767274268685, 1.4951206737522025, 1.6790696497304067, 2.9082181546099055, 1.3229226997050172, 
-    -0.14757410583507982, 0.40106132104539394, -0.3650751547008252, 0.23793553439608495, 
-    1.159796913055708, 0.7211825075445597, 1.0003953732298159, 1.0526287810801234,
-    1.9744901597397468]
-for (i, salt) in enumerate(all_salts)
-    if typeof(salt) <: SpecialSalt
-        continue
-    end
-    v = sub(logγ₁₂(salt))
-    @test v ≈ want_vals[i]
-end
-
-# Units in last column in Table 2.
-@test ModelingToolkit.get_unit(activity(NaCl_aqs)) == u"mol^2/kg_water^2"
-@test ModelingToolkit.get_unit(activity(CaNO32_aqs)) == u"mol^3/kg_water^3"
-
-@test sub(activity(NaCl_aqs)) ≈ 4.404798829196156
-
-# Special cases
-
-# Units in last column in Table 2.
-@test ModelingToolkit.get_unit(activity(CaSO4_aqs)) == u"mol^2/kg_water^2"
-@test ModelingToolkit.get_unit(activity(KHSO4_aqs)) == u"mol^2/kg_water^2"
-@test ModelingToolkit.get_unit(activity(NH4HSO4_aqs)) == u"mol^2/kg_water^2"
-@test ModelingToolkit.get_unit(activity(NaHSO4_aqs)) == u"mol^2/kg_water^2"
-@test ModelingToolkit.get_unit(activity(NH43HSO42_aqs)) == u"mol^5/kg_water^5"
-
-want_γ = [1.0e-20, 0.9735471425171203, 1.0972982950805263, 1.1905482991513472, 0.8183420463839729]
-want_activity = [3.7499999999999995e-40, 0.5923712741895313, 3.762698588708218, 0.35435131315304136, 11.20016431007118]
-for (i, s) ∈ enumerate([CaSO4_aqs, KHSO4_aqs, NH4HSO4_aqs, NaHSO4_aqs, NH43HSO42_aqs])
-    @test sub(γ₁₂(s)) ≈ want_γ[i]
-    @test sub(activity(s)) ≈ want_activity[i]
-end
-
-@test nameof(CaCl2_aqs) == "CaCl2"

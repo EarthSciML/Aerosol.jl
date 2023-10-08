@@ -1,6 +1,7 @@
 using Aerosol
 using Test
+using SafeTestsets
 
 @testset "Aerosol.jl" begin
-    # Write your tests here.
+    @safetestset "isorropia" begin include(joinpath(@__DIR__, "isorropia", "runtests.jl")) end
 end
