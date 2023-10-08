@@ -11,7 +11,7 @@ end
 From Section 2.2 in Fountoukis and Nenes (2007), the activity of a solid is 1.
 """
 γ(s::Solid) = 1.0 / s.m
-activity(s::Solid) = 1.0
+activity(s::Solid) = γ(s) * s.m
 terms(s::Solid) = [s.m], [1]
 min_conc(s::Solid) = s.m
 

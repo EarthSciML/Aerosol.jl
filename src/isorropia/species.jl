@@ -34,7 +34,7 @@ min_conc(s::AbstractArray) = reduce(min, min_conc.(s))
 
 # Miscellaneous variables and parameters
 @variables I(t) = 1.0e-4 [unit = u"mol/kg_water", description = "Ionic strength"]
-@variables W(t) = 1.0e-10 [unit = u"kg_water/m_air^3", description = "Aerosol water content"]
+@variables W(t) = 1.0e-8 [unit = u"kg_water/m_air^3", description = "Aerosol water content"]
 for v ∈ (:I, :W)
     eval(:($v = ParentScope($v))) # Keep these as global MTK variables.
 end

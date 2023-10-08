@@ -5,7 +5,7 @@ end
 # From Equation 15 in Fountoukis and Nenes (2007), the activity of water is 
 # equal to the relative humidity
 @parameters H2O_aq(t) = 1e-9 [unit = u"mol/m_air^3", isconstantspecies=true,
-                            description = "Dummy water concentration to make units balance (the real water concentration is variable `W`)"]
+        description = "Dummy water concentration to make units balance (the real water concentration is variable `W`)"]
 H2O_aq = ParentScope(H2O_aq)
 H2Oaq = H2O(H2O_aq)
 

@@ -92,8 +92,10 @@ function solution_mdrh_recurrent(i)
     ifelse(is_solution(i), mdrhs[i][2], solution_mdrh_recurrent(i + 1))
 end
 
-# TODO(CT): We don't account for the temperature dependency of MDRH. The paper 
-# doesn't say anything about this, but presumbly MDRH is temperature-dependent.
+# TODO(CT): We don't account for the temperature dependency of MDRH. The ISORROPIA II paper 
+# doesn't say anything about this, but presumbly MDRH is temperature-dependent,
+# and the ISORROPIA I paper gives a temperature-dependent MDRH for each solution included in that 
+# model.
 @named DRH = NonlinearSystem([
     drh_eqs;
     MDRH ~ solution_mdrh_recurrent(1); 

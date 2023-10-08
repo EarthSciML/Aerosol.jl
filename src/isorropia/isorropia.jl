@@ -35,7 +35,7 @@ struct Isorropia <: EarthSciMLODESystem
 
         rxn_sys = ReactionSystem(eqs, t, statevars, [so4rate; ps]; 
             systems=[IW, DRH, [rxn.sys for rxn ∈ all_rxns]...], 
-            checks=false, combinatoric_ratelaws=false, name=name)
+            checks=true, combinatoric_ratelaws=false, name=name)
         sys = convert(ODESystem, rxn_sys)
         new(sys, rxn_sys)
     end

@@ -16,7 +16,7 @@ min_conc(g::Gas) = g.p
 # <name>_g, where <name> is the name of the compound, and
 # a Gas struct named <name>g.
 all_gases = []
-for (s, v) ∈ [:HNO3 => 3.2e-8, :HCl => 1e-20, :NH3 => 2e-7, :SO4 => 1e-7]
+for (s, v) ∈ [:HNO3 => 1e-20, :HCl => 1e-20, :NH3 => 1e-20, :SO4 => 1e-20]
     varname = Symbol(s, "_g")
     gasname = Symbol(s, "g")
     description = "Gasous $s"

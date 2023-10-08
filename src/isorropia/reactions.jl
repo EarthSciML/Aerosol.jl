@@ -19,45 +19,25 @@ struct Rxn
         @constants C_group = cgroup [description = "ΔC⁰ₚ / R (unitless)"]
         @variables K_eq(t) [unit = K⁰units, description = "Equilibrium constant"]
         # These are the transformed variables to turn this into a kinetic reaction rather than an equilibrium reaction.
-        # To do so we need to choose a base reaction rate constant. (We choose it to be 1.0e-15 here.)
-        @constants fakerate = 1e6 [unit = u"mol/m_air^3/s", description = "Fake reaction rate constant to convert equilibrium reaction into kinetic reaction"]
-        @constants γrkludge = 1 [unit = ModelingToolkit.get_unit(1/ar), description = "Unit conversion for γ_r"]
-        @constants γpkludge = 1 [unit = ModelingToolkit.get_unit(1/ap), description = "Unit conversion for γ_p"]
-        @constants Keqkludge = 1 [unit = ModelingToolkit.get_unit(ar/ap), description = "Unit conversion for K_eq"]
-        @variables k_fwd(t)=1 [unit = ModelingToolkit.get_unit(γr/ar*fakerate), description = "Forward reaction rate constant"]
-        @variables k_rev(t)=1 [unit = ModelingToolkit.get_unit(γp/ap*fakerate), description = "Reverse reaction rate constant"]
-        @constants tinyk_fwd=1e-20 [unit = ModelingToolkit.get_unit(γr/ar*fakerate), description = "Minimum forward reaction rate constant"]
-        @constants tinyk_rev=1e-20 [unit = ModelingToolkit.get_unit(γp/ap*fakerate), description = "Minimum reverse reaction rate constant"]
-        @constants unit_kfwd=1 [unit = ModelingToolkit.get_unit(γr/ar*fakerate), description = "Minimum forward reaction rate constant"]
-        @constants unit_krev=1 [unit = ModelingToolkit.get_unit(γp/ap*fakerate), description = "Unit conversion for k_rev"]
-        @variables eq_ratio(t)=1 [unit = ModelingToolkit.get_unit(k_fwd/k_rev), description = "Unitless equilibrium ratio of product to reactant"]
-        @variables rate_fwd = 1 [unit = u"mol/m_air^3/s", description = "Forward reaction rate law"]
-        @variables rate_rev = 1 [unit = u"mol/m_air^3/s", description = "Reverse reaction rate law"]
+        # To do so we need to choose a base reaction rate constant to make reactions proceed at a reasonable rate.
+        @constants fakerate = 1 [unit = u"mol/m_air^3/s", description = "Fake reaction rate constant to convert equilibrium reaction into kinetic reaction"]
         @variables γ_r(t) [unit=ModelingToolkit.get_unit(γr), description="Activity coefficient of reactant"]
         @variables γ_p(t) [unit=ModelingToolkit.get_unit(γp), description="Activity coefficient of product"]
-        @constants min_γr = 1e-5 [unit=ModelingToolkit.get_unit(γr), description="Minimum activity coefficient of reactant"]
-        @constants min_γp = 1e-5 [unit=ModelingToolkit.get_unit(γp), description="Minimum activity coefficient of product"]   
+        @constants k_fwd=1 [unit = ModelingToolkit.get_unit(γr/ar*fakerate), description = "Forward reaction rate constant"]
+        @variables k_rev(t)=1 [unit = ModelingToolkit.get_unit(γp/ap*fakerate), description = "Reverse reaction rate constant"]
+        @constants unit_krev=1 [unit = ModelingToolkit.get_unit(γp/ap*fakerate), description = "Unit reverse reaction rate constant"]
         if (typeof(product) <: SaltLike) && (reactant isa Solid) # Deliquescence
-            krev = ifelse(min_conc(product) > tiny_conc, 
-                f_deliquescence[product] * γ_p* γpkludge * fakerate, 
-                #γ_p * γpkludge * fakerate, 
-                #tinyk_rev, 
-                tinyk_rev)
-        else
-            krev = ifelse(min_conc(product) > tiny_conc, γ_p* γpkludge * fakerate, tinyk_rev)
+            krev = f_deliquescence[product] * γ_p / γ_r / K_eq * fakerate
+        else # Not an aqueous precipitation reaction so no deliquescence
+            krev = γ_p / γ_r / K_eq * fakerate
         end
-        kfwd = ifelse(min_conc(reactant) > tiny_conc, K_eq * γ_r * Keqkludge * γrkludge * fakerate, tinyk_fwd)
+        @constants unitconv = 1 [unit = ModelingToolkit.get_unit(k_rev/krev), description = "Unit conversion for k_rev"]
         sys = NonlinearSystem([
             K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
-            γ_r ~ max(min_γr, γ(reactant)) 
-            γ_p ~ max(min_γp, γ(product)) 
-            k_fwd ~ max(min(kfwd / krev * unit_krev, unit_kfwd*1e10), unit_kfwd*1e-10)
-            k_rev ~ unit_krev
-            # Only react if there is something to react.
-            #rate_fwd ~ ifelse(min_conc(reactant) > tiny_conc, K_eq * Keqkludge * γrkludge * fakerate * ar, tinyrate)
-            #rate_rev ~ rrev
-            #eq_ratio ~ k_fwd / k_rev
-        ], [K_eq, γ_r, γ_p, k_fwd, k_rev, rate_fwd, rate_rev, eq_ratio], [T₀, K⁰, H_group, C_group]; name=name)
+            γ_r ~ γr
+            γ_p ~ γp
+            k_rev ~ min(unit_krev*1e20, krev * unitconv)
+        ], [K_eq, γ_r, γ_p, k_rev], [K⁰, H_group, C_group, k_fwd, fakerate, unitconv, unit_krev]; name=name)
         new(reactant, product, sys)
     end
 end

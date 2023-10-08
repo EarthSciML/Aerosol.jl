@@ -54,7 +54,7 @@ struct Salt <: SaltLike
     drh
     "Enthalpy term (-18/1000R L_s m_s)"
     l_term
-    "Binary activity parameter"
+    "Kusik-Meissner Binary activity parameter"
     q::Number
 
     function Salt(cation::Ion, ν_cation::Number, anion::Ion, ν_anion::Number, drh, l_term, q::Number)
@@ -113,6 +113,8 @@ same_anion(s::SaltLike) = all_salts[[s.anion == ss.anion for ss in all_salts]]
 # doesn't work unless those units are inverted.
 @constants Aᵧ = 0.511 [unit = u"mol^0.5/kg_water^0.5", description = "Debye-Hückel constant at 298.15 K"]
 @constants I_one = 1 [unit = u"mol/kg_water", description = "An ionic strength of 1"]
+Aᵧ = ParentScope(Aᵧ)
+I_one = ParentScope(I_one)
 
 # Equation 6
 logγ₁₂T⁰(s::Salt) = -Aᵧ * (abs(s.cation.z) * abs(s.anion.z) * √I) / (√I_one + √I) +
@@ -151,6 +153,8 @@ C(q) = 1 + 0.055q * exp(-0.023I^3 / I_one^3)
 
 @constants T₀₂ = 273.15 [unit = u"K", description = "Standard temperature 2"]
 @constants c_1 = 0.005 [unit = u"K^-1"]
+T₀₂ = ParentScope(T₀₂)
+c_1 = ParentScope(c_1)
 
 # Equation 14
 A = -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
