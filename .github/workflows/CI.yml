@@ -43,7 +43,9 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3    
+      - name: Setup Graphviz
+        uses: ts-graphviz/setup-graphviz@v1
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
