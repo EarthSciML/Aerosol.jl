@@ -1,9 +1,9 @@
 module Aerosol
 
-using EarthSciMLBase
-using ModelingToolkit, Catalyst, Unitful
-using IfElse
+using Reexport
 
 include("isorropia/isorropia.jl")
+@reexport using .ISORROPIA
+@reexport using .ISORROPIA.MyUnits
 
 end

@@ -97,6 +97,6 @@ all_rxn_eqs = [rxn_eqs(x) for x in all_rxns]
         # Force I to always be positive to avoid attempts to take the square root of a negative number.
         I ~ max(1.0e-20*I_one, 1 / 2 * sum([ion.m * ion.z^2 for ion in all_Ions] / W))
 
-        # Water content.
+        # Water content (Fountoukis and Nenes Eq. 16).
         W ~ max(1.0e-10*W_one, W_eq16)
     ], [I; W], [])

@@ -3,6 +3,7 @@ using Test
 
 @variables t [unit = u"s", description = "Time"]
 
+include(joinpath(@__DIR__, "../../src/isorropia/units.jl"))
 include(joinpath(@__DIR__, "../../src/isorropia/species.jl"))
 include(joinpath(@__DIR__, "../../src/isorropia/aqueous.jl"))
 

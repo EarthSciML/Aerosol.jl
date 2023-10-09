@@ -1,4 +1,11 @@
+module ISORROPIA
+using EarthSciMLBase
+using ModelingToolkit, Catalyst, Unitful
+using IfElse
+
 export Isorropia
+
+include("units.jl")
 
 """
     Isorropia(t)
@@ -12,10 +19,12 @@ struct Isorropia <: EarthSciMLODESystem
     sys::ODESystem
     rxn_sys::ReactionSystem
     Isorropia(sys::ModelingToolkit.ODESystem, rxn_sys::ReactionSystem) = new(sys, rxn_sys)
-    function Isorropia(t; name=:Isorropia)
+    function Isorropia(tt; name=:Isorropia)
+        global t = tt # Make t global so that it can be used when defining MTK variables.
 
-        # Load the other files into the local namespace inside this function.
-        # This will allow us to create multiple instances of Isorropia if necessary.
+        # Load the other files into the global namespace. Ideally we would use functions 
+        # instead, but there is so much systemic complexity it's difficult to encapsulate
+        # everything into functions.
         include(joinpath(@__DIR__, "species.jl"))
         include(joinpath(@__DIR__, "aqueous.jl"))
         include(joinpath(@__DIR__, "deliquescence.jl"))
@@ -39,4 +48,5 @@ struct Isorropia <: EarthSciMLODESystem
         sys = convert(ODESystem, rxn_sys)
         new(sys, rxn_sys)
     end
+end
 end
