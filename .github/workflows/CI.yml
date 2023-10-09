@@ -10,8 +10,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.0'
-          - '1.6'
+          - '1.8'
+          - '1.9'
           - 'nightly'
         os:
           - ubuntu-latest
@@ -43,7 +43,9 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3    
+      - name: Setup Graphviz
+        uses: ts-graphviz/setup-graphviz@v1
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
@@ -62,3 +64,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+          GKSwstype: "100" # disable plotting

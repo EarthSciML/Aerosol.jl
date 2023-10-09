@@ -6,16 +6,26 @@ DocMeta.setdocmeta!(Aerosol, :DocTestSetup, :(using Aerosol); recursive=true)
 makedocs(;
     modules=[Aerosol],
     authors="EarthSciML authors and contributors",
-    repo="https://github.com/EarthSciML/Aerosol.jl/blob/{commit}{path}#{line}",
     sitename="Aerosol.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://EarthSciML.github.io/Aerosol.jl",
+        canonical="https://aerosol.earthsci.dev",
         assets=String[],
+        #size_threshold=10000000,
     ),
+    repo = Remotes.GitHub("EarthSciML", "Aerosol.jl"),
     pages=[
         "Home" => "index.md",
+        "Thermodynamics" => [
+            "Isorropia" => [
+                "Overview" => "isorropia/overview.md",
+                "Examples" => "isorropia/examples.md",
+                "Implementation details" => "isorropia/implementation.md",
+            ],
+        ],
+        "API" => "api.md",
     ],
+    warnonly = [:missing_docs],
 )
 
 deploydocs(;

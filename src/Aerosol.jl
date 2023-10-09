@@ -1,5 +1,9 @@
 module Aerosol
 
-# Write your package code here.
+using Reexport
+
+include("isorropia/isorropia.jl")
+@reexport using .ISORROPIA
+@reexport using .ISORROPIA.MyUnits
 
 end
