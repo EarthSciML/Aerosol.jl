@@ -20,10 +20,11 @@ struct Rxn
         @variables K_eq(t) [unit = K⁰units, description = "Equilibrium constant"]
         # These are the transformed variables to turn this into a kinetic reaction rather than an equilibrium reaction.
         # To do so we need to choose a base reaction rate constant to make reactions proceed at a reasonable rate.
-        @constants fakerate = 1 [unit = u"mol/m_air^3/s", description = "Fake reaction rate constant to convert equilibrium reaction into kinetic reaction"]
+        baserate = 1
+        @constants fakerate = baserate [unit = u"mol/m_air^3/s", description = "Fake reaction rate constant to convert equilibrium reaction into kinetic reaction"]
         @variables γ_r(t) [unit=ModelingToolkit.get_unit(γr), description="Activity coefficient of reactant"]
         @variables γ_p(t) [unit=ModelingToolkit.get_unit(γp), description="Activity coefficient of product"]
-        @constants k_fwd=1 [unit = ModelingToolkit.get_unit(γr/ar*fakerate), description = "Forward reaction rate constant"]
+        @constants k_fwd=baserate [unit = ModelingToolkit.get_unit(γr/ar*fakerate), description = "Forward reaction rate constant"]
         @variables k_rev(t)=1 [unit = ModelingToolkit.get_unit(γp/ap*fakerate), description = "Reverse reaction rate constant"]
         @constants unit_krev=1 [unit = ModelingToolkit.get_unit(γp/ap*fakerate), description = "Unit reverse reaction rate constant"]
         if (typeof(product) <: SaltLike) && (reactant isa Solid) # Deliquescence
@@ -37,7 +38,7 @@ struct Rxn
             γ_r ~ γr
             γ_p ~ γp
             k_rev ~ min(unit_krev*1e20, krev * unitconv)
-        ], [K_eq, γ_r, γ_p, k_rev], [K⁰, H_group, C_group, k_fwd, fakerate, unitconv, unit_krev]; name=name)
+        ], [K_eq, γ_r, γ_p, k_rev], [K⁰, H_group, C_group, k_fwd, fakerate, unitconv, unit_krev, T₀, T₀₂, c_1, I_one]; name=name)
         new(reactant, product, sys)
     end
 end

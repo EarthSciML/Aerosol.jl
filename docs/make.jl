@@ -9,18 +9,23 @@ makedocs(;
     sitename="Aerosol.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://EarthSciML.github.io/Aerosol.jl",
+        canonical="https://aerosol.earthsci.dev",
         assets=String[],
-        repolink="https://github.com/EarthSciML/Aerosol.jl/blob/{commit}{path}#{line}",
         #size_threshold=10000000,
     ),
+    repo = Remotes.GitHub("EarthSciML", "Aerosol.jl"),
     pages=[
         "Home" => "index.md",
         "Thermodynamics" => [
-            "Isorropia" => "isorropia.md",
+            "Isorropia" => [
+                "Overview" => "isorropia/overview.md",
+                "Examples" => "isorropia/examples.md",
+                "Implementation details" => "isorropia/implementation.md",
+            ],
         ],
         "API" => "api.md",
     ],
+    warnonly = [:missing_docs],
 )
 
 deploydocs(;

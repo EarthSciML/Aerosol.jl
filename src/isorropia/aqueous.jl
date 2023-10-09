@@ -8,8 +8,7 @@ struct Ion <: Species
 end
 
 #==
-NOTE: Fountoukis and Nenes (2007) don't give any details on how to calculate the 
-activity coefficient of an ion, so we assume that it is 1.0.
+The activity coefficient of an ion is assumed to one (Fountoukis and Nenes (2007), Section 3.3).
 ==#
 γ(i::Ion) = 1.0 / W
 terms(i::Ion) = [i.m], [1]

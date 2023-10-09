@@ -4,6 +4,7 @@ using Test
 using Plots
 
 include(joinpath(@__DIR__, "../../src/isorropia/isorropia.jl"))
+using .ISORROPIA
 
 @variables t [unit = u"s", description = "Time"]
 
@@ -13,6 +14,12 @@ sys = structural_simplify(get_mtk(model))
 
 @test all([ModelingToolkit.check_units(eq) for eq in equations(get_mtk(model))])
 
+@unpack Na_aq, SO4_aq, SO4_g, NH3_aq, NH3_g, NO3_aq, Cl_aq, NaCl_s, MgNO32_s, HNO3_g,
+    Ca_aq, K_aq, Mg_aq, H_aq, NH4_aq, HCl_g, K2SO4_s, KNO3_s, CaNO32_s, HNO3_g, HNO3_aq,
+    KHSO4_s, KCl_s, NH4NO3_s, CaSO4_s, CaCl2_s, MgSO4_s, MgCl2_s, NH4HSO4_s,
+    NH42SO4_s, NH43HSO42_s, NH4Cl_s, NaHSO4_s, Na2SO4_s, NaNO3_s, HSO4_aq, HCl_aq,
+    RH, metastable, W, I, T, f_CaNO32, rxn1₊k_rev, rxn1₊T₀,
+    rxn1₊K⁰, rxn1₊H_group, rxn1₊C_group, T₀₂, c_1, I_one = sys
 
 mw = Dict(Na_aq => 22.989769, SO4_aq => 96.0636, SO4_g => 96.0636, NH3_aq => 17.03052, NH3_g => 17.03052,
     NO3_aq => 62.0049, Cl_aq => 35.453, NaCl_s => 58.44,
@@ -48,20 +55,20 @@ prob = ODEProblem(sys, u₀, (0.0, 100.0), p)
 # Need low tolerance for mass balance checks to pass.
 @time sol = solve(prob, Rosenbrock23(), abstol=1e-12, reltol=1e-12)
 
-eq = []
-for i in eachindex(sol.u)
-    u = [x => sol[x][i] for x in [I, W, states(sys)...]]
-    push!(u, T => sol[T])
-    γ_p = substitute(ModelingToolkit.subs_constants(γ(CaNO32_aqs)), u)
-    a_r = substitute(ModelingToolkit.subs_constants(activity(CaNO32s)), u)
-    a_p = substitute(ModelingToolkit.subs_constants(activity(CaNO32_aqs)), u)
-    keq = sol[rxn1.sys.K_eq][i]
-    @info :a_p => a_p, :γ_p => γ_p, :Ca_aq => sol[Ca_aq][i], :a_r => a_r, :keq => keq, :ratio => a_p / a_r / keq
-    push!(eq, a_p / a_r / keq)
-end
+# eq = []
+# for i in eachindex(sol.u)
+#     u = [x => sol[x][i] for x in [I, W, states(sys)...]]
+#     push!(u, T => sol[T])
+#     γ_p = substitute(ModelingToolkit.subs_constants(γ(CaNO32_aqs)), u)
+#     a_r = substitute(ModelingToolkit.subs_constants(activity(CaNO32s)), u)
+#     a_p = substitute(ModelingToolkit.subs_constants(activity(CaNO32_aqs)), u)
+#     keq = sol[rxn1.sys.K_eq][i]
+#     @info :a_p => a_p, :γ_p => γ_p, :Ca_aq => sol[Ca_aq][i], :a_r => a_r, :keq => keq, :ratio => a_p / a_r / keq
+#     push!(eq, a_p / a_r / keq)
+# end
 
 plot(
-    plot(sol[t], sol[DRH.f_CaNO32],
+    plot(sol[t], sol[f_CaNO32],
         ylabel="f_CaNO32", xlabel="time (s)", label=:none),
     plot(sol[t], sol[CaNO32_s] * 1e6 * mw[CaNO32_s],
         ylabel="CaNO32_s", xlabel="time (s)", label=:none),
@@ -73,15 +80,15 @@ plot(
         ylabel="HNO3_g", xlabel="time (s)", label=:none),
     plot(sol[t], sol[Ca_aq] * 1e6 * mw[Ca_aq],
         ylabel="Ca_aq", xlabel="time (s)", label=:none),
-    plot(sol[t], sol[rxn1.sys.k_rev],
+    plot(sol[t], sol[rxn1₊k_rev],
         ylabel="k_rev", xlabel="time (s)", label=:none),
     plot(sol[t], sol[W] * 1e9,
         ylabel="W (ug/m3)", xlabel="time (s)", label=:none),
 )
 
-plot([plot(sol[t], sol[ion], ylabel=ion, xlabel="time", label=:none) for ion in all_ions]..., size=(1000, 800))
-plot([plot(sol[t], sol[gas], ylabel=gas, xlabel="time", label=:none) for gas in all_gases]..., size=(1000, 800))
-plot([plot(sol[t], sol[solid], ylabel=solid, xlabel="time", label=:none) for solid in all_solids]..., size=(1000, 800))
+plot([plot(sol[t], sol[ion], ylabel=ion, xlabel="time", label=:none) for ion in ISORROPIA.all_ions]..., size=(1000, 800))
+plot([plot(sol[t], sol[gas], ylabel=gas, xlabel="time", label=:none) for gas in ISORROPIA.all_gases]..., size=(1000, 800))
+plot([plot(sol[t], sol[solid], ylabel=solid, xlabel="time", label=:none) for solid in ISORROPIA.all_solids]..., size=(1000, 800))
 
 @testset "Mass balances" begin
     names = [:K, :Ca, :Mg, :NH, :Na, :SO4, :NO3, :Cl, :H]
@@ -129,21 +136,21 @@ ca2plus = sol[Ca_aq][end] / sol[W][end] # mol/kg_water
 no3minus = sol[NO3_aq][end] / sol[W][end] # mol/kg_water
 
 γaq = substitute(ModelingToolkit.subs_constants(
-        exp(logγ₁₂(CaNO32_aqs))^(CaNO32_aqs.ν_cation + CaNO32_aqs.ν_anion)), u)
+        exp(ISORROPIA.logγ₁₂(ISORROPIA.CaNO32_aqs))^(ISORROPIA.CaNO32_aqs.ν_cation + ISORROPIA.CaNO32_aqs.ν_anion)), u)
 
 # First activity calculated using formulas from paper.
 aq_activity1 = ca2plus * no3minus^2 * γaq
 
 # Second activity calculated using functions with water conversions.
-aq_activity2 = substitute(ModelingToolkit.subs_constants(activity(CaNO32_aqs)), u)
+aq_activity2 = substitute(ModelingToolkit.subs_constants(ISORROPIA.activity(ISORROPIA.CaNO32_aqs)), u)
 
 @test ModelingToolkit.value(aq_activity1) ≈ ModelingToolkit.value(aq_activity2)
 
-keq = rxn1.sys.K⁰ * exp(-rxn1.sys.H_group * (T₀ / T - 1) -
-                        rxn1.sys.C_group * (1 + log(T₀ / T) - T₀ / T))
+keq = rxn1₊K⁰ * exp(-rxn1₊H_group * (rxn1₊T₀ / T - 1) -
+                        rxn1₊C_group * (1 + log(rxn1₊T₀ / T) - rxn1₊T₀ / T))
 eq_const = substitute(ModelingToolkit.subs_constants(keq), u)
 
-solid_activity = substitute(ModelingToolkit.subs_constants(activity(CaNO32s)), u)
+solid_activity = substitute(ModelingToolkit.subs_constants(ISORROPIA.activity(ISORROPIA.CaNO32s)), u)
 @test solid_activity ≈ 1.0
 
 # Theoretically the ratio of the activities should be equal to the equilibrium constant
@@ -154,22 +161,22 @@ solid_activity = substitute(ModelingToolkit.subs_constants(activity(CaNO32s)), u
 
 # Derivative of activity with respect to concentration should be positive
 da_daq = substitute(ModelingToolkit.subs_constants(
-        expand_derivatives(Differential(Ca_aq)(activity(CaNO32_aqs)))), [I_one => 1.0, T₀₂ => 273.15, c_1 => 0.005, u...])
+        expand_derivatives(Differential(ISORROPIA.Ca_aq)(ISORROPIA.activity(ISORROPIA.CaNO32_aqs)))), [I_one => 1.0, T₀₂ => 273.15, c_1 => 0.005, u...])
 @test ModelingToolkit.value(da_daq) > 0.0
 
 # The derivative of our equilibrium ratio (the ratio of our equilibrium expression to one)
 # is positive for the aqueous concentration and zero for the solid concentration, because
 # the rate of the forward reaction (solid to aqueous) doesn't depend on the concentration of the solid,
 # but rate of the reverse reaction (aqueous to solid) does depend on concentration of the aqueous salt.
-k_expr = ModelingToolkit.subs_constants(activity(CaNO32_aqs) / activity(CaNO32s) / keq)
-dk_daq = expand_derivatives(Differential(Ca_aq)(k_expr))
+k_expr = ModelingToolkit.subs_constants(ISORROPIA.activity(ISORROPIA.CaNO32_aqs) / ISORROPIA.activity(ISORROPIA.CaNO32s) / keq)
+dk_daq = expand_derivatives(Differential(ISORROPIA.Ca_aq)(k_expr))
 
 @test substitute(dk_daq, u) > 0
 
-dk_ds = expand_derivatives(Differential(CaNO32_s)(k_expr))
+dk_ds = expand_derivatives(Differential(ISORROPIA.CaNO32_s)(k_expr))
 @test substitute(dk_ds, u₀) == 0
 
-@test ModelingToolkit.get_unit(activity(CaNO32_aqs) / activity(CaNO32s) / keq) isa Unitful.FreeUnits{(),NoDims,nothing}
+@test ModelingToolkit.get_unit(ISORROPIA.activity(ISORROPIA.CaNO32_aqs) / ISORROPIA.activity(ISORROPIA.CaNO32s) / keq) isa Unitful.FreeUnits{(),NoDims,nothing}
 
 
 ##### Reproducing Figures from Fountoukis and Nenes (2007)
