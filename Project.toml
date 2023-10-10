@@ -20,7 +20,18 @@ StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
+Catalyst = "13"
+DiffEqBase = "6"
+DifferentialEquations = "7"
+EarthSciMLBase = "0.6"
+IfElse = "0.1"
+ModelingToolkit = "8"
 NonlinearSolve = "2"
+Plots = "1"
+Reexport = "1"
+SafeTestsets = "0.1"
+StochasticDiffEq = "6"
+Unitful = "1"
 julia = "1"
 
 [extras]
