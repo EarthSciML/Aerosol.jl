@@ -25,6 +25,7 @@ DiffEqBase = "6"
 EarthSciMLBase = "0.6"
 IfElse = "0.1"
 ModelingToolkit = "8"
+Plots = "1"
 Reexport = "1"
 julia = "1"
 
