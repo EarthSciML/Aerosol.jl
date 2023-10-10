@@ -27,6 +27,7 @@ IfElse = "0.1"
 ModelingToolkit = "8"
 Plots = "1"
 Reexport = "1"
+SafeTestsets = "0.1"
 StochasticDiffEq = "6"
 julia = "1"
 
