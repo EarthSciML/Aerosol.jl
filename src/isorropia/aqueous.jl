@@ -8,7 +8,7 @@ struct Ion <: Species
 end
 
 #==
-The activity coefficient of an ion is assumed to one (Fountoukis and Nenes (2007), Section 3.3).
+The activity coefficient of an ion is assumed to be one (Fountoukis and Nenes (2007), Section 3.3).
 ==#
 γ(i::Ion) = 1.0 / W
 terms(i::Ion) = [i.m], [1]
