@@ -2,17 +2,20 @@
 An ion with the given concentration `m` and valence (charge) `z`.
 """
 struct Ion <: Species
-    m::Num # Concentration in mol/(m^3 air)
-    m_water # Concentration in mol/(kg water)
+    m::Num # Concentration in mol/(kg water)
     z::Int
 end
+
+function Base.nameof(i::Ion)
+    string(Symbolics.tosymbol(i.m, escape=false))
+end
+
+vars(i::Ion) = [i.m]
 
 #==
 The activity coefficient of an ion is assumed to be one (Fountoukis and Nenes (2007), Section 3.3).
 ==#
-γ(i::Ion) = 1.0 / W
-terms(i::Ion) = [i.m], [1]
-min_conc(i::Ion) = i.m
+activity(i::Ion) = i.m
 
 # Generate the aqueous ions.
 # Each ion has an associated MTK variable named 
@@ -28,10 +31,10 @@ for i ∈ eachindex(ion_names)
     varname = Symbol(ion_names[i], "_aq")
     s = "Aqueous $(ion_names[i])"
     eval(quote
-        @species $varname($t) = 1e-11 [unit = u"mol/m_air^3", description = $s]
+        @species $varname = 1e-11 [unit = u"mol/kg_water", description = $s]
         $varname = ParentScope($varname)
         push!(all_ions, $varname)
-        $n = Ion($varname, $varname / W, $(ion_valence[i]))
+        $n = Ion($varname, $(ion_valence[i]))
         push!(all_Ions, $n)
     end)
 end
@@ -69,8 +72,10 @@ end
 function Base.nameof(s::SaltLike)
     c = replace(string(Symbolics.tosymbol(s.cation.m, escape=false)), "_aq" => "")
     a = replace(string(Symbolics.tosymbol(s.anion.m, escape=false)), "_aq" => "")
-    "$(c)$(s.ν_cation > 1 ? s.ν_cation : "")$(a)$(s.ν_anion > 1 ? s.ν_anion : "")"
+    "$(c)$(s.ν_cation > 1 ? s.ν_cation : "")$(a)$(s.ν_anion > 1 ? s.ν_anion : "")_aqs"
 end
+
+vars(s::SaltLike) = [s.cation.m, s.anion.m]
 
 # Salts from Table 4.
 CaNO32_aqs = Salt(Ca_ion, 1, NO3_ion, 2, 0.4906, 509.4, 0.93)
@@ -98,13 +103,39 @@ all_salts = SaltLike[CaNO32_aqs, CaCl2_aqs, K2SO4_aqs, KNO3_aqs, KCl_aqs, MgSO4_
     NH4Cl_aqs, H2SO4_aqs, HHSO4_aqs, HNO3_aqs, HCl_aqs]
 
 """
+Add additional salts as necessary to all the calculation of the activity 
+of the SpecialSalts.
+"""
+function augmented_salts(all_salts)
+    extra_salts = Dict( # Additional species needed to calculate activity of the SpecialSalts
+        KHSO4_aqs => [HHSO4_aqs, KCl_aqs, HCl_aqs],
+        NH4HSO4_aqs => [HHSO4_aqs, NH4Cl_aqs, HCl_aqs],
+        NaHSO4_aqs => [HHSO4_aqs, NaCl_aqs, HCl_aqs],
+        NH43HSO42_aqs => [NH42SO4_aqs, NH4HSO4_aqs],
+    )
+    for es in keys(extra_salts)
+        if es in all_salts
+            all_salts = vcat(all_salts, extra_salts[es])
+        end
+    end
+    unique(all_salts)
+end
+
+"""
 Find all salts that have the same cation as the given salt.
 """
-same_cation(s::SaltLike) = all_salts[[s.cation == ss.cation for ss in all_salts]]
+function same_cation(s::SaltLike, all_salts)
+    aug_salts = augmented_salts(all_salts)
+    aug_salts[[s.cation == ss.cation for ss in aug_salts]]
+end
+
 """
 Find all salts that have the same anion as the given salt.
 """
-same_anion(s::SaltLike) = all_salts[[s.anion == ss.anion for ss in all_salts]]
+function same_anion(s::SaltLike, all_salts)
+    aug_salts = augmented_salts(all_salts)
+    aug_salts[[s.anion == ss.anion for ss in aug_salts]]
+end
 
 ### Calculate aqueous activity coefficients.
 
@@ -112,75 +143,67 @@ same_anion(s::SaltLike) = all_salts[[s.anion == ss.anion for ss in all_salts]]
 # doesn't work unless those units are inverted.
 @constants Aᵧ = 0.511 [unit = u"mol^0.5/kg_water^0.5", description = "Debye-Hückel constant at 298.15 K"]
 @constants I_one = 1 [unit = u"mol/kg_water", description = "An ionic strength of 1"]
-Aᵧ = ParentScope(Aᵧ)
-I_one = ParentScope(I_one)
 
 # Equation 6
-logγ₁₂T⁰(s::Salt) = -Aᵧ * (abs(s.cation.z) * abs(s.anion.z) * √I) / (√I_one + √I) +
-                    (abs(s.cation.z) * abs(s.anion.z)) / (abs(s.cation.z) + abs(s.anion.z)) *
-                    (F₁(s) / abs(s.cation.z) + F₂(s) / abs(s.anion.z))
+logγ₁₂T⁰(s::Salt, all_salts, I) = -Aᵧ * (abs(s.cation.z) * abs(s.anion.z) * √I) / (√I_one + √I) +
+                                  (abs(s.cation.z) * abs(s.anion.z)) / (abs(s.cation.z) + abs(s.anion.z)) *
+                                  (F₁(s, all_salts, I) / abs(s.cation.z) + F₂(s, all_salts, I) / abs(s.anion.z))
 
 # Equation 7
-F₁(s::Salt) = sum([
-    Y(ss) * logγ⁰₁₂(ss) * √I_one +
-    Aᵧ * √I / (√I_one + √I) * abs(ss.cation.z) * abs(ss.anion.z) * Y(ss)
-    for ss ∈ same_cation(s)
+F₁(s::Salt, all_salts, I) = sum([
+    Y(ss, I) * logγ⁰₁₂(ss, I) * √I_one +
+    Aᵧ * √I / (√I_one + √I) * abs(ss.cation.z) * abs(ss.anion.z) * Y(ss, I)
+    for ss ∈ same_cation(s, all_salts)
 ])
 
 
 # Equation 8
-F₂(s::Salt) = sum([
-    X(ss) * logγ⁰₁₂(ss) * √I_one +
-    Aᵧ * √I / (√I_one + √I) * abs(ss.cation.z) * abs(ss.anion.z) * X(ss)
-    for ss ∈ same_anion(s)
+F₂(s::Salt, all_salts, I) = sum([
+    X(ss, I) * logγ⁰₁₂(ss, I) * √I_one +
+    Aᵧ * √I / (√I_one + √I) * abs(ss.cation.z) * abs(ss.anion.z) * X(ss, I)
+    for ss ∈ same_anion(s, all_salts)
 ])
 
 # Supplemental equations after 7 and 8
-Y(s::SaltLike) = ((abs(s.cation.z) + abs(s.anion.z)) / 2)^2 * s.anion.m_water / I
-X(s::SaltLike) = ((abs(s.cation.z) + abs(s.anion.z)) / 2)^2 * s.cation.m_water / I
+Y(s::SaltLike, I) = ((abs(s.cation.z) + abs(s.anion.z)) / 2)^2 * s.anion.m / I
+X(s::SaltLike, I) = ((abs(s.cation.z) + abs(s.anion.z)) / 2)^2 * s.cation.m / I
 
 # Equation 9
-logγ⁰₁₂(s::Salt) = abs(s.cation.z) * abs(s.anion.z) * log(Γ⁰(s.q) / I_one)
+logγ⁰₁₂(s::Salt, I) = abs(s.cation.z) * abs(s.anion.z) * log(Γ⁰(s.q, I) / I_one)
 # Equation 10
-Γ⁰(q) = (I_one + B(q) * ((I_one + 0.1I) / I_one)^q * I_one - I_one * B(q)) * Γstar(q)
+Γ⁰(q, I) = (I_one + B(q) * ((I_one + 0.1I) / I_one)^q * I_one - I_one * B(q)) * Γstar(q, I)
 # Equation 11
 B(q) = 0.75 - 0.065q
 # Equation 12
-Γstar(q) = exp(-0.5107√I / (√I_one + C(q) * √I))
+Γstar(q, I) = exp(-0.5107√I / (√I_one + C(q, I) * √I))
 # Equation 13
-C(q) = 1 + 0.055q * exp(-0.023I^3 / I_one^3)
+C(q, I) = 1 + 0.055q * exp(-0.023I^3 / I_one^3)
 
 @constants T₀₂ = 273.15 [unit = u"K", description = "Standard temperature 2"]
-@constants c_1 = 0.005 [unit = u"K^-1"]
-T₀₂ = ParentScope(T₀₂)
-c_1 = ParentScope(c_1)
+@constants c_1 = 0.005 [unit = u"K^-1", description = "Constant for Fountoukis and Nenes (2007) Eq. 14"]
 
 # Equation 14
-A = -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
-logγ₁₂(s::Salt) = (1.125 - c_1 * (T - T₀₂)) * logγ₁₂T⁰(s) / √I_one - (0.125 - c_1 * (T - T₀₂)) * A
-"""
-Calculate the activity coefficient of a salt based on Section 2.2 
-in Fountoukis and Nenes (2007). We divide by W^(s.ν_cation + s.ν_anion)
-to account for the fact that state variables are in units of mol/m3 air but
-activity is calculated in units of mol/kg water.
-"""
-γ(s::Salt) = exp(logγ₁₂(s))^(s.ν_cation + s.ν_anion) / W^(s.ν_cation + s.ν_anion)
+A(I) = -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
+logγ₁₂(s::Salt, all_salts, I) = (1.125 - c_1 * (T - T₀₂)) * logγ₁₂T⁰(s, all_salts, I) / √I_one - (0.125 - c_1 * (T - T₀₂)) * A(I)
 
-terms(s::Salt) = [s.cation.m, s.anion.m], [s.ν_cation, s.ν_anion]
-
-min_conc(s::Salt) = min(s.cation.m, s.anion.m)
+"""
+Calculate the activity coefficient of a salt based on Section 2.2
+in Fountoukis and Nenes (2007).
+"""
+activity(s::Salt, all_salts, I) = s.cation.m^s.ν_cation * s.anion.m^s.ν_anion #*
+                                  #exp(logγ₁₂(s, all_salts, I))^(s.ν_cation + s.ν_anion)
 
 ### Special cases
 
 abstract type SpecialSalt <: SaltLike end
 
-#==
+"""
 The activity of a SpecialSalt is the same as for a salt except that it has 
 a special activity coefficient as defined in the footnotes to Table 4.
-==#
-γ(s::SpecialSalt) = γ₁₂(s)^(s.ν_cation + s.ν_anion) / W^(s.ν_cation + s.ν_anion)
-logγ⁰₁₂(s::SpecialSalt) = abs(s.cation.z) * abs(s.anion.z) * log(Γ⁰(0) / I_one) # Assuming q = 0 for SpecialSalts
-terms(s::SpecialSalt) = [s.cation.m, s.anion.m], [s.ν_cation, s.ν_anion]
+"""
+activity(s::SpecialSalt, all_salts, I) = s.cation.m^s.ν_cation * s.anion.m^s.ν_anion #*
+                                         #γ₁₂(s, all_salts, I)^(s.ν_cation + s.ν_anion)
+logγ⁰₁₂(s::SpecialSalt, I) = abs(s.cation.z) * abs(s.anion.z) * log(Γ⁰(0, I) / I_one) # Assuming q = 0 for SpecialSalts
 
 min_conc(s::SpecialSalt) = min(s.cation.m, s.anion.m)
 
@@ -221,24 +244,77 @@ end
 """
 From Table 4 footnote a, CaSO4 has an activity coefficient of zero.
 """
-γ₁₂(s::CaSO4aqs) = 1.0e-20
+γ₁₂(s::CaSO4aqs, all_salts, I) = 1.0e-20
 
 """
 From Table 4 footnote b, KHSO4 has a unique activity coefficient
 """
-γ₁₂(s::KHSO4aqs) = (exp(logγ₁₂(HHSO4_aqs)) * exp(logγ₁₂(KCl_aqs)) / exp(logγ₁₂(HCl_aqs)))^(1 / 2)
+γ₁₂(s::KHSO4aqs, all_salts, I) = (exp(logγ₁₂(HHSO4_aqs, all_salts, I)) * exp(logγ₁₂(KCl_aqs, all_salts, I)) /
+                                  exp(logγ₁₂(HCl_aqs, all_salts, I)))^(1 / 2)
 
 """
 From Table 4 footnote c, NH4HSO4 has a unique activity coefficient
 """
-γ₁₂(s::NH4HSO4aqs) = (exp(logγ₁₂(HHSO4_aqs)) * exp(logγ₁₂(NH4Cl_aqs)) / exp(logγ₁₂(HCl_aqs)))^(1 / 2)
+γ₁₂(s::NH4HSO4aqs, all_salts, I) = (exp(logγ₁₂(HHSO4_aqs, all_salts, I)) * exp(logγ₁₂(NH4Cl_aqs, all_salts, I)) /
+                                    exp(logγ₁₂(HCl_aqs, all_salts, I)))^(1 / 2)
 
 """
 From Table 4 footnote d, NaHSO4 has a unique activity coefficient
 """
-γ₁₂(s::NaHSO4aqs) = (exp(logγ₁₂(HHSO4_aqs)) * exp(logγ₁₂(NaCl_aqs)) / exp(logγ₁₂(HCl_aqs)))^(1 / 2)
+γ₁₂(s::NaHSO4aqs, all_salts, I) = (exp(logγ₁₂(HHSO4_aqs, all_salts, I)) * exp(logγ₁₂(NaCl_aqs, all_salts, I)) /
+                                   exp(logγ₁₂(HCl_aqs, all_salts, I)))^(1 / 2)
 
 """
 From Table 4 footnote e, NH43HSO42 has a unique activity coefficient
 """
-γ₁₂(s::NH43HSO42aqs) = (exp(logγ₁₂(NH42SO4_aqs))^3 * γ₁₂(NH4HSO4_aqs))^(1 / 5)
+γ₁₂(s::NH43HSO42aqs, all_salts, I) = (exp(logγ₁₂(NH42SO4_aqs, all_salts, I))^3 * γ₁₂(NH4HSO4_aqs, all_salts, I))^(1 / 5)
+
+"""
+Create a system of equations for the ionic strength of the multicomponent solution, as specified by
+Fountoukis and Nenes (2007), between equations 8 and 9: ``I = \\frac{1}{2} \\sum_i m_i z_i^2``
+"""
+function IonicStrength(all_Ions)
+    @variables I = 1.0e-4 [unit = u"mol/kg_water", description = "Ionic strength"]
+    I = ParentScope(I)
+    @constants I_one = 1 [unit = u"mol/kg_water", description = "An ionic strength of 1"]
+    @named ionic_strength = NonlinearSystem([
+            # Force I to always be positive to avoid attempts to take the square root of a negative number.
+            I ~ max(1.0e-20 * I_one, 1 / 2 * sum([ion.m * ion.z^2 for ion in all_Ions]))
+        ], [I], [I_one])
+end
+
+"""
+Create an equation system for the activities of all the salts listed in all_salts,
+using I as the ionic strength.
+"""
+function SaltActivities(all_salts, I)
+    eqs = Equation[]
+    vars = []
+    for s ∈ all_salts
+        rhs = activity(s, all_salts, I)
+        unit = ModelingToolkit.get_unit(rhs)
+        x = Symbol("a_", nameof(s))
+        a = only(@variables $x=1 [unit = unit, description = "Activity of $(nameof(s))"])
+        push!(vars, a)
+        push!(eqs, a ~ activity(s, all_salts, I))
+    end
+    NonlinearSystem(eqs, vars, [I_one, T₀₂, c_1, Aᵧ]; name=:activities)
+end
+
+
+"""
+Create an equation system for the activities of all the species listed in all_species.
+"""
+function Activities(all_species)
+    eqs = Equation[]
+    vars = []
+    for s ∈ all_species
+        rhs = activity(s)
+        unit = ModelingToolkit.get_unit(rhs)
+        x = Symbol("a_", nameof(s))
+        a = only(@variables $x=1 [unit = unit, description = "Activity of $(nameof(s))"])
+        push!(vars, a)
+        push!(eqs, a ~ rhs)
+    end
+    NonlinearSystem(eqs, vars, []; name=:activities)
+end

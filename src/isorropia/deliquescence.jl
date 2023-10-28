@@ -1,6 +1,6 @@
 @parameters metastable = 0 [description = "Whether the solution is 'metastable' (i.e. RH is decreasing over time). Value should be 1 for 'true' or 0 for 'false'"]
 metastable = ParentScope(metastable)
-@variables MDRH(t) = 0.3 [description = "Minimum deliquescence relative humidity (unitless)"]
+@variables MDRH = 0.3 [description = "Minimum deliquescence relative humidity (unitless)"]
 
 @constants T₀₃ = 298.15 [unit = u"K", description = "Standard temperature 3"]
 @constants unit_T = 1 [unit = u"K", description = "Unit temperature"]
@@ -17,7 +17,7 @@ for s ∈ all_salts
     saltname = nameof(s)
     drhname = Symbol("DRH_", saltname)
     eval(quote
-        v = (@variables $drhname($t) [description = "Deliquescence relative humidity of $(nameof($s)) (unitless)"])[1]
+        v = (@variables $drhname [description = "Deliquescence relative humidity of $(nameof($s)) (unitless)"])[1]
         eq = v ~ $drh($s)
         push!(drh_eqs, eq)
         push!(drh_vars, v)
@@ -30,7 +30,7 @@ for s ∈ all_salts
     fname = Symbol("f_", saltname)
     drhname = Symbol("DRH_", saltname)
     eval(quote
-        v = (@variables $fname($t) [description = "Deliquescence factor for $(nameof($s)) (unitless)"])[1]
+        v = (@variables $fname [description = "Deliquescence factor for $(nameof($s)) (unitless)"])[1]
         v = ParentScope(v)
         # Fountoukis and Nenes (2007) Eq. 22.
         # If the solution is "metastable" (i.e. RH is decreasing over time), 
