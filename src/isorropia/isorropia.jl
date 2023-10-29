@@ -78,7 +78,7 @@ Create a system of equations for mass and charge balances.
 function Balance(T, active_vars, active_ions, active_salts)
     # Return the given species, or zero if the species is not in the list.
     g(v) = !isnothing(findfirst(isequal(v), active_vars)) ? v : 0
-    all_active_ions = vcat(active_ions, [[s.cation, s.anion] for s ∈ active_salts]...)
+    all_active_ions = unique(vcat(active_ions, [[s.cation, s.anion] for s ∈ active_salts]...))
 
     @constants R = 8.31446261815324 [unit = u"m_air^3*Pa/K/mol", description = "Universal gas constant"]
     @constants PaPerAtm = 101325 [unit = u"Pa/atm", description = "Number of pascals per atmosphere"]
