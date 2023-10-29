@@ -39,7 +39,7 @@ function Water(active_salts)
         if s ∈ keys(m_aw_coeffs)
             m_aw_coeff = m_aw_coeffs[s]
              # Water content (Fountoukis and Nenes Eq. 16).
-            w += (s.cation.m + s.anion.m ) * W / sum(m_aw_coeff .* RH.^collect(0:6)) 
+            w += (s.cation.m + s.anion.m ) / sum(m_aw_coeff .* RH.^collect(0:6)) 
         end
     end
     @named water = NonlinearSystem([W ~ w], [W], [])

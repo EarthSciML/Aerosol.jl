@@ -1,5 +1,3 @@
-#@constants tinyrate = 1.e-99 [unit = u"mol/m_air^3/s", description = "Tiny reaction rate constant negative concentrations"]
-
 """
 Define a reaction based on information in Table 2 of Fountoukis and Nenes (2007).
 
@@ -17,7 +15,8 @@ struct Rxn
 end
 
 """
-Create an equation system for this reaction.
+Create an equation system for this reaction based on the information in 
+Equation 5 and Table 2 of Fountoukis and Nenes (2007).
 """
 function rxn_sys(r::Rxn, activities::ModelingToolkit.AbstractSystem)
     @constants T₀ = 293.15 [unit = u"K", description = "Standard temperature"]
@@ -26,15 +25,11 @@ function rxn_sys(r::Rxn, activities::ModelingToolkit.AbstractSystem)
     @constants H_group = r.hgroup [description = "ΔH⁰ / (R * T₀) (unitless)"]
     @constants C_group = r.cgroup [description = "ΔC⁰ₚ / R (unitless)"]
     @variables K_eq [unit = r.K⁰units, description = "Equilibrium constant"]
-    ap = speciesactivity(activities, r.product)
-    ar = speciesactivity(activities, r.reactant)
-    @constants tinyap = 1e-20 [unit = ModelingToolkit.get_unit(ap), description = "Tiny activity to avoid negative concentration"]
-    @constants tinyar = 1e-20 [unit = ModelingToolkit.get_unit(ar), description = "Tiny activity to avoid negative concentration"]
-    sys = NonlinearSystem([
-            # Equation 5: Equilibrium constant
-            K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
-            K_eq ~ max(ap, tinyap) / max(ar, tinyar)
-        ], [K_eq], [K⁰, H_group, C_group, T₀, T₀₂, c_1, I_one, tinyap, tinyar]; name=r.name)
+    NonlinearSystem([
+        # Equation 5: Equilibrium constant
+        K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
+        K_eq ~ speciesactivity(activities, r.product) / speciesactivity(activities, r.reactant)
+    ], [K_eq], [K⁰, H_group, C_group, T₀, T₀₂, c_1, I_one]; name=r.name)
 end
 
 
@@ -57,8 +52,6 @@ The activity of multiple species is the product of their activities
 as shown in Table 2 of Fountoukis and Nenes (2007).
 """
 speciesactivity(activities::ModelingToolkit.AbstractSystem, s::AbstractVector) = reduce(*, speciesactivity.((activities,), s))
-
-
 
 # NOTE: Assuming that H_group and C_group are zero when they are left out of Table 2.
 reactions = [
@@ -90,8 +83,6 @@ reactions = [
     Rxn(NH4HSO4s, NH4HSO4_aqs, 1.383e0, u"mol^2/kg_water^2", -2.87, 15.83, :rxn26)
     Rxn(NH43HSO42s, NH43HSO42_aqs, 2.972e1, u"mol^5/kg_water^5", -5.19, 54.40, :rxn27)
 ]
-
-
 
 """
 Return a vector of the Species that are products or reactants in the given reactions.

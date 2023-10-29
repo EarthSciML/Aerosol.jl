@@ -22,7 +22,7 @@ vars(g::Gas) = [g.p]
 # All SO4 immediately goes to aerosol phase as per Section 3.3 (item 1) of Fountoukis and Nenes (2007), so we don't include it here.
 all_gases = []
 all_Gases = []
-for (s, v) ∈ [:HNO3 => 1e-20, :HCl => 1e-20, :NH3 => 1e-20]
+for (s, v) ∈ [:HNO3 => 1e-8, :HCl => 1e-8, :NH3 => 1e-8]
     varname = Symbol(s, "_g")
     gasname = Symbol(s, "g")
     description = "Gasous $s"
