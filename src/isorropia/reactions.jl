@@ -14,22 +14,63 @@ struct Rxn
     name
 end
 
+@constants tinyconc = 1e-12 [unit = u"mol/m_air^3", description = "Tiny concentration"]
+@constants tinypress = 1e-12 [unit = u"atm", description = "Tiny concentration"]
+
+""" Return whether the given concentration(s) are significantly greater than zero. """
+present(s::Gas) = s.p > tinypress
+present(s::Ion) = s.m > tinyconc
+present(s::Solid) = s.m > tinyconc
+present(s::SaltLike) = min(s.cation.m > tinyconc, s.anion.m > tinyconc) > 0
+present(v::AbstractVector) = min(present.(v)...) > 0
+present(_::H2O) = true
+
 """
 Create an equation system for this reaction based on the information in 
 Equation 5 and Table 2 of Fountoukis and Nenes (2007).
+
+Rather than setting up for nonlinear rootfinding as is done in the original paper,
+we create equations for a mass-action based solution where mass is moved between 
+the product and reactant species based on different between the current ratio and 
+the equilibrium ratio.
 """
-function rxn_sys(r::Rxn, activities::ModelingToolkit.AbstractSystem)
+function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem)
+    ap = speciesactivity(activities, r.product)
+    ar = speciesactivity(activities, r.reactant)
+    pv, ps = terms(r.product) # Product variables and stoichiometry coefficients
+    rv, rs = terms(r.reactant) # Reactant variables and stoichiometry coefficients
+    Dt = Differential(t)
     @constants T₀ = 293.15 [unit = u"K", description = "Standard temperature"]
     # These are the variables from Fountoukis and Nenes (2007) Table 2
     @constants K⁰ = r.K⁰ [unit = r.K⁰units, description = "Equilibrium constant at 298.15 K"]
     @constants H_group = r.hgroup [description = "ΔH⁰ / (R * T₀) (unitless)"]
     @constants C_group = r.cgroup [description = "ΔC⁰ₚ / R (unitless)"]
-    @variables K_eq [unit = r.K⁰units, description = "Equilibrium constant"]
-    NonlinearSystem([
+    @variables K_eq(t) [unit = r.K⁰units, description = "Equilibrium constant"]
+    @variables rawrate(t) [unit = r.K⁰units, description = "Pseudo reaction rate"]
+    @variables rate(t) [unit = r.K⁰units, description = "Normalized Pseudo reaction rate"]
+    @constants rateconst = 1 [unit = r.K⁰units, description = "Rate constant"]
+    @constants zerorate = 0 [unit = r.K⁰units, description = "Rate constant"]
+    
+    rate_rhs = clamp(rawrate, -rateconst, rateconst) # Clip the mass transfer rate to avoid stiffness in the overall system.
+    # Products or reactants can only be consumed if their concentration is significantly greater than zero.
+    rate_rhs = ifelse(present(r.reactant), rate_rhs, max(rate_rhs, zerorate))
+    rate_rhs = ifelse(present(r.product), rate_rhs, min(rate_rhs, zerorate))
+    
+    sys = ODESystem([
         # Equation 5: Equilibrium constant
         K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
-        K_eq ~ speciesactivity(activities, r.product) / speciesactivity(activities, r.reactant)
-    ], [K_eq], [K⁰, H_group, C_group, T₀, T₀₂, c_1, I_one]; name=r.name)
+        rawrate ~ (ap/ar - K_eq)
+        rate ~ rate_rhs
+    ], t, [K_eq, rawrate, rate], []; name=r.name)
+
+    # Equations to move toward equilibrium
+    ode_eqs = Dict()
+    for (v, s, sign) ∈ zip(vcat(pv, rv), vcat(ps, rs), vcat(fill(-1, length(pv)), fill(1, length(rv))))
+            x = Symbol(r.name, :conv_, Symbolics.tosymbol(v, escape=false))
+            conv = only(@constants $x=1 [unit = ModelingToolkit.get_unit(v/rate/t), description = "Unit onversion factor"])
+            ode_eqs[Dt(v)] = sign * sys.rate * s * conv
+    end
+    sys, ode_eqs
 end
 
 
@@ -53,36 +94,42 @@ as shown in Table 2 of Fountoukis and Nenes (2007).
 """
 speciesactivity(activities::ModelingToolkit.AbstractSystem, s::AbstractVector) = reduce(*, speciesactivity.((activities,), s))
 
-# NOTE: Assuming that H_group and C_group are zero when they are left out of Table 2.
-reactions = [
-    Rxn(CaNO32s, CaNO32_aqs, 6.067e5, u"mol^3/kg_water^3", -11.299, 0.0, :rxn1)
-    Rxn(CaCl2s, CaCl2_aqs, 7.974e11, u"mol^3/kg_water^3", -14.087, 0.0, :rxn2)
-    Rxn(CaSO4s, CaSO4_aqs, 4.319e-5, u"mol^2/kg_water^2", 0.0, 0.0, :rxn3)
-    Rxn(K2SO4s, K2SO4_aqs, 1.569e-2, u"mol^3/kg_water^3", -9.589, 45.807, :rxn4)
-    Rxn(KHSO4s, KHSO4_aqs, 24.016, u"mol^2/kg_water^2", -8.423, 17.964, :rxn5)
-    Rxn(KNO3s, KNO3_aqs, 0.872, u"mol^2/kg_water^2", 14.075, 19.388, :rxn6)
-    Rxn(KCls, KCl_aqs, 8.680, u"mol^2/kg_water^2", -6.167, 19.953, :rxn7)
-    Rxn(MgSO4s, MgSO4_aqs, 1.079e5, u"mol^2/kg_water^2", 36.798, 0.0, :rxn8)
-    Rxn(MgNO32s, MgNO32_aqs, 2.507e15, u"mol^3/kg_water^3", -8.754, 0.0, :rxn9)
-    Rxn(MgCl2s, MgCl2_aqs, 9.557e21, u"mol^3/kg_water^3", -1.347, 0.0, :rxn10)
-    Rxn(HSO4_ion, [H_ion, SO4_ion], 1.015e-2, u"mol/kg_water", 8.85, 25.14, :rxn11)
-    Rxn(NH3g, NH3_ion, 5.764e1, u"mol/kg_water/atm", 13.79, -5.39, :rxn12)
-    Rxn([NH3_ion, H2Oaq], [NH4_ion, OH_ion], 1.805e-5, u"mol/kg_water", -1.50, 26.92, :rxn13)
-    Rxn(HNO3g, HNO3_aqs, 2.511e6, u"mol^2/kg_water^2/atm", 29.17, 16.83, :rxn14)
-    Rxn(HNO3g, HNO3_ion, 2.1e5, u"mol/kg_water/atm", 29.17, 16.83, :rxn15)
-    Rxn(HClg, [H_ion, Cl_ion], 1.971e6, u"mol^2/kg_water^2/atm", 30.20, 19.91, :rxn16)
-    Rxn(HClg, HCl_ion, 2.5e3, u"mol/kg_water/atm", 30.20, 19.91, :rxn17)
-    Rxn(H2Oaq, [H_ion, OH_ion], 1.010e-14, u"mol^2/kg_water^2", -22.52, 26.92, :rxn18)
-    Rxn(Na2SO4s, Na2SO4_aqs, 4.799e-1, u"mol^3/kg_water^3", 0.98, 39.75, :rxn19)
-    Rxn(NH42SO4s, NH42SO4_aqs, 1.87e0, u"mol^3/kg_water^3", -2.65, 38.57, :rxn20)
-    Rxn(NH4Cls, [NH3g, HClg], 1.086e-16, u"atm^2", -71.00, 2.40, :rxn21)
-    Rxn(NaNO3s, NaNO3_aqs, 1.197e1, u"mol^2/kg_water^2", -8.22, 16.01, :rxn22)
-    Rxn(NaCls, NaCl_aqs, 3.766e1, u"mol^2/kg_water^2", -1.56, 16.90, :rxn23)
-    Rxn(NaHSO4s, NaHSO4_aqs, 2.413e4, u"mol^2/kg_water^2", 0.79, 14.75, :rxn24)
-    Rxn(NH4NO3s, [NH3g, HNO3g], 4.199e-17, u"atm^2", -74.375, 6.025, :rxn25)
-    Rxn(NH4HSO4s, NH4HSO4_aqs, 1.383e0, u"mol^2/kg_water^2", -2.87, 15.83, :rxn26)
-    Rxn(NH43HSO42s, NH43HSO42_aqs, 2.972e1, u"mol^5/kg_water^5", -5.19, 54.40, :rxn27)
+
+"""
+generate reactions, where slt, g, sld, and i are dictionaries of aqueous salts, gases, solids, and ions, respectively,
+and H2Oaq is water.
+"""
+generate_reactions(slt, g, sld, i, H2Oaq) = [
+    # NOTE: Assuming that H_group and C_group are zero when they are left out of Table 2.
+    Rxn(sld[:CaNO32], slt[:CaNO32], 6.067e5, u"mol^3/kg_water^3", -11.299, 0.0, :rxn1)
+    Rxn(sld[:CaCl2], slt[:CaCl2], 7.974e11, u"mol^3/kg_water^3", -14.087, 0.0, :rxn2)
+    Rxn(sld[:CaSO4], slt[:CaSO4], 4.319e-5, u"mol^2/kg_water^2", 0.0, 0.0, :rxn3)
+    Rxn(sld[:K2SO4], slt[:K2SO4], 1.569e-2, u"mol^3/kg_water^3", -9.589, 45.807, :rxn4)
+    Rxn(sld[:KHSO4], slt[:KHSO4], 24.016, u"mol^2/kg_water^2", -8.423, 17.964, :rxn5)
+    Rxn(sld[:KNO3], slt[:KNO3], 0.872, u"mol^2/kg_water^2", 14.075, 19.388, :rxn6)
+    Rxn(sld[:KCl], slt[:KCl], 8.680, u"mol^2/kg_water^2", -6.167, 19.953, :rxn7)
+    Rxn(sld[:MgSO4], slt[:MgSO4], 1.079e5, u"mol^2/kg_water^2", 36.798, 0.0, :rxn8)
+    Rxn(sld[:MgNO32], slt[:MgNO32], 2.507e15, u"mol^3/kg_water^3", -8.754, 0.0, :rxn9)
+    Rxn(sld[:MgCl2], slt[:MgCl2], 9.557e21, u"mol^3/kg_water^3", -1.347, 0.0, :rxn10)
+    Rxn(i[:HSO4], [i[:H], i[:SO4]], 1.015e-2, u"mol/kg_water", 8.85, 25.14, :rxn11)
+    Rxn(g[:NH3], i[:NH3], 5.764e1, u"mol/kg_water/atm", 13.79, -5.39, :rxn12)
+    Rxn([i[:NH3], H2Oaq], [i[:NH4], i[:OH]], 1.805e-5, u"mol/kg_water", -1.50, 26.92, :rxn13)
+    Rxn(g[:HNO3], slt[:HNO3], 2.511e6, u"mol^2/kg_water^2/atm", 29.17, 16.83, :rxn14)
+    Rxn(g[:HNO3], i[:HNO3], 2.1e5, u"mol/kg_water/atm", 29.17, 16.83, :rxn15)
+    Rxn(g[:HCl], [i[:H], i[:Cl]], 1.971e6, u"mol^2/kg_water^2/atm", 30.20, 19.91, :rxn16)
+    Rxn(g[:HCl], i[:HCl], 2.5e3, u"mol/kg_water/atm", 30.20, 19.91, :rxn17)
+    Rxn(H2Oaq, [i[:H], i[:OH]], 1.010e-14, u"mol^2/kg_water^2", -22.52, 26.92, :rxn18)
+    Rxn(sld[:Na2SO4], slt[:Na2SO4], 4.799e-1, u"mol^3/kg_water^3", 0.98, 39.75, :rxn19)
+    Rxn(sld[:NH42SO4], slt[:NH42SO4], 1.87e0, u"mol^3/kg_water^3", -2.65, 38.57, :rxn20)
+    Rxn(sld[:NH4Cl], [g[:NH3], g[:HCl]], 1.086e-16, u"atm^2", -71.00, 2.40, :rxn21)
+    Rxn(sld[:NaNO3], slt[:NaNO3], 1.197e1, u"mol^2/kg_water^2", -8.22, 16.01, :rxn22)
+    Rxn(sld[:NaCl], slt[:NaCl], 3.766e1, u"mol^2/kg_water^2", -1.56, 16.90, :rxn23)
+    Rxn(sld[:NaHSO4], slt[:NaHSO4], 2.413e4, u"mol^2/kg_water^2", 0.79, 14.75, :rxn24)
+    Rxn(sld[:NH4NO3], [g[:NH3], g[:HNO3]], 4.199e-17, u"atm^2", -74.375, 6.025, :rxn25)
+    Rxn(sld[:NH4HSO4], slt[:NH4HSO4], 1.383e0, u"mol^2/kg_water^2", -2.87, 15.83, :rxn26)
+    Rxn(sld[:NH43HSO42], slt[:NH43HSO42], 2.972e1, u"mol^5/kg_water^5", -5.19, 54.40, :rxn27)
 ]
+
 
 """
 Return a vector of the Species that are products or reactants in the given reactions.

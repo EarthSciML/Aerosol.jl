@@ -1,5 +1,5 @@
 using EarthSciMLBase
-using ModelingToolkit, Catalyst, DifferentialEquations, Unitful
+using ModelingToolkit, DifferentialEquations, Unitful
 using Test
 using Plots
 
@@ -8,64 +8,46 @@ using .ISORROPIA
 
 @variables t [unit = u"s", description = "Time"]
 
-model = Isorropia(t);
+model = Isorropia(t, :all);
 
 sys = structural_simplify(get_mtk(model))
 
 @test all([ModelingToolkit.check_units(eq) for eq in equations(get_mtk(model))])
 
-@unpack Na_aq, SO4_aq, SO4_g, NH3_aq, NH3_g, NO3_aq, Cl_aq, NaCl_s, MgNO32_s, HNO3_g,
-    Ca_aq, K_aq, Mg_aq, H_aq, NH4_aq, HCl_g, K2SO4_s, KNO3_s, CaNO32_s, HNO3_g, HNO3_aq,
-    KHSO4_s, KCl_s, NH4NO3_s, CaSO4_s, CaCl2_s, MgSO4_s, MgCl2_s, NH4HSO4_s,
-    NH42SO4_s, NH43HSO42_s, NH4Cl_s, NaHSO4_s, Na2SO4_s, NaNO3_s, HSO4_aq, HCl_aq,
-    RH, metastable, W, I, T, f_CaNO32, rxn1₊k_rev, rxn1₊T₀,
-    rxn1₊K⁰, rxn1₊H_group, rxn1₊C_group, T₀₂, c_1, I_one = sys
-
-mw = Dict(Na_aq => 22.989769, SO4_aq => 96.0636, SO4_g => 96.0636, NH3_aq => 17.03052, NH3_g => 17.03052,
-    NO3_aq => 62.0049, Cl_aq => 35.453, NaCl_s => 58.44,
-    Ca_aq => 40.078, K_aq => 39.0983, Mg_aq => 24.305, H_aq => 1.00784, NH4_aq => 18.04, HCl_g => 36.46,
-    K2SO4_s => 174.259, KNO3_s => 101.1032, CaNO32_s => 164.1, HNO3_g => 63.01, HNO3_aq => 63.01,
-    KHSO4_s => 136.169, KCl_s => 74.5513, NH4NO3_s => 80.043) # g/mol
-
-# Molecules for checking mass balance
-K_molecs = [(1, K_aq), (1, KHSO4_s), (2, K2SO4_s), (1, KNO3_s), (1, KCl_s)]
-Ca_molecs = [(1, Ca_aq), (1, CaSO4_s), (1, CaNO32_s), (1, CaCl2_s)]
-Mg_molecs = [(1, Mg_aq), (1, MgSO4_s), (1, MgNO32_s), (1, MgCl2_s)]
-NH_molecs = [(1, NH4_aq), (1, NH3_aq), (1, NH3_g), (1, NH4HSO4_s),
-    (2, NH42SO4_s), (3, NH43HSO42_s), (1, NH4Cl_s), (1, NH4NO3_s)]
-Na_molecs = [(1, Na_aq), (1, NaHSO4_s), (2, Na2SO4_s), (1, NaCl_s), (1, NaNO3_s)]
-SO4_molecs = [(1, SO4_aq), (1, HSO4_aq), (1, SO4_g),
-    (1, KHSO4_s), (1, NaHSO4_s), (1, NH4HSO4_s), (1, CaSO4_s), (1, Na2SO4_s), (1, NH42SO4_s),
-    (2, NH43HSO42_s), (1, K2SO4_s), (1, MgSO4_s)]
-NO3_molecs = [(1, NO3_aq), (1, HNO3_aq), (1, HNO3_g), (1, NH4NO3_s), (1, NaNO3_s)]
-Cl_molecs = [(1, Cl_aq), (1, HCl_aq), (1, HCl_g), (1, NH4Cl_s),
-    (1, NaCl_s), (2, CaCl2_s), (1, KCl_s), (2, MgCl2_s)]
-H_molecs = [(1, H_aq), (1, HNO3_g), (1, HCl_g)]
-
-
 defaults = ModelingToolkit.get_defaults(sys)
-u₀ = Dict{Any,Float64}([s => 1.0e-15 for s ∈ states(sys)])
-u₀[CaNO32_s] = 0.8 / 1e6 / mw[CaNO32_s]
-u₀[Ca_aq] = 0.8 / 1e6 / mw[Ca_aq]
-u₀[NO3_aq] = 10.0 / 1e6 / mw[NO3_aq]
+u₀ = Dict{Any,Float64}([s => 1.0e-8 for s ∈ states(sys)])
+#u₀[CaNO32_s] = 0.8 / 1e6 / mw[CaNO32_s]
+#u₀[Ca_aq] = 0.8 / 1e6 / mw[Ca_aq]
+#u₀[NO3_aq] = 10.0 / 1e6 / mw[NO3_aq]
 
 p = Dict{Any,Float64}([p => defaults[p] for p ∈ parameters(sys)])
 p[RH] = 0.30
-prob = ODEProblem(sys, u₀, (0.0, 100.0), p)
+prob = ODEProblem(sys, u₀, (0.0, 3e-8), p)
 # Need low tolerance for mass balance checks to pass.
 @time sol = solve(prob, Rosenbrock23(), abstol=1e-12, reltol=1e-12)
 
-# eq = []
-# for i in eachindex(sol.u)
-#     u = [x => sol[x][i] for x in [I, W, states(sys)...]]
-#     push!(u, T => sol[T])
-#     γ_p = substitute(ModelingToolkit.subs_constants(γ(CaNO32_aqs)), u)
-#     a_r = substitute(ModelingToolkit.subs_constants(activity(CaNO32s)), u)
-#     a_p = substitute(ModelingToolkit.subs_constants(activity(CaNO32_aqs)), u)
-#     keq = sol[rxn1.sys.K_eq][i]
-#     @info :a_p => a_p, :γ_p => γ_p, :Ca_aq => sol[Ca_aq][i], :a_r => a_r, :keq => keq, :ratio => a_p / a_r / keq
-#     push!(eq, a_p / a_r / keq)
-# end
+begin
+    p1 = plot(title="Solids", xscale=:log10)
+    for (n, s) in model.solids
+        plot!(sol.t[2:end], sol[s.m, 2:end], label=string(n))
+    end
+    p2 = plot(title="Aqueous Ions", xscale=:log10)
+    for (n, i) in model.ions
+        plot!(sol.t[2:end], sol[i.m, 2:end], label=string(n))
+    end
+    p3 = plot(title="Gases", xscale=:log10)
+    for (n, g) in model.gases
+        plot!(sol.t[2:end], sol[g.p, 2:end], label=string(n))
+    end
+    p4 = plot(title="Reaction Rates", xscale=:log10)
+    for i ∈ 1:27
+        r = Symbol(:rxn, i)
+        y = eval(:(sol[sys.$r.rate]))
+        plot!(sol.t[2:end], y[2:end], label="$r.rate")
+    end    
+    plot(p1, p2, p3, p4, size=(1000, 800))
+end
+
 
 plot(
     plot(sol[t], sol[f_CaNO32],

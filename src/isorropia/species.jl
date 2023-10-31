@@ -1,7 +1,17 @@
 """
 A species represents a chemical species in the system.
+
+It should have a `terms` method which returns the variable(s) and
+stoichiometry coefficient(s) associated with the species, and 
+a `vars` method which returns only the variable(s) associated with the species.
 """
 abstract type Species end
+
+"Return the combined terms for a vector of species."
+function terms(s::AbstractVector) 
+   tt = terms.(s)
+   vcat([t[1] for t ∈ tt]...), vcat([t[2] for t ∈ tt]...)
+end
 
 # Miscellaneous variables and parameters
 
