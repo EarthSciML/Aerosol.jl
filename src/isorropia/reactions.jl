@@ -14,7 +14,8 @@ struct Rxn
     name
 end
 
-@constants tinyconc = 1e-12 [unit = u"mol/m_air^3", description = "Tiny concentration"]
+
+@constants tinyconc = 1e-11 [unit = u"mol/m_air^3", description = "Tiny concentration"]
 @constants tinypress = 1e-12 [unit = u"atm", description = "Tiny concentration"]
 
 """ Return whether the given concentration(s) are significantly greater than zero. """
@@ -24,6 +25,7 @@ present(s::Solid) = s.m > tinyconc
 present(s::SaltLike) = min(s.cation.m > tinyconc, s.anion.m > tinyconc) > 0
 present(v::AbstractVector) = min(present.(v)...) > 0
 present(_::H2O) = true
+bothabsent(r::Rxn) = max(present(r.reactant), present(r.product)) == 0
 
 """
 Create an equation system for this reaction based on the information in 
@@ -48,27 +50,33 @@ function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem)
     @variables K_eq(t) [unit = r.K⁰units, description = "Equilibrium constant"]
     @variables rawrate(t) [unit = r.K⁰units, description = "Pseudo reaction rate"]
     @variables rate(t) [unit = r.K⁰units, description = "Normalized Pseudo reaction rate"]
-    @constants rateconst = 1 [unit = r.K⁰units, description = "Rate constant"]
-    @constants zerorate = 0 [unit = r.K⁰units, description = "Rate constant"]
-    
-    rate_rhs = clamp(rawrate, -rateconst, rateconst) # Clip the mass transfer rate to avoid stiffness in the overall system.
-    # Products or reactants can only be consumed if their concentration is significantly greater than zero.
-    rate_rhs = ifelse(present(r.reactant), rate_rhs, max(rate_rhs, zerorate))
-    rate_rhs = ifelse(present(r.product), rate_rhs, min(rate_rhs, zerorate))
-    
+    @constants rateconst =  1e-6 [unit = r.K⁰units, description = "Rate constant (chosen to manage stiffness)"]
+    @constants zerorate = 0 [unit = r.K⁰units, description = "Zero rate"]
+    @variables present(t) = 1 [description = "Whether the reactant is present (only used when reactant is a solid)"]
+    @constants unitconc = 1 [unit = u"mol/m_air^3", description = "Unit concentration"]
+    logit(x) = 1 / (1 + exp(-(NaNMath.log10(x/unitconc)+11)*5)) # Solid is not present if its concentration is less than ~1e-11
+
+#    rate_rhs = 
+ #   if (r.reactant isa Solid) 
+  #      rate_rhs = ifelse(present(r.reactant), rate_rhs, max(rate_rhs, zerorate))
+   # end
+
     sys = ODESystem([
-        # Equation 5: Equilibrium constant
-        K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
-        rawrate ~ (ap/ar - K_eq)
-        rate ~ rate_rhs
-    ], t, [K_eq, rawrate, rate], []; name=r.name)
+            # Equation 5: Equilibrium constant
+            K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
+            rawrate ~ (ap / ar - K_eq)
+            # Solids can only be consumed if their concentration is significantly greater than zero.
+            present ~ (r.reactant isa Solid) ? logit(r.reactant.m) : 1
+            # Clip the mass transfer rate to avoid stiffness in the overall system.
+            rate ~ tanh(rawrate / K⁰) * rateconst * present
+        ], t, [K_eq, rawrate, rate, present], []; name=r.name)
 
     # Equations to move toward equilibrium
     ode_eqs = Dict()
     for (v, s, sign) ∈ zip(vcat(pv, rv), vcat(ps, rs), vcat(fill(-1, length(pv)), fill(1, length(rv))))
-            x = Symbol(r.name, :conv_, Symbolics.tosymbol(v, escape=false))
-            conv = only(@constants $x=1 [unit = ModelingToolkit.get_unit(v/rate/t), description = "Unit onversion factor"])
-            ode_eqs[Dt(v)] = sign * sys.rate * s * conv
+        x = Symbol(r.name, :conv_, Symbolics.tosymbol(v, escape=false))
+        conv = only(@constants $x = 1 [unit = ModelingToolkit.get_unit(v / rate / t), description = "Unit onversion factor"])
+        ode_eqs[Dt(v)] = sign * sys.rate * s * conv
     end
     sys, ode_eqs
 end

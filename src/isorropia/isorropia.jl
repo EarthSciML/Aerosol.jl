@@ -1,7 +1,7 @@
 #module ISORROPIA
 using EarthSciMLBase
 using ModelingToolkit, Catalyst, Unitful
-using IfElse
+using IfElse, NaNMath
 
 using Latexify
 using NonlinearSolve
@@ -107,16 +107,17 @@ struct Isorropia <: EarthSciMLODESystem
         active_salts = intersect(active_specs, values(salts))
         active_solids = intersect(active_specs, values(solids))
         active_gases = intersect(active_specs, values(gases))
+        active_ions_including_salts = unique(vcat(active_ions, [[s.cation, s.anion] for s ∈ active_salts]...))
 
         water = Water(t, active_salts)
-        ionic_strength = IonicStrength(t, active_ions, water.W)
+        ionic_strength = IonicStrength(t, active_ions_including_salts, water.W)
         salt_act = Activities(t, active_salts, (s) -> activity(s, active_salts, salts, ionic_strength.I, water.W))
         ion_act = Activities(t, active_ions, (i) -> activity(i, water.W))
         gas_act = Activities(t, active_gases, activity)
         solid_act = Activities(t, active_solids, activity)
         water_act = Activities(t, [H2Oaq], activity)
         activities = extend(water_act, extend(salt_act, extend(ion_act, extend(gas_act, solid_act))))
-        balance = Balance(t, T, active_specs, active_ions, active_salts, gases, solids, ions)
+        balance = Balance(t, T, active_specs, active_ions_including_salts, gases, solids, ions)
         #out = Output(active_vars)
 
         # Convert dictionaries of equations into an equation system by combining equations with the same left-hand side.
@@ -138,7 +139,14 @@ struct Isorropia <: EarthSciMLODESystem
         sys = ODESystem(eqs, t, active_vars, [T, RH]; systems=syss, name=name)
         sys = extend(sys, extend(ionic_strength, extend(activities, extend(balance, water))))
         #sys = sub_trans(sys, active_vars)
-        new(sys, mw, molecs, solids, gases, ions, salts)
+        
+        filter_present(d, l) = filter(((k,v),) -> !isnothing(findfirst(isequal(v), l)), d)
+        new(sys, mw, molecs, 
+            filter_present(solids, active_solids), 
+            filter_present(gases, active_gases), 
+            filter_present(ions, active_ions_including_salts), 
+            filter_present(salts, active_salts),
+        )
     end
 end
 
@@ -146,10 +154,10 @@ end
 Create a system of equations for mass and charge balances, 
 where slt, g, sld, and i are dictionaries of gases, solids, and ions, respectively.
 """
-function Balance(t, T, active_specs, active_ions, active_salts, g, sld, i)
+function Balance(t, T, active_specs, active_ions_including_salts, g, sld, i)
     # Return the given species, or zero if the species is not in the list.
-    all_active_ions = unique(vcat(active_ions, [[s.cation, s.anion] for s ∈ active_salts]...))
-    is(v) = ((v ∈ active_specs) || (v ∈ all_active_ions)) ? only(vars(v)) : 0
+    
+    is(v) = ((v ∈ active_specs) || (v ∈ active_ions_including_salts)) ? only(vars(v)) : 0
 
     @constants R = 8.31446261815324 [unit = u"m_air^3*Pa/K/mol", description = "Universal gas constant"]
     @constants PaPerAtm = 101325 [unit = u"Pa/atm", description = "Number of pascals per atmosphere"]
@@ -184,12 +192,12 @@ function Balance(t, T, active_specs, active_ions, active_salts, g, sld, i)
         totalCl ~ is(i[:Cl]) + is(i[:HCl]) + atm2mol(is(g[:HCl])) +
                   is(sld[:NH4Cl]) + is(sld[:NaCl]) + 2is(sld[:CaCl2]) + is(sld[:KCl]) + 2is(sld[:MgCl2])
         # Charge balance
-        charge ~ sum([i.m * i.z for i in all_active_ions])
+        charge ~ sum([i.m * i.z for i in active_ions_including_salts])
 
         # Ratios from Section 3.1
-        R_1 ~ (totalNH + totalCa + totalK + totalMg + totalNa) / totalSO4
-        R_2 ~ (totalCa + totalK + totalMg + totalNa) / totalSO4
-        R_3 ~ (totalCa + totalK + totalMg) / totalSO4
+        # R_1 ~ (totalNH + totalCa + totalK + totalMg + totalNa) / totalSO4
+        # R_2 ~ (totalCa + totalK + totalMg + totalNa) / totalSO4
+        # R_3 ~ (totalCa + totalK + totalMg) / totalSO4
     ]
     nonzeros = [e.rhs !== 0 for e ∈ eqs]
     ODESystem(eqs[nonzeros], t, vs, [], name=:balance)
