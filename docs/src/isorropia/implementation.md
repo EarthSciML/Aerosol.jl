@@ -38,6 +38,37 @@ to be effectively instantaneous.
 However, to make the equilibrium occur more quickly or slowly we could simply multiply both forward and reverse reaction 
 rate constants by a constant factor.
 
+## Solid phase activity
+
+The paper states that the "activity of each solid phase species is assumed to be unity." (Fountoukis and Nenes, 2007)
+However, this cannot be strictly true because if the activity were always equal to one the solid would continue to be consumed 
+even after its concentration had reached zero, resulting in negative concentrations which are physically impossible.
+Instead, the activity of a solid should be a function which asymptotes to one for normal concentrations and 
+asymptotes to infinity for concentrations approaching zero, with an inflection point at a concentration where the solid
+would not considered to be meaningfully present in the aerosol.
+Given that an atmospherically relevant aerosol concentration is typically ≥1 ``\textrm{\mu g m^{-3}}``, we choose an inflection
+concentration of 0.01 ``\mu g m^{-3}``, which is around 1e-10 mol ``\textrm{m^{-3}}`` for sulfate.
+Smooth function forms are preferable for numerical stability so we therefore choose the equation:
+
+```math
+a(c) = 10^{-(log10(c)+10)}+1
+```
+
+where ``a`` is activity, ``c`` is concentration, and ``+10`` represents the exponent of our threshold value. The resulting curve looks like this:
+
+```@example
+using Plots
+c = 10 .^(-13:0.1:-7)
+a(c) = 10^-(log10(c)+10)+1
+plot(c, a.(c), yscale=:log10, xscale=:log10, title="Solid Activity Coefficient",
+    xlabel="Concentration (μg/m³)", ylabel="Activity Coefficient", label=:none)
+
+
+logit(x) = 1 / (1 + exp(-(log10(x)+11)*5))
+x = 10 .^ (-13:0.1:-10)
+plot(x, logit.(x), xscale=:log10)
+```
+
 ## Deliquescence
 
 When interpolation between MRDH and DRH relative humidities as in Foungtoukis and Nenes (2007), we take ``\mathrm{RH_{wet}}``
