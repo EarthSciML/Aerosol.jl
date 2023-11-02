@@ -194,8 +194,7 @@ Calculate the activity coefficient of a salt based on Section 2.2
 in Fountoukis and Nenes (2007).
 """
 activity(s::Salt, active_salts, sss, I, W) = (s.cation.m / W)^s.ν_cation * (s.anion.m / W)^s.ν_anion *
-                                        min(exp(logγ₁₂(s, active_salts, sss, I, W)), 1)^(s.ν_cation + s.ν_anion)
-# TODO(CT): Clipping γ to 1. This may cause problems.
+                                        exp(logγ₁₂(s, active_salts, sss, I, W))^(s.ν_cation + s.ν_anion)
 
 ### Special cases
 
@@ -206,8 +205,8 @@ The activity of a SpecialSalt is the same as for a salt except that it has
 a special activity coefficient as defined in the footnotes to Table 4.
 """
 activity(s::SpecialSalt, active_salts, sss, I, W) = (s.cation.m / W)^s.ν_cation * (s.anion.m / W)^s.ν_anion *
-                                               min(γ₁₂(s, active_salts, sss, I, W), 1)^(s.ν_cation + s.ν_anion)
-# TODO(CT): Clipping γ to 1. This may cause problems.
+                                               γ₁₂(s, active_salts, sss, I, W)^(s.ν_cation + s.ν_anion)
+
 logγ⁰₁₂(s::SpecialSalt, I) = abs(s.cation.z) * abs(s.anion.z) * log(Γ⁰(0, I) / I_one) # Assuming q = 0 for SpecialSalts
 
 # Generate special salt structs for multiple dispatch.

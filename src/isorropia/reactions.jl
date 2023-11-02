@@ -52,14 +52,30 @@ function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem)
     @variables rate(t) [unit = r.K⁰units, description = "Normalized Pseudo reaction rate"]
     @constants rateconst =  1e-6 [unit = r.K⁰units, description = "Rate constant (chosen to manage stiffness)"]
     @constants zerorate = 0 [unit = r.K⁰units, description = "Zero rate"]
+    @constants ratediv = 0.01 [unit = r.K⁰units, description = "Rate division factor (chosen to manage stiffness)"]
     @variables present(t) = 1 [description = "Whether the reactant is present (only used when reactant is a solid)"]
     @constants unitconc = 1 [unit = u"mol/m_air^3", description = "Unit concentration"]
     logit(x) = 1 / (1 + exp(-(NaNMath.log10(x/unitconc)+11)*5)) # Solid is not present if its concentration is less than ~1e-11
+    units = ([],[])
+    for (i, vv) in enumerate((pv, rv))
+        for v in vv
+            x = Symbol(:unit, Symbolics.tosymbol(v, escape=false))
+            push!(units[i], only(@constants $x = .01 [unit = ModelingToolkit.get_unit(v/ratediv), description = "Unit conversion factor"]))
+        end
+    end
 
 #    rate_rhs = 
  #   if (r.reactant isa Solid) 
   #      rate_rhs = ifelse(present(r.reactant), rate_rhs, max(rate_rhs, zerorate))
    # end
+   @info pv./units[1]
+   @info rv./units[2]
+    @info min([rateconst; (rv./units[2])]...)
+    @info ifelse(rawrate > zerorate, min([rateconst; pv./units[1]]...), -min([rateconst; rv./units[2]]...))
+    @info ModelingToolkit.get_unit.([rateconst; pv./units[1]])
+    @info ModelingToolkit.get_unit.([rateconst; rv./units[2]])
+    #@assert ModelingToolkit.check_units(rate~ifelse(rawrate > zerorate, min([rateconst; pv./units[1]]...), -rateconst))
+
 
     sys = ODESystem([
             # Equation 5: Equilibrium constant
@@ -68,7 +84,8 @@ function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem)
             # Solids can only be consumed if their concentration is significantly greater than zero.
             present ~ (r.reactant isa Solid) ? logit(r.reactant.m) : 1
             # Clip the mass transfer rate to avoid stiffness in the overall system.
-            rate ~ tanh(rawrate / K⁰) * rateconst * present
+            #rate ~ tanh(rawrate / K⁰) * rateconst * present
+            rate ~ ifelse(rawrate > zerorate, min([rateconst; pv./units[1]]...), -min([rateconst; rv./units[2]]...))
         ], t, [K_eq, rawrate, rate, present], []; name=r.name)
 
     # Equations to move toward equilibrium
