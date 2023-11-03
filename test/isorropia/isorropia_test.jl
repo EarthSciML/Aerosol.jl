@@ -20,7 +20,7 @@ model = Isorropia(t, rxn_nums);
 sys = structural_simplify(get_mtk(model))
 
 defaults = ModelingToolkit.get_defaults(sys)
-u₀ = Dict{Any,Float64}([s => 1.0e-8 for s ∈ states(sys)])
+u₀ = Dict{Any,Float64}([s => 1.0e-7 for s ∈ states(sys)])
 #u₀[sys.NH3_g] = 0.8 / 1e6 / mw[CaNO32_s]
 #u₀[CaNO32_s] = 0.8 / 1e6 / mw[CaNO32_s]
 #u₀[Ca_aq] = 0.8 / 1e6 / mw[Ca_aq]
@@ -28,14 +28,14 @@ u₀ = Dict{Any,Float64}([s => 1.0e-8 for s ∈ states(sys)])
 
 p = Dict{Any,Float64}([p => defaults[p] for p ∈ parameters(sys)])
 #p[RH] = 0.30
-prob = ODEProblem(sys, u₀, (0.0, 1), p)
+prob = ODEProblem(sys, u₀, (0.0, 30), p)
 # Need low tolerance for mass balance checks to pass.
-@time sol = solve(prob, Vern6(), abstol=1e-13, reltol=1e-13; 
+@time sol = solve(prob, Vern6(), abstol=1e-12, reltol=1e-12;
     callback = PositiveDomain(zeros(length(prob.u0))))
 
 let
     xscale = :none
-    yscale = :log10
+    yscale = :none
     p1 = plot(title="Solids", xscale=xscale, yscale=yscale, legend=:outertopright)
     for (n, s) in model.solids
         plot!(sol.t[2:end], sol[s.m, 2:end], label=string(n))

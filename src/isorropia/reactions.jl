@@ -53,7 +53,7 @@ function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem)
     @variables rawrate(t) [unit = r.K⁰units, description = "Pseudo reaction rate"]
     @variables rate2(t) [unit = r.K⁰units, description = "Normalized Pseudo reaction rate"]
     @variables rate(t) [unit = r.K⁰units, description = "Normalized Pseudo reaction rate"]
-    @constants rateconst =  1e-7 [unit = r.K⁰units, description = "Rate constant (chosen to manage stiffness)"]
+    @constants rateconst =  1e-9 [unit = r.K⁰units, description = "Rate constant (chosen to manage stiffness)"]
     @constants zerorate = 0 [unit = r.K⁰units, description = "Zero rate"]
     @constants ratediv = 0.01 [unit = r.K⁰units, description = "Rate division factor (chosen to manage stiffness)"]
     @variables present(t) = 1 [description = "Whether the reactant is present (only used when reactant is a solid)"]
@@ -73,13 +73,11 @@ function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem)
             K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
             a_ratio ~ ap / ar
             rawrate ~ (a_ratio - K_eq) * ratefactor
-            # Solids can only be consumed if their concentration is significantly greater than zero.
-            present ~ (r.reactant isa Solid) ? logit(r.reactant.m) : 1
-            # Clip the mass transfer rate to avoid stiffness in the overall system.
-            #rate ~ tanh(rawrate / K⁰) * rateconst * present
-            rate2 ~ ifelse(rawrate > zerorate, min([rawrate; rateconst; pv./units[1]]...), -min([-rawrate; rateconst; rv./units[2]]...))
-            rate ~ ifelse(abs(rate2) > rateconst * 1e-2, rate2, zerorate)
-        ], t, [K_eq, rawrate, a_ratio, rate, rate2, present], []; name=r.name)
+            # Decay reaction rate to zero as the reactant approaches zero concentration.
+            rate2 ~ ifelse(rawrate > zerorate, min([rawrate; pv./units[1]]...), -min([-rawrate; rv./units[2]]...))
+            # Clip tiny reaction rates.
+            rate ~ ifelse(abs(rate2) > rateconst, rate2, zerorate)
+        ], t, [K_eq, a_ratio, rawrate, rate2, rate], []; name=r.name)
 
     # Equations to move toward equilibrium
     ode_eqs = Dict()
