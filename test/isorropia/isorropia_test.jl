@@ -10,8 +10,8 @@ include(joinpath(@__DIR__, "../../src/isorropia/isorropia.jl"))
 
 #model = Isorropia(t, :all);
 #rxn_nums = [10, 11, 12]
-#rxn_nums = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
-rxn_nums = [10, 16]
+rxn_nums = 1:27
+#rxn_nums = [10, 11, 12, 13, 21, 26, 27]
 #rxn_nums = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 #rxn_nums = 1:27
 # rxn 11, 13?
@@ -20,7 +20,7 @@ model = Isorropia(t, rxn_nums);
 sys = structural_simplify(get_mtk(model))
 
 defaults = ModelingToolkit.get_defaults(sys)
-u₀ = Dict{Any,Float64}([s => rand()* 1.0e-8 for s ∈ states(sys)])
+u₀ = Dict{Any,Float64}([s => 1.0e-8 for s ∈ states(sys)])
 #u₀[sys.NH3_g] = 0.8 / 1e6 / mw[CaNO32_s]
 #u₀[CaNO32_s] = 0.8 / 1e6 / mw[CaNO32_s]
 #u₀[Ca_aq] = 0.8 / 1e6 / mw[Ca_aq]
@@ -28,19 +28,19 @@ u₀ = Dict{Any,Float64}([s => rand()* 1.0e-8 for s ∈ states(sys)])
 
 p = Dict{Any,Float64}([p => defaults[p] for p ∈ parameters(sys)])
 #p[RH] = 0.30
-prob = ODEProblem(sys, u₀, (0.0, 0.5), p)
+prob = ODEProblem(sys, u₀, (0.0, 1), p)
 # Need low tolerance for mass balance checks to pass.
-@time sol = solve(prob, Vern6(), abstol=1e-16, reltol=1e-16; 
+@time sol = solve(prob, Vern6(), abstol=1e-13, reltol=1e-13; 
     callback = PositiveDomain(zeros(length(prob.u0))))
 
 let
     xscale = :none
-    yscale = :none
-    p1 = plot(title="Solids", xscale=xscale, yscale=yscale, legend=:bottomright)
+    yscale = :log10
+    p1 = plot(title="Solids", xscale=xscale, yscale=yscale, legend=:outertopright)
     for (n, s) in model.solids
         plot!(sol.t[2:end], sol[s.m, 2:end], label=string(n))
     end
-    p2 = plot(title="Aqueous Ions", xscale=xscale, yscale=yscale, legend=:bottomright)
+    p2 = plot(title="Aqueous Ions", xscale=xscale, yscale=yscale, legend=:outertopright)
     for (n, i) in model.ions
         plot!(sol.t[2:end], sol[i.m, 2:end], label=string(n))
     end
@@ -70,19 +70,15 @@ end
 # #    end,
 # )
 
-xx = 54
 let
     ps = []
-    for i ∈ [10]
+    for i ∈ rxn_nums
         r = Symbol(:rxn, i)
         y = eval(:(sol[sys.$r.rate]))
-        p = plot(sol.t[end-xx:end], y[end-xx:end], label="$r.rate")
-        # y = eval(:(sol[sys.$r.a_ratio]))
-        # p = plot!(sol.t[end-xx:end], y[end-xx:end], label="$r.a_ratio", legend=:outertopright)
-        # y = eval(:(sol[sys.$r.K_eq]))
-        # p = plot!(sol.t[end-xx:end], y[end-xx:end], label="$r.K_eq")
-        y = eval(:(sol[sys.$r.rawrate]))
-        p = plot(sol.t[end-xx:end], y[end-xx:end], alpha=1, label="$r.rawrate")
+        p = scatter(sol.t, y, label="$r.rate")
+        #y = eval(:(sol[sys.$r.rawrate]))
+        #@info y[1:10]
+        #p = plot!(sol.t, y, alpha=1, label="$r.rawrate")
         push!(ps, p)
     end
     plot(ps..., size=(1400, 600))
