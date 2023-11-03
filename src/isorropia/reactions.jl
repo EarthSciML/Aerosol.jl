@@ -11,6 +11,7 @@ struct Rxn
     K⁰units
     hgroup::Number
     cgroup::Number
+    ratefactor::Number
     name
 end
 
@@ -48,13 +49,16 @@ function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem)
     @constants H_group = r.hgroup [description = "ΔH⁰ / (R * T₀) (unitless)"]
     @constants C_group = r.cgroup [description = "ΔC⁰ₚ / R (unitless)"]
     @variables K_eq(t) [unit = r.K⁰units, description = "Equilibrium constant"]
+    @variables a_ratio(t) [unit = r.K⁰units, description = "Equilibrium constant"]
     @variables rawrate(t) [unit = r.K⁰units, description = "Pseudo reaction rate"]
+    @variables rate2(t) [unit = r.K⁰units, description = "Normalized Pseudo reaction rate"]
     @variables rate(t) [unit = r.K⁰units, description = "Normalized Pseudo reaction rate"]
-    @constants rateconst =  1e-6 [unit = r.K⁰units, description = "Rate constant (chosen to manage stiffness)"]
+    @constants rateconst =  1e-7 [unit = r.K⁰units, description = "Rate constant (chosen to manage stiffness)"]
     @constants zerorate = 0 [unit = r.K⁰units, description = "Zero rate"]
     @constants ratediv = 0.01 [unit = r.K⁰units, description = "Rate division factor (chosen to manage stiffness)"]
     @variables present(t) = 1 [description = "Whether the reactant is present (only used when reactant is a solid)"]
     @constants unitconc = 1 [unit = u"mol/m_air^3", description = "Unit concentration"]
+    @constants ratefactor = r.ratefactor [description = "Reaction-specific rate factor to manage stiffness"]
     logit(x) = 1 / (1 + exp(-(NaNMath.log10(x/unitconc)+11)*5)) # Solid is not present if its concentration is less than ~1e-11
     units = ([],[])
     for (i, vv) in enumerate((pv, rv))
@@ -64,29 +68,18 @@ function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem)
         end
     end
 
-#    rate_rhs = 
- #   if (r.reactant isa Solid) 
-  #      rate_rhs = ifelse(present(r.reactant), rate_rhs, max(rate_rhs, zerorate))
-   # end
-   @info pv./units[1]
-   @info rv./units[2]
-    @info min([rateconst; (rv./units[2])]...)
-    @info ifelse(rawrate > zerorate, min([rateconst; pv./units[1]]...), -min([rateconst; rv./units[2]]...))
-    @info ModelingToolkit.get_unit.([rateconst; pv./units[1]])
-    @info ModelingToolkit.get_unit.([rateconst; rv./units[2]])
-    #@assert ModelingToolkit.check_units(rate~ifelse(rawrate > zerorate, min([rateconst; pv./units[1]]...), -rateconst))
-
-
     sys = ODESystem([
             # Equation 5: Equilibrium constant
             K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
-            rawrate ~ (ap / ar - K_eq)
+            a_ratio ~ ap / ar
+            rawrate ~ (a_ratio - K_eq) * ratefactor
             # Solids can only be consumed if their concentration is significantly greater than zero.
             present ~ (r.reactant isa Solid) ? logit(r.reactant.m) : 1
             # Clip the mass transfer rate to avoid stiffness in the overall system.
             #rate ~ tanh(rawrate / K⁰) * rateconst * present
-            rate ~ ifelse(rawrate > zerorate, min([rateconst; pv./units[1]]...), -min([rateconst; rv./units[2]]...))
-        ], t, [K_eq, rawrate, rate, present], []; name=r.name)
+            rate2 ~ ifelse(rawrate > zerorate, min([rawrate; rateconst; pv./units[1]]...), -min([-rawrate; rateconst; rv./units[2]]...))
+            rate ~ ifelse(abs(rate2) > rateconst * 1e-2, rate2, zerorate)
+        ], t, [K_eq, rawrate, a_ratio, rate, rate2, present], []; name=r.name)
 
     # Equations to move toward equilibrium
     ode_eqs = Dict()
@@ -126,33 +119,33 @@ and H2Oaq is water.
 """
 generate_reactions(slt, g, sld, i, H2Oaq) = [
     # NOTE: Assuming that H_group and C_group are zero when they are left out of Table 2.
-    Rxn(sld[:CaNO32], slt[:CaNO32], 6.067e5, u"mol^3/kg_water^3", -11.299, 0.0, :rxn1)
-    Rxn(sld[:CaCl2], slt[:CaCl2], 7.974e11, u"mol^3/kg_water^3", -14.087, 0.0, :rxn2)
-    Rxn(sld[:CaSO4], slt[:CaSO4], 4.319e-5, u"mol^2/kg_water^2", 0.0, 0.0, :rxn3)
-    Rxn(sld[:K2SO4], slt[:K2SO4], 1.569e-2, u"mol^3/kg_water^3", -9.589, 45.807, :rxn4)
-    Rxn(sld[:KHSO4], slt[:KHSO4], 24.016, u"mol^2/kg_water^2", -8.423, 17.964, :rxn5)
-    Rxn(sld[:KNO3], slt[:KNO3], 0.872, u"mol^2/kg_water^2", 14.075, 19.388, :rxn6)
-    Rxn(sld[:KCl], slt[:KCl], 8.680, u"mol^2/kg_water^2", -6.167, 19.953, :rxn7)
-    Rxn(sld[:MgSO4], slt[:MgSO4], 1.079e5, u"mol^2/kg_water^2", 36.798, 0.0, :rxn8)
-    Rxn(sld[:MgNO32], slt[:MgNO32], 2.507e15, u"mol^3/kg_water^3", -8.754, 0.0, :rxn9)
-    Rxn(sld[:MgCl2], slt[:MgCl2], 9.557e21, u"mol^3/kg_water^3", -1.347, 0.0, :rxn10)
-    Rxn(i[:HSO4], [i[:H], i[:SO4]], 1.015e-2, u"mol/kg_water", 8.85, 25.14, :rxn11)
-    Rxn(g[:NH3], i[:NH3], 5.764e1, u"mol/kg_water/atm", 13.79, -5.39, :rxn12)
-    Rxn([i[:NH3], H2Oaq], [i[:NH4], i[:OH]], 1.805e-5, u"mol/kg_water", -1.50, 26.92, :rxn13)
-    Rxn(g[:HNO3], slt[:HNO3], 2.511e6, u"mol^2/kg_water^2/atm", 29.17, 16.83, :rxn14)
-    Rxn(g[:HNO3], i[:HNO3], 2.1e5, u"mol/kg_water/atm", 29.17, 16.83, :rxn15)
-    Rxn(g[:HCl], [i[:H], i[:Cl]], 1.971e6, u"mol^2/kg_water^2/atm", 30.20, 19.91, :rxn16)
-    Rxn(g[:HCl], i[:HCl], 2.5e3, u"mol/kg_water/atm", 30.20, 19.91, :rxn17)
-    Rxn(H2Oaq, [i[:H], i[:OH]], 1.010e-14, u"mol^2/kg_water^2", -22.52, 26.92, :rxn18)
-    Rxn(sld[:Na2SO4], slt[:Na2SO4], 4.799e-1, u"mol^3/kg_water^3", 0.98, 39.75, :rxn19)
-    Rxn(sld[:NH42SO4], slt[:NH42SO4], 1.87e0, u"mol^3/kg_water^3", -2.65, 38.57, :rxn20)
-    Rxn(sld[:NH4Cl], [g[:NH3], g[:HCl]], 1.086e-16, u"atm^2", -71.00, 2.40, :rxn21)
-    Rxn(sld[:NaNO3], slt[:NaNO3], 1.197e1, u"mol^2/kg_water^2", -8.22, 16.01, :rxn22)
-    Rxn(sld[:NaCl], slt[:NaCl], 3.766e1, u"mol^2/kg_water^2", -1.56, 16.90, :rxn23)
-    Rxn(sld[:NaHSO4], slt[:NaHSO4], 2.413e4, u"mol^2/kg_water^2", 0.79, 14.75, :rxn24)
-    Rxn(sld[:NH4NO3], [g[:NH3], g[:HNO3]], 4.199e-17, u"atm^2", -74.375, 6.025, :rxn25)
-    Rxn(sld[:NH4HSO4], slt[:NH4HSO4], 1.383e0, u"mol^2/kg_water^2", -2.87, 15.83, :rxn26)
-    Rxn(sld[:NH43HSO42], slt[:NH43HSO42], 2.972e1, u"mol^5/kg_water^5", -5.19, 54.40, :rxn27)
+    Rxn(sld[:CaNO32], slt[:CaNO32], 6.067e5, u"mol^3/kg_water^3", -11.299, 0.0, 1, :rxn1)
+    Rxn(sld[:CaCl2], slt[:CaCl2], 7.974e11, u"mol^3/kg_water^3", -14.087, 0.0, 1, :rxn2)
+    Rxn(sld[:CaSO4], slt[:CaSO4], 4.319e-5, u"mol^2/kg_water^2", 0.0, 0.0, 1, :rxn3)
+    Rxn(sld[:K2SO4], slt[:K2SO4], 1.569e-2, u"mol^3/kg_water^3", -9.589, 45.807, 1, :rxn4)
+    Rxn(sld[:KHSO4], slt[:KHSO4], 24.016, u"mol^2/kg_water^2", -8.423, 17.964, 1, :rxn5)
+    Rxn(sld[:KNO3], slt[:KNO3], 0.872, u"mol^2/kg_water^2", 14.075, 19.388, 1, :rxn6)
+    Rxn(sld[:KCl], slt[:KCl], 8.680, u"mol^2/kg_water^2", -6.167, 19.953, 1, :rxn7)
+    Rxn(sld[:MgSO4], slt[:MgSO4], 1.079e5, u"mol^2/kg_water^2", 36.798, 0.0, 1, :rxn8)
+    Rxn(sld[:MgNO32], slt[:MgNO32], 2.507e15, u"mol^3/kg_water^3", -8.754, 0.0, 1, :rxn9)
+    Rxn(sld[:MgCl2], slt[:MgCl2], 9.557e21, u"mol^3/kg_water^3", -1.347, 0.0, 1e-24, :rxn10)
+    Rxn(i[:HSO4], [i[:H], i[:SO4]], 1.015e-2, u"mol/kg_water", 8.85, 25.14, 1e-6, :rxn11)
+    Rxn(g[:NH3], i[:NH3], 5.764e1, u"mol/kg_water/atm", 13.79, -5.39, 1, :rxn12)
+    Rxn([i[:NH3], H2Oaq], [i[:NH4], i[:OH]], 1.805e-5, u"mol/kg_water", -1.50, 26.92, 1e-2, :rxn13)
+    Rxn(g[:HNO3], slt[:HNO3], 2.511e6, u"mol^2/kg_water^2/atm", 29.17, 16.83, 1e-13, :rxn14)
+    Rxn(g[:HNO3], i[:HNO3], 2.1e5, u"mol/kg_water/atm", 29.17, 16.83, 1e-13, :rxn15)
+    Rxn(g[:HCl], [i[:H], i[:Cl]], 1.971e6, u"mol^2/kg_water^2/atm", 30.20, 19.91, 1e-15, :rxn16)
+    Rxn(g[:HCl], i[:HCl], 2.5e3, u"mol/kg_water/atm", 30.20, 19.91, 1, :rxn17)
+    Rxn(H2Oaq, [i[:H], i[:OH]], 1.010e-14, u"mol^2/kg_water^2", -22.52, 26.92, 1, :rxn18)
+    Rxn(sld[:Na2SO4], slt[:Na2SO4], 4.799e-1, u"mol^3/kg_water^3", 0.98, 39.75, 1, :rxn19)
+    Rxn(sld[:NH42SO4], slt[:NH42SO4], 1.87e0, u"mol^3/kg_water^3", -2.65, 38.57, 1, :rxn20)
+    Rxn(sld[:NH4Cl], [g[:NH3], g[:HCl]], 1.086e-16, u"atm^2", -71.00, 2.40, 1, :rxn21)
+    Rxn(sld[:NaNO3], slt[:NaNO3], 1.197e1, u"mol^2/kg_water^2", -8.22, 16.01, 1, :rxn22)
+    Rxn(sld[:NaCl], slt[:NaCl], 3.766e1, u"mol^2/kg_water^2", -1.56, 16.90, 1, :rxn23)
+    Rxn(sld[:NaHSO4], slt[:NaHSO4], 2.413e4, u"mol^2/kg_water^2", 0.79, 14.75, 1, :rxn24)
+    Rxn(sld[:NH4NO3], [g[:NH3], g[:HNO3]], 4.199e-17, u"atm^2", -74.375, 6.025, 1, :rxn25)
+    Rxn(sld[:NH4HSO4], slt[:NH4HSO4], 1.383e0, u"mol^2/kg_water^2", -2.87, 15.83, 1, :rxn26)
+    Rxn(sld[:NH43HSO42], slt[:NH43HSO42], 2.972e1, u"mol^5/kg_water^5", -5.19, 54.40, 1, :rxn27)
 ]
 
 

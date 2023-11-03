@@ -10,38 +10,37 @@ include(joinpath(@__DIR__, "../../src/isorropia/isorropia.jl"))
 
 #model = Isorropia(t, :all);
 #rxn_nums = [10, 11, 12]
-#rxn_nums = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
-#rxn_nums = [2, 7, 10]
-rxn_nums = [18, 19]
+#rxn_nums = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+rxn_nums = [10, 16]
+#rxn_nums = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 #rxn_nums = 1:27
+# rxn 11, 13?
 model = Isorropia(t, rxn_nums);
 
 sys = structural_simplify(get_mtk(model))
 
-@test all([ModelingToolkit.check_units(eq) for eq in equations(get_mtk(model))])
-
 defaults = ModelingToolkit.get_defaults(sys)
-u₀ = Dict{Any,Float64}([s => 1.0e-8 for s ∈ states(sys)])
+u₀ = Dict{Any,Float64}([s => rand()* 1.0e-8 for s ∈ states(sys)])
 #u₀[sys.NH3_g] = 0.8 / 1e6 / mw[CaNO32_s]
 #u₀[CaNO32_s] = 0.8 / 1e6 / mw[CaNO32_s]
 #u₀[Ca_aq] = 0.8 / 1e6 / mw[Ca_aq]
 #u₀[NO3_aq] = 10.0 / 1e6 / mw[NO3_aq]
 
 p = Dict{Any,Float64}([p => defaults[p] for p ∈ parameters(sys)])
-p[RH] = 0.30
-prob = ODEProblem(sys, u₀, (0.0, 0.1), p)
-cb = PositiveDomain(zeros(length(prob.u0)))
+#p[RH] = 0.30
+prob = ODEProblem(sys, u₀, (0.0, 0.5), p)
 # Need low tolerance for mass balance checks to pass.
-@time sol = solve(prob, Rosenbrock23(), abstol=1e-16, reltol=1e-16; callback = cb)
+@time sol = solve(prob, Vern6(), abstol=1e-16, reltol=1e-16; 
+    callback = PositiveDomain(zeros(length(prob.u0))))
 
 let
     xscale = :none
     yscale = :none
-    p1 = plot(title="Solids", xscale=xscale, yscale=yscale, legend=:bottomleft)
+    p1 = plot(title="Solids", xscale=xscale, yscale=yscale, legend=:bottomright)
     for (n, s) in model.solids
         plot!(sol.t[2:end], sol[s.m, 2:end], label=string(n))
     end
-    p2 = plot(title="Aqueous Ions", xscale=xscale, yscale=yscale, legend=:bottomleft)
+    p2 = plot(title="Aqueous Ions", xscale=xscale, yscale=yscale, legend=:bottomright)
     for (n, i) in model.ions
         plot!(sol.t[2:end], sol[i.m, 2:end], label=string(n))
     end
@@ -55,32 +54,70 @@ let
         r = Symbol(:rxn, i)
         y = eval(:(sol[sys.$r.rate]))
         plot!(sol.t[2:end], y[2:end], label="$r.rate")
+        #y2 = eval(:(sol[sys.$r.rawrate]))
+        #plot!(sol.t[2:end], y2[2:end], label="$r.rawrate")
     end
     plot(p1, p2, p3, p4, size=(1000, 800))
 end
 
+# plot(
+#     plot(sol.t, sol[sys.a_K2SO4_aqs], label=sys.a_K2SO4_aqs, yscale=:log10),
+#     plot(sol.t, sol[sys.a_K2SO4_s], label=sys.a_K2SO4_s, yscale=:log10),
+# #    begin
+# #        plot(sol.t, sol[sys.a_NH3_aq] ./ sol[sys.a_NH3_g], label="a ratio")
+#         #plot!(sol.t, sol[sys.a_CaNO32_s] ./ sol[sys.a_CaNO32_aqs], yscale=:log10)
+#         plot(sol.t, sol[sys.rxn4.K_eq], label="K_eq", yscale=:log10),
+# #    end,
+# )
+
+xx = 54
+let
+    ps = []
+    for i ∈ [10]
+        r = Symbol(:rxn, i)
+        y = eval(:(sol[sys.$r.rate]))
+        p = plot(sol.t[end-xx:end], y[end-xx:end], label="$r.rate")
+        # y = eval(:(sol[sys.$r.a_ratio]))
+        # p = plot!(sol.t[end-xx:end], y[end-xx:end], label="$r.a_ratio", legend=:outertopright)
+        # y = eval(:(sol[sys.$r.K_eq]))
+        # p = plot!(sol.t[end-xx:end], y[end-xx:end], label="$r.K_eq")
+        y = eval(:(sol[sys.$r.rawrate]))
+        p = plot(sol.t[end-xx:end], y[end-xx:end], alpha=1, label="$r.rawrate")
+        push!(ps, p)
+    end
+    plot(ps..., size=(1400, 600))
+end
+
+sol[sys.rxn16.rawrate]
+plot(sol.t, sol[sys.rxn10.rawrate])
+
 plot(
-    plot(sol.t, sol[sys.a_NH3_g], label="NH3_g"),
-    plot(sol.t, sol[sys.a_NH3_aq], label="NH3_aq"),
     begin
-        plot(sol.t, sol[sys.a_NH3_aq] ./ sol[sys.a_NH3_g], label="a ratio")
+        plot(sol.t, sol[sys.a_K2SO4_aqs] ./ sol[sys.a_K2SO4_s], label="a ratio", ylim=(0.01, 0.02))
         #plot!(sol.t, sol[sys.a_CaNO32_s] ./ sol[sys.a_CaNO32_aqs], yscale=:log10)
-        plot!(sol.t, sol[sys.rxn12.K_eq], label="K_eq")
+        plot!(sol.t, sol[sys.rxn4.K_eq], label="K_eq")
     end,
+    plot(sol.t, sol[sys.a_K2SO4_aqs] ./ sol[sys.a_K2SO4_s] - sol[sys.rxn4.K_eq], 
+        label="a ratio - k_eq", ylim=(-1e-6, 1e-6)),
+    scatter(sol.t, sol[sys.rxn4.rate], label="rate", ylim=(-2e-6, 2e-6)),
+    plot(sol.t, sol[sys.rxn4.rawrate], label="rawrate"),
 )
-plot(
-    begin
-        plot(sol.t, sol[sys.a_NH3_aq] ./ sol[sys.a_NH3_g], label="a ratio", ylim=(-200, 100))
-        #plot!(sol.t, sol[sys.a_CaNO32_s] ./ sol[sys.a_CaNO32_aqs], yscale=:log10)
-        plot!(sol.t, sol[sys.rxn12.K_eq], label="K_eq")
-    end,
-    plot(sol.t, sol[sys.a_NH3_aq] ./ sol[sys.a_NH3_g] - sol[sys.rxn12.K_eq], 
-        label="a ratio - k_eq", ylim=(-200, 100)),
-    plot(sol.t, sol[sys.rxn12.rate], label="rate", ylim=(-2e-6, 2e-6)),
-    plot(sol.t, sol[sys.rxn12.rawrate], label="rawrate", ylim=(-200, 100)),
-)
+
+
+
+
+
 yy = sol[sys.a_NH3_aq] ./ sol[sys.a_NH3_g] - sol[sys.rxn12.K_eq]
 
+softplus(x) = log(1 + exp(x-10))
+trans(x) = sign(x) * softplus(abs(x))
+plot(
+scatter(sol.t, sol[sys.rxn4.rawrate], label="rawrate"),
+plot(sol.t, trans.(sol[sys.rxn4.rawrate]), label="rawrate"),
+)
+xx = 
+
+@test all([ModelingToolkit.check_units(eq) for eq in equations(get_mtk(model))])
 
 
 let
