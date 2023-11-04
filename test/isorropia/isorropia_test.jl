@@ -28,7 +28,7 @@ u₀ = Dict{Any,Float64}([s => 1.0e-7 for s ∈ states(sys)])
 
 p = Dict{Any,Float64}([p => defaults[p] for p ∈ parameters(sys)])
 #p[RH] = 0.30
-prob = ODEProblem(sys, u₀, (0.0, 30), p)
+prob = ODEProblem(sys, u₀, (0.0, 5), p)
 # Need low tolerance for mass balance checks to pass.
 @time sol = solve(prob, Vern6(), abstol=1e-12, reltol=1e-12;
     callback = PositiveDomain(zeros(length(prob.u0))))
@@ -70,12 +70,13 @@ end
 # #    end,
 # )
 
+xx = 100000
 let
     ps = []
     for i ∈ rxn_nums
         r = Symbol(:rxn, i)
-        y = eval(:(sol[sys.$r.rate]))
-        p = scatter(sol.t, y, label="$r.rate")
+        y = eval(:(sol[sys.$r.rate, end-xx:end]))
+        p = plot(sol.t[end-xx:end], y, label="$r.rate")
         #y = eval(:(sol[sys.$r.rawrate]))
         #@info y[1:10]
         #p = plot!(sol.t, y, alpha=1, label="$r.rawrate")
