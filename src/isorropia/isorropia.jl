@@ -1,7 +1,7 @@
-#module ISORROPIA
+module ISORROPIA
 using EarthSciMLBase
 using ModelingToolkit, Catalyst, Unitful
-using IfElse, NaNMath
+using IfElse
 
 using Latexify
 using NonlinearSolve
@@ -21,9 +21,12 @@ include("reactions.jl")
 # Molar mass in g/mol
 mw = Dict(:Na_aq => 22.989769, :SO4_aq => 96.0636, :NH3_aq => 17.03052, :NH3_g => 17.03052,
     :NO3_aq => 62.0049, :Cl_aq => 35.453, :NaCl_s => 58.44,
-    :Ca_aq => 40.078, :K_aq => 39.0983, :Mg_aq => 24.305, :H_aq => 1.00784, :NH4_aq => 18.04, :HCl_g => 36.46,
+    :Ca_aq => 40.078, :K_aq => 39.0983, :Mg_aq => 24.305, :H_aq => 1.00784, :NH4_aq => 18.04, :HCl_g => 36.46, :HCl_aq => 36.46,
     :K2SO4_s => :174.259, :KNO3_s => 101.1032, :CaNO32_s => 164.1, :HNO3_g => 63.01, :HNO3_aq => 63.01,
-    :KHSO4_s => 136.169, :KCl_s => 74.5513, :NH4NO3_s => 80.043)
+    :KHSO4_s => 136.169, :KCl_s => 74.5513, :NH4NO3_s => 80.043, :NaNO3_s => 84.9947, :NH4Cl_s => 53.491,
+    :CaCl2_s => 110.98, :MgCl2_s => 95.211, :NH4HSO4_s => 115.11, :NH42SO4_s => 132.14, :NH43HSO42_s => 247.2485,
+    :MgSO4_s => 120.3676, :MgNO32_s => 148.3148, :CaSO4_s => 136.1406, :HSO4_aq => 97.0705, :NaHSO4_s => 120.0603,
+    :Na2SO4_s => 142.0421)
 
 # Species containing each molecule for mass balancing
 molecs = Dict(
@@ -69,7 +72,7 @@ struct Isorropia <: EarthSciMLODESystem
     "Dictionary of salts"
     salts
 
-    Isorropia(t, name=:isorropia) = Isorropia(t, :all; name=name) 
+    Isorropia(t; name=:isorropia) = Isorropia(t, :all; name=name) 
     function Isorropia(t, type::Symbol; name=:isorropia)
         sys_types = Dict(
             :all => 1:27, # Use all 27 reactions
@@ -197,4 +200,6 @@ function Output(active_vars)
              (n, v) ∈ zip(names, active_vars)]
     eqs = [ov ~ v for (ov, v) ∈ zip(ovars, active_vars)]
     NonlinearSystem(eqs, ovars, [], name=:out)
+end
+
 end
