@@ -16,18 +16,6 @@ struct Rxn
 end
 
 
-@constants tinyconc = 1e-11 [unit = u"mol/m_air^3", description = "Tiny concentration"]
-@constants tinypress = 1e-12 [unit = u"atm", description = "Tiny concentration"]
-
-""" Return whether the given concentration(s) are significantly greater than zero. """
-present(s::Gas) = s.p > tinypress
-present(s::Ion) = s.m > tinyconc
-present(s::Solid) = s.m > tinyconc
-present(s::SaltLike) = min(s.cation.m > tinyconc, s.anion.m > tinyconc) > 0
-present(v::AbstractVector) = min(present.(v)...) > 0
-present(_::H2O) = true
-bothabsent(r::Rxn) = max(present(r.reactant), present(r.product)) == 0
-
 """
 Create an equation system for this reaction based on the information in 
 Equation 5 and Table 2 of Fountoukis and Nenes (2007).
@@ -36,8 +24,12 @@ Rather than setting up for nonlinear rootfinding as is done in the original pape
 we create equations for a mass-action based solution where mass is moved between 
 the product and reactant species based on different between the current ratio and 
 the equilibrium ratio.
+
+`activities` should be a system of equations for the activities of the species in this reaction
+and `f_del` should be a dictionary of variables representing deliquescence fractions for 
+
 """
-function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem)
+function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem, f_del)
     ap = speciesactivity(activities, r.product)
     ar = speciesactivity(activities, r.reactant)
     pv, ps = terms(r.product) # Product variables and stoichiometry coefficients
@@ -55,17 +47,18 @@ function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem)
     @variables rate(t) [unit = r.K⁰units, description = "Normalized Pseudo reaction rate"]
     @constants rateconst =  1e-9 [unit = r.K⁰units, description = "Rate constant (chosen to manage stiffness)"]
     @constants zerorate = 0 [unit = r.K⁰units, description = "Zero rate"]
-    @constants ratediv = 0.01 [unit = r.K⁰units, description = "Rate division factor (chosen to manage stiffness)"]
     @variables present(t) = 1 [description = "Whether the reactant is present (only used when reactant is a solid)"]
     @constants unitconc = 1 [unit = u"mol/m_air^3", description = "Unit concentration"]
     @constants ratefactor = r.ratefactor [description = "Reaction-specific rate factor to manage stiffness"]
-    logit(x) = 1 / (1 + exp(-(NaNMath.log10(x/unitconc)+11)*5)) # Solid is not present if its concentration is less than ~1e-11
     units = ([],[])
     for (i, vv) in enumerate((pv, rv))
         for v in vv
             x = Symbol(:unit, Symbolics.tosymbol(v, escape=false))
-            push!(units[i], only(@constants $x = .01 [unit = ModelingToolkit.get_unit(v/ratediv), description = "Unit conversion factor"]))
+            push!(units[i], only(@constants $x = .01 [unit = ModelingToolkit.get_unit(v/rateconst), description = "Unit conversion factor"]))
         end
+    end
+    if (typeof(r.product) <: SaltLike) && (r.reactant isa Solid) # Deliquescence
+        ar *= f_del[r.product]
     end
 
     sys = ODESystem([

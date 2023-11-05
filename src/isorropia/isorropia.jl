@@ -12,25 +12,11 @@ export Isorropia
 include("units.jl")
 include("species.jl")
 include("aqueous.jl")
-#include("deliquescence.jl")
+include("deliquescence.jl")
 include("solid.jl")
 include("gas.jl")
 include("water.jl")
 include("reactions.jl")
-
-"Function to transform variables to avoid negative concentrations."
-trans(x) = abs(x)
-
-"""
-Substitute in transformed concentrations to avoid negative values, where 
-`sys` is an equation system and `active_vars` is a vector of variables
-to be substituted.
-"""
-function sub_trans(sys::ModelingToolkit.ODESystem, active_vars::AbstractVector)
-    trans_subs = [v => trans(v) for v ∈ active_vars]
-    subbed_eqs = substitute(equations(sys), Dict(trans_subs)) # Type 1 reactions (R_1 < 1.0)
-    ODESystem(subbed_eqs, ModelingToolkit.get_iv(sys), states(sys), parameters(sys); name=nameof(sys))
-end
 
 # Molar mass in g/mol
 mw = Dict(:Na_aq => 22.989769, :SO4_aq => 96.0636, :NH3_aq => 17.03052, :NH3_g => 17.03052,
@@ -118,13 +104,14 @@ struct Isorropia <: EarthSciMLODESystem
         water_act = Activities(t, [H2Oaq], activity)
         activities = extend(water_act, extend(salt_act, extend(ion_act, extend(gas_act, solid_act))))
         balance = Balance(t, T, active_specs, active_ions_including_salts, gases, solids, ions)
+        del, f_del = deliquescence(t, RH, active_salts, salts, ions)
         #out = Output(active_vars)
 
         # Convert dictionaries of equations into an equation system by combining equations with the same left-hand side.
         eq_dict = Dict()
         syss = []
         for rx ∈ rxns
-            sys, ode_eqs_dict = rxn_sys(rx, t, activities)
+            sys, ode_eqs_dict = rxn_sys(rx, t, activities, f_del)
             push!(syss, sys)
             for lhs ∈ keys(ode_eqs_dict)
                 if lhs in keys(eq_dict)
@@ -136,9 +123,8 @@ struct Isorropia <: EarthSciMLODESystem
         end
         eqs = [lhs ~ rhs for (lhs, rhs) ∈ pairs(eq_dict)]
 
-        sys = ODESystem(eqs, t, active_vars, [T, RH]; systems=syss, name=name)
+        sys = ODESystem(eqs, t, active_vars, [T, RH]; systems=[syss; del], name=name)
         sys = extend(sys, extend(ionic_strength, extend(activities, extend(balance, water))))
-        #sys = sub_trans(sys, active_vars)
         
         filter_present(d, l) = filter(((k,v),) -> !isnothing(findfirst(isequal(v), l)), d)
         new(sys, mw, molecs, 
@@ -156,7 +142,6 @@ where slt, g, sld, and i are dictionaries of gases, solids, and ions, respective
 """
 function Balance(t, T, active_specs, active_ions_including_salts, g, sld, i)
     # Return the given species, or zero if the species is not in the list.
-    
     is(v) = ((v ∈ active_specs) || (v ∈ active_ions_including_salts)) ? only(vars(v)) : 0
 
     @constants R = 8.31446261815324 [unit = u"m_air^3*Pa/K/mol", description = "Universal gas constant"]
@@ -210,7 +195,6 @@ function Output(active_vars)
     names = Symbolics.tosymbol.(active_vars, escape=false)
     ovars = [only(@variables $(n) [unit = ModelingToolkit.get_unit(v), description = "Output for $n"]) for
              (n, v) ∈ zip(names, active_vars)]
-    # This ends up with a double transform (e.g. ||v||), but is necessary to avoid cancelling.
-    eqs = [ov ~ trans(v) for (ov, v) ∈ zip(ovars, active_vars)]
+    eqs = [ov ~ v for (ov, v) ∈ zip(ovars, active_vars)]
     NonlinearSystem(eqs, ovars, [], name=:out)
 end
