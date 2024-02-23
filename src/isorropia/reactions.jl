@@ -26,8 +26,8 @@ the product and reactant species based on different between the current ratio an
 the equilibrium ratio.
 
 `activities` should be a system of equations for the activities of the species in this reaction
-and `f_del` should be a dictionary of variables representing deliquescence fractions for 
-
+and `f_del` should be a dictionary of variables representing deliquescence fractions for each
+species.
 """
 function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem, f_del)
     ap = speciesactivity(activities, r.product)
@@ -57,9 +57,9 @@ function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem, f_del)
             push!(units[i], only(@constants $x = .01 [unit = ModelingToolkit.get_unit(v/rateconst), description = "Unit conversion factor"]))
         end
     end
-    if (typeof(r.product) <: SaltLike) && (r.reactant isa Solid) # Deliquescence
-        ar *= f_del[r.product]
-    end
+    #if (typeof(r.product) <: SaltLike) && (r.reactant isa Solid) # Deliquescence
+    #    ar *= f_del[r.product]
+    #end
 
     sys = ODESystem([
             # Equation 5: Equilibrium constant
@@ -76,7 +76,7 @@ function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem, f_del)
     ode_eqs = Dict()
     for (v, s, sign) ∈ zip(vcat(pv, rv), vcat(ps, rs), vcat(fill(-1, length(pv)), fill(1, length(rv))))
         x = Symbol(r.name, :conv_, Symbolics.tosymbol(v, escape=false))
-        conv = only(@constants $x = 1 [unit = ModelingToolkit.get_unit(v / rate / t), description = "Unit onversion factor"])
+        conv = only(@constants $x = 1 [unit = ModelingToolkit.get_unit(v / rate / t), description = "Unit conversion factor"])
         ode_eqs[Dt(v)] = sign * sys.rate * s * conv
     end
     sys, ode_eqs

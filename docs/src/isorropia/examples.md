@@ -52,7 +52,7 @@ function plot_rh_sweep(RHs, u₀, sols, plotvars)
     ylabel="H2O (ug/m3)", xlabel="Relative humidity (%)", label=:none)
     ps = []
     for v in plotvars
-        push!(ps, plot(RHs, [sols[i][v][end] * 1e6 * mw[Symbolics.tosymbol(v, escape=false)] for i ∈ 1:length(RHs)],
+        push!(ps, plot(RHs, [sols[i][v][end] * 1e6 * model.mw[Symbolics.tosymbol(v, escape=false)] for i ∈ 1:length(RHs)],
             ylabel="$v (ug/m3)", xlabel="Relative humidity (%)", label=:none))
     end
     plot(p1, ps...)
@@ -165,7 +165,7 @@ p1 = plot(RHs, [sols1[i][sys.W][end] * 1e9 for i ∈ 1:length(RHs)], ylim=(0, 50
     ylabel="H2O (ug/m3)", xlabel="Relative humidity (%)", label="Stable")
 plot!(p1, RHs, [sols2[i][sys.W][end] * 1e9 for i ∈ 1:length(RHs)], ylim=(0, 50), label="Metastable")
 p = plot(RHs, [sols1[i][sys.K_aq][end] * 1e6 * model.mw[:K_aq] for i ∈ 1:length(RHs)],
-    ylabel="$v (ug/m3)", xlabel="Relative humidity (%)", label="Stable")
+    ylabel="K_aq (ug/m3)", xlabel="Relative humidity (%)", label="Stable")
 plot!(p, RHs, [sols2[i][sys.K_aq][end] * 1e6 * model.mw[:K_aq] for i ∈ 1:length(RHs)], label="Metastable")
 plot(p1, p, size=(600, 300))
 ```

@@ -1,12 +1,3 @@
-using EarthSciMLBase
-using ModelingToolkit, DifferentialEquations, Unitful
-using Test
-using Plots
-
-include(joinpath(@__DIR__, "../../src/isorropia/isorropia.jl"))
-#using .ISORROPIA
-
-@variables t [unit = u"s", description = "Time"]
 
 #model = Isorropia(t, :all);
 #rxn_nums = [10, 11, 12]
