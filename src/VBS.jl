@@ -14,7 +14,6 @@ function VBS(Ci)
     @parameters T_unit = 1 [unit = u"K"]
     @variables Ci_star[1:8] [description = "saturation concentrations"]
 
-    #Ci = [2.5, 1.8, 4.0, 4.0, 5.8, 4.8, 6.3, 8.0]
     Ci_star_standard = [0.01,0.1,1,10,100,1000,10000,100000] #[description = "standard saturation concentrations"]
     @parameters C_OA_unit = 1 [unit = u"m^3/μg", description = "make C_OA unitless"]
     @variables C_OA [unit = u"μg/(m^3)", description = "organic compound in aerosol phase"]
