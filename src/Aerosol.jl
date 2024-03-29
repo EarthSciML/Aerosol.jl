@@ -1,9 +1,10 @@
 module Aerosol
 
-using Reexport
+#using Reexport
 
-include("isorropia/isorropia.jl")
-@reexport using .ISORROPIA
-@reexport using .ISORROPIA.MyUnits
+include("VBS.jl")
+# include("isorropia/isorropia.jl")
+# @reexport using .ISORROPIA
+# @reexport using .ISORROPIA.MyUnits
 
 end
