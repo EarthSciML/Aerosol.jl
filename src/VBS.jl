@@ -10,6 +10,7 @@ function calc_Ci_star(T, Ci_star_standard)
 end
 @register_symbolic calc_Ci_star(T, Ci_star_standard)
 
+# The function create a nonlinear system with input Ci (the organic compound concentration in all phases)
 function VBS(Ci)
     @parameters T = 300 [unit = u"K", description = "temperature"]
     @parameters T_unit = 1 [unit = u"K"]
@@ -28,6 +29,7 @@ function VBS(Ci)
     NonlinearSystem(eqs, [C_OA, collect(ξ)...], [T,C_OA_unit,T_unit]; name=:VBS)
 end
 
+# The function create a nonlinear system with input Ci (the organic compound concentration in all phases) and Ci_star_standard(basic set at standard temperatures)
 function VBS(Ci,Ci_star_standard)
     @parameters T = 300 [unit = u"K", description = "temperature"]
     @parameters T_unit = 1 [unit = u"K"]
