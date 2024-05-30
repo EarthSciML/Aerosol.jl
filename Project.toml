@@ -22,7 +22,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 Catalyst = "13"
 DiffEqBase = "6"
 DifferentialEquations = "7"
-EarthSciMLBase = "0.6, 0.8"
+EarthSciMLBase = "0.6, 0.8, 0.10"
 IfElse = "0.1"
 ModelingToolkit = "8"
 OrdinaryDiffEq = "6"
@@ -34,9 +34,8 @@ Unitful = "1"
 julia = "1"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test","NonlinearSolve"]
-
+test = ["Test", "NonlinearSolve"]
