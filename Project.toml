@@ -19,7 +19,7 @@ StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
-Catalyst = "13"
+Catalyst = "13, 14"
 DiffEqBase = "6"
 DifferentialEquations = "7"
 EarthSciMLBase = "0.6, 0.8"
@@ -34,9 +34,8 @@ Unitful = "1"
 julia = "1"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test","NonlinearSolve"]
-
+test = ["Test", "NonlinearSolve"]
