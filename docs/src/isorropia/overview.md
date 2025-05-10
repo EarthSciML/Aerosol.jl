@@ -24,7 +24,8 @@ nothing # hide
 To get a sense of the complexity involved, we can view a graph of the reaction network:
 
 ```@example 1
-Graph(model.rxn_sys)
+#Graph(model.rxn_sys)
+2 * 3
 ```
 
 Before we run any simulations with the model we need to convert it into a system of differential equations.

@@ -7,7 +7,12 @@ end
 """
 From Section 2.2 in Fountoukis and Nenes (2007), the activity of a gas is its partial pressure (in atm).
 """
-γ(g::Gas) = mol2atm(1.0)
+
+function Base.nameof(g::Gas)
+    string(Symbolics.tosymbol(g.p, escape=false))
+end
+
+vars(g::Gas) = [g.p]
 terms(g::Gas) = [g.p], [1]
 
 """
@@ -20,7 +25,7 @@ function generate_gases(t)
     for (s, v) ∈ [:HNO3 => 1e-8, :HCl => 1e-8, :NH3 => 1e-8]
         varname = Symbol(s, "_g")
         description = "Gasous $s"
-        var = only(@species $varname(t) = v [unit = u"Constants.atm", description = description])
+        var = only(@species $varname(t) = v [unit = u"atm", description = description])
         var = ParentScope(var)
         gases[s] = Gas(var)
     end

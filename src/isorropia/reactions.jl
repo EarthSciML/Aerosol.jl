@@ -1,5 +1,3 @@
-@constants tinyrate = 1.e-99 [unit = u"mol/m_air^3/s", description = "Tiny reaction rate constant negative concentrations"]
-
 """
 Define a reaction based on information in Table 2 of Fountoukis and Nenes (2007).
 
@@ -16,7 +14,6 @@ struct Rxn
     ratefactor::Number
     name
 end
-
 
 """
 Create an equation system for this reaction based on the information in
@@ -66,20 +63,27 @@ function rxn_sys(r::Rxn, t, activities::ModelingToolkit.AbstractSystem, f_del)
     sys = ODESystem([
             # Equation 5: Equilibrium constant
             K_eq ~ K⁰ * exp(-H_group * (T₀ / T - 1) - C_group * (1 + log(T₀ / T) - T₀ / T))
-            γ_r ~ γr
-            γ_p ~ γp
-            k_rev ~ min(unit_krev*1e20, krev * unitconv)
-        ], [K_eq, γ_r, γ_p, k_rev], [K⁰, H_group, C_group, k_fwd, fakerate, unitconv, unit_krev, T₀, T₀₂, c_1, I_one]; name=name)
-        new(reactant, product, sys)
+            a_ratio ~ ap / ar
+            rawrate ~ (a_ratio - K_eq) * ratefactor
+            # Decay reaction rate to zero as the reactant approaches zero concentration.
+            rate2 ~ ifelse(rawrate > zerorate, min([rawrate; pv./units[1]]...), -min([-rawrate; rv./units[2]]...))
+            # Clip tiny reaction rates.
+            rate ~ ifelse(abs(rate2) > rateconst, rate2, zerorate)
+        ], t, [K_eq, a_ratio, rawrate, rate2, rate], []; name=r.name)
+
+    # Equations to move toward equilibrium
+    ode_eqs = Dict()
+    for (v, s, sign) ∈ zip(vcat(pv, rv), vcat(ps, rs), vcat(fill(-1, length(pv)), fill(1, length(rv))))
+        x = Symbol(r.name, :conv_, Symbolics.tosymbol(v, escape=false))
+        conv = only(@constants $x = 1 [unit = ModelingToolkit.get_unit(v / rate / t), description = "Unit conversion factor"])
+        ode_eqs[Dt(v)] = sign * sys.rate * s * conv
     end
+    sys, ode_eqs
 end
 
-# Equation 5: Equilibrium constant
-@constants T₀ = 293.15 [unit = u"K", description = "Standard temperature"]
 
 """
-Assemble an equation for a reaction based on Table 2 of Fountoukis and Nenes (2007), where
-the left-hand side is the equilibrium constant and the right-hand side is the activity.
+Return the variable from the given system of activities that represents the activity of the given species.
 """
 function speciesactivity(activities::ModelingToolkit.AbstractSystem, s::Species)
     vars = states(activities)
@@ -92,7 +96,7 @@ function speciesactivity(activities::ModelingToolkit.AbstractSystem, s::Species)
     ParentScope(vars[i])
 end
 
-"""
+""" 
 The activity of multiple species is the product of their activities
 as shown in Table 2 of Fountoukis and Nenes (2007).
 """
