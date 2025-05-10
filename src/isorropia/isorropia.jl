@@ -130,19 +130,19 @@ struct Isorropia <: EarthSciMLODESystem
 
         sys = ODESystem(eqs, t, active_vars, [T, RH]; systems=[syss; del], name=name)
         sys = extend(sys, extend(ionic_strength, extend(activities, extend(balance, water))))
-        
+
         filter_present(d, l) = filter(((k,v),) -> !isnothing(findfirst(isequal(v), l)), d)
-        new(sys, mw, molecs, 
-            filter_present(solids, active_solids), 
-            filter_present(gases, active_gases), 
-            filter_present(ions, active_ions_including_salts), 
+        new(sys, mw, molecs,
+            filter_present(solids, active_solids),
+            filter_present(gases, active_gases),
+            filter_present(ions, active_ions_including_salts),
             filter_present(salts, active_salts),
         )
     end
 end
 
 """
-Create a system of equations for mass and charge balances, 
+Create a system of equations for mass and charge balances,
 where slt, g, sld, and i are dictionaries of gases, solids, and ions, respectively.
 """
 function Balance(t, T, active_specs, active_ions_including_salts, g, sld, i)
@@ -150,7 +150,7 @@ function Balance(t, T, active_specs, active_ions_including_salts, g, sld, i)
     is(v) = ((v ∈ active_specs) || (v ∈ active_ions_including_salts)) ? only(vars(v)) : 0
 
     @constants R = 8.31446261815324 [unit = u"m_air^3*Pa/K/mol", description = "Universal gas constant"]
-    @constants PaPerAtm = 101325 [unit = u"Pa/atm", description = "Number of pascals per atmosphere"]
+    @constants PaPerAtm = 101325 [unit = u"Pa/Constants.atm", description = "Number of pascals per atmosphere"]
     atm2mol(p) = p * PaPerAtm / R / T
 
     @variables totalK(t) = 1.0e-7 [unit = u"mol/m_air^3", description = "Total concentration of K"]
@@ -193,6 +193,7 @@ function Balance(t, T, active_specs, active_ions_including_salts, g, sld, i)
     ODESystem(eqs[nonzeros], t, vs, [], name=:balance)
 end
 
+"""
 Create a system of equations for output variables.
 """
 function Output(active_vars)

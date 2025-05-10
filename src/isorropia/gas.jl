@@ -25,7 +25,7 @@ function generate_gases(t)
     for (s, v) ∈ [:HNO3 => 1e-8, :HCl => 1e-8, :NH3 => 1e-8]
         varname = Symbol(s, "_g")
         description = "Gasous $s"
-        var = only(@species $varname(t) = v [unit = u"atm", description = description])
+        var = only(@species $varname(t) = v [unit = u"Constants.atm", description = description])
         var = ParentScope(var)
         gases[s] = Gas(var)
     end
