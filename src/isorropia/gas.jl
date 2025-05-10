@@ -7,7 +7,6 @@ end
 """
 From Section 2.2 in Fountoukis and Nenes (2007), the activity of a gas is its partial pressure (in atm).
 """
-activity(g::Gas) = g.p
 
 function Base.nameof(g::Gas)
     string(Symbolics.tosymbol(g.p, escape=false))

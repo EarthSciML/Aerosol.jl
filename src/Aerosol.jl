@@ -11,6 +11,5 @@ include("VBS.jl")
 include("elemental_carbon.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA
-@reexport using .ISORROPIA.MyUnits
 
 end

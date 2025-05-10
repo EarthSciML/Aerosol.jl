@@ -1,7 +1,7 @@
 """
 Define a reaction based on information in Table 2 of Fountoukis and Nenes (2007).
 
-The left-hand side of the reaction equation is the equilibrium constant and the right-hand side is the ratio 
+The left-hand side of the reaction equation is the equilibrium constant and the right-hand side is the ratio
 of the product and reactant activities.
 """
 struct Rxn
@@ -15,14 +15,13 @@ struct Rxn
     name
 end
 
-
 """
-Create an equation system for this reaction based on the information in 
+Create an equation system for this reaction based on the information in
 Equation 5 and Table 2 of Fountoukis and Nenes (2007).
 
 Rather than setting up for nonlinear rootfinding as is done in the original paper,
-we create equations for a mass-action based solution where mass is moved between 
-the product and reactant species based on different between the current ratio and 
+we create equations for a mass-action based solution where mass is moved between
+the product and reactant species based on different between the current ratio and
 the equilibrium ratio.
 
 `activities` should be a system of equations for the activities of the species in this reaction
@@ -121,20 +120,20 @@ generate_reactions(slt, g, sld, i, H2Oaq) = [
     Rxn(sld[:MgNO32], slt[:MgNO32], 2.507e15, u"mol^3/kg_water^3", -8.754, 0.0, 1e-22, :rxn9)
     Rxn(sld[:MgCl2], slt[:MgCl2], 9.557e21, u"mol^3/kg_water^3", -1.347, 0.0, 1e-28, :rxn10)
     Rxn(i[:HSO4], [i[:H], i[:SO4]], 1.015e-2, u"mol/kg_water", 8.85, 25.14, 1e-5, :rxn11)
-    Rxn(g[:NH3], i[:NH3], 5.764e1, u"mol/kg_water/atm", 13.79, -5.39, 1e-12, :rxn12)
+    Rxn(g[:NH3], i[:NH3], 5.764e1, u"mol/kg_water/Constants.atm", 13.79, -5.39, 1e-12, :rxn12)
     Rxn([i[:NH3], H2Oaq], [i[:NH4], i[:OH]], 1.805e-5, u"mol/kg_water", -1.50, 26.92, 1e-6, :rxn13)
-    Rxn(g[:HNO3], slt[:HNO3], 2.511e6, u"mol^2/kg_water^2/atm", 29.17, 16.83, 1e-13, :rxn14)
-    Rxn(g[:HNO3], i[:HNO3], 2.1e5, u"mol/kg_water/atm", 29.17, 16.83, 1e-14, :rxn15)
-    Rxn(g[:HCl], [i[:H], i[:Cl]], 1.971e6, u"mol^2/kg_water^2/atm", 30.20, 19.91, 1e-12, :rxn16)
-    Rxn(g[:HCl], i[:HCl], 2.5e3, u"mol/kg_water/atm", 30.20, 19.91, 1e-14, :rxn17)
+    Rxn(g[:HNO3], slt[:HNO3], 2.511e6, u"mol^2/kg_water^2/Constants.atm", 29.17, 16.83, 1e-13, :rxn14)
+    Rxn(g[:HNO3], i[:HNO3], 2.1e5, u"mol/kg_water/Constants.atm", 29.17, 16.83, 1e-14, :rxn15)
+    Rxn(g[:HCl], [i[:H], i[:Cl]], 1.971e6, u"mol^2/kg_water^2/Constants.atm", 30.20, 19.91, 1e-12, :rxn16)
+    Rxn(g[:HCl], i[:HCl], 2.5e3, u"mol/kg_water/Constants.atm", 30.20, 19.91, 1e-14, :rxn17)
     Rxn(H2Oaq, [i[:H], i[:OH]], 1.010e-14, u"mol^2/kg_water^2", -22.52, 26.92, 1e-8, :rxn18)
     Rxn(sld[:Na2SO4], slt[:Na2SO4], 4.799e-1, u"mol^3/kg_water^3", 0.98, 39.75, 1e-6, :rxn19)
     Rxn(sld[:NH42SO4], slt[:NH42SO4], 1.87e0, u"mol^3/kg_water^3", -2.65, 38.57, 1e-7, :rxn20)
-    Rxn(sld[:NH4Cl], [g[:NH3], g[:HCl]], 1.086e-16, u"atm^2", -71.00, 2.40, 1e10, :rxn21)
+    Rxn(sld[:NH4Cl], [g[:NH3], g[:HCl]], 1.086e-16, u"Constants.atm^2", -71.00, 2.40, 1e10, :rxn21)
     Rxn(sld[:NaNO3], slt[:NaNO3], 1.197e1, u"mol^2/kg_water^2", -8.22, 16.01, 1e-8, :rxn22)
     Rxn(sld[:NaCl], slt[:NaCl], 3.766e1, u"mol^2/kg_water^2", -1.56, 16.90, 1e-8, :rxn23)
     Rxn(sld[:NaHSO4], slt[:NaHSO4], 2.413e4, u"mol^2/kg_water^2", 0.79, 14.75, 1e-11, :rxn24)
-    Rxn(sld[:NH4NO3], [g[:NH3], g[:HNO3]], 4.199e-17, u"atm^2", -74.375, 6.025, 5e10, :rxn25)
+    Rxn(sld[:NH4NO3], [g[:NH3], g[:HNO3]], 4.199e-17, u"Constants.atm^2", -74.375, 6.025, 5e10, :rxn25)
     Rxn(sld[:NH4HSO4], slt[:NH4HSO4], 1.383e0, u"mol^2/kg_water^2", -2.87, 15.83, 1e-7, :rxn26)
     Rxn(sld[:NH43HSO42], slt[:NH43HSO42], 2.972e1, u"mol^5/kg_water^5", -5.19, 54.40, 1e-8, :rxn27)
 ]

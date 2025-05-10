@@ -1,6 +1,6 @@
 module ISORROPIA
 using EarthSciMLBase
-using ModelingToolkit, Catalyst, Unitful
+using ModelingToolkit, Catalyst, DynamicQuantities
 using IfElse
 
 using Latexify
@@ -45,6 +45,8 @@ molecs = Dict(
     :H => [(1, :H_aq), (1, :HNO3_g), (1, :HCl_g)],
 )
 
+abstract type EarthSciMLODESystem end
+
 """
     Isorropia(t)
     Isorropia(t, 1:3) # Only include the first three of the 27 reactions.
@@ -72,7 +74,7 @@ struct Isorropia <: EarthSciMLODESystem
     "Dictionary of salts"
     salts
 
-    Isorropia(t; name=:isorropia) = Isorropia(t, :all; name=name) 
+    Isorropia(t; name=:isorropia) = Isorropia(t, :all; name=name)
     function Isorropia(t, type::Symbol; name=:isorropia)
         sys_types = Dict(
             :all => 1:27, # Use all 27 reactions
@@ -191,7 +193,6 @@ function Balance(t, T, active_specs, active_ions_including_salts, g, sld, i)
     ODESystem(eqs[nonzeros], t, vs, [], name=:balance)
 end
 
-"""
 Create a system of equations for output variables.
 """
 function Output(active_vars)
