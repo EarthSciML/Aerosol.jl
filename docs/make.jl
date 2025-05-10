@@ -16,6 +16,7 @@ makedocs(;
     repo = Remotes.GitHub("EarthSciML", "Aerosol.jl"),
     pages=[
         "Home" => "index.md",
+        "VBS" => "VBS.md",
         "Thermodynamics" => [
             "Isorropia" => [
                 "Overview" => "isorropia/overview.md",
