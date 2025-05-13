@@ -6,11 +6,18 @@ active_salts = collect(values(salts))
 
 @test ISORROPIA.drh(salts[:KNO3]) == salts[:KNO3].drh
 
-@test ModelingToolkit.substitute(ModelingToolkit.subs_constants(ISORROPIA.drh(salts[:CaNO32])), ISORROPIA.T => 298.15) == salts[:CaNO32].drh
+@test ModelingToolkit.substitute(
+    ModelingToolkit.subs_constants(ISORROPIA.drh(salts[:CaNO32])),
+    ISORROPIA.T => 298.15
+) == salts[:CaNO32].drh
 
-@test ModelingToolkit.substitute(ModelingToolkit.subs_constants(ISORROPIA.drh(salts[:CaNO32])), ISORROPIA.T => 320) ≈ 0.5513060522349494
+@test ModelingToolkit.substitute(
+    ModelingToolkit.subs_constants(ISORROPIA.drh(salts[:CaNO32])),
+    ISORROPIA.T => 320
+) ≈ 0.5513060522349494
 
-@test ModelingToolkit.get_unit(ISORROPIA.drh(salts[:CaNO32])) isa Unitful.FreeUnits{(),NoDims,nothing}
+@test ModelingToolkit.get_unit(ISORROPIA.drh(salts[:CaNO32])) isa
+      Unitful.FreeUnits{(), NoDims, nothing}
 
 # TODO(CT): Our solution MDRH selection doesn't work in most cases, 
 # because our method of checking which ions are present doesn't 
@@ -18,23 +25,28 @@ active_salts = collect(values(salts))
 # way to do this, perhaps based on the ratios in Fountoukis and 
 # Nenes (2007) Table 3. 
 @testset "solution_mdrh_recurrent" begin
-    for i ∈ eachindex(ISORROPIA.mdrhs)
+    for i in eachindex(ISORROPIA.mdrhs)
         u = Dict()
-        for ion ∈ values(ions)
+        for ion in values(ions)
             u[ion.m] = 1.e-20
             u[ion.m] = 1.e-20
         end
-        for s ∈ ISORROPIA.mdrhs[i][1]
+        for s in ISORROPIA.mdrhs[i][1]
             u[salts[s].cation.m] = 1.e-9
             u[salts[s].anion.m] = 1.e-9
         end
         @testset "$i" begin
-            x = ModelingToolkit.substitute(ModelingToolkit.subs_constants(ISORROPIA.solution_mdrh_recurrent(1, active_salts, salts, ions)), u)
+            x = ModelingToolkit.substitute(
+                ModelingToolkit.subs_constants(
+                    ISORROPIA.solution_mdrh_recurrent(1, active_salts, salts, ions),
+                ),
+                u
+            )
             if i ∈ [3, 5, 9, 10, 11, 12, 13, 14]
                 @test_broken x == ISORROPIA.mdrhs[i][2]
-            else 
+            else
                 @test x == ISORROPIA.mdrhs[i][2]
-            end 
+            end
         end
     end
 end

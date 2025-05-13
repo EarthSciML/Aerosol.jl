@@ -6,7 +6,6 @@ CurrentModule = Aerosol
 
 Documentation for [Aerosol](https://github.com/EarthSciML/Aerosol.jl).
 
-
 ## Installation
 
 To install Aerosol.jl, use the Julia package manager:

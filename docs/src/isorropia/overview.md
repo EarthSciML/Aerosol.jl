@@ -30,40 +30,45 @@ To get a sense of the complexity involved, we can view a graph of the reaction n
 
 Before we run any simulations with the model we need to convert it into a system of differential equations.
 Below, we visualize just the first three of them:
+
 ```@example 1
 sys = structural_simplify(get_mtk(model))
 equations(sys)[1:3]
 ```
+
 ## State variables
+
 This system of equations contains the following state variables, which are the variables that will be solved for:
 
 ```@example 1
-function vars2dataframe(vars; include_defaults=true)
+function vars2dataframe(vars; include_defaults = true)
     df = DataFrame(
-        :Name => [string(Symbolics.tosymbol(v, escape=false)) for v ∈ vars],
-        :Units => [ModelingToolkit.get_unit(v) for v ∈ vars],
-        :Description => [ModelingToolkit.getdescription(v) for v ∈ vars])
+        :Name => [string(Symbolics.tosymbol(v, escape = false)) for v in vars],
+        :Units => [ModelingToolkit.get_unit(v) for v in vars],
+        :Description => [ModelingToolkit.getdescription(v) for v in vars])
     if include_defaults
-        df.Default = [ModelingToolkit.getdefault(v) for v ∈ vars]
+        df.Default = [ModelingToolkit.getdefault(v) for v in vars]
     end
     df
 end
 
 vars2dataframe(states(sys))
 ```
+
 ## Parameters
 
-The model also has the following parameters, which are variables that are not solved for but can vary 
+The model also has the following parameters, which are variables that are not solved for but can vary
 from simulation to simulation (there are are also constants, which we are filtering out):
 
 ```@example 1
 vars2dataframe(parameters(sys)[[!ModelingToolkit.isconstant(p) for p in parameters(sys)]])
 ```
+
 ## Observed variables
 
 Finally, the model has the following observed variables, which are variables that can be solved for by the system
 but are not strictly necessary to specify the system state:
 
 ```@example 1
-vars2dataframe([eq.lhs for eq in observed(sys)]; include_defaults=false)
+vars2dataframe([eq.lhs for eq in observed(sys)]; include_defaults = false)
 ```

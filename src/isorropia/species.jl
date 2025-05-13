@@ -2,23 +2,25 @@
 A species represents a chemical species in the system.
 
 It should have a `terms` method which returns the variable(s) and
-stoichiometry coefficient(s) associated with the species, and 
+stoichiometry coefficient(s) associated with the species, and
 a `vars` method which returns only the variable(s) associated with the species.
 """
 abstract type Species end
 
-"Return the combined terms for a vector of species."
-function terms(s::AbstractVector) 
-   tt = terms.(s)
-   vcat([t[1] for t ∈ tt]...), vcat([t[2] for t ∈ tt]...)
+"""
+Return the combined terms for a vector of species.
+"""
+function terms(s::AbstractVector)
+    tt = terms.(s)
+    vcat([t[1] for t in tt]...), vcat([t[2] for t in tt]...)
 end
 
 # Miscellaneous variables and parameters
 
 @parameters T = 293.15 [unit = u"K", description = "Temperature"]
 @parameters RH = 0.3 [description = "Relative humidity (expressed on a scale from 0 to 1)"] # unitless
-for p ∈ (:T, :RH)
-   eval(:($p = ParentScope($p)))
+for p in (:T, :RH)
+    eval(:($p = ParentScope($p)))
 end
 
 #@constants tiny_conc=1e-20 [unit = u"mol/m_air^3", description = "Tiny concentration to avoid division by zero"]

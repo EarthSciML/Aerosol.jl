@@ -2,14 +2,14 @@
 A gas with the given partial pressure.
 """
 struct Gas <: Species
-    p
+    p::Any
 end
 """
 From Section 2.2 in Fountoukis and Nenes (2007), the activity of a gas is its partial pressure (in atm).
 """
 
 function Base.nameof(g::Gas)
-    string(Symbolics.tosymbol(g.p, escape=false))
+    string(Symbolics.tosymbol(g.p, escape = false))
 end
 
 vars(g::Gas) = [g.p]
@@ -22,10 +22,12 @@ All SO4 immediately goes to aerosol phase as per Section 3.3 (item 1) of Fountou
 """
 function generate_gases(t)
     gases = Dict()
-    for (s, v) ∈ [:HNO3 => 1e-8, :HCl => 1e-8, :NH3 => 1e-8]
+    for (s, v) in [:HNO3 => 1e-8, :HCl => 1e-8, :NH3 => 1e-8]
         varname = Symbol(s, "_g")
         description = "Gasous $s"
-        var = only(@species $varname(t) = v [unit = u"Constants.atm", description = description])
+        var = only(
+            @species $varname(t) = v [unit = u"Constants.atm", description = description]
+        )
         var = ParentScope(var)
         gases[s] = Gas(var)
     end

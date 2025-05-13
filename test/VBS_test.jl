@@ -17,7 +17,7 @@ end
     Ci = [2.5, 1.8, 4.0, 4.0, 5.8, 4.8, 6.3, 8.0]
     ns = VBS(Ci)
     simplens = structural_simplify(ns)
-    @unpack C_OA,T = simplens
+    @unpack C_OA, T = simplens
     guess = [29]
     params = [T=>285]
     prob = NonlinearProblem(simplens, guess, params)
