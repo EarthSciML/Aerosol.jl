@@ -1,7 +1,7 @@
 name = "Aerosol"
 uuid = "8510b696-cc45-4a64-84d0-47f429ca1505"
 authors = ["EarthSciML authors and contributors"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 Catalyst = "479239e8-5488-4da2-87a7-35f2df7eef83"
@@ -34,7 +34,7 @@ DiffEqBase = "6"
 DifferentialEquations = "7"
 DynamicQuantities = "1.4.0"
 EarthSciData = "0.12.6"
-EarthSciMLBase = "0.21"
+EarthSciMLBase = "0.21, 0.22"
 IfElse = "0.1"
 Latexify = "0.16.7"
 ModelingToolkit = "9"
