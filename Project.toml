@@ -15,7 +15,7 @@ EarthSciData = "a293c155-435f-439d-9c11-a083b6b47337"
 EarthSciDataExt = "EarthSciData"
 
 [compat]
-Dates = "1.11.0"
+Dates = "1"
 DynamicQuantities = "1.4.0"
 EarthSciData = "0.14"
 EarthSciMLBase = "0.24"
