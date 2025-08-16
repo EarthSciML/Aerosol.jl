@@ -21,7 +21,7 @@ EarthSciData = "0.14"
 EarthSciMLBase = "0.24"
 ModelingToolkit = "10.4"
 NonlinearSolve = "4.8"
-Reexport = "1"
+Reexport = "1.2"
 TestItemRunner = "1.1.0"
 julia = "1"
 
