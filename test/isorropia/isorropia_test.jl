@@ -215,7 +215,7 @@ plot(
     end
 end
 
-# TOOD(CT): ODEProblem and SteadyStateProblem don't give the same result.
+# TODO(CT): ODEProblem and SteadyStateProblem don't give the same result.
 prob = SteadyStateProblem(sys, u₀, p)
 @time sol_ss = solve(prob, DynamicSS(Rosenbrock23()), abstol = 1e-12, reltol = 1e-12)
 
