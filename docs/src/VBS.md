@@ -95,7 +95,7 @@ end
 
 ## Temperature dependence
 
-Temperature dependece was taken into consideration. A  basis  set  of  saturationconcentrations (ranging from 1 ng to 100 mg at 300 K) changes withtemperature  according  to  the  Clausius  Clapeyron  equation. Let's try reproducing Figure 2:
+Temperature dependence was taken into consideration. A  basis  set  of  saturation concentrations (ranging from 1 ng to 100 mg at 300 K) changes with temperature  according  to  the  Clausius  Clapeyron  equation. Let's try reproducing Figure 2:
 
 ```@example 2
 Ci_t = [0.4, 0.55, 0.7, 1.1, 1.25, 1.45, 1.7, 1.8, 2] # values were read from the original Figure

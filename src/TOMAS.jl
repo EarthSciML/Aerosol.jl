@@ -44,7 +44,7 @@ end
 begin
     # particle density (g cm-3)
     ρ = 1.8
-    # lower limit of particle diamter (cm)
+    # lower limit of particle diameter (cm)
     Dp_lower = []
     # upper limit of particle diameter (cm)
     Dp_upper = []
@@ -64,7 +64,7 @@ begin
 end
 
 begin
-    # diamter bin width (cm)
+    # diameter bin width (cm)
     dDp = []
     sizerange = 0
     for i in 1:length(Dp_lower)
@@ -144,7 +144,7 @@ begin
 end
 
 # coagulation coef K_jk
-function coagcoef(i, j) # (cm^3 s^-1) 
+function coagcoef(i, j) # (cm^3 s^-1)
     if Dp[i] < 10^(-5) && Dp[j] < 10^(-5) # free molecular regime
         # Funchs Form of the Brownian Coagulation Coef
         return 2*pi*(Dp[i]+Dp[j])*(D[i]+D[j])*(
@@ -192,7 +192,7 @@ begin
     @variables f(t)[1:I]
     @variables ψ(t)[1:I]
     # @parameters Kmat
-    # @constants ξ = 1.0625 
+    # @constants ξ = 1.0625
     N = collect(N)
     f = collect(f)
     ψ = collect(ψ)
