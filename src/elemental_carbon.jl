@@ -13,7 +13,7 @@ Default density is from: https://doi.org/10.5194/acp-23-4327-2023
 function ElementalCarbon(; name = :ElementalCarbon)
     params = @parameters begin
         ρ=1.1, [unit = u"kg/m^3", description = "Particle density"]
-        d_p=0.8e-6,[unit = u"m", description = "Particle diameter"]
+        d_p=0.8e-6, [unit = u"m", description = "Particle diameter"]
         T=298.15, [unit = u"K", description = "Temperature"]
         P=101325, [unit = u"Pa", description = "Pressure"]
     end
@@ -36,7 +36,7 @@ function ElementalCarbon(; name = :ElementalCarbon)
         eqs,
         t,
         vars,
-       [params; consts];
+        [params; consts];
         name = name,
         metadata = Dict(CoupleType => ElementalCarbonCoupler)
     )

@@ -148,20 +148,10 @@ end
 @test unitactf(:NH43HSO42) == u"mol^5/kg_water^5"
 
 actf(x) = sub(ISORROPIA.activity(salts[x], active_salts, salts, I.I, W.W))
-want_γ = Any[
-    1.0e-20,
-    0.8460080854008434,
-    0.9372095310924331,
-    1.0345811139028118,
-    0.5384101987210793
-]
-want_activity = Any[
-    3.7499999999999995e-40,
-    0.4473310503522503,
-    2.744880328657807,
-    0.2675895203110956,
-    1.3807544582351838
-]
+want_γ = Any[1.0e-20, 0.8460080854008434, 0.9372095310924331, 1.0345811139028118,
+0.5384101987210793]
+want_activity = Any[3.7499999999999995e-40, 0.4473310503522503, 2.744880328657807,
+0.2675895203110956, 1.3807544582351838]
 for (i, s) in enumerate([:CaSO4, :KHSO4, :NH4HSO4, :NaHSO4, :NH43HSO42])
     @test sub(ISORROPIA.γ₁₂(salts[s], active_salts, salts, I.I, W.W)) ≈ want_γ[i]
     @test actf(s) ≈ want_activity[i]
