@@ -2,21 +2,33 @@ using ModelingToolkit
 using ModelingToolkit: t
 using DynamicQuantities
 
-@mtkmodel Ion begin
+# @connector Ion begin
+#     @parameters begin
+#         z, [description = "Valence (charge) of the ion"]
+#     end
+#     @variables begin
+#         m(t) = 0.0, [description = "Concentration of the ion", unit = u"mol/m^3"]
+#     end
+# end
+
+@connector Ion begin
     @description "An aqueous ion."
+    # @components begin
+    #     c = IonConnector(; m, z)
+    # end
     @parameters begin
-        z, [description = "Valence (charge) of the ion"]
+        z, [description = "Absolute value of the valence (charge) of the ion"]
     end
     @variables begin
         m(t) = 0.0, [description = "Concentration of the ion", unit = u"mol/m^3"]
-        activity(t),
-        [
-            description = "Activity of the ion. The activity coefficient of an ion is assumed to be one (Fountoukis and Nenes (2007), Section 3.3).",
-            unit = u"mol/m^3"]
+        # activity(t),
+        # [
+        #     description = "Activity of the ion. The activity coefficient is assumed to be one (Fountoukis and Nenes (2007), Section 3.3).",
+        #     unit = u"mol/m^3"]
     end
-    @equations begin
-        activity ~ m
-    end
+    # @equations begin
+    #     activity ~ c.m
+    # end
 end
 
 @mtkmodel Salt begin
@@ -24,11 +36,15 @@ end
 An aqueous salt comprised of a cation, an anion, and an activity parameter (q).
 q values are given in Table 4 of Fountoukis and Nenes (2007).
 """
-    @structural_parameters begin
-        cation = Ion(; z)
-        anion = Ion(; z)
+    @components begin
+        cation = Ion()
+        anion = Ion()
     end
     @constants begin
+        # Properties of cation and anion
+        z_cation, [description = "Absolute value of the valence (charge) of the cation"]
+        z_anion, [description = "Absolute value of the valence (charge) of the anion"]
+
         # Salt properties
         ν_c, [description = "Number of cations per molecule"]
         ν_a, [description = "Number of anions per molecule"]
@@ -40,23 +56,31 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         logγ⁰, [description = "Log of the standard state activity coefficient"]
         Γ⁰, [unit = u"mol/kg"]
         B
-        C
         zz, [description = "Product of the absolute values of the cation and anion charges"]
 
         # Unit conversions
         I_one = 1, [unit = u"mol/kg", description = "An ionic strength of 1"]
     end
     @variables begin
+        m_cation(t), [description="Concentration of the cation", unit = u"mol/m^3"]
+        m_anion(t), [description="Concentration of the anion", unit = u"mol/m^3"]
+
         X(t), [unit = u"kg/m^3"]
         Y(t), [unit = u"kg/m^3"]
         I(t), [description = "Ionic strength", unit = u"mol/kg"]
         Γ⁺(t)
+        C(t)
     end
     @equations begin
-        zz ~ ParentScope(cation.z) * ParentScope(anion.z)
+        m_cation ~ cation.m
+        m_anion ~ anion.m
+        z_cation ~ cation.z
+        z_anion ~ anion.z
+
+        zz ~ z_cation * z_anion
         # Supplemental equations after equations 7 and 8
-        Y ~ ((ParentScope(cation.z) + ParentScope(anion.z)) / 2)^2 * ParentScope(anion.m) / I
-        X ~ ((ParentScope(cation.z) + ParentScope(anion.z)) / 2)^2 * ParentScope(cation.m) / I
+        Y ~ ((z_cation + z_anion) / 2)^2 * m_anion / I
+        X ~ ((z_cation + z_anion) / 2)^2 * m_cation / I
         # Equation 9
         logγ⁰ ~ zz * log(Γ⁰ / I_one)
         # Equation 10
@@ -69,6 +93,29 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         C ~ 1 + 0.055q * exp(-0.023I^3 / I_one^3)
     end
 end
+
+@named yy = Salt()
+
+mtkcompile(yy)
+
+q = compose(yy, x, z)
+
+@mtkmodel ZZZ begin
+    @components begin
+        s1 = Salt(; z_cation=1, z_anion=1, ν_c=1, ν_a=1, drh=0.5, l_t=100.0, q=1.0)
+        s2 = Salt(; z_cation=1, z_anion=1, ν_c=1, ν_a=1, drh=0.5, l_t=100.0, q=1.0)
+    end
+    @equations begin
+        connect(s1.cation, s2.cation)
+        connect(s1.anion, s2.anion)
+        s1.I ~ s2.I
+    end
+end
+
+@named vv = ZZZ()
+equations(vv)
+
+mtkcompile(vv)
 
 @mtkmodel Aqueous begin
     @description "Aqueous behavior"
@@ -111,29 +158,29 @@ end
 
         # Salts
         #! format: off
-        CaNO32 = Salt(cation = Ca, ν_c = 1, anion = NO3, ν_a = 2, drh = 0.4906, l_t = 509.4, q = 0.93, I=I)
-        CaCl2 =  Salt(cation = Ca, ν_c = 1, anion = Cl, ν_a = 2, drh = 0.2830, l_t = 551.1, q = 2.4, I=I)
-        CaSO4 = Salt(cation = Ca, ν_c = 1, anion = SO4, ν_a = 1, drh = 0.9700, l_t = missing, q = missing, I=I)
-        KHSO4 = Salt(cation = K, ν_c = 1, anion = HSO4, ν_a = 1, drh = 0.8600, l_t = missing, q = missing, I=I)
-        K2SO4 = Salt(cation = K, ν_c = 2, anion = SO4, ν_a = 1, drh = 0.9751, l_t = 35.6, q = -0.25, I=I)
-        KNO3 = Salt(cation = K, ν_c = 1, anion = NO3, ν_a = 1, drh = 0.9248, l_t = missing, q = -2.33, I=I)
-        KCl = Salt(cation = K, ν_c = 1, anion = Cl, ν_a = 1, drh = 0.8426, l_t = 158.9, q = 0.92, I=I)
-        MgSO4 = Salt(cation = Mg, ν_c = 1, anion = SO4, ν_a = 1, drh = 0.8613, l_t = -714.5, q = 0.15, I=I)
-        MgNO32 = Salt(cation = Mg, ν_c = 1, anion = NO3, ν_a = 2, drh = 0.5400, l_t = 230.2, q = 2.32, I=I)
-        MgCl2 = Salt(cation = Mg, ν_c = 1, anion = Cl, ν_a = 2, drh = 0.3284, l_t = 42.23, q = 2.90, I=I)
-        NaCl = Salt(cation = Na, ν_c = 1, anion = Cl, ν_a = 1, drh = 0.7528, l_t = 25.0, q = 2.23, I=I)
-        Na2SO4 = Salt(cation = Na, ν_c = 2, anion = SO4, ν_a = 1, drh = 0.9300, l_t = 80.0, q = -0.19, I=I)
-        NaNO3 = Salt(cation = Na, ν_c = 1, anion = NO3, ν_a = 1, drh = 0.7379, l_t = 304.0, q = -0.39, I=I)
-        NH42SO4 = Salt(cation = NH4, ν_c = 2, anion = SO4, ν_a = 1, drh = 0.7997, l_t = 80.0, q = -0.25, I=I)
-        NH4NO3 = Salt(cation = NH4, ν_c = 1, anion = NO3, ν_a = 1, drh = 0.6183, l_t = 852.0, q = -1.15, I=I)
-        NH4Cl = Salt(cation = NH4, ν_c = 1, anion = Cl, ν_a = 1, drh = 0.7710, l_t = 239.0, q = 0.82, I=I)
-        NH4HSO4 = Salt(cation = NH4, ν_c = 1, anion = HSO4, ν_a = 1, drh = 0.4000, l_t = 384.0, q = missing, I=I)
-        NaHSO4 = Salt(cation = Na, ν_c = 1, anion = HSO4, ν_a = 1, drh = 0.5200, l_t = -45.0, q = missing, I=I)
-        NH43HSO42 = Salt(cation = NH4, ν_c = 3, anion = HSO4, ν_a = 2, drh = 0.6900, l_t = 186.0, q = missing, I=I)
-        H2SO4 = Salt(cation = H, ν_c = 2, anion = SO4, ν_a = 1, drh = 0.000, l_t = missing, q = -0.1, I=I)
-        HHSO4 = Salt(cation = H, ν_c = 1, anion = HSO4, ν_a = 1, drh = 0.000, l_t = missing, q = 8.00, I=I)
-        HNO3_aqs = Salt(cation = H, ν_c = 1, anion = NO3, ν_a = 1, drh = NaN, l_t = missing, q = 2.60, I=I) # There is no aqueous to solid conversion for HNO3.
-        HCl_aqs = Salt(cation = H, ν_c = 1, anion = Cl, ν_a = 1, drh = NaN, l_t = missing, q = 6.00, I=I) # There is no aqueous to solid conversion for HCl.
+        CaNO32 = Salt(cation = Ca, ν_c = 1, anion = NO3, ν_a = 2, drh = 0.4906, l_t = 509.4, q = 0.93)
+        CaCl2 =  Salt(cation = Ca, ν_c = 1, anion = Cl, ν_a = 2, drh = 0.2830, l_t = 551.1, q = 2.4)
+        CaSO4 = Salt(cation = Ca, ν_c = 1, anion = SO4, ν_a = 1, drh = 0.9700, l_t = missing, q = missing)
+        KHSO4 = Salt(cation = K, ν_c = 1, anion = HSO4, ν_a = 1, drh = 0.8600, l_t = missing, q = missing)
+        K2SO4 = Salt(cation = K, ν_c = 2, anion = SO4, ν_a = 1, drh = 0.9751, l_t = 35.6, q = -0.25)
+        KNO3 = Salt(cation = K, ν_c = 1, anion = NO3, ν_a = 1, drh = 0.9248, l_t = missing, q = -2.33)
+        KCl = Salt(cation = K, ν_c = 1, anion = Cl, ν_a = 1, drh = 0.8426, l_t = 158.9, q = 0.92)
+        MgSO4 = Salt(cation = Mg, ν_c = 1, anion = SO4, ν_a = 1, drh = 0.8613, l_t = -714.5, q = 0.15)
+        MgNO32 = Salt(cation = Mg, ν_c = 1, anion = NO3, ν_a = 2, drh = 0.5400, l_t = 230.2, q = 2.32)
+        MgCl2 = Salt(cation = Mg, ν_c = 1, anion = Cl, ν_a = 2, drh = 0.3284, l_t = 42.23, q = 2.90)
+        NaCl = Salt(cation = Na, ν_c = 1, anion = Cl, ν_a = 1, drh = 0.7528, l_t = 25.0, q = 2.23)
+        Na2SO4 = Salt(cation = Na, ν_c = 2, anion = SO4, ν_a = 1, drh = 0.9300, l_t = 80.0, q = -0.19)
+        NaNO3 = Salt(cation = Na, ν_c = 1, anion = NO3, ν_a = 1, drh = 0.7379, l_t = 304.0, q = -0.39)
+        NH42SO4 = Salt(cation = NH4, ν_c = 2, anion = SO4, ν_a = 1, drh = 0.7997, l_t = 80.0, q = -0.25)
+        NH4NO3 = Salt(cation = NH4, ν_c = 1, anion = NO3, ν_a = 1, drh = 0.6183, l_t = 852.0, q = -1.15)
+        NH4Cl = Salt(cation = NH4, ν_c = 1, anion = Cl, ν_a = 1, drh = 0.7710, l_t = 239.0, q = 0.82)
+        NH4HSO4 = Salt(cation = NH4, ν_c = 1, anion = HSO4, ν_a = 1, drh = 0.4000, l_t = 384.0, q = missing)
+        NaHSO4 = Salt(cation = Na, ν_c = 1, anion = HSO4, ν_a = 1, drh = 0.5200, l_t = -45.0, q = missing)
+        NH43HSO42 = Salt(cation = NH4, ν_c = 3, anion = HSO4, ν_a = 2, drh = 0.6900, l_t = 186.0, q = missing)
+        H2SO4 = Salt(cation = H, ν_c = 2, anion = SO4, ν_a = 1, drh = 0.000, l_t = missing, q = -0.1)
+        HHSO4 = Salt(cation = H, ν_c = 1, anion = HSO4, ν_a = 1, drh = 0.000, l_t = missing, q = 8.00)
+        HNO3_aqs = Salt(cation = H, ν_c = 1, anion = NO3, ν_a = 1, drh = NaN, l_t = missing, q = 2.60) # There is no aqueous to solid conversion for HNO3.
+        HCl_aqs = Salt(cation = H, ν_c = 1, anion = Cl, ν_a = 1, drh = NaN, l_t = missing, q = 6.00) # There is no aqueous to solid conversion for HCl.
         #! format: on
     end
     @equations begin
@@ -141,8 +188,37 @@ end
         # Equation 7
         F_Ca ~ CaNO32.Y * CaNO32.logγ⁰ + CaCl2.Y * CaCl2.logγ⁰ + CaSO4.Y * CaSO4.logγ⁰ +
                A_γterm * (CaNO32.zz * CaNO32.Y + CaCl2.zz * CaCl2.Y + CaSO4.zz * CaSO4.Y)
+
+
+        I ~ I_one
+        CaNO32.I ~ I
+        CaCl2.I ~ I
+        CaSO4.I ~ I
+        KHSO4.I ~ I
+        K2SO4.I ~ I
+        KNO3.I ~ I
+        KCl.I ~ I
+        MgSO4.I ~ I
+        MgNO32.I ~ I
+        MgCl2.I ~ I
+        NaCl.I ~ I
+        Na2SO4.I ~ I
+        NaNO3.I ~ I
+        NH42SO4.I ~ I
+        NH4NO3.I ~ I
+        NH4Cl.I ~ I
+        NH4HSO4.I ~ I
+        NaHSO4.I ~ I
+        NH43HSO42.I ~ I
+        H2SO4.I ~ I
+        HHSO4.I ~ I
+        HNO3_aqs.I ~ I
+        HCl_aqs.I ~ I
     end
 end
+
+@named x = Salt(cation = Ion(;z=1, name=:x), ν_c = 1, anion = Ion(;z=-1, name=:y), ν_a = 1, drh = 0.5, l_t = 100.0, q = 1.0)
+structural_simplify(x)
 
 @named aq = Aqueous()
 equations(aq)
