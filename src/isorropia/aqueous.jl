@@ -8,7 +8,7 @@ using DynamicQuantities
         z, [description = "Valence (charge) of the ion"]
     end
     @variables begin
-        m(t) = 0.0, [description = "Concentration of the ion", unit = u"mol/kg"]
+        m(t) = 0.0, [description = "Molal concentration of the ion", unit = u"mol/kg"]
         a(t),
         [
             description = "Activity of the ion. The activity coefficient of an ion is assumed to be one (Fountoukis and Nenes (2007), Section 3.3).",
@@ -42,6 +42,7 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         I_one = 1, [unit = u"mol/kg", description = "An ionic strength of 1"]
     end
     @variables begin
+        m(t), [description = "Molal concentration of the salt", unit = u"mol/kg"]
         X(t)
         Y(t)
         I(t), [description = "Ionic strength", unit = u"mol/kg"]
@@ -70,6 +71,28 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
     end
 end
 
+@mtkmodel BinaryMolality begin
+    @description """Water content for a binary aqueous aerosol solution using data from
+    Fountoukis and Nenes (2007) Table 7, for use in Equation 16."""
+    @constants begin
+        k_0, [description = "polynomial fit coefficient"]
+        k_1, [description = "polynomial fit coefficient"]
+        k_2, [description = "polynomial fit coefficient"]
+        k_3, [description = "polynomial fit coefficient"]
+        k_4, [description = "polynomial fit coefficient"]
+        k_5, [description = "polynomial fit coefficient"]
+        k_6, [description = "polynomial fit coefficient"]
+        m_one = 1.0, [unit = u"mol/kg", description = "unit molality"]
+    end
+    @variables begin
+        RH(t), [description = "Relative humidity"]
+        m_aw(t), [description = "molality of the binary solution", unit = u"mol/kg"]
+    end
+    @equations begin
+        m_aw ~ (k_0 + k_1 * RH + k_2 * RH^2 + k_3 * RH^3 + k_4 * RH^4 + k_5 * RH^5) * m_one
+    end
+end
+
 @mtkmodel Aqueous begin
     @description "Aqueous behavior"
     @constants begin
@@ -91,9 +114,11 @@ end
     end
     @parameters begin
         T = 298.15, [description = "Temperature", unit = u"K"]
+        RH = 0.5, [description = "Relative humidity (0-1)"]
     end
     @variables begin
         I(t), [description = "Ionic strength", unit = u"mol/kg"]
+        W(t), [description = "Aerosol water content (per m^3 air)", unit = u"kg/m^3"]
 
         #! format: off
         F_Ca(t), [description = "Activity contribution from Ca-containing salts"]
@@ -243,6 +268,28 @@ end
         HHSO4 = Salt(cation = H, anion = HSO4, drh = 0.000, l_t = NaN, q = 8.00)
         HNO3_aqs = Salt(cation = H, anion = NO3, drh = NaN, l_t = NaN, q = 2.60) # There is no aqueous to solid conversion for HNO3.
         HCl_aqs = Salt(cation = H, anion = Cl, drh = NaN, l_t = NaN, q = 6.00) # There is no aqueous to solid conversion for HCl.
+
+        # Water content
+        #! format: off
+        maw_CaNO32 = BinaryMolality(k_0=36.356, k_1=-165.66, k_2=447.46, k_3=-673.55, k_4=510.91, k_5=-155.56, k_6=0)
+        maw_CaCl2 = BinaryMolality(k_0=20.847, k_1=-97.599, k_2=273.220, k_3=-422.120, k_4=331.160, k_5=-105.450, k_6=0)
+        maw_KHSO4 = BinaryMolality(k_0=1.061, k_1=-0.101, k_2=1.579e-2, k_3=-1.950e-3, k_4=9.515e-5, k_5=-1.547e-6, k_6=0)
+        maw_K2SO4 = BinaryMolality(k_0=1061.51, k_1=-4748.97, k_2=8096.16, k_3=-6166.16, k_4=1757.47, k_5=0, k_6=0)
+        maw_KNO3 = BinaryMolality(k_0=1.2141e4, k_1=-5.1173e4, k_2=8.1252e4, k_3=-5.7527e4, k_4=1.5305e4, k_5=0, k_6=0)
+        maw_KCl = BinaryMolality(k_0=179.721, k_1=-721.266, k_2=1161.03, k_3=-841.479, k_4=221 / 943, k_5=0, k_6=0)
+        maw_MgSO4 = BinaryMolality(k_0=-0.778, k_1=177.74, k_2=-719.79, k_3=1174.6, k_4=-863.44, k_5=232.31, k_6=0)
+        maw_MgNO32 = BinaryMolality(k_0=12.166, k_1=-16.154, k_2=0, k_3=10.886, k_4=0, k_5=-6.815, k_6=0)
+        maw_MgCl2 = BinaryMolality(k_0=11.505, k_1=-26.518, k_2=34.937, k_3=-19.829, k_4=0, k_5=0, k_6=0)
+        maw_NaNO3 = BinaryMolality(k_0=0.9988, k_1=-2.6947e-2, k_2=1.9610e-4, k_3=2.8154e-5, k_4=6.1359e-7, k_5=0, k_6=0)
+        maw_NaHSO4 = BinaryMolality(k_0=1.0614, k_1=-0.1014, k_2=1.5796e-2, k_3=-1.9501e-3, k_4=9.5147e-5, k_5=-1.5473e-6, k_6=0)
+        maw_NaCl = BinaryMolality(k_0=1.0084, k_1=-4.9390e-2, k_2=8.888e-3, k_3=-2.1570e-3, k_4=1.6170e-4, k_5=1.99e-6, k_6=-1.142e-7)
+        maw_Na2SO4 = BinaryMolality(k_0=1.0052, k_1=-6.4840e-2, k_2=3.519e-2, k_3=-1.3190e-2, k_4=1.9250e-3, k_5=-1.224e-4, k_6=2.87e-6)
+        maw_NH42SO4 = BinaryMolality(k_0=0.9968, k_1=-2.9690e-2, k_2=1.735e-5, k_3=-3.2530e-4, k_4=3.5710e-5, k_5=-9.7870e-7, k_6=0)
+        maw_NH4Cl = BinaryMolality(k_0=0.9968, k_1=-2.6110e-2, k_2=-1.5990e-3, k_3=1.3550e-4, k_4=-2.317e-6, k_5=-1.113e-8, k_6=0)
+        maw_NH4NO3 = BinaryMolality(k_0=1.0053, k_1=-2.4991e-2, k_2=4.4688e-4, k_3=1.6453e-5, k_4=-3.8940e-7, k_5=-4.7668e-8, k_6=1.3753e-9)
+        maw_NH4HSO4 = BinaryMolality(k_0=1.0261, k_1=-4.9766e-2, k_2=3.2757e-3, k_3=-2.4477e-4, k_4=1.0766e-5, k_5=-1.8329e-7, k_6=0)
+        maw_NH43HSO42 = BinaryMolality(k_0=1.0088, k_1=-5.3730e-2, k_2=1.4201e-3, k_3=-9.2484e-4, k_4=2.2796e-4, k_5=-1.5445e-5, k_6=0)
+        #! format: on
     end
     @equations begin
         # Equation 6
@@ -433,6 +480,46 @@ end
         a_HHSO4 ~ H.m * HSO4.m * γ_HHSO4^(1 + 1)
         a_HNO3_aqs ~ H.m * NO3.m * γ_HNO3_aqs^(1 + 1)
         a_HCl_aqs ~ H.m * Cl.m * γ_HCl_aqs^(1 + 1)
+
+        # Water content (Section 2.3)
+        W ~ CaNO32.m * W / maw_CaNO32.m_aw + CaCl2.m * W / maw_CaCl2.m_aw + KHSO4.m * W / maw_KHSO4.m_aw +
+            K2SO4.m * W / maw_K2SO4.m_aw + KNO3.m * W / maw_KNO3.m_aw + KCl.m * W / maw_KCl.m_aw +
+            MgSO4.m * W / maw_MgSO4.m_aw + MgNO32.m * W / maw_MgNO32.m_aw + MgCl2.m * W / maw_MgCl2.m_aw +
+            NaNO3.m * W / maw_NaNO3.m_aw + NaHSO4.m * W / maw_NaHSO4.m_aw + NaCl.m * W / maw_NaCl.m_aw +
+            Na2SO4.m * W / maw_Na2SO4.m_aw + NH42SO4.m * W / maw_NH42SO4.m_aw + NH4NO3.m * W / maw_NH4NO3.m_aw +
+            NH4Cl.m * W / maw_NH4Cl.m_aw + NH4HSO4.m * W / maw_NH4HSO4.m_aw + NH43HSO42.m * W / maw_NH43HSO42.m_aw
+        maw_CaNO32.RH ~ RH
+        maw_CaCl2.RH ~ RH
+        maw_KHSO4.RH ~ RH
+        maw_K2SO4.RH ~ RH
+        maw_KNO3.RH ~ RH
+        maw_KCl.RH ~ RH
+        maw_MgSO4.RH ~ RH
+        maw_MgNO32.RH ~ RH
+        maw_MgCl2.RH ~ RH
+        maw_NaNO3.RH ~ RH
+        maw_NaHSO4.RH ~ RH
+        maw_NaCl.RH ~ RH
+        maw_Na2SO4.RH ~ RH
+        maw_NH42SO4.RH ~ RH
+        maw_NH4Cl.RH ~ RH
+        maw_NH4NO3.RH ~ RH
+        maw_NH4HSO4.RH ~ RH
+        maw_NH43HSO42.RH ~ RH
+
+        # Mass balance (need to double check)
+        Ca.m ~ CaNO32.m + CaCl2.m + CaSO4.m
+        K.m ~ KHSO4.m + K2SO4.m + KNO3.m + KCl.m
+        Mg.m ~ MgSO4.m + MgNO32.m + MgCl2.m
+        Na.m ~ NaCl.m + Na2SO4.m + NaNO3.m + NaHSO4.m
+        NH4.m ~ NH4NO3.m + NH4Cl.m + NH4HSO4.m + 2NH42SO4.m + 3NH43HSO42.m
+        H.m ~ 2H2SO4.m + HHSO4.m + HCl_aqs.m + HNO3_aqs.m
+        Cl.m ~ NaCl.m + KCl.m + MgCl2.m + CaCl2.m + NH4Cl.m + HCl_aqs.m
+        NO3.m ~ NaNO3.m + KNO3.m + MgNO32.m + CaNO32.m + NH4NO3.m + HNO3_aqs.m
+        SO4.m ~ Na2SO4.m + K2SO4.m + MgSO4.m + CaSO4.m + NH42SO4.m + H2SO4.m
+        HSO4.m ~ KHSO4.m + HHSO4.m + NaHSO4.m + NH4HSO4.m + NH43HSO42.m
+
+        # Charge balance
     end
 end
 
@@ -473,11 +560,10 @@ prob = ODEProblem(sys, [], (0.0, 1.0))
 
 using SymbolicIndexingInterface: setp, getsym, parameter_values
 using SciMLBase: remake
-prob = remake(prob, u0=[sys.aq.Ca.m => 1.0])
+prob = remake(prob, u0 = [sys.aq.Ca.m => 1.0])
 f = getsym(prob, [sys.aq.γ_NaCl, sys.aq.γ_CaCl2, sys.aq.γ_NaNO3, sys.aq.γ_CaNO32])
 f(prob)
 
-
-prob = remake(prob, u0=[sys.aq.Cl.m => 1.0])
+prob = remake(prob, u0 = [sys.aq.Cl.m => 1.0])
 f = getsym(prob, [sys.aq.γ_NaCl, sys.aq.γ_CaCl2, sys.aq.γ_NaNO3, sys.aq.γ_CaNO32])
 f(prob)
