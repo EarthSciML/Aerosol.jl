@@ -8,7 +8,9 @@ using DynamicQuantities
         z, [description = "Valence (charge) of the ion"]
     end
     @variables begin
-        m(t) = 0.0, [description = "Molal concentration of the ion", unit = u"mol/kg"]
+        m(t)=0.0, [description = "Molal concentration of the ion in water", unit = u"mol/kg"]
+        M(t)=0.0, [description = "Molar concentration of the ion in air", unit = u"mol/m^3"]
+        W(t), [description = "Aerosol water content (per m^3 air)", unit = u"kg/m^3"]
         a(t),
         [
             description = "Activity of the ion. The activity coefficient of an ion is assumed to be one (Fountoukis and Nenes (2007), Section 3.3).",
@@ -16,6 +18,7 @@ using DynamicQuantities
     end
     @equations begin
         a ~ m
+        M ~ m * W
     end
 end
 
@@ -25,8 +28,8 @@ An aqueous salt comprised of a cation, an anion, and an activity parameter (q).
 q values are given in Table 4 of Fountoukis and Nenes (2007).
 """
     @structural_parameters begin
-        cation = Ion(; z)
-        anion = Ion(; z)
+        cation = Ion(; name = :cation, z = 1)
+        anion = Ion(; name = :anion, z = 1)
     end
     @constants begin
         # Salt properties
@@ -42,7 +45,11 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         I_one = 1, [unit = u"mol/kg", description = "An ionic strength of 1"]
     end
     @variables begin
-        m(t), [description = "Molal concentration of the salt", unit = u"mol/kg"]
+        #! format: off
+        M(t), [description = "Molar concentration of the salt in air", unit = u"mol/m^3", guess=1.0]
+        #! format: on
+        #m(t), [description = "Molal concentration of the salt in water", unit = u"mol/kg"]
+        W(t), [description = "Aerosol water content (per m^3 air)", unit = u"kg/m^3"]
         X(t)
         Y(t)
         I(t), [description = "Ionic strength", unit = u"mol/kg"]
@@ -52,6 +59,7 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         C(t)
     end
     @equations begin
+        #M ~ m * W
         zz ~ ParentScope(cation.z) * ParentScope(anion.z)
         # Supplemental equations after equations 7 and 8
         Y ~ ((ParentScope(cation.z) + ParentScope(anion.z)) / 2)^2 * ParentScope(anion.m) /
@@ -111,16 +119,17 @@ end
             unit = u"K^-1",
             description = "Constant for Fountoukis and Nenes (2007) Eq. 14"
         ]
+        M_zero = 0.0, [unit = u"mol/m^3", description = "Zero molarity."]
     end
     @parameters begin
         T = 298.15, [description = "Temperature", unit = u"K"]
         RH = 0.5, [description = "Relative humidity (0-1)"]
     end
     @variables begin
-        I(t), [description = "Ionic strength", unit = u"mol/kg"]
-        W(t), [description = "Aerosol water content (per m^3 air)", unit = u"kg/m^3"]
-
         #! format: off
+        I(t), [description = "Ionic strength", unit = u"mol/kg", guess=1.0, state_priority=10]
+        W(t), [description = "Aerosol water content (per m^3 air)", unit = u"kg/m^3", guess=1.0, state_priority=10]
+
         F_Ca(t), [description = "Activity contribution from Ca-containing salts"]
         F_K(t), [description = "Activity contribution from K-containing salts"]
         F_Mg(t), [description = "Activity contribution from Mg-containing salts"]
@@ -151,8 +160,8 @@ end
         logγₜ₀_NH4Cl(t), [description = "Log of the standard state activity coefficient of NH4Cl at 298.15K"]
         logγₜ₀_H2SO4(t), [description = "Log of the standard state activity coefficient of H2SO4 at 298.15K"]
         logγₜ₀_HHSO4(t), [description = "Log of the standard state activity coefficient of HHSO4 at 298.15K"]
-        logγₜ₀_HNO3_aqs(t), [description = "Log of the standard state activity coefficient of HNO3 (aqueous) at 298.15K"]
-        logγₜ₀_HCl_aqs(t), [description = "Log of the standard state activity coefficient of HCl (aqueous) at 298.15K"]
+        logγₜ₀_HNO3(t), [description = "Log of the standard state activity coefficient of HNO3 (aqueous) at 298.15K"]
+        logγₜ₀_HCl(t), [description = "Log of the standard state activity coefficient of HCl (aqueous) at 298.15K"]
         #! format: on
 
         logγ_CaNO32(t), [description = "Log of the activity coefficient of CaNO3_2"]
@@ -171,8 +180,8 @@ end
         logγ_NH4Cl(t), [description = "Log of the activity coefficient of NH4Cl"]
         logγ_H2SO4(t), [description = "Log of the activity coefficient of H2SO4"]
         logγ_HHSO4(t), [description = "Log of the activity coefficient of HHSO4"]
-        logγ_HNO3_aqs(t), [description = "Log of the activity coefficient of HNO3 (salt)"]
-        logγ_HCl_aqs(t), [description = "Log of the activity coefficient of HCl (salt)"]
+        logγ_HNO3(t), [description = "Log of the activity coefficient of HNO3 (salt)"]
+        logγ_HCl(t), [description = "Log of the activity coefficient of HCl (salt)"]
 
         γ_CaNO32(t), [description = "Activity coefficient of CaNO3_2"]
         γ_CaCl2(t), [description = "Activity coefficient of CaCl2"]
@@ -195,8 +204,8 @@ end
         γ_NH43HSO42(t), [description = "Activity coefficient of (NH4)3HSO4_2"]
         γ_H2SO4(t), [description = "Activity coefficient of H2SO4"]
         γ_HHSO4(t), [description = "Activity coefficient of HHSO4"]
-        γ_HNO3_aqs(t), [description = "Activity coefficient of HNO3 (salt)"]
-        γ_HCl_aqs(t), [description = "Activity coefficient of HCl (salt)"]
+        γ_HNO3(t), [description = "Activity coefficient of HNO3 (salt)"]
+        γ_HCl(t), [description = "Activity coefficient of HCl (salt)"]
 
         a_CaNO32(t), [description = "Activity of CaNO3_2", unit = u"mol^3/kg^3"]
         a_CaCl2(t), [description = "Activity of CaCl2", unit = u"mol^3/kg^3"]
@@ -219,8 +228,8 @@ end
         a_NH43HSO42(t), [description = "Activity of (NH4)3HSO4_2", unit = u"mol^5/kg^5"]
         a_H2SO4(t), [description = "Activity of H2SO4", unit = u"mol^3/kg^3"]
         a_HHSO4(t), [description = "Activity of HHSO4", unit = u"mol^2/kg^2"]
-        a_HNO3_aqs(t), [description = "Activity of HNO3 (salt)", unit = u"mol^2/kg^2"]
-        a_HCl_aqs(t), [description = "Activity of HCl (salt)", unit = u"mol^2/kg^2"]
+        a_HNO3(t), [description = "Activity of HNO3 (salt)", unit = u"mol^2/kg^2"]
+        a_HCl(t), [description = "Activity of HCl (salt)", unit = u"mol^2/kg^2"]
     end
     @structural_parameters begin
         q0 = 0.0 # Assume q=0 for salts in Table 4 with no data for q.
@@ -238,9 +247,6 @@ end
         Cl = Ion(z = abs(-1))
         NO3 = Ion(z = abs(-1))
         SO4 = Ion(z = abs(-2))
-        HNO3 = Ion(z = 0)
-        NH3 = Ion(z = 0)
-        HCl = Ion(z = 0)
         HSO4 = Ion(z = abs(-1))
         OH = Ion(z = abs(-1))
 
@@ -266,8 +272,8 @@ end
         NH43HSO42 = Salt(cation = NH4, anion = HSO4, drh = 0.6900, l_t = 186.0, q = q0)
         H2SO4 = Salt(cation = H, anion = SO4, drh = 0.000, l_t = NaN, q = -0.1)
         HHSO4 = Salt(cation = H, anion = HSO4, drh = 0.000, l_t = NaN, q = 8.00)
-        HNO3_aqs = Salt(cation = H, anion = NO3, drh = NaN, l_t = NaN, q = 2.60) # There is no aqueous to solid conversion for HNO3.
-        HCl_aqs = Salt(cation = H, anion = Cl, drh = NaN, l_t = NaN, q = 6.00) # There is no aqueous to solid conversion for HCl.
+        HNO3 = Salt(cation = H, anion = NO3, drh = NaN, l_t = NaN, q = 2.60) # There is no aqueous to solid conversion for HNO3.
+        HCl = Salt(cation = H, anion = Cl, drh = NaN, l_t = NaN, q = 6.00) # There is no aqueous to solid conversion for HCl.
 
         # Water content
         #! format: off
@@ -325,10 +331,10 @@ end
                        (H2SO4.zz / (2H.z + SO4.z)) * (F_H / H.z + F_SO4 / SO4.z)
         logγₜ₀_HHSO4 ~ -Aᵧ * HHSO4.zz * √I / (√I_one + √I) / √I_one +
                        (HHSO4.zz / (H.z + HSO4.z)) * (F_H / H.z + F_HSO4 / HSO4.z)
-        logγₜ₀_HNO3_aqs ~ -Aᵧ * HNO3_aqs.zz * √I / (√I_one + √I) / √I_one +
-                          (HNO3_aqs.zz / (H.z + NO3.z)) * (F_H / H.z + F_NO3 / NO3.z)
-        logγₜ₀_HCl_aqs ~ -Aᵧ * HCl_aqs.zz * √I / (√I_one + √I) / √I_one +
-                         (HCl_aqs.zz / (H.z + Cl.z)) * (F_H / H.z + F_Cl / Cl.z)
+        logγₜ₀_HNO3 ~ -Aᵧ * HNO3.zz * √I / (√I_one + √I) / √I_one +
+                      (HNO3.zz / (H.z + NO3.z)) * (F_H / H.z + F_NO3 / NO3.z)
+        logγₜ₀_HCl ~ -Aᵧ * HCl.zz * √I / (√I_one + √I) / √I_one +
+                     (HCl.zz / (H.z + Cl.z)) * (F_H / H.z + F_Cl / Cl.z)
 
         Aᵧ_term ~ Aᵧ * √I / (√I_one + √I) / √I_one # NOTE: The last √I_one here is not in the paper but is needed to make the units balance.
         # Equation 7
@@ -337,8 +343,8 @@ end
                 sum([s.zz * s.Y for s in [NH4NO3, NH4Cl, NH4HSO4, NH42SO4, NH43HSO42]])
         F_Na ~ sum([s.Y * s.logγ⁰ for s in [NaCl, Na2SO4, NaNO3, NaHSO4]]) +
                Aᵧ_term * sum([s.zz * s.Y for s in [NaCl, Na2SO4, NaNO3, NaHSO4]])
-        F_H ~ sum([s.Y * s.logγ⁰ for s in [H2SO4, HHSO4, HCl_aqs, HNO3_aqs]]) +
-              Aᵧ_term * sum([s.zz * s.Y for s in [H2SO4, HHSO4, HCl_aqs, HNO3_aqs]])
+        F_H ~ sum([s.Y * s.logγ⁰ for s in [H2SO4, HCl, HNO3]]) +
+              Aᵧ_term * sum([s.zz * s.Y for s in [H2SO4, HCl, HNO3]])
         F_Ca ~ sum([s.Y * s.logγ⁰ for s in [CaNO32, CaCl2, CaSO4]]) +
                Aᵧ_term * sum([s.zz * s.Y for s in [CaNO32, CaCl2, CaSO4]])
         F_K ~ sum([s.Y * s.logγ⁰ for s in [KHSO4, K2SO4, KNO3, KCl]]) +
@@ -347,12 +353,12 @@ end
                Aᵧ_term * sum([s.zz * s.Y for s in [MgSO4, MgNO32, MgCl2]])
 
         # Equation 8
-        F_Cl ~ sum([s.X * s.logγ⁰ for s in [NaCl, KCl, MgCl2, CaCl2, NH4Cl, HCl_aqs]]) +
+        F_Cl ~ sum([s.X * s.logγ⁰ for s in [NaCl, KCl, MgCl2, CaCl2, NH4Cl, HCl]]) +
                Aᵧ_term *
-               sum([s.zz * s.X for s in [NaCl, KCl, MgCl2, CaCl2, NH4Cl, HCl_aqs]])
-        F_NO3 ~ sum([s.X * s.logγ⁰ for s in [NaNO3, KNO3, MgNO32, CaNO32, NH4NO3, HNO3_aqs]]) +
+               sum([s.zz * s.X for s in [NaCl, KCl, MgCl2, CaCl2, NH4Cl, HCl]])
+        F_NO3 ~ sum([s.X * s.logγ⁰ for s in [NaNO3, KNO3, MgNO32, CaNO32, NH4NO3, HNO3]]) +
                 Aᵧ_term *
-                sum([s.zz * s.X for s in [NaNO3, KNO3, MgNO32, CaNO32, NH4NO3, HNO3_aqs]])
+                sum([s.zz * s.X for s in [NaNO3, KNO3, MgNO32, CaNO32, NH4NO3, HNO3]])
         F_SO4 ~ sum([s.X * s.logγ⁰ for s in [Na2SO4, K2SO4, MgSO4, CaSO4, NH42SO4, H2SO4]]) +
                 Aᵧ_term *
                 sum([s.zz * s.X for s in [Na2SO4, K2SO4, MgSO4, CaSO4, NH42SO4, H2SO4]])
@@ -393,10 +399,10 @@ end
                      (0.125 - c_1 * (T - T₀₂)) * A
         logγ_HHSO4 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_HHSO4 -
                      (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_HNO3_aqs ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_HNO3_aqs -
-                        (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_HCl_aqs ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_HCl_aqs -
-                       (0.125 - c_1 * (T - T₀₂)) * A
+        logγ_HNO3 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_HNO3 -
+                    (0.125 - c_1 * (T - T₀₂)) * A
+        logγ_HCl ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_HCl -
+                   (0.125 - c_1 * (T - T₀₂)) * A
 
         # Equation in text below Equation 14
         A ~ -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
@@ -418,20 +424,20 @@ end
         γ_NH4Cl ~ exp(logγ_NH4Cl)
         γ_H2SO4 ~ exp(logγ_H2SO4)
         γ_HHSO4 ~ exp(logγ_HHSO4)
-        γ_HNO3_aqs ~ exp(logγ_HNO3_aqs)
-        γ_HCl_aqs ~ exp(logγ_HCl_aqs)
+        γ_HNO3 ~ exp(logγ_HNO3)
+        γ_HCl ~ exp(logγ_HCl)
 
         # Table 4 footnotes
         γ_CaSO4 ~ 0.0 # From Table 4 footnote a, CaSO4 has an activity coefficient of zero.
-        γ_KHSO4 ~ √(γ_HHSO4 * γ_KCl / γ_HCl_aqs) # From Table 4 footnote b.
-        γ_NH4HSO4 ~ √(γ_HHSO4 * γ_NH4Cl / γ_HCl_aqs) # From Table 4 footnote c
-        γ_NaHSO4 ~ √(γ_HHSO4 * γ_NaCl / γ_HCl_aqs) # From Table 4 footnote d
+        γ_KHSO4 ~ √(γ_HHSO4 * γ_KCl / γ_HCl) # From Table 4 footnote b.
+        γ_NH4HSO4 ~ √(γ_HHSO4 * γ_NH4Cl / γ_HCl) # From Table 4 footnote c
+        γ_NaHSO4 ~ √(γ_HHSO4 * γ_NaCl / γ_HCl) # From Table 4 footnote d
         γ_NH43HSO42 ~ (γ_NH42SO4^3 * γ_NH4HSO4)^(1 / 5) # From Table 4 footnote e
 
         # Ionic strength (equation in text below Equation 8)
         I ~ 0.5 * sum([ion.m * ion.z^2
                  for ion in [
-            NH4, Na, H, Ca, K, Mg, Cl, NO3, SO4, HNO3, NH3, HCl, HSO4, OH]])
+            NH4, Na, H, Ca, K, Mg, Cl, NO3, SO4, HSO4, OH]])
         CaNO32.I ~ I
         CaCl2.I ~ I
         CaSO4.I ~ I
@@ -453,8 +459,8 @@ end
         NH43HSO42.I ~ I
         H2SO4.I ~ I
         HHSO4.I ~ I
-        HNO3_aqs.I ~ I
-        HCl_aqs.I ~ I
+        HNO3.I ~ I
+        HCl.I ~ I
 
         # Activities (Section 2.2)
         a_CaNO32 ~ Ca.m * NO3.m^2 * γ_CaNO32^(1 + 2)
@@ -478,16 +484,62 @@ end
         a_NH43HSO42 ~ NH4.m^3 * HSO4.m^2 * γ_NH43HSO42^(3 + 2)
         a_H2SO4 ~ H.m^2 * SO4.m * γ_H2SO4^(2 + 1)
         a_HHSO4 ~ H.m * HSO4.m * γ_HHSO4^(1 + 1)
-        a_HNO3_aqs ~ H.m * NO3.m * γ_HNO3_aqs^(1 + 1)
-        a_HCl_aqs ~ H.m * Cl.m * γ_HCl_aqs^(1 + 1)
+        a_HNO3 ~ H.m * NO3.m * γ_HNO3^(1 + 1)
+        a_HCl ~ H.m * Cl.m * γ_HCl^(1 + 1)
 
         # Water content (Section 2.3)
-        W ~ CaNO32.m * W / maw_CaNO32.m_aw + CaCl2.m * W / maw_CaCl2.m_aw + KHSO4.m * W / maw_KHSO4.m_aw +
-            K2SO4.m * W / maw_K2SO4.m_aw + KNO3.m * W / maw_KNO3.m_aw + KCl.m * W / maw_KCl.m_aw +
-            MgSO4.m * W / maw_MgSO4.m_aw + MgNO32.m * W / maw_MgNO32.m_aw + MgCl2.m * W / maw_MgCl2.m_aw +
-            NaNO3.m * W / maw_NaNO3.m_aw + NaHSO4.m * W / maw_NaHSO4.m_aw + NaCl.m * W / maw_NaCl.m_aw +
-            Na2SO4.m * W / maw_Na2SO4.m_aw + NH42SO4.m * W / maw_NH42SO4.m_aw + NH4NO3.m * W / maw_NH4NO3.m_aw +
-            NH4Cl.m * W / maw_NH4Cl.m_aw + NH4HSO4.m * W / maw_NH4HSO4.m_aw + NH43HSO42.m * W / maw_NH43HSO42.m_aw
+        W ~ CaNO32.M / maw_CaNO32.m_aw +
+            CaCl2.M / maw_CaCl2.m_aw +
+            KHSO4.M / maw_KHSO4.m_aw +
+            K2SO4.M / maw_K2SO4.m_aw +
+            KNO3.M / maw_KNO3.m_aw +
+            KCl.M / maw_KCl.m_aw +
+            MgSO4.M / maw_MgSO4.m_aw +
+            MgNO32.M / maw_MgNO32.m_aw +
+            MgCl2.M / maw_MgCl2.m_aw +
+            NaNO3.M / maw_NaNO3.m_aw +
+            NaHSO4.M / maw_NaHSO4.m_aw +
+            NaCl.M / maw_NaCl.m_aw +
+            Na2SO4.M / maw_Na2SO4.m_aw +
+            NH42SO4.M / maw_NH42SO4.m_aw +
+            NH4NO3.M / maw_NH4NO3.m_aw +
+            NH4Cl.M / maw_NH4Cl.m_aw +
+            NH4HSO4.M / maw_NH4HSO4.m_aw +
+            NH43HSO42.M / maw_NH43HSO42.m_aw
+        NH4.W ~ W
+        Na.W ~ W
+        H.W ~ W
+        Ca.W ~ W
+        K.W ~ W
+        Mg.W ~ W
+        Cl.W ~ W
+        NO3.W ~ W
+        SO4.W ~ W
+        HSO4.W ~ W
+        OH.W ~ W
+        CaNO32.W ~ W
+        CaSO4.W ~ W
+        CaCl2.W ~ W
+        KHSO4.W ~ W
+        K2SO4.W ~ W
+        KNO3.W ~ W
+        KCl.W ~ W
+        MgSO4.W ~ W
+        MgNO32.W ~ W
+        MgCl2.W ~ W
+        NaNO3.W ~ W
+        NaHSO4.W ~ W
+        NaCl.W ~ W
+        Na2SO4.W ~ W
+        NH42SO4.W ~ W
+        NH4NO3.W ~ W
+        NH4Cl.W ~ W
+        NH4HSO4.W ~ W
+        NH43HSO42.W ~ W
+        H2SO4.W ~ W
+        HHSO4.W ~ W
+        HNO3.W ~ W
+        HCl.W ~ W
         maw_CaNO32.RH ~ RH
         maw_CaCl2.RH ~ RH
         maw_KHSO4.RH ~ RH
@@ -507,19 +559,23 @@ end
         maw_NH4HSO4.RH ~ RH
         maw_NH43HSO42.RH ~ RH
 
-        # Mass balance (need to double check)
-        Ca.m ~ CaNO32.m + CaCl2.m + CaSO4.m
-        K.m ~ KHSO4.m + K2SO4.m + KNO3.m + KCl.m
-        Mg.m ~ MgSO4.m + MgNO32.m + MgCl2.m
-        Na.m ~ NaCl.m + Na2SO4.m + NaNO3.m + NaHSO4.m
-        NH4.m ~ NH4NO3.m + NH4Cl.m + NH4HSO4.m + 2NH42SO4.m + 3NH43HSO42.m
-        H.m ~ 2H2SO4.m + HHSO4.m + HCl_aqs.m + HNO3_aqs.m
-        Cl.m ~ NaCl.m + KCl.m + MgCl2.m + CaCl2.m + NH4Cl.m + HCl_aqs.m
-        NO3.m ~ NaNO3.m + KNO3.m + MgNO32.m + CaNO32.m + NH4NO3.m + HNO3_aqs.m
-        SO4.m ~ Na2SO4.m + K2SO4.m + MgSO4.m + CaSO4.m + NH42SO4.m + H2SO4.m
-        HSO4.m ~ KHSO4.m + HHSO4.m + NaHSO4.m + NH4HSO4.m + NH43HSO42.m
+        # Mass balance
+        HHSO4.M ~ 0.0 # HHSO4 doesn't participate in any reactions
+        H2SO4.M ~ 0.0 # The first dissociation of H2SO4 is assumed to be complete (Section 3.3)
+        NH4.M ~ NH4NO3.M + NH4Cl.M + NH4HSO4.M + 2NH42SO4.M + 3NH43HSO42.M
+        Na.M ~ NaCl.M + 2Na2SO4.M + NaNO3.M + NaHSO4.M
+        H.M ~ 2H2SO4.M + HCl.M + HNO3.M + KHSO4.M
+        Ca.M ~ CaNO32.M + CaCl2.M + CaSO4.M
+        K.M ~ KHSO4.M + 2K2SO4.M + KNO3.M + KCl.M
+        Mg.M ~ MgSO4.M + MgNO32.M + MgCl2.M
+        Cl.M ~ NaCl.M + KCl.M + 2MgCl2.M + 2CaCl2.M + NH4Cl.M + HCl.M
+        NO3.M ~ NaNO3.M + KNO3.M + 2MgNO32.M + 2CaNO32.M + NH4NO3.M + HNO3.M
+        SO4.M ~ Na2SO4.M + K2SO4.M + MgSO4.M + CaSO4.M + NH42SO4.M + H2SO4.M
+        HSO4.M ~ KHSO4.M + NaHSO4.M + NH4HSO4.M + 2NH43HSO42.M
 
         # Charge balance
+        #0 ~ sum([i.M * i.z for i in [NH4, Na, H, Ca, K, Mg]]) -
+        #     sum([i.M * i.z for i in [Cl, NO3, SO4, HSO4, OH]])
     end
 end
 
@@ -531,39 +587,80 @@ equations(aq)
         aq = Aqueous()
     end
     @constants begin
-        no_change = 0.0, [unit = u"mol/kg/s"]
+        no_change = 0.0, [unit = u"mol/m^3/s"]
+        M_one = 1.0, [unit = u"mol/m^3"]
     end
     @equations begin
-        D(aq.Ca.m) ~ no_change
-        D(aq.Cl.m) ~ no_change
-        D(aq.SO4.m) ~ no_change
-        D(aq.Na.m) ~ no_change
-        D(aq.NH4.m) ~ no_change
-        D(aq.H.m) ~ no_change
-        D(aq.K.m) ~ no_change
-        D(aq.Mg.m) ~ no_change
-        D(aq.NO3.m) ~ no_change
-        D(aq.HSO4.m) ~ no_change
-        D(aq.OH.m) ~ no_change
-        D(aq.HNO3.m) ~ no_change
-        D(aq.NH3.m) ~ no_change
-        D(aq.HCl.m) ~ no_change
+        D(aq.Ca.M) ~ no_change
+        D(aq.Cl.M) ~ no_change
+        D(aq.SO4.M) ~ no_change
+        D(aq.Na.M) ~ no_change
+        D(aq.NH4.M) ~ no_change
+        D(aq.H.M) ~ no_change
+        D(aq.K.M) ~ no_change
+        D(aq.Mg.M) ~ no_change
+        D(aq.NO3.M) ~ no_change
+        D(aq.HSO4.M) ~ no_change
+        D(aq.OH.M) ~ no_change
+
+        # Relationships between salts, just for testing purposes.
+        # These are replaced by equilibrium equations in the real model.
+        aq.NH4NO3.M ~ aq.NH4.M^2 / 5 / M_one
+        aq.NH4HSO4.M ~ aq.NH4.M / 5
+        aq.NH42SO4.M ~ aq.NH4.M / 5
+        aq.Na2SO4.M ~ aq.Na.M / 4
+        aq.CaNO32.M ~ aq.Ca.M / 3
+        aq.CaSO4.M ~ aq.Ca.M / 3
+        aq.MgNO32.M ~ aq.Mg.M / 3
+        aq.NaCl.M ~ aq.Na.M / 4
+        aq.HNO3.M ~ aq.H.M / 4
+        aq.KHSO4.M ~ aq.HSO4.M / 4
+        aq.K2SO4.M ~ aq.K.M / 4
     end
 end
 
 @named aqt = AqueousTest()
 
 sys = mtkcompile(aqt)
+equations(sys)
 unknowns(sys)
+
 
 prob = ODEProblem(sys, [], (0.0, 1.0))
 
+isys = mtkcompile(ModelingToolkit.generate_initializesystem(sys))
+
+equations(isys)
+
+unknowns(isys)
+
+defaults(sys)
+
+
+
+
 using SymbolicIndexingInterface: setp, getsym, parameter_values
 using SciMLBase: remake
-prob = remake(prob, u0 = [sys.aq.Ca.m => 1.0])
+using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
+prob = remake(prob, u0 = [sys.aq.Ca.m => 1.0, sys.aq.CaCl2.M => 1.0])
 f = getsym(prob, [sys.aq.γ_NaCl, sys.aq.γ_CaCl2, sys.aq.γ_NaNO3, sys.aq.γ_CaNO32])
+f(prob)
+
+f = getsym(prob, [sys.aq.Ca.M, sys.aq.Ca.m, sys.aq.CaCl2.M, sys.aq.W, sys.aq.maw_CaCl2.m_aw, sys.aq.I])
+f(prob)
+
+
+
+f = getsym(prob, [sys.aq.CaNO32.M, sys.aq.CaCl2.M, sys.aq.CaSO4.M, sys.aq.KHSO4.M,
+    sys.aq.K2SO4.M, sys.aq.KNO3.M, sys.aq.KCl.M, sys.aq.MgSO4.M, sys.aq.MgNO32.M,
+    sys.aq.MgCl2.M, sys.aq.NaCl.M, sys.aq.Na2SO4.M, sys.aq.NaNO3.M, sys.aq.NH42SO4.M,
+    sys.aq.NH4NO3.M, sys.aq.NH4Cl.M, sys.aq.NH4HSO4.M, sys.aq.NH43HSO42.M, sys.aq.H2SO4.M,
+    sys.aq.HHSO4.M, sys.aq.HNO3.M, sys.aq.HCl.M])
 f(prob)
 
 prob = remake(prob, u0 = [sys.aq.Cl.m => 1.0])
 f = getsym(prob, [sys.aq.γ_NaCl, sys.aq.γ_CaCl2, sys.aq.γ_NaNO3, sys.aq.γ_CaNO32])
 f(prob)
+
+
+solve(prob, Rosenbrock23())
