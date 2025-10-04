@@ -18,6 +18,106 @@ include("gas.jl")
 include("water.jl")
 include("reactions.jl")
 
+@mtkmodel Isorropia begin
+    @components begin
+        aq = Aqueous()
+        s = Solids()
+        g = Gases()
+        eq = EquilibriumConstants()
+    end
+    @parameters begin
+        T, [unit = u"K", description = "Temperature"]
+        RH, [unit = u"1", description = "Relative humidity (0 to 1)"]
+    end
+    @variables begin
+        TotalNH(t), [unit = u"mol/m^3", description = "Total concentration of NH3 + NH4+"]
+        TotalNa(t), [unit = u"mol/m^3", description = "Total concentration of Na+"]
+        TotalCa(t), [unit = u"mol/m^3", description = "Total concentration of Ca2+"]
+        TotalK(t), [unit = u"mol/m^3", description = "Total concentration of K+"]
+        TotalMg(t), [unit = u"mol/m^3", description = "Total concentration of Mg2+"]
+        TotalCl(t), [unit = u"mol/m^3", description = "Total concentration of Cl-"]
+        TotalNO3(t), [unit = u"mol/m^3", description = "Total concentration of NO3-"]
+        TotalSO4(t), [unit = u"mol/m^3", description = "Total concentration of SO4 2-"]
+    end
+    @equations begin
+        T ~ aq.T
+        T ~ eq.T
+        T ~ g.T
+        aq.W ~ s.W
+        RH ~ aq.RH
+
+        # Reactions based on information in Table 2 of Fountoukis and Nenes (2007).
+        # The left-hand side of the reaction equation is the equilibrium constant and the
+        # right-hand side is the ratio of the product and reactant activities.
+        eq.r1.K_eq * eq.k1_unit ~ aq.a_CaNO32
+        eq.r2.K_eq * eq.k2_unit ~ aq.a_CaCl2
+        # eq.r3.K_eq * eq.k3_unit ~ aq.a_CaSO4 * RH^2
+        aq.CaSO4.M ~ 0.0 # From Table 4 footnote a, CaSO4 has an activity coefficient of zero and therefore 0 concentration.
+        eq.r4.K_eq * eq.k4_unit ~ aq.a_K2SO4
+        eq.r5.K_eq * eq.k5_unit ~ aq.a_KHSO4
+        eq.r6.K_eq * eq.k6_unit ~ aq.a_KNO3
+        eq.r7.K_eq * eq.k7_unit ~ aq.a_KCl
+        eq.r8.K_eq * eq.k8_unit ~ aq.a_MgSO4
+        eq.r9.K_eq * eq.k9_unit ~ aq.a_MgNO32
+        eq.r10.K_eq * eq.k10_unit ~ aq.a_MgCl2
+        eq.r11.K_eq * eq.k11_unit ~ aq.H.a * aq.SO4.a / aq.HSO4.a
+        eq.r12.K_eq * eq.k12_unit ~ aq.NH3.a / g.NH3.p
+        eq.r13.K_eq * eq.k13_unit ~ aq.NH4.a * aq.OH.a / aq.NH3.a / RH
+        eq.r14.K_eq * eq.k14_unit ~ aq.H.a * aq.NO3.a / g.HNO3.p # K1
+        eq.r15.K_eq * eq.k15_unit ~ aq.a_HNO3 / g.HNO3.p # K1a
+        eq.r14.K_eq / eq.r15.K_eq ~ aq.H.a * aq.NO3.a / aq.a_HNO3 # K1b, from Table 2 footnote ♠
+        eq.r16.K_eq * eq.k16_unit ~ aq.a_HCl / g.HCl.p # K2
+        eq.r17.K_eq * eq.k17_unit ~ aq.HCl_aq.a / g.HCl.p # K2a
+        eq.r16.K_eq / eq.r17.K_eq * eq.k2b_unit ~ aq.H.a * aq.Cl.a / aq.HCl_aq.a # K2b, from Table 2 footnote ♦
+        eq.r18.K_eq * eq.k18_unit ~ aq.H.a * aq.OH.a / RH
+        eq.r19.K_eq * eq.k19_unit ~ aq.a_Na2SO4
+        eq.r20.K_eq * eq.k20_unit ~ aq.a_NH42SO4
+        eq.r21.K_eq * eq.k21_unit ~ g.NH3.p * g.HCl.p
+        eq.r22.K_eq * eq.k22_unit ~ aq.a_NaNO3
+        eq.r23.K_eq * eq.k23_unit ~ aq.a_NaCl
+        eq.r24.K_eq * eq.k24_unit ~ aq.a_NaHSO4
+        eq.r25.K_eq * eq.k25_unit ~ g.NH3.p * g.HNO3.p
+        eq.r26.K_eq * eq.k26_unit ~ aq.a_NH4HSO4
+        eq.r27.K_eq * eq.k27_unit ~ aq.a_NH43HSO42
+
+        # Mass Balance
+        TotalNH ~ aq.NH4.M + aq.NH3.M + g.NH3.M + s.NH4Cl.M + s.NH4NO3.M + 2s.NH42SO4.M +
+            s.NH4HSO4.M + 3s.NH43HSO42.M
+        TotalNa ~ aq.Na.M + s.NaCl.M + s.NaNO3.M + 2s.Na2SO4.M + s.NaHSO4.M
+        TotalCa ~ aq.Ca.M + s.CaCl2.M + s.CaNO32.M + s.CaSO4.M
+        TotalK ~ aq.K.M + s.KCl.M + s.KNO3.M + s.KHSO4.M + 2s.K2SO4.M
+        TotalMg ~ aq.Mg.M + s.MgCl2.M + s.MgNO32.M + s.MgSO4.M
+        TotalCl ~ aq.Cl.M + aq.HCl.M + g.HCl.M + 2s.CaCl2.M + s.KCl.M + s.NH4Cl.M +
+            s.NaCl.M + 2s.MgCl2.M
+        TotalNO3 ~ aq.NO3.M + g.HNO3.M + 2s.CaNO32.M + s.KNO3.M + s.NH4NO3.M + s.NaNO3.M +
+            2s.MgNO32.M
+        TotalSO4 ~ aq.SO4.M + g.H2SO4.M + 2s.NH42SO4.M + s.NH4HSO4.M + 2s.NH43HSO42.M +
+            s.NaHSO4.M + s.Na2SO4.M + s.KHSO4.M + 2s.K2SO4.M + s.CaSO4.M + s.MgSO4.M
+
+        D(TotalNH) ~ 0.0
+        D(TotalNa) ~ 0.0
+        D(TotalCa) ~ 0.0
+        D(TotalK) ~ 0.0
+        D(TotalMg) ~ 0.0
+        D(TotalCl) ~ 0.0
+        D(TotalNO3) ~ 0.0
+        D(TotalSO4) ~ 0.0
+    end
+end
+
+@named isrpa = Isorropia()
+
+structural_simplify(isrpa)
+sys = structural_simplify(isrpa, fully_determined=false)
+
+unknowns(sys)
+equations(sys)
+
+isrpa.T
+
+equations(isrpa)
+
+
 # Molar mass in g/mol
 mw = Dict(
     :Na_aq => 22.989769,
@@ -357,3 +457,64 @@ function Output(active_vars)
 end
 
 end
+
+
+spc = [
+:CaNO32s
+:CaNO32aq
+:CaCl2s
+:CaCl2aq
+:CaSO4s
+:CaSO4aq
+:K2SO4s
+:K2SO4aq
+:KHSO4s
+:KHSO4aq
+:KNO3s
+:KNO3aq
+:KCls
+:KClaq
+:MgSO4s
+:MgSO4aq
+:MgNO32s
+:MgNO32aq
+:MgCl2s
+:MgCl2aq
+:HSO4s
+:Haq
+:SO4aq
+:NH3g
+:NH3aq
+:NH3aq
+:NH4aq
+:OHaq
+:HNO3g
+:HNO3aq
+:HClg
+:Haq
+:Claq
+:HClg
+:HClaq
+:Haq
+:OHaq
+:Na2SO4s
+:Na2SO4aq
+:NH4Cls
+:NH3g
+:HClg
+:NaNO3s
+:NaNO3aq
+:NaCls
+:NaClaq
+:NaHSO4s
+:NaHSO4aq
+:NH4NO3s
+:NH3g
+:HNO3g
+:NH4HSO4s
+:NH4HSO4aq
+:NH43HSO42s
+:NH43HSO42aq
+]
+
+unique(spc)

@@ -1,35 +1,39 @@
-"""
-A gas with the given partial pressure.
-"""
-struct Gas <: Species
-    p::Any
-end
-"""
-From Section 2.2 in Fountoukis and Nenes (2007), the activity of a gas is its partial pressure (in atm).
-"""
-
-function Base.nameof(g::Gas)
-    string(Symbolics.tosymbol(g.p, escape = false))
-end
-
-vars(g::Gas) = [g.p]
-terms(g::Gas) = [g.p], [1]
-
-"""
-Generate the gases.
-Each gas has an associated MTK variable named <name>_g, where <name> is the name of the compound.
-All SO4 immediately goes to aerosol phase as per Section 3.3 (item 1) of Fountoukis and Nenes (2007), so we don't include it here.
-"""
-function generate_gases(t)
-    gases = Dict()
-    for (s, v) in [:HNO3 => 1e-8, :HCl => 1e-8, :NH3 => 1e-8]
-        varname = Symbol(s, "_g")
-        description = "Gasous $s"
-        var = only(
-            @species $varname(t) = v [unit = u"Constants.atm", description = description]
-        )
-        var = ParentScope(var)
-        gases[s] = Gas(var)
+@mtkmodel Gas begin
+    @description """A gas with the given partial pressure.
+    From Section 2.2 in Fountoukis and Nenes (2007), the activity of a gas is its partial pressure (in atm).
+    """
+    @constants begin
+        R = 8.31446261815324, [unit = u"m^3*Pa/K/mol", description = "Univ. gas constant"]
+        PaPerAtm = 101325, [unit = u"Pa/Constants.atm", description = "Unit conversion"]
     end
-    gases
+    @parameters begin
+        p, [description = "Partial pressure of the gas", unit = u"Constants.atm"]
+        M, [description = "Concentration of the gas in air", unit = u"mol/m^3"]
+        T, [description = "Temperature", unit = u"K"]
+    end
+    @equations begin
+        M ~ p * PaPerAtm / R / T
+    end
+end
+
+@mtkmodel Gases begin
+    @description "Gases in Isorropia II."
+    @parameters begin
+        T, [unit = u"K", description = "Temperature"]
+    end
+    @components begin
+        HNO3 = Gas()
+        HCl = Gas()
+        NH3 = Gas()
+        H2SO4 = Gas()
+    end
+    @equations begin
+        # From Section 3.3 (item 1) in Fountoukis and Nenes (2007), all H2SO4 immediately goes to aerosol phase.
+        H2SO4.p ~ 0.0
+
+        HNO3.T ~ T
+        HCl.T ~ T
+        NH3.T ~ T
+        H2SO4.T ~ T
+    end
 end

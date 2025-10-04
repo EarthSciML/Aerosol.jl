@@ -122,8 +122,8 @@ end
         M_zero = 0.0, [unit = u"mol/m^3", description = "Zero molarity."]
     end
     @parameters begin
-        T = 298.15, [description = "Temperature", unit = u"K"]
-        RH = 0.5, [description = "Relative humidity (0-1)"]
+        T = 293.15, [description = "Temperature", unit = u"K"]
+        RH = 0.3, [description = "Relative humidity (0-1)"]
     end
     @variables begin
         #! format: off
@@ -220,7 +220,7 @@ end
         a_NaCl(t), [description = "Activity of NaCl", unit = u"mol^2/kg^2"]
         a_Na2SO4(t), [description = "Activity of Na2SO4", unit = u"mol^3/kg^3"]
         a_NaNO3(t), [description = "Activity of NaNO3", unit = u"mol^2/kg^2"]
-        a_NH42SO4(t), [description = "Activity of (NH4)2SO4", unit = u"mol^2/kg^2"]
+        a_NH42SO4(t), [description = "Activity of (NH4)2SO4", unit = u"mol^3/kg^3"]
         a_NH4NO3(t), [description = "Activity of NH4NO3", unit = u"mol^2/kg^2"]
         a_NH4Cl(t), [description = "Activity of NH4Cl", unit = u"mol^2/kg^2"]
         a_NH4HSO4(t), [description = "Activity of NH4HSO4", unit = u"mol^2/kg^2"]
@@ -249,6 +249,10 @@ end
         SO4 = Ion(z = abs(-2))
         HSO4 = Ion(z = abs(-1))
         OH = Ion(z = abs(-1))
+
+        # Neutral species
+        NH3 = Ion(z = 0)
+        HCl_aq = Ion(z = 0)
 
         # Salts
         CaNO32 = Salt(cation = Ca, anion = NO3, drh = 0.4906, l_t = 509.4, q = 0.93)
@@ -476,7 +480,7 @@ end
         a_NaCl ~ Na.m * Cl.m * γ_NaCl^(1 + 1)
         a_Na2SO4 ~ Na.m^2 * SO4.m * γ_Na2SO4^(2 + 1)
         a_NaNO3 ~ Na.m * NO3.m * γ_NaNO3^(1 + 1)
-        a_NH42SO4 ~ NH4.m * SO4.m * γ_NH42SO4^(1 + 1)
+        a_NH42SO4 ~ NH4.m^2 * SO4.m * γ_NH42SO4^(2 + 1)
         a_NH4NO3 ~ NH4.m * NO3.m * γ_NH4NO3^(1 + 1)
         a_NH4Cl ~ NH4.m * Cl.m^1 * γ_NH4Cl^(1 + 1)
         a_NH4HSO4 ~ NH4.m * HSO4.m * γ_NH4HSO4^(1 + 1)
@@ -559,23 +563,25 @@ end
         maw_NH4HSO4.RH ~ RH
         maw_NH43HSO42.RH ~ RH
 
-        # Mass balance
         HHSO4.M ~ 0.0 # HHSO4 doesn't participate in any reactions
         H2SO4.M ~ 0.0 # The first dissociation of H2SO4 is assumed to be complete (Section 3.3)
+
+        # Mass balance
         NH4.M ~ NH4NO3.M + NH4Cl.M + NH4HSO4.M + 2NH42SO4.M + 3NH43HSO42.M
         Na.M ~ NaCl.M + 2Na2SO4.M + NaNO3.M + NaHSO4.M
-        H.M ~ 2H2SO4.M + HCl.M + HNO3.M + KHSO4.M
+        H.M ~ 2H2SO4.M + HCl.M + HNO3.M + KHSO4.M + HHSO4.M
         Ca.M ~ CaNO32.M + CaCl2.M + CaSO4.M
         K.M ~ KHSO4.M + 2K2SO4.M + KNO3.M + KCl.M
         Mg.M ~ MgSO4.M + MgNO32.M + MgCl2.M
         Cl.M ~ NaCl.M + KCl.M + 2MgCl2.M + 2CaCl2.M + NH4Cl.M + HCl.M
         NO3.M ~ NaNO3.M + KNO3.M + 2MgNO32.M + 2CaNO32.M + NH4NO3.M + HNO3.M
-        SO4.M ~ Na2SO4.M + K2SO4.M + MgSO4.M + CaSO4.M + NH42SO4.M + H2SO4.M
-        HSO4.M ~ KHSO4.M + NaHSO4.M + NH4HSO4.M + 2NH43HSO42.M
+        SO4.M ~ Na2SO4.M + K2SO4.M + MgSO4.M + CaSO4.M + NH42SO4.M + H2SO4.M +
+            NH43HSO42.M
+        HSO4.M ~ KHSO4.M + NaHSO4.M + NH4HSO4.M + NH43HSO42.M + HHSO4.M
 
         # Charge balance
-        #0 ~ sum([i.M * i.z for i in [NH4, Na, H, Ca, K, Mg]]) -
-        #     sum([i.M * i.z for i in [Cl, NO3, SO4, HSO4, OH]])
+        0 ~ sum([i.M * i.z for i in [NH4, Na, H, Ca, K, Mg]]) -
+             sum([i.M * i.z for i in [Cl, NO3, SO4, HSO4, OH]])
     end
 end
 
