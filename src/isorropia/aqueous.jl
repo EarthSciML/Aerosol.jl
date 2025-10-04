@@ -92,8 +92,10 @@ end
         k_6, [description = "polynomial fit coefficient"]
         m_one = 1.0, [unit = u"mol/kg", description = "unit molality"]
     end
+    @parameters begin
+        RH, [description = "Relative humidity"]
+    end
     @variables begin
-        RH(t), [description = "Relative humidity"]
         m_aw(t), [description = "molality of the binary solution", unit = u"mol/kg"]
     end
     @equations begin
@@ -252,6 +254,7 @@ end
 
         # Neutral species
         NH3 = Ion(z = 0)
+        HNO3_aq = Ion(z = 0)
         HCl_aq = Ion(z = 0)
 
         # Salts
@@ -276,8 +279,8 @@ end
         NH43HSO42 = Salt(cation = NH4, anion = HSO4, drh = 0.6900, l_t = 186.0, q = q0)
         H2SO4 = Salt(cation = H, anion = SO4, drh = 0.000, l_t = NaN, q = -0.1)
         HHSO4 = Salt(cation = H, anion = HSO4, drh = 0.000, l_t = NaN, q = 8.00)
-        HNO3 = Salt(cation = H, anion = NO3, drh = NaN, l_t = NaN, q = 2.60) # There is no aqueous to solid conversion for HNO3.
-        HCl = Salt(cation = H, anion = Cl, drh = NaN, l_t = NaN, q = 6.00) # There is no aqueous to solid conversion for HCl.
+        HNO3 = Salt(cation = H, anion = NO3, drh = NaN, l_t = NaN, q = 2.60)
+        HCl = Salt(cation = H, anion = Cl, drh = NaN, l_t = NaN, q = 6.00)
 
         # Water content
         #! format: off
@@ -521,6 +524,10 @@ end
         SO4.W ~ W
         HSO4.W ~ W
         OH.W ~ W
+        NH3.W ~ W
+        HNO3_aq.W ~ W
+        HCl_aq.W ~ W
+
         CaNO32.W ~ W
         CaSO4.W ~ W
         CaCl2.W ~ W
@@ -544,6 +551,7 @@ end
         HHSO4.W ~ W
         HNO3.W ~ W
         HCl.W ~ W
+
         maw_CaNO32.RH ~ RH
         maw_CaCl2.RH ~ RH
         maw_KHSO4.RH ~ RH
@@ -588,6 +596,20 @@ end
 @named aq = Aqueous()
 equations(aq)
 
+filter(s -> occursin("W", string(s)), equations(aq))
+
+mtkcompile(aq)
+
+ions = 11
+neutrals = 3
+salts =  23
+eqs = 14
+vars = ions + neutrals + salts
+dfs = vars - eqs
+constraints = dfs - ions - neutrals
+sysdfs = 81 - 60
+101 - 89
+
 @mtkmodel AqueousTest begin
     @components begin
         aq = Aqueous()
@@ -608,29 +630,35 @@ equations(aq)
         D(aq.NO3.M) ~ no_change
         D(aq.HSO4.M) ~ no_change
         D(aq.OH.M) ~ no_change
+        D(aq.NH3.M) ~ no_change
+        D(aq.HNO3_aq.M) ~ no_change
+        D(aq.HCl_aq.M) ~ no_change
 
         # Relationships between salts, just for testing purposes.
         # These are replaced by equilibrium equations in the real model.
-        aq.NH4NO3.M ~ aq.NH4.M^2 / 5 / M_one
-        aq.NH4HSO4.M ~ aq.NH4.M / 5
-        aq.NH42SO4.M ~ aq.NH4.M / 5
-        aq.Na2SO4.M ~ aq.Na.M / 4
-        aq.CaNO32.M ~ aq.Ca.M / 3
-        aq.CaSO4.M ~ aq.Ca.M / 3
-        aq.MgNO32.M ~ aq.Mg.M / 3
-        aq.NaCl.M ~ aq.Na.M / 4
-        aq.HNO3.M ~ aq.H.M / 4
-        aq.KHSO4.M ~ aq.HSO4.M / 4
-        aq.K2SO4.M ~ aq.K.M / 4
+        aq.CaSO4.M ~ 0
+        aq.NH4HSO4.M ~ 0
+        aq.MgNO32.M ~ 0
+        aq.NH42SO4.M ~ 0
+        aq.CaNO32.M ~ 0
+        aq.NH4Cl.M ~ 0
+        aq.HCl.M ~ 0
+        aq.KNO3.M ~ 0
+        aq.KCl.M ~ 0
+        aq.HNO3.M ~ 0
     end
 end
 
 @named aqt = AqueousTest()
 
-sys = mtkcompile(aqt)
+aqt = substitute(aqt, aqt.aq.HCl_aq.W => aqt.aq.W)
+
+
+
+sys = mtkcompile(aqt, fully_determined=false)
 equations(sys)
 unknowns(sys)
-
+mtkcompile(aqt)
 
 prob = ODEProblem(sys, [], (0.0, 1.0))
 

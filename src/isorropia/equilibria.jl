@@ -119,7 +119,6 @@ end
 
 @named eq = EquilibriumConstants()
 
-eq.k1_unit
 
 """
 Create an equation system for this reaction based on the information in

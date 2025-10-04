@@ -62,7 +62,7 @@ include("equilibria.jl")
         eq.r13.K_eq * eq.k13_unit ~ aq.NH4.a * aq.OH.a / aq.NH3.a / RH
         eq.r14.K_eq * eq.k14_unit ~ aq.H.a * aq.NO3.a / g.HNO3.p # K1
         eq.r15.K_eq * eq.k15_unit ~ aq.a_HNO3 / g.HNO3.p # K1a
-        eq.r14.K_eq / eq.r15.K_eq ~ aq.H.a * aq.NO3.a / aq.a_HNO3 # K1b, from Table 2 footnote ♠
+        eq.r14.K_eq / eq.r15.K_eq ~ aq.HNO3_aq / aq.a_HNO3 # K1b, from Table 2 footnote ♠
         eq.r16.K_eq * eq.k16_unit ~ aq.a_HCl / g.HCl.p # K2
         eq.r17.K_eq * eq.k17_unit ~ aq.HCl_aq.a / g.HCl.p # K2a
         eq.r16.K_eq / eq.r17.K_eq * eq.k2b_unit ~ aq.H.a * aq.Cl.a / aq.HCl_aq.a # K2b, from Table 2 footnote ♦
@@ -85,9 +85,9 @@ include("equilibria.jl")
         TotalK ~ aq.K.M + s.KCl.M + s.KNO3.M + s.KHSO4.M + 2s.K2SO4.M
         TotalMg ~ aq.Mg.M + s.MgCl2.M + s.MgNO32.M + s.MgSO4.M
         TotalCl ~ aq.Cl.M + aq.HCl.M + g.HCl.M + 2s.CaCl2.M + s.KCl.M + s.NH4Cl.M +
-            s.NaCl.M + 2s.MgCl2.M
+            s.NaCl.M + 2s.MgCl2.M + aq.HCl_aq.M
         TotalNO3 ~ aq.NO3.M + g.HNO3.M + 2s.CaNO32.M + s.KNO3.M + s.NH4NO3.M + s.NaNO3.M +
-            2s.MgNO32.M
+            2s.MgNO32.M + aq.HNO3_aq.M + aq.HNO3.M
         TotalSO4 ~ aq.SO4.M + g.H2SO4.M + 2s.NH42SO4.M + s.NH4HSO4.M + 2s.NH43HSO42.M +
             s.NaHSO4.M + s.Na2SO4.M + s.KHSO4.M + 2s.K2SO4.M + s.CaSO4.M + s.MgSO4.M
 
