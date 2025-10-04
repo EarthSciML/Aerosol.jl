@@ -1,11 +1,3 @@
-"""
-Define a reaction based on information in Table 2 of Fountoukis and Nenes (2007).
-
-The left-hand side of the reaction equation is the equilibrium constant and the right-hand side is the ratio
-of the product and reactant activities.
-"""
-
-
 @mtkmodel EqConst begin
     @description """An equilibrium constant based on Equation 5 in Fountoukis and Nenes (2007),
 parameterized by values from Table 2 in the same paper."""

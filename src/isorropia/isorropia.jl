@@ -9,14 +9,11 @@ using Plots
 
 export Isorropia
 
-include("units.jl")
-include("species.jl")
 include("aqueous.jl")
 include("deliquescence.jl")
 include("solid.jl")
 include("gas.jl")
-include("water.jl")
-include("reactions.jl")
+include("equilibria.jl")
 
 @mtkmodel Isorropia begin
     @components begin
