@@ -1,16 +1,10 @@
-using ModelingToolkit
-using ModelingToolkit: t, D
-using DynamicQuantities
-
 @mtkmodel Ion begin
     @description "An aqueous ion."
     @parameters begin
         z, [description = "Valence (charge) of the ion"]
     end
     @variables begin
-        m(t), [description = "Molality of the ion in water", unit = u"mol/kg", guess = 1.0]
-        M(t), [description = "Molarity of the ion in air", unit = u"mol/m^3", guess = 1.0]
-        W(t), [description = "Aerosol water content (in air)", unit = u"kg/m^3", guess=1.0]
+        m(t), [description = "Molality of the ion in water", unit = u"mol/kg", guess = 1e-8]
         a(t),
         [
             description = "Activity of the ion. The activity coefficient of an ion is assumed to be one (Fountoukis and Nenes (2007), Section 3.3).",
@@ -18,7 +12,6 @@ using DynamicQuantities
     end
     @equations begin
         a ~ m
-        M ~ m * W
     end
 end
 
@@ -45,21 +38,16 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         I_one = 1, [unit = u"mol/kg", description = "An ionic strength of 1"]
     end
     @variables begin
-        #! format: off
-        M(t), [description = "Molarity of the salt in air", unit = u"mol/m^3", guess=1.0]
-        #! format: on
-        #m(t), [description = "Molal concentration of the salt in water", unit = u"mol/kg"]
-        W(t), [description = "Aerosol water content (per m^3 air)", unit = u"kg/m^3"]
+        M(t), [description = "Molarity of the salt in air", unit = u"mol/m^3", guess=1e-8]
         X(t)
         Y(t)
-        I(t), [description = "Ionic strength", unit = u"mol/kg", guess=1]
+        I(t), [description = "Ionic strength", unit = u"mol/kg", guess=1e-8]
         logγ⁰(t), [description = "Log of the standard state activity coefficient"]
         Γ⁰(t), [unit = u"mol/kg"]
         Γ⁺(t)
         C(t)
     end
     @equations begin
-        #M ~ m * W
         zz ~ ParentScope(cation.z) * ParentScope(anion.z)
         # Supplemental equations after equations 7 and 8
         Y ~ ((ParentScope(cation.z) + ParentScope(anion.z)) / 2)^2 * ParentScope(anion.m) /
@@ -121,7 +109,6 @@ end
             unit = u"K^-1",
             description = "Constant for Fountoukis and Nenes (2007) Eq. 14"
         ]
-        M_zero = 0.0, [unit = u"mol/m^3", description = "Zero molarity."]
     end
     @parameters begin
         T, [description = "Temperature", unit = u"K"]
@@ -513,44 +500,6 @@ end
             NH4Cl.M / maw_NH4Cl.m_aw +
             NH4HSO4.M / maw_NH4HSO4.m_aw +
             NH43HSO42.M / maw_NH43HSO42.m_aw
-        NH4.W ~ W
-        Na.W ~ W
-        H.W ~ W
-        Ca.W ~ W
-        K.W ~ W
-        Mg.W ~ W
-        Cl.W ~ W
-        NO3.W ~ W
-        SO4.W ~ W
-        HSO4.W ~ W
-        OH.W ~ W
-        NH3.W ~ W
-        HNO3_aq.W ~ W
-        HCl_aq.W ~ W
-
-        CaNO32.W ~ W
-        CaSO4.W ~ W
-        CaCl2.W ~ W
-        KHSO4.W ~ W
-        K2SO4.W ~ W
-        KNO3.W ~ W
-        KCl.W ~ W
-        MgSO4.W ~ W
-        MgNO32.W ~ W
-        MgCl2.W ~ W
-        NaNO3.W ~ W
-        NaHSO4.W ~ W
-        NaCl.W ~ W
-        Na2SO4.W ~ W
-        NH42SO4.W ~ W
-        NH4NO3.W ~ W
-        NH4Cl.W ~ W
-        NH4HSO4.W ~ W
-        NH43HSO42.W ~ W
-        H2SO4.W ~ W
-        HHSO4.W ~ W
-        HNO3.W ~ W
-        HCl.W ~ W
 
         maw_CaNO32.RH ~ RH
         maw_CaCl2.RH ~ RH
@@ -571,121 +520,25 @@ end
         maw_NH4HSO4.RH ~ RH
         maw_NH43HSO42.RH ~ RH
 
-        HHSO4.M ~ 0.0 # HHSO4 doesn't participate in any reactions
         H2SO4.M ~ 0.0 # The first dissociation of H2SO4 is assumed to be complete (Section 3.3)
 
         # Mass balance
-        NH4.M ~ NH4NO3.M + NH4Cl.M + NH4HSO4.M + 2NH42SO4.M + 3NH43HSO42.M
-        Na.M ~ NaCl.M + 2Na2SO4.M + NaNO3.M + NaHSO4.M
-        H.M ~ 2H2SO4.M + HCl.M + HNO3.M + KHSO4.M + HHSO4.M
-        Ca.M ~ CaNO32.M + CaCl2.M + CaSO4.M
-        K.M ~ KHSO4.M + 2K2SO4.M + KNO3.M + KCl.M
-        Mg.M ~ MgSO4.M + MgNO32.M + MgCl2.M
-        Cl.M ~ NaCl.M + KCl.M + 2MgCl2.M + 2CaCl2.M + NH4Cl.M + HCl.M
-        NO3.M ~ NaNO3.M + KNO3.M + 2MgNO32.M + 2CaNO32.M + NH4NO3.M + HNO3.M
-        SO4.M ~ Na2SO4.M + K2SO4.M + MgSO4.M + CaSO4.M + NH42SO4.M + H2SO4.M +
+        NH4.m * W ~ NH4NO3.M + NH4Cl.M + NH4HSO4.M + 2NH42SO4.M + 3NH43HSO42.M
+        Na.m * W ~ NaCl.M + 2Na2SO4.M + NaNO3.M + NaHSO4.M
+        H.m * W ~ 2H2SO4.M + HCl.M + HNO3.M + KHSO4.M + HHSO4.M
+        Ca.m * W ~ CaNO32.M + CaCl2.M + CaSO4.M
+        K.m * W ~ KHSO4.M + 2K2SO4.M + KNO3.M + KCl.M
+        Mg.m * W ~ MgSO4.M + MgNO32.M + MgCl2.M
+        Cl.m * W ~ NaCl.M + KCl.M + 2MgCl2.M + 2CaCl2.M + NH4Cl.M + HCl.M
+        NO3.m * W ~ NaNO3.M + KNO3.M + 2MgNO32.M + 2CaNO32.M + NH4NO3.M + HNO3.M
+        SO4.m * W ~ Na2SO4.M + K2SO4.M + MgSO4.M + CaSO4.M + NH42SO4.M + H2SO4.M +
                 NH43HSO42.M
-        HSO4.M ~ KHSO4.M + NaHSO4.M + NH4HSO4.M + NH43HSO42.M + HHSO4.M
+        HSO4.m * W ~ KHSO4.M + NaHSO4.M + NH4HSO4.M + NH43HSO42.M + HHSO4.M
 
         # Charge balance
-        0 ~ sum([i.M * i.z for i in [NH4, Na, H, Ca, K, Mg]]) -
-            sum([i.M * i.z for i in [Cl, NO3, SO4, HSO4, OH]])
+        0 ~ sum([i.m * i.z for i in [NH4, Na, H, Ca, K, Mg]]) -
+            sum([i.m * i.z for i in [Cl, NO3, SO4, HSO4, OH]])
     end
 end
 
-@named aq = Aqueous()
-
-@mtkmodel AqueousTest begin
-    @components begin
-        aq = Aqueous()
-    end
-    @constants begin
-        no_change = 0.0, [unit = u"mol/m^3/s"]
-        M_one = 1.0, [unit = u"mol/m^3"]
-    end
-    @equations begin
-        D(aq.Ca.M) ~ no_change
-        D(aq.Cl.M) ~ no_change
-        D(aq.SO4.M) ~ no_change
-        D(aq.Na.M) ~ no_change
-        D(aq.NH4.M) ~ no_change
-        D(aq.K.M) ~ no_change
-        D(aq.Mg.M) ~ no_change
-        D(aq.NO3.M) ~ no_change
-        D(aq.HSO4.M) ~ no_change
-        D(aq.NH3.M) ~ no_change
-        D(aq.HNO3_aq.M) ~ no_change
-        D(aq.HCl_aq.M) ~ no_change
-
-        # Relationships between salts, just for testing purposes.
-        # These are replaced by equilibrium equations in the real model.
-        aq.CaSO4.M ~ aq.NH4HSO4.M
-        aq.HCl.M ~ aq.NaCl.M
-        aq.MgNO32.M ~ aq.Na2SO4.M
-        aq.NH42SO4.M ~ aq.NH4NO3.M
-        aq.CaNO32.M ~ aq.CaCl2.M
-        aq.NH4Cl.M ~ aq.MgCl2.M
-        aq.OH.M ~ 0
-        aq.KNO3.M ~ aq.NH43HSO42.M
-        aq.KCl.M + 2aq.HNO3.M ~ aq.K2SO4.M
-        aq.HNO3.M ~ aq.NaNO3.M
-        aq.NaHSO4.M ~ 0
-        aq.MgSO4.M ~ 0
-    end
-end
-
-@named aqt = AqueousTest()
-sys = mtkcompile(aqt)
-unknowns(sys)
-
-prob = ODEProblem(sys, [], (0.0, 1.0))
-prob = ODEProblem(sys, [
-        sys.aq.Ca.M => 1.0,
-        sys.aq.Cl.M => 1.0,
-        sys.aq.SO4.M => 1.0,
-        sys.aq.Na.M => 1.0,
-        sys.aq.NH4.M => 1.0,
-        sys.aq.K.M => 1.0,
-        sys.aq.Mg.M => 1.0,
-        sys.aq.NO3.M => 1.0,
-        sys.aq.HSO4.M => 1.0,
-        sys.aq.NH3.M => 1.0,
-        sys.aq.HNO3_aq.M => 1.0,
-        sys.aq.HCl_aq.M => 1.0
-    ], (0.0, 1.0))
-
-unknowns(prob.f.initializeprob.f.sys)
-equations(prob.f.initializeprob.f.sys)
-
-isys = mtkcompile(ModelingToolkit.generate_initializesystem(sys))
-
-equations(isys)
-
-unknowns(isys)
-
-defaults(sys)
-
-using SymbolicIndexingInterface: setp, getsym, parameter_values
-using SciMLBase: remake
-using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
-prob = remake(prob, u0 = [sys.aq.Ca.m => 1.0, sys.aq.CaCl2.M => 1.0])
-f = getsym(prob, [sys.aq.γ_NaCl, sys.aq.γ_CaCl2, sys.aq.γ_NaNO3, sys.aq.γ_CaNO32])
-f(prob)
-
-f = getsym(prob,
-    [sys.aq.Ca.M, sys.aq.Ca.m, sys.aq.CaCl2.M, sys.aq.W, sys.aq.maw_CaCl2.m_aw, sys.aq.I])
-f(prob)
-
-f = getsym(prob,
-    [sys.aq.CaNO32.M, sys.aq.CaCl2.M, sys.aq.CaSO4.M, sys.aq.KHSO4.M,
-        sys.aq.K2SO4.M, sys.aq.KNO3.M, sys.aq.KCl.M, sys.aq.MgSO4.M, sys.aq.MgNO32.M,
-        sys.aq.MgCl2.M, sys.aq.NaCl.M, sys.aq.Na2SO4.M, sys.aq.NaNO3.M, sys.aq.NH42SO4.M,
-        sys.aq.NH4NO3.M, sys.aq.NH4Cl.M, sys.aq.NH4HSO4.M, sys.aq.NH43HSO42.M, sys.aq.H2SO4.M,
-        sys.aq.HHSO4.M, sys.aq.HNO3.M, sys.aq.HCl.M])
-f(prob)
-
-prob = remake(prob, u0 = [sys.aq.Cl.m => 1.0])
-f = getsym(prob, [sys.aq.γ_NaCl, sys.aq.γ_CaCl2, sys.aq.γ_NaNO3, sys.aq.γ_CaNO32])
-f(prob)
-
-solve(prob, Rosenbrock23())
+@named xx = Aqueous()

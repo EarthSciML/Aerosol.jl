@@ -1,12 +1,7 @@
 @mtkmodel Solid begin
     @description "A solid with the given concentration."
     @variables begin
-     #   m(t), [description = "Concentration of the solid in water", unit = u"mol/kg"]
-        M(t), [description = "Molarity of the solid in air", unit = u"mol/m^3", guess=1]
-        W(t), [description = "Aerosol water mass in air", unit = u"kg/m^3"]
-    end
-    @equations begin
-      #  M ~ m * W
+        M(t), [description = "Molarity of the solid in air", unit = u"mol/m^3", guess=1e-8]
     end
 end
 
@@ -33,33 +28,9 @@ end
         NH4HSO4 = Solid()
         NH43HSO42 = Solid()
     end
-    @variables begin
-        W(t), [description = "Aerosol water mass in air", unit = u"kg/m^3"]
-    end
-    @equations begin
-        CaNO32.W ~ W
-        CaCl2.W ~ W
-        CaSO4.W ~ W
-        KHSO4.W ~ W
-        K2SO4.W ~ W
-        KNO3.W ~ W
-        KCl.W ~ W
-        MgSO4.W ~ W
-        MgNO32.W ~ W
-        MgCl2.W ~ W
-        NaCl.W ~ W
-        NaNO3.W ~ W
-        Na2SO4.W ~ W
-        NaHSO4.W ~ W
-        NH4Cl.W ~ W
-        NH4NO3.W ~ W
-        NH42SO4.W ~ W
-        NH4HSO4.W ~ W
-        NH43HSO42.W ~ W
-    end
 end
 
-
+@named xxx = Solids()
 sys = mtkcompile(Solids(name=:x), fully_determined=false)
 
 equations(sys)

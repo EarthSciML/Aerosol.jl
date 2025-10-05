@@ -1,160 +1,109 @@
-@variables t [description = "Time" unit = u"s"]
+using Aerosol
+import Aerosol.ISORROPIA: Aqueous
+using ModelingToolkit
+using ModelingToolkit: D
+using DynamicQuantities
+using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
 
-ions = ISORROPIA.generate_ions(t)
-salts = ISORROPIA.generate_salts(ions)
-@test length(ions) == 14
-@test length(salts) == 23
+@named aq = Aqueous()
 
-active_salts = collect(values(salts))
-@test issetequal(
-    ISORROPIA.same_cation(salts[:KCl], active_salts, salts),
-    [salts[:K2SO4], salts[:KNO3], salts[:KCl], salts[:KHSO4]]
-)
-@test issetequal(
-    ISORROPIA.same_anion(salts[:KCl], active_salts, salts),
-    [salts[:CaCl2], salts[:KCl], salts[:MgCl2], salts[:NaCl], salts[:NH4Cl], salts[:HCl]]
-)
-
-W = ISORROPIA.Water(t, active_salts)
-I = ISORROPIA.IonicStrength(t, values(ions), W.W)
-
-@test ModelingToolkit.get_unit(
-    ISORROPIA.logγ₁₂T⁰(salts[:NaCl], active_salts, salts, I.I, W.W),
-) == u"mol^0.5/kg_water^0.5"
-@test ModelingToolkit.get_unit(ISORROPIA.F₁(salts[:NaCl], active_salts, salts, I.I, W.W)) ==
-      u"mol^0.5/kg_water^0.5"
-@test ModelingToolkit.get_unit(ISORROPIA.F₂(salts[:NaCl], active_salts, salts, I.I, W.W)) ==
-      u"mol^0.5/kg_water^0.5"
-@test ModelingToolkit.get_unit(ISORROPIA.X(salts[:NaCl], I.I, W.W)) isa
-      Unitful.FreeUnits{(), NoDims, nothing}
-@test ModelingToolkit.get_unit(ISORROPIA.Y(salts[:NaCl], I.I, W.W)) isa
-      Unitful.FreeUnits{(), NoDims, nothing}
-@test ModelingToolkit.get_unit(ISORROPIA.Γ⁰(salts[:NaCl].q, I.I)) == u"mol/kg_water"
-@test ModelingToolkit.get_unit(ISORROPIA.Γstar(1, I.I)) isa
-      Unitful.FreeUnits{(), NoDims, nothing}
-@test ModelingToolkit.get_unit(ISORROPIA.C(1, I.I)) isa
-      Unitful.FreeUnits{(), NoDims, nothing}
-@test ModelingToolkit.get_unit(ISORROPIA.logγ⁰₁₂(salts[:NaCl], I.I)) isa
-      Unitful.FreeUnits{(), NoDims, nothing}
-@test ModelingToolkit.get_unit(ISORROPIA.logγ⁰₁₂(salts[:NaCl], I.I)) isa
-      Unitful.FreeUnits{(), NoDims, nothing}
-@test ModelingToolkit.get_unit(
-    ISORROPIA.logγ₁₂(salts[:NaCl], active_salts, salts, I.I, W.W),
-) isa Unitful.FreeUnits{(), NoDims, nothing}
-
-function sub(expr, u = nothing)
-    if !isnothing(u)
-        expr = substitute(expr, u)
+@mtkmodel AqueousTest begin
+    @components begin
+        aq = Aqueous()
     end
-    expr = ModelingToolkit.subs_constants(expr)
-    defaults = [
-        I.I => 2.5,
-        ions[:Cl].m => 1,
-        ions[:H].m => 2,
-        ISORROPIA.T => 289,
-        ions[:K].m => 0.5,
-        ions[:Mg].m => 1.2,
-        ions[:NH4].m => 2.5,
-        ions[:NO3].m => 3.1,
-        ions[:Na].m => 0.2,
-        ions[:Ca].m => 1.2,
-        ions[:SO4].m => 2.0,
-        ions[:HSO4].m => 0.8,
-        W.W => 0.8
-    ]
-    substitute(expr, defaults)
+    @constants begin
+        no_change = 0.0, [unit = u"mol/m^3/s"]
+        M_one = 1.0, [unit = u"mol/m^3"]
+    end
+    @equations begin
+        D(aq.Ca.M) ~ no_change
+        D(aq.Cl.M) ~ no_change
+        D(aq.SO4.M) ~ no_change
+        D(aq.Na.M) ~ no_change
+        D(aq.NH4.M) ~ no_change
+        D(aq.K.M) ~ no_change
+        D(aq.Mg.M) ~ no_change
+        D(aq.NO3.M) ~ no_change
+        D(aq.HSO4.M) ~ no_change
+        D(aq.NH3.M) ~ no_change
+        D(aq.HNO3_aq.M) ~ no_change
+        D(aq.HCl_aq.M) ~ no_change
+
+        # Relationships between salts, just for testing purposes.
+        # These are replaced by equilibrium equations in the real model.
+        aq.CaSO4.M ~ aq.NH4HSO4.M
+        aq.HCl.M ~ aq.NaCl.M
+        aq.MgNO32.M ~ aq.Na2SO4.M
+        aq.NH42SO4.M ~ aq.NH4NO3.M
+        aq.CaNO32.M ~ aq.CaCl2.M
+        aq.NH4Cl.M ~ aq.MgCl2.M
+        aq.OH.M ~ 0
+        aq.KNO3.M ~ aq.NH43HSO42.M
+        aq.KCl.M + 2aq.HNO3.M ~ aq.K2SO4.M
+        aq.HNO3.M ~ aq.NaNO3.M
+        aq.NaHSO4.M ~ 0
+        aq.MgSO4.M ~ 0
+    end
 end
 
-# Activity coefficients should often be ≤ 1 for ions in aqueous solution
-@test sub(ISORROPIA.logγ⁰₁₂(salts[:KCl], I.I)) ≈ -0.16013845145909214
+@named aqt = AqueousTest()
+sys = mtkcompile(aqt)
+unknowns(sys)
 
-@test sub(ISORROPIA.logγ₁₂T⁰(salts[:KCl], active_salts, salts, I.I, W.W)) ≈
-      0.8322034507224931
+prob = ODEProblem(sys, [sys.aq.T => 293.15, sys.aq.RH => 0.3], (0.0, 1.0))
+prob = ODEProblem(sys, [
+        sys.aq.T => 293.15, sys.aq.RH => 0.3,
+        sys.aq.Ca.M => 1.0,
+        sys.aq.Cl.M => 1.0,
+        sys.aq.SO4.M => 1.0,
+        sys.aq.Na.M => 1.0,
+        sys.aq.NH4.M => 1.0,
+        sys.aq.K.M => 1.0,
+        sys.aq.Mg.M => 1.0,
+        sys.aq.NO3.M => 1.0,
+        sys.aq.HSO4.M => 1.0,
+        sys.aq.NH3.M => 1.0,
+        sys.aq.HNO3_aq.M => 1.0,
+        sys.aq.HCl_aq.M => 1.0
+    ], (0.0, 1.0), use_scc=false)
 
-@test sub(ISORROPIA.logγ₁₂(salts[:KCl], active_salts, salts, I.I, W.W)) ≈ 0.8859124609238154
+sol = solve(prob, Rosenbrock23())
 
-# Activity coefficients should decrease with increasing ionic strength.
-@test sub(ISORROPIA.logγ₁₂(salts[:KCl], active_salts, salts, I.I, W.W), [I.I => 5]) ≈
-      0.853546306554723
+sol[[sys.aq.I, sys.aq.W]]
 
-# Test activity coefficients for all salts.
-saltnames = [
-    :CaNO32,
-    :CaCl2,
-    :K2SO4,
-    :KNO3,
-    :KCl,
-    :MgSO4,
-    :MgNO32,
-    :MgCl2,
-    :NaCl,
-    :Na2SO4,
-    :NaNO3,
-    :NH42SO4,
-    :NH4NO3,
-    :NH4Cl,
-    :H2SO4,
-    :HHSO4,
-    :HNO3,
-    :HCl
-]
-want_vals = [
-    0.9899740297791452,
-    2.219122534658643,
-    -1.2832826882588682,
-    -0.03594891773580812,
-    0.8859124609238154,
-    0.6655782776789243,
-    1.6790696497304067,
-    2.9082181546099055,
-    1.288358433201964,
-    -0.7466880585546696,
-    0.3664970545423407,
-    -1.0102747960911531,
-    0.16880700138997853,
-    1.0906683800496015,
-    0.1681542434957075,
-    0.7541249743955618,
-    1.0526287810801234,
-    1.9744901597397468
-]
-for (i, salt) in enumerate(saltnames)
-    v = sub(ISORROPIA.logγ₁₂(salts[salt], active_salts, salts, I.I, W.W))
-    @test v ≈ want_vals[i]
-end
 
-# Units in last column in Table 2.
+unknowns(prob.f.initializeprob.f.sys)
+equations(prob.f.initializeprob.f.sys)
 
-@test ModelingToolkit.get_unit(
-    ISORROPIA.activity(salts[:NaCl], active_salts, salts, I.I, W.W),
-) == u"mol^2/kg_water^2"
-@test ModelingToolkit.get_unit(
-    ISORROPIA.activity(salts[:CaNO32], active_salts, salts, I.I, W.W),
-) == u"mol^3/kg_water^3"
+isys = mtkcompile(ModelingToolkit.generate_initializesystem(sys))
 
-@test sub(ISORROPIA.activity(salts[:NaCl], active_salts, salts, I.I, W.W)) ≈
-      4.110587887491537
+equations(isys)
 
-# Special cases
+unknowns(isys)
 
-# Units in last column in Table 2.
-function unitactf(x)
-    ModelingToolkit.get_unit(ISORROPIA.activity(salts[x], active_salts, salts, I.I, W.W))
-end
-@test unitactf(:CaSO4) == u"mol^2/kg_water^2"
-@test unitactf(:KHSO4) == u"mol^2/kg_water^2"
-@test unitactf(:NH4HSO4) == u"mol^2/kg_water^2"
-@test unitactf(:NaHSO4) == u"mol^2/kg_water^2"
-@test unitactf(:NH43HSO42) == u"mol^5/kg_water^5"
+defaults(sys)
 
-actf(x) = sub(ISORROPIA.activity(salts[x], active_salts, salts, I.I, W.W))
-want_γ = Any[1.0e-20, 0.8460080854008434, 0.9372095310924331, 1.0345811139028118,
-0.5384101987210793]
-want_activity = Any[3.7499999999999995e-40, 0.4473310503522503, 2.744880328657807,
-0.2675895203110956, 1.3807544582351838]
-for (i, s) in enumerate([:CaSO4, :KHSO4, :NH4HSO4, :NaHSO4, :NH43HSO42])
-    @test sub(ISORROPIA.γ₁₂(salts[s], active_salts, salts, I.I, W.W)) ≈ want_γ[i]
-    @test actf(s) ≈ want_activity[i]
-end
+using SymbolicIndexingInterface: setp, getsym, parameter_values
+using SciMLBase: remake
 
-@test nameof(salts[:CaCl2]) == "CaCl2_aqs"
+prob = remake(prob, u0 = [sys.aq.Ca.m => 1.0, sys.aq.CaCl2.M => 1.0])
+f = getsym(prob, [sys.aq.γ_NaCl, sys.aq.γ_CaCl2, sys.aq.γ_NaNO3, sys.aq.γ_CaNO32])
+f(prob)
+
+f = getsym(prob,
+    [sys.aq.Ca.M, sys.aq.Ca.m, sys.aq.CaCl2.M, sys.aq.W, sys.aq.maw_CaCl2.m_aw, sys.aq.I])
+f(prob)
+
+f = getsym(prob,
+    [sys.aq.CaNO32.M, sys.aq.CaCl2.M, sys.aq.CaSO4.M, sys.aq.KHSO4.M,
+        sys.aq.K2SO4.M, sys.aq.KNO3.M, sys.aq.KCl.M, sys.aq.MgSO4.M, sys.aq.MgNO32.M,
+        sys.aq.MgCl2.M, sys.aq.NaCl.M, sys.aq.Na2SO4.M, sys.aq.NaNO3.M, sys.aq.NH42SO4.M,
+        sys.aq.NH4NO3.M, sys.aq.NH4Cl.M, sys.aq.NH4HSO4.M, sys.aq.NH43HSO42.M, sys.aq.H2SO4.M,
+        sys.aq.HHSO4.M, sys.aq.HNO3.M, sys.aq.HCl.M])
+f(prob)
+
+prob = remake(prob, u0 = [sys.aq.Cl.m => 1.0])
+f = getsym(prob, [sys.aq.γ_NaCl, sys.aq.γ_CaCl2, sys.aq.γ_NaNO3, sys.aq.γ_CaNO32])
+f(prob)
+
+solve(prob, Rosenbrock23())
