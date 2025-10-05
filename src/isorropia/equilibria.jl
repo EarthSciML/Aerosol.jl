@@ -71,6 +71,7 @@ end
         k12_unit = 1, [unit = u"mol/kg/Constants.atm", description = "Unit conversion"]
         k13_unit = 1, [unit = u"mol/kg", description = "Unit conversion factor"]
         k14_unit = 1, [unit = u"mol^2/kg^2/Constants.atm", description = "Unit conversion"]
+        k1b_unit = 1, [unit = u"mol/kg", description = "Unit conversion"]
         k15_unit = 1, [unit = u"mol^2/kg^2/Constants.atm", description = "Unit conversion"]
         k16_unit = 1, [unit = u"mol^2/kg^2/Constants.atm", description = "Unit conversion"]
         k17_unit = 1, [unit = u"mol/kg/Constants.atm", description = "Unit conversion"]

@@ -27,6 +27,23 @@ include("equilibria.jl")
         RH, [unit = u"1", description = "Relative humidity (0 to 1)"]
     end
     @variables begin
+        aqNH(t), [unit = u"mol/m^3", description = "Aqueous NH3 + NH4+"]
+        sNH(t), [unit = u"mol/m^3", description = "Solid NH3 + NH4+"]
+        aqNa(t), [unit = u"mol/m^3", description = "Aqueous Na+"]
+        sNa(t), [unit = u"mol/m^3", description = "Solid Na+"]
+        aqCa(t), [unit = u"mol/m^3", description = "Aqueous Ca2+"]
+        sCa(t), [unit = u"mol/m^3", description = "Solid Ca2+"]
+        aqK(t), [unit = u"mol/m^3", description = "Aqueous K+"]
+        sK(t), [unit = u"mol/m^3", description = "Solid K+"]
+        aqMg(t), [unit = u"mol/m^3", description = "Aqueous Mg2+"]
+        sMg(t), [unit = u"mol/m^3", description = "Solid Mg2+"]
+        aqCl(t), [unit = u"mol/m^3", description = "Aqueous Cl-"]
+        sCl(t), [unit = u"mol/m^3", description = "Solid Cl-"]
+        aqNO3(t), [unit = u"mol/m^3", description = "Aqueous NO3-"]
+        sNO3(t), [unit = u"mol/m^3", description = "Solid NO3-"]
+        aqSO4(t), [unit = u"mol/m^3", description = "Aqueous SO4 2-"]
+        sSO4(t), [unit = u"mol/m^3", description = "Solid SO4 2-"]
+
         TotalNH(t), [unit = u"mol/m^3", description = "Total concentration of NH3 + NH4+"]
         TotalNa(t), [unit = u"mol/m^3", description = "Total concentration of Na+"]
         TotalCa(t), [unit = u"mol/m^3", description = "Total concentration of Ca2+"]
@@ -62,7 +79,7 @@ include("equilibria.jl")
         eq.r13.K_eq * eq.k13_unit ~ aq.NH4.a * aq.OH.a / aq.NH3.a / RH
         eq.r14.K_eq * eq.k14_unit ~ aq.H.a * aq.NO3.a / g.HNO3.p # K1
         eq.r15.K_eq * eq.k15_unit ~ aq.a_HNO3 / g.HNO3.p # K1a
-        eq.r14.K_eq / eq.r15.K_eq ~ aq.HNO3_aq / aq.a_HNO3 # K1b, from Table 2 footnote ♠
+        eq.r14.K_eq / eq.r15.K_eq * eq.k1b_unit ~ aq.a_HNO3 / aq.HNO3_aq.a # K1b, from Table 2 footnote ♠
         eq.r16.K_eq * eq.k16_unit ~ aq.a_HCl / g.HCl.p # K2
         eq.r17.K_eq * eq.k17_unit ~ aq.HCl_aq.a / g.HCl.p # K2a
         eq.r16.K_eq / eq.r17.K_eq * eq.k2b_unit ~ aq.H.a * aq.Cl.a / aq.HCl_aq.a # K2b, from Table 2 footnote ♦
@@ -78,34 +95,75 @@ include("equilibria.jl")
         eq.r27.K_eq * eq.k27_unit ~ aq.a_NH43HSO42
 
         # Mass Balance
-        TotalNH ~ aq.NH4.M + aq.NH3.M + g.NH3.M + s.NH4Cl.M + s.NH4NO3.M + 2s.NH42SO4.M +
-            s.NH4HSO4.M + 3s.NH43HSO42.M
-        TotalNa ~ aq.Na.M + s.NaCl.M + s.NaNO3.M + 2s.Na2SO4.M + s.NaHSO4.M
-        TotalCa ~ aq.Ca.M + s.CaCl2.M + s.CaNO32.M + s.CaSO4.M
-        TotalK ~ aq.K.M + s.KCl.M + s.KNO3.M + s.KHSO4.M + 2s.K2SO4.M
-        TotalMg ~ aq.Mg.M + s.MgCl2.M + s.MgNO32.M + s.MgSO4.M
-        TotalCl ~ aq.Cl.M + aq.HCl.M + g.HCl.M + 2s.CaCl2.M + s.KCl.M + s.NH4Cl.M +
-            s.NaCl.M + 2s.MgCl2.M + aq.HCl_aq.M
-        TotalNO3 ~ aq.NO3.M + g.HNO3.M + 2s.CaNO32.M + s.KNO3.M + s.NH4NO3.M + s.NaNO3.M +
-            2s.MgNO32.M + aq.HNO3_aq.M + aq.HNO3.M
-        TotalSO4 ~ aq.SO4.M + g.H2SO4.M + 2s.NH42SO4.M + s.NH4HSO4.M + 2s.NH43HSO42.M +
-            s.NaHSO4.M + s.Na2SO4.M + s.KHSO4.M + 2s.K2SO4.M + s.CaSO4.M + s.MgSO4.M
+        aqNH ~ aq.NH3.M +
+               aq.NH4Cl.M + aq.NH4NO3.M + 2aq.NH42SO4.M + aq.NH4HSO4.M + 3aq.NH43HSO42.M
+        sNH ~ s.NH4Cl.M + s.NH4NO3.M + 2s.NH42SO4.M + s.NH4HSO4.M + 3s.NH43HSO42.M
+        TotalNH ~ g.NH3.M + aqNH + sNH
+
+        aqNa ~ aq.NaCl.M + aq.NaNO3.M + 2aq.Na2SO4.M + aq.NaHSO4.M
+        sNa ~ s.NaCl.M + s.NaNO3.M + 2s.Na2SO4.M + s.NaHSO4.M
+        TotalNa ~ aqNa + sNa
+
+        aqCa ~ aq.CaNO32.M + aq.CaCl2.M + aq.CaSO4.M
+        sCa ~ s.CaNO32.M + s.CaCl2.M + s.CaSO4.M
+        TotalCa ~ aqCa + sCa
+
+        aqK ~ aq.KHSO4.M + 2aq.K2SO4.M + aq.KNO3.M + aq.KCl.M
+        sK ~ s.KHSO4.M + 2s.K2SO4.M + s.KNO3.M + s.KCl.M
+        TotalK ~ aqK + sK
+
+        aqMg ~ aq.MgSO4.M + aq.MgNO32.M + aq.MgCl2.M
+        sMg ~ s.MgSO4.M + s.MgNO32.M + s.MgCl2.M
+        TotalMg ~ aqMg + sMg
+
+        aqCl ~ aq.HCl_aq.M + aq.HCl.M +
+               2aq.CaCl2.M + aq.KCl.M + 2aq.MgCl2.M + aq.NaCl.M + aq.NH4Cl.M
+        sCl ~ 2s.CaCl2.M + s.KCl.M + 2s.MgCl2.M + s.NaCl.M + s.NH4Cl.M
+        TotalCl ~ g.HCl.M + aqCl + sCl
+
+        aqNO3 ~ aq.HNO3_aq.M + aq.HNO3.M +
+                2aq.CaNO32.M + aq.KNO3.M + 2aq.MgNO32.M + aq.NaNO3.M + aq.NH4NO3.M
+        sNO3 ~ 2s.CaNO32.M + s.KNO3.M + 2s.MgNO32.M + s.NaNO3.M + s.NH4NO3.M
+        TotalNO3 ~ g.HNO3.M + aqNO3 + sNO3
+
+        aqSO4 ~ aq.H2SO4.M + aq.HHSO4.M +
+                aq.CaSO4.M + aq.KHSO4.M + aq.K2SO4.M + aq.MgSO4.M + aq.Na2SO4.M +
+                aq.NaHSO4.M + aq.NH42SO4.M + aq.NH4HSO4.M + 2aq.NH43HSO42.M
+        sSO4 ~ s.CaSO4.M + s.KHSO4.M + s.K2SO4.M + s.MgSO4.M + s.Na2SO4.M + s.NaHSO4.M +
+               s.NH42SO4.M + s.NH4HSO4.M + 2s.NH43HSO42.M
+        TotalSO4 ~ g.H2SO4.M + aqSO4 + sSO4
 
         D(TotalNH) ~ 0.0
-        D(TotalNa) ~ 0.0
-        D(TotalCa) ~ 0.0
-        D(TotalK) ~ 0.0
-        D(TotalMg) ~ 0.0
-        D(TotalCl) ~ 0.0
-        D(TotalNO3) ~ 0.0
-        D(TotalSO4) ~ 0.0
+        # D(TotalNa) ~ 0.0
+        # D(TotalCa) ~ 0.0
+        # D(TotalK) ~ 0.0
+        # D(TotalMg) ~ 0.0
+        # D(TotalCl) ~ 0.0
+        # D(TotalNO3) ~ 0.0
+        # D(TotalSO4) ~ 0.0
+
+        s.NH42SO4.M ~ s.NH4HSO4.M
+        s.NaHSO4.M ~ 0.0 #s.KHSO4.M
+        #aq.HNO3.M ~ 0.0
+        #aq.HCl.M ~ 0.0
+        s.Na2SO4.M ~ 0.0 # s.NaNO3.M
+        aq.MgCl2.M ~ 0.0 #s.MgCl2.M
+        s.KHSO4.M ~ 0.0
+        s.CaCl2.M ~ 0.0
+        s.CaSO4.M ~ 0.0
+        s.KCl.M ~ 0.0
+        s.KNO3.M ~ 0.0
+        s.K2SO4.M ~ 0.0
+        s.NaNO3.M ~ 0.0
+        s.MgNO32.M ~ 0.0
+        #s.MgCl2.M ~ 0.0
     end
 end
 
 @named isrpa = Isorropia()
 
-structural_simplify(isrpa)
-sys = structural_simplify(isrpa, fully_determined=false)
+mtkcompile(isrpa)
+sys = structural_simplify(isrpa, fully_determined = false)
 
 unknowns(sys)
 equations(sys)
@@ -113,7 +171,6 @@ equations(sys)
 isrpa.T
 
 equations(isrpa)
-
 
 # Molar mass in g/mol
 mw = Dict(
@@ -311,58 +368,58 @@ function Balance(t, T, active_specs, active_ions_including_salts, g, sld, i)
     # Return the given species, or zero if the species is not in the list.
     is(v) = ((v ∈ active_specs) || (v ∈ active_ions_including_salts)) ? only(vars(v)) : 0
 
-    @constants R = 8.31446261815324 [
+    @constants R=8.31446261815324 [
         unit = u"m_air^3*Pa/K/mol",
         description = "Universal gas constant"
     ]
-    @constants PaPerAtm = 101325 [
+    @constants PaPerAtm=101325 [
         unit = u"Pa/Constants.atm",
         description = "Number of pascals per atmosphere"
     ]
     atm2mol(p) = p * PaPerAtm / R / T
 
-    @variables totalK(t) = 1.0e-7 [
+    @variables totalK(t)=1.0e-7 [
         unit = u"mol/m_air^3",
         description = "Total concentration of K"
     ]
-    @variables totalCa(t) = 1.0e-7 [
+    @variables totalCa(t)=1.0e-7 [
         unit = u"mol/m_air^3",
         description = "Total concentration of Ca"
     ]
-    @variables totalMg(t) = 1.0e-7 [
+    @variables totalMg(t)=1.0e-7 [
         unit = u"mol/m_air^3",
         description = "Total concentration of Mg"
     ]
-    @variables totalNH(t) = 1.0e-7 [
+    @variables totalNH(t)=1.0e-7 [
         unit = u"mol/m_air^3",
         description = "Total concentration of NH"
     ]
-    @variables totalNa(t) = 1.0e-7 [
+    @variables totalNa(t)=1.0e-7 [
         unit = u"mol/m_air^3",
         description = "Total concentration of Na"
     ]
-    @variables totalSO4(t) = 1.0e-7 [
+    @variables totalSO4(t)=1.0e-7 [
         unit = u"mol/m_air^3",
         description = "Total concentration of SO4"
     ]
-    @variables totalNO3(t) = 1.0e-7 [
+    @variables totalNO3(t)=1.0e-7 [
         unit = u"mol/m_air^3",
         description = "Total concentration of NO3"
     ]
-    @variables totalCl(t) = 1.0e-7 [
+    @variables totalCl(t)=1.0e-7 [
         unit = u"mol/m_air^3",
         description = "Total concentration of Cl"
     ]
-    @variables R_1(t) = 1.0 [
-        description = "Total sulfate ratio from Section 3.1 of Fountoukis and Nenes (2007)",
+    @variables R_1(t)=1.0 [
+        description = "Total sulfate ratio from Section 3.1 of Fountoukis and Nenes (2007)"
     ]
-    @variables R_2(t) = 1.0 [
-        description = "Crustal species and sodium ratio from Section 3.1 of Fountoukis and Nenes (2007)",
+    @variables R_2(t)=1.0 [
+        description = "Crustal species and sodium ratio from Section 3.1 of Fountoukis and Nenes (2007)"
     ]
-    @variables R_3(t) = 1.0 [
-        description = "Crustal species ratio from Section 3.1 of Fountoukis and Nenes (2007)",
+    @variables R_3(t)=1.0 [
+        description = "Crustal species ratio from Section 3.1 of Fountoukis and Nenes (2007)"
     ]
-    @variables charge(t) = 0 [unit = u"mol/m_air^3", description = "Total ion charge"]
+    @variables charge(t)=0 [unit = u"mol/m_air^3", description = "Total ion charge"]
     vs = [
         totalK,
         totalCa,
@@ -380,52 +437,47 @@ function Balance(t, T, active_specs, active_ions_including_salts, g, sld, i)
 
     eqs = [
            # Mass balances
-           totalK ~
-           is(i[:K]) + is(sld[:KHSO4]) + 2is(sld[:K2SO4]) + is(sld[:KNO3]) + is(sld[:KCl])
+           totalK ~ is(i[:K]) + is(sld[:KHSO4]) + 2is(sld[:K2SO4]) + is(sld[:KNO3]) +
+                    is(sld[:KCl])
            totalCa ~ is(i[:Ca]) + is(sld[:CaSO4]) + is(sld[:CaNO32]) + is(sld[:CaCl2])
            totalMg ~ is(i[:Mg]) + is(sld[:MgSO4]) + is(sld[:MgNO32]) + is(sld[:MgCl2])
-           totalNH ~
-           is(i[:NH4]) +
-           is(i[:NH3]) +
-           atm2mol(is(g[:NH3])) +
-           is(sld[:NH4HSO4]) +
-           2is(sld[:NH42SO4]) +
-           3is(sld[:NH43HSO42]) +
-           is(sld[:NH4Cl]) +
-           is(sld[:NH4NO3])
-           totalNa ~
-           is(i[:Na]) +
-           is(sld[:NaHSO4]) +
-           2is(sld[:Na2SO4]) +
-           is(sld[:NaCl]) +
-           is(sld[:NaNO3])
-           totalSO4 ~
-           is(i[:SO4]) +
-           is(i[:HSO4]) +
-           is(sld[:KHSO4]) +
-           is(sld[:NaHSO4]) +
-           is(sld[:NH4HSO4]) +
-           is(sld[:CaSO4]) +
-           is(sld[:Na2SO4]) +
-           is(sld[:NH42SO4]) +
-           2is(sld[:NH43HSO42]) +
-           is(sld[:K2SO4]) +
-           is(sld[:MgSO4])
-           totalNO3 ~
-           is(i[:NO3]) +
-           is(i[:HNO3]) +
-           atm2mol(is(g[:HNO3])) +
-           is(sld[:NH4NO3]) +
-           is(sld[:NaNO3])
-           totalCl ~
-           is(i[:Cl]) +
-           is(i[:HCl]) +
-           atm2mol(is(g[:HCl])) +
-           is(sld[:NH4Cl]) +
-           is(sld[:NaCl]) +
-           2is(sld[:CaCl2]) +
-           is(sld[:KCl]) +
-           2is(sld[:MgCl2])
+           totalNH ~ is(i[:NH4]) +
+                     is(i[:NH3]) +
+                     atm2mol(is(g[:NH3])) +
+                     is(sld[:NH4HSO4]) +
+                     2is(sld[:NH42SO4]) +
+                     3is(sld[:NH43HSO42]) +
+                     is(sld[:NH4Cl]) +
+                     is(sld[:NH4NO3])
+           totalNa ~ is(i[:Na]) +
+                     is(sld[:NaHSO4]) +
+                     2is(sld[:Na2SO4]) +
+                     is(sld[:NaCl]) +
+                     is(sld[:NaNO3])
+           totalSO4 ~ is(i[:SO4]) +
+                      is(i[:HSO4]) +
+                      is(sld[:KHSO4]) +
+                      is(sld[:NaHSO4]) +
+                      is(sld[:NH4HSO4]) +
+                      is(sld[:CaSO4]) +
+                      is(sld[:Na2SO4]) +
+                      is(sld[:NH42SO4]) +
+                      2is(sld[:NH43HSO42]) +
+                      is(sld[:K2SO4]) +
+                      is(sld[:MgSO4])
+           totalNO3 ~ is(i[:NO3]) +
+                      is(i[:HNO3]) +
+                      atm2mol(is(g[:HNO3])) +
+                      is(sld[:NH4NO3]) +
+                      is(sld[:NaNO3])
+           totalCl ~ is(i[:Cl]) +
+                     is(i[:HCl]) +
+                     atm2mol(is(g[:HCl])) +
+                     is(sld[:NH4Cl]) +
+                     is(sld[:NaCl]) +
+                     2is(sld[:CaCl2]) +
+                     is(sld[:KCl]) +
+                     2is(sld[:MgCl2])
            # Charge balance
            charge ~ sum([i.m * i.z for i in active_ions_including_salts])
 
@@ -455,63 +507,60 @@ end
 
 end
 
-
-spc = [
-:CaNO32s
-:CaNO32aq
-:CaCl2s
-:CaCl2aq
-:CaSO4s
-:CaSO4aq
-:K2SO4s
-:K2SO4aq
-:KHSO4s
-:KHSO4aq
-:KNO3s
-:KNO3aq
-:KCls
-:KClaq
-:MgSO4s
-:MgSO4aq
-:MgNO32s
-:MgNO32aq
-:MgCl2s
-:MgCl2aq
-:HSO4s
-:Haq
-:SO4aq
-:NH3g
-:NH3aq
-:NH3aq
-:NH4aq
-:OHaq
-:HNO3g
-:HNO3aq
-:HClg
-:Haq
-:Claq
-:HClg
-:HClaq
-:Haq
-:OHaq
-:Na2SO4s
-:Na2SO4aq
-:NH4Cls
-:NH3g
-:HClg
-:NaNO3s
-:NaNO3aq
-:NaCls
-:NaClaq
-:NaHSO4s
-:NaHSO4aq
-:NH4NO3s
-:NH3g
-:HNO3g
-:NH4HSO4s
-:NH4HSO4aq
-:NH43HSO42s
-:NH43HSO42aq
-]
+spc = [:CaNO32s
+       :CaNO32aq
+       :CaCl2s
+       :CaCl2aq
+       :CaSO4s
+       :CaSO4aq
+       :K2SO4s
+       :K2SO4aq
+       :KHSO4s
+       :KHSO4aq
+       :KNO3s
+       :KNO3aq
+       :KCls
+       :KClaq
+       :MgSO4s
+       :MgSO4aq
+       :MgNO32s
+       :MgNO32aq
+       :MgCl2s
+       :MgCl2aq
+       :HSO4s
+       :Haq
+       :SO4aq
+       :NH3g
+       :NH3aq
+       :NH3aq
+       :NH4aq
+       :OHaq
+       :HNO3g
+       :HNO3aq
+       :HClg
+       :Haq
+       :Claq
+       :HClg
+       :HClaq
+       :Haq
+       :OHaq
+       :Na2SO4s
+       :Na2SO4aq
+       :NH4Cls
+       :NH3g
+       :HClg
+       :NaNO3s
+       :NaNO3aq
+       :NaCls
+       :NaClaq
+       :NaHSO4s
+       :NaHSO4aq
+       :NH4NO3s
+       :NH3g
+       :HNO3g
+       :NH4HSO4s
+       :NH4HSO4aq
+       :NH43HSO42s
+       :NH43HSO42aq]
 
 unique(spc)

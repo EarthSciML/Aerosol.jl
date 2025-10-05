@@ -1,12 +1,12 @@
 @mtkmodel Solid begin
     @description "A solid with the given concentration."
     @variables begin
-        m(t), [description = "Concentration of the solid in water", unit = u"mol/kg"]
+     #   m(t), [description = "Concentration of the solid in water", unit = u"mol/kg"]
         M(t), [description = "Concentration of the solid in air", unit = u"mol/m^3"]
         W(t), [description = "Aerosol water mass in air", unit = u"kg/m^3"]
     end
     @equations begin
-        M ~ m * W
+      #  M ~ m * W
     end
 end
 
