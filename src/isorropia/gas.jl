@@ -7,9 +7,11 @@
         PaPerAtm = 101325, [unit = u"Pa/Constants.atm", description = "Unit conversion"]
     end
     @parameters begin
-        p, [description = "Partial pressure of the gas", unit = u"Constants.atm"]
-        M, [description = "Concentration of the gas in air", unit = u"mol/m^3"]
         T, [description = "Temperature", unit = u"K"]
+    end
+    @variables begin
+        p(t), [description = "Partial pressure of the gas", unit = u"Constants.atm"]
+        M(t), [description = "Concentration of the gas in air", unit = u"mol/m^3"]
     end
     @equations begin
         M ~ p * PaPerAtm / R / T
@@ -19,7 +21,7 @@ end
 @mtkmodel Gases begin
     @description "Gases in Isorropia II."
     @parameters begin
-        T, [unit = u"K", description = "Temperature"]
+        T = 293.15, [unit = u"K", description = "Temperature"]
     end
     @components begin
         HNO3 = Gas()
