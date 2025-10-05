@@ -16,42 +16,42 @@ include("gas.jl")
 include("equilibria.jl")
 
 @mtkmodel Isorropia begin
-    @components begin
-        aq = Aqueous()
-        s = Solids()
-        g = Gases()
-        eq = EquilibriumConstants()
-    end
     @parameters begin
         T=293.15, [unit = u"K", description = "Temperature"]
         RH=0.3, [unit = u"1", description = "Relative humidity (0 to 1)"]
     end
+    @components begin
+        aq = Aqueous(T=T, RH=RH)
+        s = Solids()
+        g = Gases()
+        eq = EquilibriumConstants(T=T)
+    end
     @variables begin
-        aqNH(t), [unit = u"mol/m^3", description = "Aqueous NH3 + NH4+"]
-        sNH(t), [unit = u"mol/m^3", description = "Solid NH3 + NH4+"]
-        aqNa(t), [unit = u"mol/m^3", description = "Aqueous Na+"]
-        sNa(t), [unit = u"mol/m^3", description = "Solid Na+"]
-        aqCa(t), [unit = u"mol/m^3", description = "Aqueous Ca2+"]
-        sCa(t), [unit = u"mol/m^3", description = "Solid Ca2+"]
-        aqK(t), [unit = u"mol/m^3", description = "Aqueous K+"]
-        sK(t), [unit = u"mol/m^3", description = "Solid K+"]
-        aqMg(t), [unit = u"mol/m^3", description = "Aqueous Mg2+"]
-        sMg(t), [unit = u"mol/m^3", description = "Solid Mg2+"]
-        aqCl(t), [unit = u"mol/m^3", description = "Aqueous Cl-"]
-        sCl(t), [unit = u"mol/m^3", description = "Solid Cl-"]
-        aqNO3(t), [unit = u"mol/m^3", description = "Aqueous NO3-"]
-        sNO3(t), [unit = u"mol/m^3", description = "Solid NO3-"]
-        aqSO4(t), [unit = u"mol/m^3", description = "Aqueous SO4 2-"]
-        sSO4(t), [unit = u"mol/m^3", description = "Solid SO4 2-"]
+        aqNH(t), [unit = u"mol/m^3", description = "Aqueous NH3 + NH4+", guess=1]
+        sNH(t), [unit = u"mol/m^3", description = "Solid NH3 + NH4+", guess=1]
+        aqNa(t), [unit = u"mol/m^3", description = "Aqueous Na+", guess=1]
+        sNa(t), [unit = u"mol/m^3", description = "Solid Na+", guess=1]
+        aqCa(t), [unit = u"mol/m^3", description = "Aqueous Ca2+", guess=1]
+        sCa(t), [unit = u"mol/m^3", description = "Solid Ca2+", guess=1]
+        aqK(t), [unit = u"mol/m^3", description = "Aqueous K+", guess=1]
+        sK(t), [unit = u"mol/m^3", description = "Solid K+", guess=1]
+        aqMg(t), [unit = u"mol/m^3", description = "Aqueous Mg2+", guess=1]
+        sMg(t), [unit = u"mol/m^3", description = "Solid Mg2+", guess=1]
+        aqCl(t), [unit = u"mol/m^3", description = "Aqueous Cl-", guess=1]
+        sCl(t), [unit = u"mol/m^3", description = "Solid Cl-", guess=1]
+        aqNO3(t), [unit = u"mol/m^3", description = "Aqueous NO3-", guess=1]
+        sNO3(t), [unit = u"mol/m^3", description = "Solid NO3-", guess=1]
+        aqSO4(t), [unit = u"mol/m^3", description = "Aqueous SO4 2-", guess=1]
+        sSO4(t), [unit = u"mol/m^3", description = "Solid SO4 2-", guess=1]
 
-        TotalNH(t), [unit = u"mol/m^3", description = "Total concentration of NH3 + NH4+"]
-        TotalNa(t), [unit = u"mol/m^3", description = "Total concentration of Na+"]
-        TotalCa(t), [unit = u"mol/m^3", description = "Total concentration of Ca2+"]
-        TotalK(t), [unit = u"mol/m^3", description = "Total concentration of K+"]
-        TotalMg(t), [unit = u"mol/m^3", description = "Total concentration of Mg2+"]
-        TotalCl(t), [unit = u"mol/m^3", description = "Total concentration of Cl-"]
-        TotalNO3(t), [unit = u"mol/m^3", description = "Total concentration of NO3-"]
-        TotalSO4(t), [unit = u"mol/m^3", description = "Total concentration of SO4 2-"]
+        TotalNH(t), [unit = u"mol/m^3", description = "Total NH3 + NH4 Molarity", guess=1]
+        TotalNa(t), [unit = u"mol/m^3", description = "Total Na+ Molarity", guess=1]
+        TotalCa(t), [unit = u"mol/m^3", description = "Total Ca2+ Molarity", guess=1]
+        TotalK(t), [unit = u"mol/m^3", description = "Total K+ Molarity", guess=1]
+        TotalMg(t), [unit = u"mol/m^3", description = "Total Mg2+ Molarity", guess=1]
+        TotalCl(t), [unit = u"mol/m^3", description = "Total Cl- Molarity", guess=1]
+        TotalNO3(t), [unit = u"mol/m^3", description = "Total NO3- Molarity", guess=1]
+        TotalSO4(t), [unit = u"mol/m^3", description = "Total SO4 2- Molarity", guess=1]
     end
     @equations begin
         # T ~ aq.T
@@ -64,39 +64,39 @@ include("equilibria.jl")
         # The left-hand side of the reaction equation is the equilibrium constant and the
         # right-hand side is the ratio of the product and reactant activities.
         eq.r1.K_eq * eq.k1_unit ~ aq.a_CaNO32
-        #eq.r2.K_eq * eq.k2_unit ~ aq.a_CaCl2
-        # # eq.r3.K_eq * eq.k3_unit ~ aq.a_CaSO4 * RH^2
-        # aq.CaSO4.M ~ 0.0 # From Table 4 footnote a, CaSO4 has an activity coefficient of zero and therefore 0 concentration.
-        # eq.r4.K_eq * eq.k4_unit ~ aq.a_K2SO4
-        # eq.r5.K_eq * eq.k5_unit ~ aq.a_KHSO4
-        # eq.r6.K_eq * eq.k6_unit ~ aq.a_KNO3
-        # eq.r7.K_eq * eq.k7_unit ~ aq.a_KCl
-        # eq.r8.K_eq * eq.k8_unit ~ aq.a_MgSO4
-        # eq.r9.K_eq * eq.k9_unit ~ aq.a_MgNO32
-        # eq.r10.K_eq * eq.k10_unit ~ aq.a_MgCl2
+        eq.r2.K_eq * eq.k2_unit ~ aq.a_CaCl2
+        # eq.r3.K_eq * eq.k3_unit ~ aq.a_CaSO4 * RH^2 # Not using in favor of equation below
+        aq.CaSO4.M ~ 0.0 # From Table 4 footnote a, CaSO4 has an activity coefficient of zero and therefore 0 concentration.
+        eq.r4.K_eq * eq.k4_unit ~ aq.a_K2SO4
+        eq.r5.K_eq * eq.k5_unit ~ aq.a_KHSO4
+        eq.r6.K_eq * eq.k6_unit ~ aq.a_KNO3
+        eq.r7.K_eq * eq.k7_unit ~ aq.a_KCl
+        eq.r8.K_eq * eq.k8_unit ~ aq.a_MgSO4
+        eq.r9.K_eq * eq.k9_unit ~ aq.a_MgNO32
+        #eq.r10.K_eq * eq.k10_unit ~ aq.a_MgCl2
         # eq.r11.K_eq * eq.k11_unit ~ aq.H.a * aq.SO4.a / aq.HSO4.a
         eq.r12.K_eq * eq.k12_unit ~ aq.NH3.a / g.NH3.p
-        # eq.r13.K_eq * eq.k13_unit ~ aq.NH4.a * aq.OH.a / aq.NH3.a / RH
-        # eq.r14.K_eq * eq.k14_unit ~ aq.H.a * aq.NO3.a / g.HNO3.p # K1
-        eq.r15.K_eq * eq.k15_unit ~ aq.a_HNO3 / g.HNO3.p # K1a
+        eq.r13.K_eq * eq.k13_unit ~ aq.NH4.a * aq.OH.a / aq.NH3.a / RH
+        eq.r14.K_eq * eq.k14_unit ~ aq.H.a * aq.NO3.a / g.HNO3.p # K1
+        # eq.r15.K_eq * eq.k15_unit ~ aq.a_HNO3 / g.HNO3.p # K1a
         # eq.r14.K_eq / eq.r15.K_eq * eq.k1b_unit ~ aq.a_HNO3 / aq.HNO3_aq.a # K1b, from Table 2 footnote ♠
         eq.r16.K_eq * eq.k16_unit ~ aq.a_HCl / g.HCl.p # K2
         # eq.r17.K_eq * eq.k17_unit ~ aq.HCl_aq.a / g.HCl.p # K2a
-        # eq.r16.K_eq / eq.r17.K_eq * eq.k2b_unit ~ aq.H.a * aq.Cl.a / aq.HCl_aq.a # K2b, from Table 2 footnote ♦
+        eq.r16.K_eq / eq.r17.K_eq * eq.k2b_unit ~ aq.H.a * aq.Cl.a / aq.HCl_aq.a # K2b, from Table 2 footnote ♦
         # eq.r18.K_eq * eq.k18_unit ~ aq.H.a * aq.OH.a / RH
-        # eq.r19.K_eq * eq.k19_unit ~ aq.a_Na2SO4
-        # eq.r20.K_eq * eq.k20_unit ~ aq.a_NH42SO4
+        eq.r19.K_eq * eq.k19_unit ~ aq.a_Na2SO4
+        eq.r20.K_eq * eq.k20_unit ~ aq.a_NH42SO4
         # eq.r21.K_eq * eq.k21_unit ~ g.NH3.p * g.HCl.p
-        # eq.r22.K_eq * eq.k22_unit ~ aq.a_NaNO3
-        # eq.r23.K_eq * eq.k23_unit ~ aq.a_NaCl
-        # eq.r24.K_eq * eq.k24_unit ~ aq.a_NaHSO4
-        # eq.r25.K_eq * eq.k25_unit ~ g.NH3.p * g.HNO3.p
-        # eq.r26.K_eq * eq.k26_unit ~ aq.a_NH4HSO4
-        # eq.r27.K_eq * eq.k27_unit ~ aq.a_NH43HSO42
+        #eq.r22.K_eq * eq.k22_unit ~ aq.a_NaNO3
+        #eq.r23.K_eq * eq.k23_unit ~ aq.a_NaCl
+         eq.r24.K_eq * eq.k24_unit ~ aq.a_NaHSO4
+        #eq.r25.K_eq * eq.k25_unit ~ g.NH3.p * g.HNO3.p
+        #eq.r26.K_eq * eq.k26_unit ~ aq.a_NH4HSO4
+        #eq.r27.K_eq * eq.k27_unit ~ aq.a_NH43HSO42
 
         # Mass Balance
         aqNH ~ aq.NH3.M +
-               aq.NH4Cl.M + aq.NH4NO3.M + 2aq.NH42SO4.M + aq.NH4HSO4.M + 3aq.NH43HSO42.M
+                aq.NH4Cl.M + aq.NH4NO3.M + 2aq.NH42SO4.M + aq.NH4HSO4.M + 3aq.NH43HSO42.M
         sNH ~ s.NH4Cl.M + s.NH4NO3.M + 2s.NH42SO4.M + s.NH4HSO4.M + 3s.NH43HSO42.M
         TotalNH ~ g.NH3.M + aqNH + sNH
 
@@ -133,63 +133,90 @@ include("equilibria.jl")
                s.NH42SO4.M + s.NH4HSO4.M + 2s.NH43HSO42.M
         TotalSO4 ~ g.H2SO4.M + aqSO4 + sSO4
 
-        #D(TotalNH) ~ 0.0
-        # D(TotalNa) ~ 0.0
-        # D(TotalCa) ~ 0.0
-        # D(TotalK) ~ 0.0
-        # D(TotalMg) ~ 0.0
-        # D(TotalCl) ~ 0.0
-        # D(TotalNO3) ~ 0.0
-        # D(TotalSO4) ~ 0.0
+        D(TotalNH) ~ 0.0
+        D(TotalNa) ~ 0.0
+        D(TotalCa) ~ 0.0
+        D(TotalK) ~ 0.0
+        D(TotalMg) ~ 0.0
+        D(TotalCl) ~ 0.0
+        D(TotalNO3) ~ 0.0
+        D(TotalSO4) ~ 0.0
 
-        s.NH42SO4.M ~ s.NH4HSO4.M
-        s.NaHSO4.M ~ 0.0 #s.KHSO4.M
-        aq.HNO3.M ~ 0.0
-        aq.HCl.M ~ 0.0
-        s.Na2SO4.M ~ 0.0 # s.NaNO3.M
-        aq.MgCl2.M ~ 0.0 #s.MgCl2.M
-        s.KHSO4.M ~ 0.0
-        s.CaCl2.M ~ 0.0
-        s.CaSO4.M ~ 0.0
-        s.KCl.M ~ 0.0
-        s.KNO3.M ~ 0.0
-        s.K2SO4.M ~ 0.0
-        s.NaNO3.M ~ 0.0
-        s.MgNO32.M ~ 0.0
-        s.MgCl2.M ~ 0.0
-        s.NH42SO4.M ~ 0.0
-        aq.NaCl.M ~ 0.0
-        s.NaCl.M ~ 0.0
-        aq.CaCl2.M ~ 0.0
-        aq.CaNO32.M ~ 0.0
-        s.CaNO32.M ~ 0.0
-        aq.K2SO4.M ~ 0.0
-        aq.KNO3.M ~ 0.0
-        aq.MgNO32.M ~ 0.0
-        s.NH4Cl.M ~ 0.0
-        aq.Na.M ~ 0.0
-        aq.H.M ~ 0.0
-        aq.Ca.M ~ 0.0
-        aq.K.M ~ 0.0
-        aq.Mg.M ~ 0.0
-        aq.Cl.M ~ 0.0
-        aq.NO3.M ~ 0.0
-        aq.SO4.M ~ 0.0
-        aq.HSO4.M ~ 0.0
-        aq.OH.M ~ 0.0
-        aq.NH3.m ~ 0.0
-        aq.HNO3_aq.m ~ 0.0
-        aq.HCl_aq.m ~ 0.0
-        s.NH4NO3.M ~ 0.0
-        sNH ~ 0.0
-        aq.Na2SO4.M ~ 0.0
-        #aq.W ~ 0.0
+        #g.NH3.M ~ 0
+        #aq.NH3.M ~ 0
+        aq.NH4Cl.M ~ 0 # Not present in Table 2?
+        aq.NH4NO3.M ~ 0 # Not present in Table 2?
+        #aq.NH42SO4.M ~ 0
+        aq.NH4HSO4.M ~ 0
+        aq.NH43HSO42.M ~ 0
+        s.NH4Cl.M ~ 0
+        s.NH4NO3.M ~ 0
+        #s.NH42SO4.M ~ 0
+        s.NH4HSO4.M ~ 0
+        s.NH43HSO42.M ~ 0
+
+
+        aq.NaCl.M ~ 0
+        aq.NaNO3.M ~ 0
+        # 2aq.Na2SO4.M ~ 0
+        #aq.NaHSO4.M ~ 0
+        #s.NaCl.M ~ 0
+        s.NaNO3.M ~ 0
+        #2s.Na2SO4.M ~ 0
+        s.NaHSO4.M ~ 0
+
+        #aq.CaNO32.M ~ 0
+        #aq.CaCl2.M ~ 0
+        #s.CaNO32.M ~ 0
+        s.CaCl2.M ~ 0
+        #s.CaSO4.M ~ 0
+
+
+        #aq.KHSO4.M ~ 0
+        #aq.K2SO4.M ~ 0
+        #aq.KNO3.M ~ 0
+        #aq.KCl.M ~ 0
+        #s.KHSO4.M ~ 0
+        s.K2SO4.M ~ 0
+        s.KNO3.M ~ 0
+        #s.KCl.M ~ 0
+
+        #aq.MgSO4.M ~ 0
+        #aq.MgNO32.M ~ 0
+        aq.MgCl2.M ~ 0
+        #s.MgSO4.M ~ 0
+        s.MgNO32.M ~ 0
+        s.MgCl2.M ~ 0
+
+
+        #g.HCl.M ~ 0
+        #aq.HCl_aq.M ~ 0
+         aq.HCl.M ~ 0
+
+         #g.HNO3.M ~ 0
+        aq.HNO3_aq.M ~ 0
+         aq.HNO3.M ~ 0
     end
 end
 
 @named isrpa = Isorropia()
 
 sys2 = mtkcompile(isrpa)
+equations(sys2)
+unknowns(sys2)
+
+prob = ODEProblem(sys2, [
+    #sys2.aq.K2SO4.M => 10.0,
+    # sys2.g.HCl.p => 1,
+    # sys2.g.HNO3.p => 1,
+    # sys2.g.NH3.p => 1,
+    # aq.T => 293.15,
+    # aq.RH => 0.3,
+    # eq.T => 293.15,
+], (0.0, 1.0))
+
+solve(prob, Rosenbrock23())
+
 sys = structural_simplify(isrpa, fully_determined = false)
 
 unknowns(sys)
@@ -197,8 +224,7 @@ equations(sys)
 
 equations(isrpa)
 
-equations(sys2)
-unknowns(sys2)
+
 
 isys = mtkcompile(ModelingToolkit.generate_initializesystem(sys2; checks=false))
 
@@ -206,15 +232,17 @@ equations(isys)
 
 unknowns(isys)
 
-prob = ODEProblem(sys2, [sys2.g.HCl.p => 1,
-    sys2.g.HNO3.p => 1,
-    sys2.g.NH3.p => 1,
-    aq.T => 293.15,
-    aq.RH => 0.3,
-    eq.T => 293.15,
-], (0.0, 1.0))
 
-
+remake(prob, u0 = [
+    sys2.TotalNH => 10.0,
+    sys2.TotalNa => 10.0,
+    sys2.TotalCa => 10.0,
+    sys2.TotalK => 10.0,
+    sys2.TotalMg => 10.0,
+    sys2.TotalCl => 10.0,
+    sys2.TotalNO3 => 10.0,
+    sys2.TotalSO4 => 10.0
+    ])
 
 
 # Molar mass in g/mol

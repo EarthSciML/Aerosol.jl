@@ -10,8 +10,8 @@
         T, [description = "Temperature", unit = u"K"]
     end
     @variables begin
-        p(t), [description = "Partial pressure of the gas", unit = u"Constants.atm"]
-        M(t), [description = "Concentration of the gas in air", unit = u"mol/m^3"]
+        p(t), [description = "Partial pressure", unit = u"Constants.atm", guess=1]
+        M(t), [description = "Molarity of the gas in air", unit = u"mol/m^3", guess=1]
     end
     @equations begin
         M ~ p * PaPerAtm / R / T

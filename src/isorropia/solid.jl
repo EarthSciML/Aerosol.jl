@@ -2,7 +2,7 @@
     @description "A solid with the given concentration."
     @variables begin
      #   m(t), [description = "Concentration of the solid in water", unit = u"mol/kg"]
-        M(t), [description = "Concentration of the solid in air", unit = u"mol/m^3"]
+        M(t), [description = "Molarity of the solid in air", unit = u"mol/m^3", guess=1]
         W(t), [description = "Aerosol water mass in air", unit = u"kg/m^3"]
     end
     @equations begin

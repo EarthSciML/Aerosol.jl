@@ -10,7 +10,7 @@ using DynamicQuantities
     @variables begin
         m(t), [description = "Molality of the ion in water", unit = u"mol/kg", guess = 1.0]
         M(t), [description = "Molarity of the ion in air", unit = u"mol/m^3", guess = 1.0]
-        W(t), [description = "Aerosol water content (per m^3 air)", unit = u"kg/m^3"]
+        W(t), [description = "Aerosol water content (in air)", unit = u"kg/m^3", guess=1.0]
         a(t),
         [
             description = "Activity of the ion. The activity coefficient of an ion is assumed to be one (Fountoukis and Nenes (2007), Section 3.3).",
@@ -52,7 +52,7 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         W(t), [description = "Aerosol water content (per m^3 air)", unit = u"kg/m^3"]
         X(t)
         Y(t)
-        I(t), [description = "Ionic strength", unit = u"mol/kg"]
+        I(t), [description = "Ionic strength", unit = u"mol/kg", guess=1]
         logγ⁰(t), [description = "Log of the standard state activity coefficient"]
         Γ⁰(t), [unit = u"mol/kg"]
         Γ⁺(t)
