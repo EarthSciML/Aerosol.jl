@@ -1,7 +1,7 @@
 @mtkmodel Solid begin
     @description "A solid with the given concentration."
     @variables begin
-        M(t), [description = "Molarity of the solid in air", unit = u"mol/m^3", guess=1e-8]
+        M(t), [description = "Molarity of the solid in air", unit = u"mol/m^3", guess=1e-20]
     end
 end
 

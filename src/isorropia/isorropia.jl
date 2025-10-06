@@ -24,31 +24,33 @@ include("equilibria.jl")
         eq = EquilibriumConstants(T = T)
     end
     @variables begin
-        aqNH(t), [unit = u"mol/m^3", description = "Aqueous NH3 + NH4+", guess=1]
-        sNH(t), [unit = u"mol/m^3", description = "Solid NH3 + NH4+", guess=1]
-        aqNa(t), [unit = u"mol/m^3", description = "Aqueous Na+", guess=1]
-        sNa(t), [unit = u"mol/m^3", description = "Solid Na+", guess=1]
-        aqCa(t), [unit = u"mol/m^3", description = "Aqueous Ca2+", guess=1]
-        sCa(t), [unit = u"mol/m^3", description = "Solid Ca2+", guess=1]
-        aqK(t), [unit = u"mol/m^3", description = "Aqueous K+", guess=1]
-        sK(t), [unit = u"mol/m^3", description = "Solid K+", guess=1]
-        aqMg(t), [unit = u"mol/m^3", description = "Aqueous Mg2+", guess=1]
-        sMg(t), [unit = u"mol/m^3", description = "Solid Mg2+", guess=1]
-        aqCl(t), [unit = u"mol/m^3", description = "Aqueous Cl-", guess=1]
-        sCl(t), [unit = u"mol/m^3", description = "Solid Cl-", guess=1]
-        aqNO3(t), [unit = u"mol/m^3", description = "Aqueous NO3-", guess=1]
-        sNO3(t), [unit = u"mol/m^3", description = "Solid NO3-", guess=1]
-        aqSO4(t), [unit = u"mol/m^3", description = "Aqueous SO4 2-", guess=1]
-        sSO4(t), [unit = u"mol/m^3", description = "Solid SO4 2-", guess=1]
+        aqNH(t), [unit = u"mol/m^3", description = "Aqueous NH3 + NH4+", guess = 1e-20]
+        sNH(t), [unit = u"mol/m^3", description = "Solid NH3 + NH4+", guess = 1e-20]
+        aqNa(t), [unit = u"mol/m^3", description = "Aqueous Na+", guess = 1e-20]
+        sNa(t), [unit = u"mol/m^3", description = "Solid Na+", guess = 1e-20]
+        aqCa(t), [unit = u"mol/m^3", description = "Aqueous Ca2+", guess = 1e-20]
+        sCa(t), [unit = u"mol/m^3", description = "Solid Ca2+", guess = 1e-20]
+        aqK(t), [unit = u"mol/m^3", description = "Aqueous K+", guess = 1e-20]
+        sK(t), [unit = u"mol/m^3", description = "Solid K+", guess = 1e-20]
+        aqMg(t), [unit = u"mol/m^3", description = "Aqueous Mg2+", guess = 1e-20]
+        sMg(t), [unit = u"mol/m^3", description = "Solid Mg2+", guess = 1e-20]
+        aqCl(t), [unit = u"mol/m^3", description = "Aqueous Cl-", guess = 1e-20]
+        sCl(t), [unit = u"mol/m^3", description = "Solid Cl-", guess = 1e-20]
+        aqNO3(t), [unit = u"mol/m^3", description = "Aqueous NO3-", guess = 1e-20]
+        sNO3(t), [unit = u"mol/m^3", description = "Solid NO3-", guess = 1e-20]
+        aqSO4(t), [unit = u"mol/m^3", description = "Aqueous SO4 2-", guess = 1e-20]
+        sSO4(t), [unit = u"mol/m^3", description = "Solid SO4 2-", guess = 1e-20]
 
-        TotalNH(t), [unit = u"mol/m^3", description = "Total NH3 + NH4 Molarity", guess=1]
-        TotalNa(t), [unit = u"mol/m^3", description = "Total Na+ Molarity", guess=1]
-        TotalCa(t), [unit = u"mol/m^3", description = "Total Ca2+ Molarity", guess=1]
-        TotalK(t), [unit = u"mol/m^3", description = "Total K+ Molarity", guess=1]
-        TotalMg(t), [unit = u"mol/m^3", description = "Total Mg2+ Molarity", guess=1]
-        TotalCl(t), [unit = u"mol/m^3", description = "Total Cl- Molarity", guess=1]
-        TotalNO3(t), [unit = u"mol/m^3", description = "Total NO3- Molarity", guess=1]
-        TotalSO4(t), [unit = u"mol/m^3", description = "Total SO4 2- Molarity", guess=1]
+        #! format: off
+        TotalNH(t), [unit = u"mol/m^3", description = "Total NH3 + NH4 Molarity", guess = 1e-20]
+        TotalNa(t), [unit = u"mol/m^3", description = "Total Na+ Molarity", guess = 1e-20]
+        TotalCa(t), [unit = u"mol/m^3", description = "Total Ca2+ Molarity", guess = 1e-20]
+        TotalK(t), [unit = u"mol/m^3", description = "Total K+ Molarity", guess = 1e-20]
+        TotalMg(t), [unit = u"mol/m^3", description = "Total Mg2+ Molarity", guess = 1e-20]
+        TotalCl(t), [unit = u"mol/m^3", description = "Total Cl- Molarity", guess = 1e-20]
+        TotalNO3(t), [unit = u"mol/m^3", description = "Total NO3- Molarity", guess = 1e-20]
+        TotalSO4(t), [unit = u"mol/m^3", description = "Total SO4 2- Molarity", guess = 1e-20]
+        #! format: on
     end
     @equations begin
         # Reactions based on information in Table 2 of Fountoukis and Nenes (2007).
@@ -118,6 +120,39 @@ include("equilibria.jl")
         sSO4 ~ s.CaSO4.M + s.KHSO4.M + s.K2SO4.M + s.MgSO4.M + s.Na2SO4.M + s.NaHSO4.M +
                s.NH42SO4.M + s.NH4HSO4.M + 2s.NH43HSO42.M
         TotalSO4 ~ g.H2SO4.M + aqSO4 + sSO4
+
+        # Set all the concentrations equal to their absolute values to promote
+        # non-negativity.
+        sum([aq.CaNO32.M, aq.CaCl2.M, aq.CaSO4.M, aq.KHSO4.M, aq.K2SO4.M,
+        aq.KNO3.M, aq.KCl.M, aq.MgSO4.M, aq.MgNO32.M, aq.MgCl2.M,
+        aq.NaCl.M, aq.Na2SO4.M, aq.NaNO3.M, aq.NH42SO4.M, aq.NH4NO3.M,
+        aq.NH4Cl.M, aq.NH4HSO4.M, aq.NaHSO4.M, aq.NH43HSO42.M, aq.H2SO4.M,
+        aq.HHSO4.M, aq.HNO3.M, aq.HCl.M,
+        aq.HNO3.M, aq.HCl.M]) +
+        sum([aq.NH3.m, aq.HNO3_aq.m, aq.HCl_aq.m]) * aq.W +
+        sum([g.HNO3.M, g.HCl.M, g.NH3.M, g.H2SO4.M]) +
+        sum([s.CaNO32.M, s.CaCl2.M, s.CaSO4.M, s.KHSO4.M, s.K2SO4.M, s.KNO3.M,
+        s.KCl.M, s.MgSO4.M, s.MgNO32.M, s.MgCl2.M, s.NaCl.M, s.NaNO3.M,
+        s.Na2SO4.M, s.NaHSO4.M, s.NH4Cl.M, s.NH4NO3.M, s.NH42SO4.M,
+        s.NH4HSO4.M, s.NH43HSO42.M]) ~ sum(abs.([aq.CaNO32.M, aq.CaCl2.M,
+                                           aq.CaSO4.M, aq.KHSO4.M, aq.K2SO4.M,
+                                           aq.KNO3.M, aq.KCl.M, aq.MgSO4.M,
+                                           aq.MgNO32.M, aq.MgCl2.M,
+                                           aq.NaCl.M, aq.Na2SO4.M, aq.NaNO3.M,
+                                           aq.NH42SO4.M, aq.NH4NO3.M,
+                                           aq.NH4Cl.M, aq.NH4HSO4.M, aq.NaHSO4.M,
+                                           aq.NH43HSO42.M, aq.H2SO4.M,
+                                           aq.HHSO4.M, aq.HNO3.M, aq.HCl.M,
+                                           aq.HNO3.M, aq.HCl.M])) +
+                                       sum(abs.([aq.NH3.m, aq.HNO3_aq.m, aq.HCl_aq.m])) * aq.W +
+                                       sum(abs.([g.HNO3.M, g.HCl.M, g.NH3.M, g.H2SO4.M])) +
+                                       sum(abs.([s.CaNO32.M, s.CaCl2.M, s.CaSO4.M,
+                                           s.KHSO4.M, s.K2SO4.M, s.KNO3.M,
+                                           s.KCl.M, s.MgSO4.M, s.MgNO32.M,
+                                           s.MgCl2.M, s.NaCl.M, s.NaNO3.M,
+                                           s.Na2SO4.M, s.NaHSO4.M, s.NH4Cl.M,
+                                           s.NH4NO3.M, s.NH42SO4.M,
+                                           s.NH4HSO4.M, s.NH43HSO42.M]))
 
         D(TotalNH) ~ 0.0
         D(TotalNa) ~ 0.0

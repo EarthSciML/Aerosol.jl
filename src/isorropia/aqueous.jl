@@ -4,7 +4,7 @@
         z, [description = "Valence (charge) of the ion"]
     end
     @variables begin
-        m(t), [description = "Molality of the ion in water", unit = u"mol/kg", guess = 1e-8]
+        m(t), [description = "Molality of ion in water", unit = u"mol/kg", guess = 1e-20]
         a(t),
         [
             description = "Activity of the ion. The activity coefficient of an ion is assumed to be one (Fountoukis and Nenes (2007), Section 3.3).",
@@ -38,10 +38,10 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         I_one = 1, [unit = u"mol/kg", description = "An ionic strength of 1"]
     end
     @variables begin
-        M(t), [description = "Molarity of the salt in air", unit = u"mol/m^3", guess=1e-8]
+        M(t), [description = "Molarity of the salt in air", unit = u"mol/m^3", guess=1e-20]
         X(t)
         Y(t)
-        I(t), [description = "Ionic strength", unit = u"mol/kg", guess=1e-8]
+        I(t), [description = "Ionic strength", unit = u"mol/kg", guess=1e-20]
         logγ⁰(t), [description = "Log of the standard state activity coefficient"]
         Γ⁰(t), [unit = u"mol/kg"]
         Γ⁺(t)
