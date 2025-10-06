@@ -121,39 +121,6 @@ include("equilibria.jl")
                s.NH42SO4.M + s.NH4HSO4.M + 2s.NH43HSO42.M
         TotalSO4 ~ g.H2SO4.M + aqSO4 + sSO4
 
-        # Set all the concentrations equal to their absolute values to promote
-        # non-negativity.
-        sum([aq.CaNO32.M, aq.CaCl2.M, aq.CaSO4.M, aq.KHSO4.M, aq.K2SO4.M,
-        aq.KNO3.M, aq.KCl.M, aq.MgSO4.M, aq.MgNO32.M, aq.MgCl2.M,
-        aq.NaCl.M, aq.Na2SO4.M, aq.NaNO3.M, aq.NH42SO4.M, aq.NH4NO3.M,
-        aq.NH4Cl.M, aq.NH4HSO4.M, aq.NaHSO4.M, aq.NH43HSO42.M, aq.H2SO4.M,
-        aq.HHSO4.M, aq.HNO3.M, aq.HCl.M,
-        aq.HNO3.M, aq.HCl.M]) +
-        sum([aq.NH3.m, aq.HNO3_aq.m, aq.HCl_aq.m]) * aq.W +
-        sum([g.HNO3.M, g.HCl.M, g.NH3.M, g.H2SO4.M]) +
-        sum([s.CaNO32.M, s.CaCl2.M, s.CaSO4.M, s.KHSO4.M, s.K2SO4.M, s.KNO3.M,
-        s.KCl.M, s.MgSO4.M, s.MgNO32.M, s.MgCl2.M, s.NaCl.M, s.NaNO3.M,
-        s.Na2SO4.M, s.NaHSO4.M, s.NH4Cl.M, s.NH4NO3.M, s.NH42SO4.M,
-        s.NH4HSO4.M, s.NH43HSO42.M]) ~ sum(abs.([aq.CaNO32.M, aq.CaCl2.M,
-                                           aq.CaSO4.M, aq.KHSO4.M, aq.K2SO4.M,
-                                           aq.KNO3.M, aq.KCl.M, aq.MgSO4.M,
-                                           aq.MgNO32.M, aq.MgCl2.M,
-                                           aq.NaCl.M, aq.Na2SO4.M, aq.NaNO3.M,
-                                           aq.NH42SO4.M, aq.NH4NO3.M,
-                                           aq.NH4Cl.M, aq.NH4HSO4.M, aq.NaHSO4.M,
-                                           aq.NH43HSO42.M, aq.H2SO4.M,
-                                           aq.HHSO4.M, aq.HNO3.M, aq.HCl.M,
-                                           aq.HNO3.M, aq.HCl.M])) +
-                                       sum(abs.([aq.NH3.m, aq.HNO3_aq.m, aq.HCl_aq.m])) * aq.W +
-                                       sum(abs.([g.HNO3.M, g.HCl.M, g.NH3.M, g.H2SO4.M])) +
-                                       sum(abs.([s.CaNO32.M, s.CaCl2.M, s.CaSO4.M,
-                                           s.KHSO4.M, s.K2SO4.M, s.KNO3.M,
-                                           s.KCl.M, s.MgSO4.M, s.MgNO32.M,
-                                           s.MgCl2.M, s.NaCl.M, s.NaNO3.M,
-                                           s.Na2SO4.M, s.NaHSO4.M, s.NH4Cl.M,
-                                           s.NH4NO3.M, s.NH42SO4.M,
-                                           s.NH4HSO4.M, s.NH43HSO42.M]))
-
         D(TotalNH) ~ 0.0
         D(TotalNa) ~ 0.0
         D(TotalCa) ~ 0.0
