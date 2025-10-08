@@ -5,10 +5,128 @@ using ModelingToolkit: t, D
 using DynamicQuantities
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
 using OrdinaryDiffEq
+using Test
 
-#@named aq = Aqueous()
+@testitem "Pivot Salts" begin
+    #=
+    This test checks for the set of salts that are linearly independent of each other.
+    =#
+    using LinearAlgebra
 
-@mtkmodel AqueousTest begin
+    salts = [0 0 0 1 0 0 0 2 0 0 0
+             0 0 0 1 0 0 2 0 0 0 0
+             0 0 0 1 0 0 0 0 1 0 0
+             0 0 0 0 1 0 0 0 0 1 0
+             0 0 0 0 2 0 0 0 1 0 0
+             0 0 0 0 1 0 0 1 0 0 0
+             0 0 0 0 1 0 1 0 0 0 0
+             0 0 0 0 0 1 0 0 1 0 0
+             0 0 0 0 0 1 0 2 0 0 0
+             0 0 0 0 0 1 2 0 0 0 0
+             0 1 0 0 0 0 1 0 0 0 0
+             0 2 0 0 0 0 0 0 1 0 0
+             0 1 0 0 0 0 0 1 0 0 0
+             2 0 0 0 0 0 0 0 1 0 0
+             1 0 0 0 0 0 0 1 0 0 0
+             1 0 0 0 0 0 1 0 0 0 0
+             1 0 0 0 0 0 0 0 0 1 0
+             0 1 0 0 0 0 0 0 0 1 0
+             3 0 0 0 0 0 0 0 0 2 0
+             0 0 2 0 0 0 0 0 1 0 0
+             0 0 1 0 0 0 0 0 0 1 0
+             0 0 1 0 0 0 0 1 0 0 0
+             0 0 1 0 0 0 1 0 0 0 0]
+
+    ions = [:NH4, :Na, :H, :Ca, :K, :Mg, :Cl, :NO3, :SO4, :HSO4, :OH]
+    saltnames = [:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl, :MgSO4,
+        :MgNO32, :MgCl2, :NaCl, :Na2SO4, :NaNO3, :NH42SO4, :NH4NO3,
+        :NH4Cl, :NH4HSO4, :NaHSO4, :NH43HSO42, :H2SO4, :HHSO4, :HNO3, :HCl]
+
+    # Check to make sure the the salts matrix corresponds to the salt chemical formulas
+    derived_saltnames = [Symbol([r[i] > 0 ? Symbol(ions[i], r[i] > 1 ? r[i] : Symbol("")) :
+                                 Symbol("")
+                                 for i in 1:length(ions)]...) for r in eachrow(salts)]
+
+    @test derived_saltnames == saltnames
+
+    @test rank(salts) == 10
+
+    f = qr(salts', ColumnNorm())
+
+    pivotsalts = saltnames[f.p[1:rank(salts)]]
+
+    @test pivotsalts == [:NH43HSO42, :CaCl2, :K2SO4, :MgNO32, :Na2SO4,
+        :H2SO4, :NH42SO4, :MgCl2, :MgSO4, :NH4HSO4]
+
+    nonpivotsalts = setdiff(saltnames, pivotsalts)
+    @test nonpivotsalts == [:CaNO32, :CaSO4, :KHSO4, :KNO3, :KCl, :NaCl, :NaNO3,
+        :NH4NO3, :NH4Cl, :NaHSO4, :HHSO4, :HNO3, :HCl]
+
+    @test rank(salts[f.p[1:rank(salts)], :]) == 10
+end
+
+
+@mtkmodel AqueousTestMolality begin
+    @components begin
+        aq = Aqueous()
+    end
+    @constants begin
+        no_change = 0.0, [unit = u"mol/kg/s"]
+        m_one = 1.0, [unit = u"mol/kg"]
+    end
+    @equations begin
+        D(aq.NH4.m) ~ no_change
+        D(aq.Na.m) ~ no_change
+        D(aq.H.m) ~ no_change
+        D(aq.Ca.m) ~ no_change
+        D(aq.K.m) ~ no_change
+        D(aq.Mg.m) ~ no_change
+        D(aq.Cl.m) ~ no_change
+        D(aq.NO3.m) ~ no_change
+        D(aq.SO4.m) ~ no_change
+        D(aq.HSO4.m) ~ no_change
+
+        aq.NH3.m ~ m_one
+        aq.HCl_aq.m ~ m_one
+        aq.HNO3_aq.m ~ m_one
+    end
+end
+
+@named aqt = AqueousTestMolality()
+sys = mtkcompile(aqt)
+equations(sys)
+unknowns(sys)
+
+prob = ODEProblem(sys,
+    [
+        sys.aq.NH4.m => 1.0,
+        sys.aq.Na.m => 1.0,
+        sys.aq.H.m => 1.0,
+        sys.aq.Ca.m => 0.5,
+        sys.aq.K.m => 1.0,
+        sys.aq.Mg.m => 0.5,
+        sys.aq.Cl.m => 1.0,
+        sys.aq.NO3.m => 1.0,
+        sys.aq.SO4.m => 0.5,
+        sys.aq.HSO4.m => 1.0
+    ],
+    (0.0, 1.0),
+    )
+sol = solve(prob, Rosenbrock23())
+
+let
+vars = [sys.aq.a_NH4NO3, sys.aq.a_NH4Cl, sys.aq.a_NH4HSO4, sys.aq.a_NH42SO4, sys.aq.a_NH43HSO42,
+    sys.aq.a_NaCl, sys.aq.a_Na2SO4, sys.aq.a_NaNO3, sys.aq.a_NaHSO4,
+    sys.aq.a_H2SO4, sys.aq.a_HCl, sys.aq.a_HNO3, sys.aq.a_KHSO4, sys.aq.a_HHSO4,
+    sys.aq.a_CaNO32, sys.aq.a_CaCl2, sys.aq.a_CaSO4,
+    sys.aq.a_KHSO4, sys.aq.a_K2SO4, sys.aq.a_KNO3, sys.aq.a_KCl,
+    sys.aq.a_MgSO4, sys.aq.a_MgNO32, sys.aq.a_MgCl2]
+collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
+
+
+
+@mtkmodel AqueousTestActivity begin
     @components begin
         aq = Aqueous()
     end
@@ -20,6 +138,7 @@ using OrdinaryDiffEq
         a_one3 = 1.0, [unit = u"mol^3/kg^3"]
         m2_no_change = 0.0, [unit = u"(mol/kg)^2/s"]
         m3_no_change = 0.0, [unit = u"(mol/kg)^3/s"]
+        m5_no_change = 0.0, [unit = u"(mol/kg)^5/s"]
     end
     @variables begin
         #! format: off
@@ -45,91 +164,20 @@ using OrdinaryDiffEq
         # extraHSO4(t), [unit = u"mol/m^3", description = "Extra HSO4 mass", guess = 0.0]
     end
     @equations begin
-        # TotalNH4 ~ sum([aq.NH4NO3.M, aq.NH4Cl.M, aq.NH4HSO4.M, 2aq.NH42SO4.M, 3aq.NH43HSO42.M]) #+ extraNH4
-        # TotalNa ~ sum([aq.NaCl.M, 2aq.Na2SO4.M, aq.NaNO3.M, aq.NaHSO4.M]) + extraNa
-        # TotalCa ~ sum([aq.CaNO32.M, aq.CaCl2.M, aq.CaSO4.M]) + extraCa
-        # TotalK ~ sum([aq.KHSO4.M, 2aq.K2SO4.M, aq.KNO3.M, aq.KCl.M]) + extraK
-        # TotalMg ~ sum([aq.MgSO4.M, aq.MgNO32.M, aq.MgCl2.M]) + extraMg
-        # TotalCl ~ sum([aq.NaCl.M, aq.KCl.M, 2aq.MgCl2.M, 2aq.CaCl2.M, aq.NH4Cl.M, aq.HCl.M]) #+ extraCl
-        # TotalNO3 ~ sum([aq.NaNO3.M, aq.KNO3.M, 2aq.MgNO32.M, 2aq.CaNO32.M, aq.NH4NO3.M, aq.HNO3.M]) + extraNO3
-        # TotalSO4 ~ sum([aq.Na2SO4.M, aq.K2SO4.M, aq.MgSO4.M, aq.CaSO4.M, aq.NH42SO4.M, aq.H2SO4.M,
-        #     aq.NH43HSO42.M]) #+ extraSO4
-        # TotalHSO4 ~ sum([aq.KHSO4.M, aq.NaHSO4.M, aq.NH4HSO4.M, aq.NH43HSO42.M, aq.HHSO4.M]) + extraHSO4
-
-
-        # D(TotalNH4) ~ no_change
-        # D(TotalNa) ~ no_change
-        # D(TotalCa) ~ no_change
-        # D(TotalK) ~ no_change
-        # D(TotalMg) ~ no_change
-        # D(TotalCl) ~ no_change
-        # D(TotalNO3) ~ no_change
-        # D(TotalSO4) ~ no_change
-        # D(TotalHSO4) ~ no_change
-
-        # aq.Cl.m ~ abs(aq.Cl.m)
-        # aq.SO4.m ~ abs(aq.SO4.m)
-        # aq.Na.m ~ abs(aq.Na.m)
-        # aq.NH4.m ~ abs(aq.NH4.m)
-        # aq.K.m ~ abs(aq.K.m)
-        # aq.Mg.m ~ abs(aq.Mg.m)
-        # aq.NO3.m ~ abs(aq.NO3.m)
-        # aq.HSO4.m ~ abs(aq.HSO4.m)
-        # aq.NH3.m ~ abs(aq.NH3.m)
-        # aq.HNO3_aq.m ~ abs(aq.HNO3_aq.m)
-        # aq.HCl_aq.m ~ abs(aq.HCl_aq.m)
-
-        # Relationships between salts, just for testing purposes.
-        # These are replaced by equilibrium equations in the real model.
-       # aq.a_CaNO32 ~ a_one3 * 1e-8
-       # aq.a_CaCl2 ~ a_one3 * 1e-8
-       # aq.a_KHSO4 ~ a_one * 1e-8^2
-        #aq.a_KNO3 ~ a_one * 1e-8
-      #  aq.a_K2SO4 ~ a_one3 * 1e-8
-
-       #aq.CaSO4.M ~ abs(aq.CaSO4.M)
-        # aq.HCl.M ~ abs(aq.HCl.M)
-        # aq.MgNO32.M ~ abs(aq.MgNO32.M)
-        # aq.NH42SO4.M ~ abs(aq.NH42SO4.M)
-        # aq.CaNO32.M ~ abs(aq.CaNO32.M)
-        # aq.NH4Cl.M ~ abs(aq.NH4Cl.M)
-        # aq.OH.m ~ abs(aq.OH.m)
-        # aq.KNO3.M ~ abs(aq.KNO3.M)
-        # aq.KCl.M ~ abs(aq.KCl.M)
-        # aq.HNO3.M ~ abs(aq.HNO3.M)
-        # aq.NaHSO4.M ~ abs(aq.NaHSO4.M)
-        # aq.MgSO4.M ~ abs(aq.MgSO4.M)
-        # aq.HHSO4.M ~ abs(aq.HHSO4.M)
-        # aq.CaCl2.M ~ abs(aq.CaCl2.M)
-        # aq.K2SO4.M ~ abs(aq.K2SO4.M)
-        # aq.Na2SO4.M ~ abs(aq.Na2SO4.M)
-        # aq.NaCl.M ~ abs(aq.NaCl.M)
-        # aq.NH4NO3.M ~ abs(aq.NH4NO3.M)
-        # aq.NH4HSO4.M ~ abs(aq.NH4HSO4.M)
-        # aq.KHSO4.M ~ abs(aq.KHSO4.M)
-
-        # aq.H.m ~ abs(aq.H.m)
-        # aq.Na.m ~ abs(aq.Na.m)
-        # aq.K.m ~ abs(aq.K.m)
-        # aq.SO4.m ~ abs(aq.SO4.m)
-        # aq.Ca.m ~ abs(aq.Ca.m)
-        # aq.HSO4.m ~ abs(aq.HSO4.m)
-        # aq.Mg.m ~ abs(aq.Mg.m)
-        # aq.Cl.m ~ abs(aq.Cl.m)
-        # aq.NO3.m ~ abs(aq.NO3.m)
-
-        D(aq.a_CaNO32) ~ m3_no_change
+        D(aq.a_NH43HSO42) ~ m5_no_change
         D(aq.a_CaCl2) ~ m3_no_change
-        D(aq.a_KHSO4) ~ m2_no_change
         D(aq.a_K2SO4) ~ m3_no_change
-        D(aq.a_KNO3) ~ m2_no_change
-        D(aq.a_MgSO4) ~ m2_no_change
-        D(aq.a_NaCl) ~ m2_no_change
+        D(aq.a_MgNO32) ~ m3_no_change
+        D(aq.a_Na2SO4) ~ m3_no_change
+        D(aq.a_H2SO4) ~ m3_no_change
         D(aq.a_NH42SO4) ~ m3_no_change
-        D(aq.a_HNO3) ~ m2_no_change
-        D(aq.a_NaHSO4) ~ m2_no_change
+        D(aq.a_MgCl2) ~ m3_no_change
+        D(aq.a_MgSO4) ~ m2_no_change
+        D(aq.a_NH4HSO4) ~ m2_no_change
 
-        #aq.OH.m ~ m_one
+
+        #D(aq.NH42SO4.M) ~ no_change
+
 
         aq.NH3.m ~ m_one
         aq.HCl_aq.m ~ m_one
@@ -137,59 +185,35 @@ using OrdinaryDiffEq
     end
 end
 
-@named aqt = AqueousTest()
+@named aqt = AqueousTestActivity()
 sys = mtkcompile(aqt)
-sys2 = mtkcompile(aqt, fully_determined = false)
 equations(sys)
 unknowns(sys)
 
 prob = ODEProblem(sys,
     [
-#        sys.aq.T => 293.15, sys.aq.RH => 0.3,
-
-        # sys.aq.a_CaNO32 ~ 1.0e-16,
-        # sys.aq.a_CaCl2 ~ 1.0e-16,
-        # sys.aq.a_KHSO4 ~ 1.0e-16,
-        # sys.aq.a_K2SO4 ~ 1.0e-16,
-        # sys.aq.a_KNO3 ~ 1.0e-16,
-        # sys.aq.a_MgSO4 ~ 1.0e-16,
-        # sys.aq.a_NaCl ~ 1.0e-16,
-        # sys.aq.a_NH42SO4 ~ 1.0e-16,
-        # sys.aq.a_HNO3 ~ 1.0e-16,
-        # sys.aq.a_NaHSO4 ~ 1.0e-16,
-
-        #  sys.aq.NH4.m ~ 1.0e-8,
-        # sys.aq.NO3.m ~ 1.0e-8,
-        # sys.aq.H.m ~ 1.0e-8,
-        # sys.aq.Na.m ~ 1.0e-8,
-        # sys.aq.K.m ~ 1.0e-8,
-        # sys.aq.SO4.m ~ 1.0e-8,
-        # sys.aq.Ca.m ~ 1.0e-8,
-        # sys.aq.HSO4.m ~ 1.0e-8,
-        # sys.aq.Mg.m ~ 1.0e-8,
-        # sys.aq.Cl.m ~ 1.0e-8,
-
-        # sys.TotalNH4 => 1e-8,
-        # sys.TotalNa => 1e-8,
-        # sys.TotalCl => 1e-8,
-        # sys.TotalSO4 => 1e-8,
-        # sys.TotalK => 1e-8,
-        # sys.TotalMg => 1e-8,
-        # sys.TotalNO3 => 1e-8,
-        # sys.TotalHSO4 => 1e-8,
-        # sys.TotalCa => 1e-8,
-
-        #sys.aq.H.m => 1.0,
-    #    sys.aq.Ca.m => 1.0,
-      #  sys.aq.NO3.m => 1.0,
-      #  sys.aq.HSO4.m => 1.0,
-      #  sys.aq.NH3.m => 1.0,
-        # sys.aq.HNO3_aq.m => 1.0,
-        # sys.aq.HCl_aq.m => 1.0
+        sys.aq.a_NH43HSO42 => 0.079,
+        sys.aq.a_CaCl2 => 1.4,
+        sys.aq.a_K2SO4 => 0.039,
+        sys.aq.a_MgNO32 => 0.4,
+        sys.aq.a_Na2SO4 => 0.053,
+        sys.aq.a_H2SO4 => 0.094,
+        sys.aq.a_NH42SO4 => 0.043,
+        sys.aq.a_MgCl2 => 2.4,
+        sys.aq.a_MgSO4 => 0.042,
+        sys.aq.a_NH4HSO4 => 0.83,
     ],
-    (0.0, 1.0), use_scc = false,
+    (0.0, 1.0),
+    guesses = [
+        sys.aq.Ca.m => 0.5,
+        sys.aq.SO4.m => 0.5,
+        sys.aq.Mg.m => 0.5,
+    ]
     )
-sol = solve(prob, abstol=5e-3, reltol = 5e-3)
+
+    unknowns(sys)
+
+sol = solve(prob, Rosenbrock23())
 
 collect(zip(unknowns(sys), prob.u0))
 collect(zip(unknowns(sys), sol.u[1]))
@@ -200,7 +224,7 @@ let
 vars = [sys.aq.NH4.m, sys.aq.Na.m, sys.aq.H.m, sys.aq.Ca.m, sys.aq.K.m, sys.aq.Mg.m,
     sys.aq.Cl.m, sys.aq.NO3.m, sys.aq.SO4.m, sys.aq.HSO4.m, sys.aq.OH.m, sys.aq.NH3.m,
     sys.aq.HNO3_aq.m, sys.aq.HCl_aq.m]
-collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
 end
 
 let
