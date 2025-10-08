@@ -29,9 +29,3 @@ end
         NH43HSO42 = Solid()
     end
 end
-
-@named xxx = Solids()
-sys = mtkcompile(Solids(name=:x), fully_determined=false)
-
-equations(sys)
-unknowns(sys)
