@@ -72,9 +72,11 @@ end
     end
     @constants begin
         no_change = 0.0, [unit = u"mol/kg/s"]
+        M_no_change = 0.0, [unit = u"mol/m^3/s"]
         m_one = 1.0, [unit = u"mol/kg"]
     end
     @equations begin
+        # Fix the molalities at the initial concentration.
         D(aq.NH4.m) ~ no_change
         D(aq.Na.m) ~ no_change
         D(aq.H.m) ~ no_change
@@ -86,16 +88,20 @@ end
         D(aq.SO4.m) ~ no_change
         D(aq.HSO4.m) ~ no_change
 
+        # These species are neutral and are not in any salts, so
+        # we fix their concentration.
         aq.NH3.m ~ m_one
         aq.HCl_aq.m ~ m_one
         aq.HNO3_aq.m ~ m_one
+
+        # We need to fix the molar concentration of one of the salts in
+        # order to be able to calculate the water concentration.
+        D(aq.NH42SO4.M) ~ M_no_change
     end
 end
 
 @named aqt = AqueousTestMolality()
 sys = mtkcompile(aqt)
-equations(sys)
-unknowns(sys)
 
 prob = ODEProblem(sys,
     [
@@ -108,9 +114,11 @@ prob = ODEProblem(sys,
         sys.aq.Cl.m => 1.0,
         sys.aq.NO3.m => 1.0,
         sys.aq.SO4.m => 0.5,
-        sys.aq.HSO4.m => 1.0
+        sys.aq.HSO4.m => 1.0,
+
+        sys.aq.NH42SO4.M => 1.0e-8,
     ],
-    (0.0, 1.0),
+    (0.0, 1.0), use_scc=false,
     )
 sol = solve(prob, Rosenbrock23())
 
@@ -131,6 +139,7 @@ end
         aq = Aqueous()
     end
     @constants begin
+        M_no_change = 0.0, [unit = u"mol/m^3/s"]
         no_change = 0.0, [unit = u"mol/m^3/s"]
         m_no_change = 0.0, [unit = u"mol/kg/s"]
         m_one = 1.0, [unit = u"mol/kg"]
@@ -164,6 +173,7 @@ end
         # extraHSO4(t), [unit = u"mol/m^3", description = "Extra HSO4 mass", guess = 0.0]
     end
     @equations begin
+        # This time, we fix the activities at their initial values.
         D(aq.a_NH43HSO42) ~ m5_no_change
         D(aq.a_CaCl2) ~ m3_no_change
         D(aq.a_K2SO4) ~ m3_no_change
@@ -175,20 +185,20 @@ end
         D(aq.a_MgSO4) ~ m2_no_change
         D(aq.a_NH4HSO4) ~ m2_no_change
 
-
-        #D(aq.NH42SO4.M) ~ no_change
-
-
+        # These species are neutral and are not in any salts, so
+        # we fix their concentration.
         aq.NH3.m ~ m_one
         aq.HCl_aq.m ~ m_one
         aq.HNO3_aq.m ~ m_one
+
+        # We need to fix the molar concentration of one of the salts in
+        # order to be able to calculate the water concentration.
+        D(aq.NH42SO4.M) ~ M_no_change
     end
 end
 
 @named aqt = AqueousTestActivity()
 sys = mtkcompile(aqt)
-equations(sys)
-unknowns(sys)
 
 prob = ODEProblem(sys,
     [
@@ -202,16 +212,16 @@ prob = ODEProblem(sys,
         sys.aq.a_MgCl2 => 2.4,
         sys.aq.a_MgSO4 => 0.042,
         sys.aq.a_NH4HSO4 => 0.83,
+
+        sys.aq.NH42SO4.M => 1.0e-8,
     ],
-    (0.0, 1.0),
+    (0.0, 1.0), use_scc=false,
     guesses = [
         sys.aq.Ca.m => 0.5,
         sys.aq.SO4.m => 0.5,
         sys.aq.Mg.m => 0.5,
     ]
     )
-
-    unknowns(sys)
 
 sol = solve(prob, Rosenbrock23())
 
