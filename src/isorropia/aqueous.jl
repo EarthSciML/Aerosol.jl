@@ -112,8 +112,8 @@ end
         m_one = 1.0, [unit = u"mol/kg", description = "unit molality"]
     end
     @parameters begin
-        T=293.15, [description = "Temperature", unit = u"K"]
-        RH=0.3, [description = "Relative humidity (0-1)"]
+        T = 293.15, [description = "Temperature", unit = u"K"]
+        RH = 0.3, [description = "Relative humidity (0-1)"]
     end
     @variables begin
         #! format: off
@@ -411,16 +411,16 @@ end
         γ_MgSO4 ~ exp(logγ_MgSO4)
         γ_MgNO32 ~ exp(logγ_MgNO32)
         γ_MgCl2 ~ exp(logγ_MgCl2)
-        γ_NaCl ~  exp(logγ_NaCl)
-        γ_Na2SO4 ~  exp(logγ_Na2SO4)
-        γ_NaNO3 ~  exp(logγ_NaNO3)
-        γ_NH42SO4 ~  exp(logγ_NH42SO4)
-        γ_NH4NO3 ~  exp(logγ_NH4NO3)
-        γ_NH4Cl ~  exp(logγ_NH4Cl)
-        γ_H2SO4 ~  exp(logγ_H2SO4)
-        γ_HHSO4 ~  exp(logγ_HHSO4)
-        γ_HNO3 ~  exp(logγ_HNO3)
-        γ_HCl ~  exp(logγ_HCl)
+        γ_NaCl ~ exp(logγ_NaCl)
+        γ_Na2SO4 ~ exp(logγ_Na2SO4)
+        γ_NaNO3 ~ exp(logγ_NaNO3)
+        γ_NH42SO4 ~ exp(logγ_NH42SO4)
+        γ_NH4NO3 ~ exp(logγ_NH4NO3)
+        γ_NH4Cl ~ exp(logγ_NH4Cl)
+        γ_H2SO4 ~ exp(logγ_H2SO4)
+        γ_HHSO4 ~ exp(logγ_HHSO4)
+        γ_HNO3 ~ exp(logγ_HNO3)
+        γ_HCl ~ exp(logγ_HCl)
 
         # Table 4 footnotes
         γ_CaSO4 ~ 1.0 # From Table 4 footnote a, CaSO4 has an activity coefficient of zero,
@@ -435,7 +435,7 @@ end
         # We take the absolute value to avoid numerical issues as negative concentrations
         # sometimes occur during DAE initialization.
         I ~ abs(0.5 * sum([ion.m * ion.z^2
-                 for ion in [
+                     for ion in [
             NH4, Na, H, Ca, K, Mg, Cl, NO3, SO4, HSO4, OH]]))
         CaNO32.I ~ I
         CaCl2.I ~ I
@@ -528,49 +528,83 @@ end
         H2SO4.M ~ 0.0 # The first dissociation of H2SO4 is assumed to be complete (Section 3.3)
         CaSO4.M ~ 0.0 # From Table 4 footnote a, all of CaSO4 precipitates to the solid phase.
 
-        # Mass balance
-        NH4.m * W ~ sum([NH4NO3.M, NH4Cl.M, NH4HSO4.M, 2NH42SO4.M, 3NH43HSO42.M])
-        Na.m * W ~ sum([NaCl.M, 2Na2SO4.M, NaNO3.M, NaHSO4.M])
-        H.m * W ~ sum([2H2SO4.M, HCl.M, HNO3.M, HHSO4.M])
-        Ca.m * W ~ sum([CaNO32.M, CaCl2.M, CaSO4.M])
-        K.m * W ~ sum([KHSO4.M, 2K2SO4.M, KNO3.M, KCl.M])
-        Mg.m * W ~ sum([MgSO4.M, MgNO32.M, MgCl2.M])
-        Cl.m * W ~ sum([NaCl.M, KCl.M, 2MgCl2.M, 2CaCl2.M, NH4Cl.M, HCl.M])
-        NO3.m * W ~ sum([NaNO3.M, KNO3.M, 2MgNO32.M, 2CaNO32.M, NH4NO3.M, HNO3.M])
-        SO4.m * W ~ sum([Na2SO4.M, K2SO4.M, MgSO4.M, CaSO4.M, NH42SO4.M, H2SO4.M])
-        HSO4.m * W ~ sum([KHSO4.M, NaHSO4.M, NH4HSO4.M, 2NH43HSO42.M, HHSO4.M])
+        # FIXME(CT): I can't figure out how to get the aqueous salt mass balance
+        # to work consistently, so here is a had to just evenly split the mass
+        # of each cation between its corresponding salts.
+        # See below for other aborted attempts.
+        NH4NO3.M ~ NH4.m * W / 5
+        NH4Cl.M ~ NH4.m * W / 5
+        NH4HSO4.M ~ NH4.m * W / 5
+        2NH42SO4.M ~ NH4.m * W / 5
+        3NH43HSO42.M ~ NH4.m * W / 5
 
-        NH43HSO42.M / HHSO4.M ~ (a_NH43HSO42 / a_HHSO4) / m_one^3
-        CaCl2.M / NaCl.M ~ (a_CaCl2 / a_NaCl) / m_one
-        K2SO4.M / KCl.M ~ (a_K2SO4 / a_KCl) / m_one
-        MgNO32.M / KNO3.M ~ (a_MgNO32 / a_KNO3) / m_one
-        Na2SO4.M / NaHSO4.M ~ (a_Na2SO4 / a_NaHSO4) / m_one
-        NH42SO4.M / NH4NO3.M ~ (a_NH42SO4 / a_NH4NO3) / m_one
-        MgCl2.M / NH4Cl.M ~ (a_MgCl2 / a_NH4Cl) / m_one
-        MgSO4.M / KHSO4.M ~ (a_MgSO4 / a_KHSO4)
-        NH4HSO4.M / HCl.M ~ (a_NH4HSO4 / a_HCl)
-        NaNO3.M / HNO3.M ~ (a_NaNO3 / a_HNO3)
+        NaCl.M ~ Na.m * W / 4
+        2Na2SO4.M ~ Na.m * W / 4
+        NaNO3.M ~ Na.m * W / 4
+        NaHSO4.M ~ Na.m * W / 4
+
+        HCl.M ~ H.m * W / 3
+        HNO3.M ~ H.m * W / 3
+        HHSO4.M ~ H.m * W / 3
+
+        CaNO32.M ~ Ca.m * W / 2
+        CaCl2.M ~ Ca.m * W / 2
+
+        KHSO4.M ~ K.m * W / 4
+        2K2SO4.M ~ K.m * W / 4
+        KNO3.M ~ K.m * W / 4
+        KCl.M ~ K.m * W / 4
+
+        MgSO4.M ~ Mg.m * W / 3
+        MgNO32.M ~ Mg.m * W / 3
+        #MgCl2.M ~ Mg.m * W / 3 # Leave one degree of freedom to set overall molarity level.
+
+        # Mass balance
+        # NH4.m * W ~ sum([NH4NO3.M, NH4Cl.M, NH4HSO4.M, 2NH42SO4.M, 3NH43HSO42.M])
+        # Na.m * W ~ sum([NaCl.M, 2Na2SO4.M, NaNO3.M, NaHSO4.M])
+        # H.m * W ~ sum([2H2SO4.M, HCl.M, HNO3.M, HHSO4.M])
+        # Ca.m * W ~ sum([CaNO32.M, CaCl2.M, CaSO4.M])
+        # K.m * W ~ sum([KHSO4.M, 2K2SO4.M, KNO3.M, KCl.M])
+        # Mg.m * W ~ sum([MgSO4.M, MgNO32.M, MgCl2.M])
+        # Cl.m * W ~ sum([NaCl.M, KCl.M, 2MgCl2.M, 2CaCl2.M, NH4Cl.M, HCl.M])
+        # NO3.m * W ~ sum([NaNO3.M, KNO3.M, 2MgNO32.M, 2CaNO32.M, NH4NO3.M, HNO3.M])
+        # SO4.m * W ~ sum([Na2SO4.M, K2SO4.M, MgSO4.M, CaSO4.M, NH42SO4.M, H2SO4.M])
+        # HSO4.m * W ~ sum([KHSO4.M, NaHSO4.M, NH4HSO4.M, 2NH43HSO42.M, HHSO4.M])
+
+        # NH43HSO42.M / HHSO4.M ~ (a_NH43HSO42 / a_HHSO4) / m_one^3
+        # CaCl2.M / NaCl.M ~ (a_CaCl2 / a_NaCl) / m_one
+        # K2SO4.M / KCl.M ~ (a_K2SO4 / a_KCl) / m_one
+        # MgNO32.M / KNO3.M ~ (a_MgNO32 / a_KNO3) / m_one
+        # Na2SO4.M / NaHSO4.M ~ (a_Na2SO4 / a_NaHSO4) / m_one
+        # NH42SO4.M / NH4NO3.M ~ (a_NH42SO4 / a_NH4NO3) / m_one
+        # MgCl2.M / NH4Cl.M ~ (a_MgCl2 / a_NH4Cl) / m_one
+        # MgSO4.M / KHSO4.M ~ (a_MgSO4 / a_KHSO4)
+        # NH4HSO4.M / HCl.M ~ (a_NH4HSO4 / a_HCl)
+        # NaNO3.M / HNO3.M ~ (a_NaNO3 / a_HNO3)
         # Leftover: CaNO32
 
+        # 0 ~ min(CaNO32.M, CaCl2.M, CaSO4.M, KHSO4.M, K2SO4.M, KNO3.M, KCl.M, MgSO4.M,
+        # MgNO32.M, MgCl2.M, NaCl.M, Na2SO4.M, NaNO3.M, NH42SO4.M, NH4NO3.M,
+        # NH4Cl.M, NH4HSO4.M, NaHSO4.M, NH43HSO42.M, H2SO4.M, HHSO4.M, HNO3.M, HCl.M)
 
         # Second mass balance to promote non-negativity
-#         sum([NH4.m, Na.m, H.m, Ca.m, K.m, Mg.m,
-#         Cl.m, NO3.m, SO4.m, HSO4.m, OH.m, NH3.m, HNO3_aq.m, HCl_aq.m, H.m, OH.m
-# ]) ~ sum(abs.([NH4.m, Na.m, H.m, Ca.m, K.m, Mg.m,
-#             Cl.m, NO3.m, SO4.m, HSO4.m, OH.m, NH3.m, HNO3_aq.m, HCl_aq.m, H.m, OH.m]))
+        #         sum([NH4.m, Na.m, H.m, Ca.m, K.m, Mg.m,
+        #         Cl.m, NO3.m, SO4.m, HSO4.m, OH.m, NH3.m, HNO3_aq.m, HCl_aq.m, H.m, OH.m
+        # ]) ~ sum(abs.([NH4.m, Na.m, H.m, Ca.m, K.m, Mg.m,
+        #             Cl.m, NO3.m, SO4.m, HSO4.m, OH.m, NH3.m, HNO3_aq.m, HCl_aq.m, H.m, OH.m]))
 
-#         sum([NH4NO3.M, NH4Cl.M, NH4HSO4.M, 2NH42SO4.M, 3NH43HSO42.M,
-#         NaCl.M, 2Na2SO4.M, NaNO3.M, NaHSO4.M,
-#         2H2SO4.M, HCl.M, HNO3.M, KHSO4.M, HHSO4.M,
-#         CaNO32.M, CaCl2.M, CaSO4.M,
-#         KHSO4.M, 2K2SO4.M, KNO3.M, KCl.M,
-#         MgSO4.M, MgNO32.M, MgCl2.M
-# ]) ~ sum(abs.([NH4NO3.M, NH4Cl.M, NH4HSO4.M, 2NH42SO4.M, 3NH43HSO42.M,
-#             NaCl.M, 2Na2SO4.M, NaNO3.M, NaHSO4.M,
-#             2H2SO4.M, HCl.M, HNO3.M, KHSO4.M, HHSO4.M,
-#             CaNO32.M, CaCl2.M, CaSO4.M,
-#             KHSO4.M, 2K2SO4.M, KNO3.M, KCl.M,
-#             MgSO4.M, MgNO32.M, MgCl2.M]))
+        #         sum([NH4NO3.M, NH4Cl.M, NH4HSO4.M, 2NH42SO4.M, 3NH43HSO42.M,
+        #         NaCl.M, 2Na2SO4.M, NaNO3.M, NaHSO4.M,
+        #         2H2SO4.M, HCl.M, HNO3.M, KHSO4.M, HHSO4.M,
+        #         CaNO32.M, CaCl2.M, CaSO4.M,
+        #         KHSO4.M, 2K2SO4.M, KNO3.M, KCl.M,
+        #         MgSO4.M, MgNO32.M, MgCl2.M
+        # ]) ~ sum(abs.([NH4NO3.M, NH4Cl.M, NH4HSO4.M, 2NH42SO4.M, 3NH43HSO42.M,
+        #             NaCl.M, 2Na2SO4.M, NaNO3.M, NaHSO4.M,
+        #             2H2SO4.M, HCl.M, HNO3.M, KHSO4.M, HHSO4.M,
+        #             CaNO32.M, CaCl2.M, CaSO4.M,
+        #             KHSO4.M, 2K2SO4.M, KNO3.M, KCl.M,
+        #             MgSO4.M, MgNO32.M, MgCl2.M]))
 
         # Charge balance
         0 ~ sum([i.m * i.z for i in [NH4, Na, H, Ca, K, Mg]]) -

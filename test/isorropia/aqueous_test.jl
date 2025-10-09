@@ -362,3 +362,39 @@ sol = solve(prob, Rosenbrock23())
 sol[[aqt.salt1M, aqt.salt2M, aqt.W, aqt.solid1, aqt.solid2]]
 
 unknowns(aqt)
+
+
+
+
+        H2SO4 ~ 0.0 # The first dissociation of H2SO4 is assumed to be complete (Section 3.3)
+        CaSO4 ~ 0.0 # From Table 4 footnote a, all of CaSO4 precipitates to the solid phase.
+
+        # Mass balance
+        NH4 ~ sum([NH4NO3, NH4Cl, NH4HSO4, 2NH42SO4, 3NH43HSO42])
+        Na ~ sum([NaCl, 2Na2SO4, NaNO3, NaHSO4])
+        H ~ sum([2H2SO4, HCl, HNO3, HHSO4])
+        Ca ~ sum([CaNO32, CaCl2, CaSO4])
+        K ~ sum([KHSO4, 2K2SO4, KNO3, KCl])
+        Mg ~ sum([MgSO4, MgNO32, MgCl2])
+        Cl ~ sum([NaCl, KCl, 2MgCl2, 2CaCl2, NH4Cl, HCl])
+        NO3 ~ sum([NaNO3, KNO3, 2MgNO32, 2CaNO32, NH4NO3, HNO3])
+        SO4 ~ sum([Na2SO4, K2SO4, MgSO4, CaSO4, NH42SO4, H2SO4])
+        HSO4 ~ sum([KHSO4, NaHSO4, NH4HSO4, 2NH43HSO42, HHSO4])
+        W ~ CaNO32 / maw_CaNO32 +
+            CaCl2 / maw_CaCl2 +
+            KHSO4 / maw_KHSO4 +
+            K2SO4 / maw_K2SO4 +
+            KNO3 / maw_KNO3 +
+            KCl / maw_KCl +
+            MgSO4 / maw_MgSO4 +
+            MgNO32 / maw_MgNO32 +
+            MgCl2 / maw_MgCl2 +
+            NaCl / maw_NaCl +
+            Na2SO4 / maw_Na2SO4 +
+            NaNO3 / maw_NaNO3 +
+            NH42SO4 / maw_NH42SO4 +
+            NH4NO3 / maw_NH4NO3 +
+            NaHSO4 / maw_NaHSO4 +
+            NH4Cl / maw_NH4Cl +
+            NH4HSO4 / maw_NH4HSO4 +
+            NH43HSO42 / maw_NH43HSO42
