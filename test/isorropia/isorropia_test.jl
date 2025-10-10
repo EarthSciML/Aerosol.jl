@@ -1,5 +1,6 @@
 using Aerosol
 using ModelingToolkit
+using Test
 
 @testitem "initialize Equilibrium Constants" begin
     using ModelingToolkit
@@ -16,15 +17,11 @@ end
 using ModelingToolkit
 using OrdinaryDiffEqRosenbrock
 using OrdinaryDiffEqNonlinearSolve
+using NonlinearSolve, SteadyStateDiffEq
 
 @named isrpa = Isorropia()
 
 sys = mtkcompile(isrpa)
-
-
-ss = mtkcompile(isrpa, fully_determined=false)
-unknowns(ss)
-equations(ss)
 
 equations(sys)
 unknowns(sys)
@@ -32,17 +29,25 @@ unknowns(sys)
 prob = ODEProblem(sys,
     [
         sys.TotalNH => 1.0e-8,
-        sys.TotalNa => 1.0e-8,
-        sys.TotalCa => 1.0e-8,
-        sys.TotalK => 1.0e-8,
-        sys.TotalMg => 1.0e-8,
-        sys.TotalCl => 1.0e-8,
-        sys.TotalNO3 => 1.0e-8,
-        sys.TotalSO4 => 5.0e-8,
+        # sys.TotalNa => 1.0e-8,
+        # sys.TotalCa => 1.0e-8,
+        # sys.TotalK => 1.0e-8,
+        # sys.TotalMg => 1.0e-8,
+        # sys.TotalCl => 1.0e-8,
+        # sys.TotalNO3 => 1.0e-8,
+        # sys.TotalSO4 => 5.0e-8,
+
+        #sys.aq.NH42SO4.M => 1.0e-8,
+    ],
+        guesses = [
+        sys.aq.Ca.m => 0.5,
+        sys.aq.SO4.m => 0.5,
+        sys.aq.Mg.m => 0.5,
     ],
     (0.0, 1.0),
     use_scc = false)
 
+    collect(zip(unknowns(sys), prob.u0))
 filter(x -> x[2] < 0, collect(zip(unknowns(sys), prob.u0)))
 
 sol = solve(prob, Rosenbrock23())
@@ -50,6 +55,35 @@ sol = solve(prob, Rosenbrock23())
 collect(zip(unknowns(sys), sol.u[1]))
 sol[sys.aq.W]
 sol[sys.aq.I]
+
+let
+vars = [sys.aq.a_NH4NO3, sys.aq.a_NH4Cl, sys.aq.a_NH4HSO4, sys.aq.a_NH42SO4, sys.aq.a_NH43HSO42,
+    sys.aq.a_NaCl, sys.aq.a_Na2SO4, sys.aq.a_NaNO3, sys.aq.a_NaHSO4,
+    sys.aq.a_H2SO4, sys.aq.a_HCl, sys.aq.a_HNO3, sys.aq.a_KHSO4, sys.aq.a_HHSO4,
+    sys.aq.a_CaNO32, sys.aq.a_CaCl2, sys.aq.a_CaSO4,
+    sys.aq.a_KHSO4, sys.aq.a_K2SO4, sys.aq.a_KNO3, sys.aq.a_KCl,
+    sys.aq.a_MgSO4, sys.aq.a_MgNO32, sys.aq.a_MgCl2]
+collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
+
+let
+vars = [sys.eq.r2.K_eq, sys.eq.r4.K_eq, sys.eq.r8.K_eq, sys.eq.r9.K_eq, sys.eq.r10.K_eq,
+sys.eq.r14.K_eq, sys.eq.r19.K_eq, sys.eq.r20.K_eq, sys.eq.r26.K_eq, sys.eq.r27.K_eq,
+]
+collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
+
+let
+    vars = [sys.s.NH4, sys.s.Na, sys.s.Ca, sys.s.K, sys.s.Mg, sys.s.Cl, sys.s.NO3,
+        sys.s.SO4, sys.s.HSO4]
+        collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
+
+let
+    vars = [sys.g.NH3.p, sys.g.HCl.p, sys.g.HNO3.p, sys.g.H2SO4.p,
+        sys.g.NH3.M, sys.g.HCl.M, sys.g.HNO3.M, sys.g.H2SO4.M]
+        collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
 
 sol[[sys.aqNH + sys.sNH + sys.g.NH3.M - sys.TotalNH
      sys.aqNa + sys.sNa - sys.TotalNa
@@ -63,6 +97,9 @@ sol[[sys.aqNH + sys.sNH + sys.g.NH3.M - sys.TotalNH
 iprob = prob.f.initializeprob
 sol = solve(iprob)
 sol.stats
+
+prob = SteadyStateProblem(iprob.f, iprob.u0, iprob.p)
+solve(prob, SSRootfind())
 
 equations(iprob.f.sys)
 

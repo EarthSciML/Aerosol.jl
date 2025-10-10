@@ -10,6 +10,13 @@ parameterized by values from Table 2 in the same paper."""
         C⁺, [description = "ΔC⁰ₚ / R (unitless)"]
         T₀ = 293.15, [unit = u"K", description = "Standard temperature"]
     end
+    @structural_parameters begin
+        # Clamp K values to avoid numerical issues.
+        # FIXME(CT): These bounds are currently unrealistically narrow,
+        # there is clearly a problem here.
+        K_lower_bound = 1.0e-9
+        K_upper_bound = 1.5
+    end
     @parameters begin
         T, [unit = u"K", description = "Temperature"]
     end
@@ -17,7 +24,8 @@ parameterized by values from Table 2 in the same paper."""
         K_eq(t), [description = "Equilibrium constant"]
     end
     @equations begin
-        K_eq ~ K⁰ * exp(-H⁺ * (T₀ / T - 1) - C⁺ * (1 + log(T₀ / T) - T₀ / T))
+        K_eq ~ clamp(K⁰ * exp(-H⁺ * (T₀ / T - 1) - C⁺ * (1 + log(T₀ / T) - T₀ / T)),
+            K_lower_bound, K_upper_bound)
     end
 end
 

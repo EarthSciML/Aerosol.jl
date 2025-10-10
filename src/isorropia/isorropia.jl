@@ -16,11 +16,13 @@ include("equilibria.jl")
     @parameters begin
         T = 293.15, [unit = u"K", description = "Temperature"]
         RH = 0.3, [unit = u"1", description = "Relative humidity (0 to 1)"]
+
+        m_one = 1.0, [unit = u"mol/kg"]
     end
     @components begin
         aq = Aqueous(T = T, RH = RH)
-        s = Solids()
-        g = Gases()
+       # s = Solids()
+       # g = Gases()
         eq = EquilibriumConstants(T = T)
     end
     @variables begin
@@ -57,118 +59,102 @@ include("equilibria.jl")
         # The left-hand side of the reaction equation is the equilibrium constant and the
         # right-hand side is the ratio of the product and reactant activities.
         # eq.r1.K_eq * eq.k1_unit ~ aq.a_CaNO32
-        # eq.r2.K_eq * eq.k2_unit ~ aq.a_CaCl2
-        # eq.r3.K_eq * eq.k3_unit ~ aq.a_CaSO4 * RH^2 # Not using in favor of equation below
-        aq.CaSO4.M ~ 0.0 # From Table 4 footnote a, CaSO4 has an activity coefficient of zero and therefore 0 concentration.
-        # eq.r4.K_eq * eq.k4_unit ~ aq.a_K2SO4
+        eq.r2.K_eq * eq.k2_unit ~ aq.a_CaCl2
+        # eq.r3.K_eq * eq.k3_unit ~ aq.a_CaSO4 * RH^2 # Not using because CaSO4 precipitates completely (Table 4 footnote a).
+        eq.r4.K_eq * eq.k4_unit ~ aq.a_K2SO4
         #eq.r5.K_eq * eq.k5_unit ~ aq.a_KHSO4
         # eq.r6.K_eq * eq.k6_unit ~ aq.a_KNO3
         # eq.r7.K_eq * eq.k7_unit ~ aq.a_KCl
-        # eq.r8.K_eq * eq.k8_unit ~ aq.a_MgSO4
-        # eq.r9.K_eq * eq.k9_unit ~ aq.a_MgNO32
-        # eq.r10.K_eq * eq.k10_unit ~ aq.a_MgCl2
-        eq.r11.K_eq * eq.k11_unit ~ aq.H.a * aq.SO4.a / aq.HSO4.a
-        eq.r12.K_eq * eq.k12_unit ~ aq.NH3.a / g.NH3.p
-        eq.r13.K_eq * eq.k13_unit ~ aq.NH4.a * aq.OH.a / aq.NH3.a / RH
-        # eq.r14.K_eq * eq.k14_unit ~ aq.a_HNO3 / g.HNO3.p # K1
-        # eq.r15.K_eq * eq.k15_unit ~ aq.HNO3_aq.a / g.HNO3.p # K1a
+        eq.r8.K_eq * eq.k8_unit ~ aq.a_MgSO4
+        eq.r9.K_eq * eq.k9_unit ~ aq.a_MgNO32
+        eq.r10.K_eq * eq.k10_unit ~ aq.a_MgCl2
+        #eq.r11.K_eq * eq.k11_unit ~ aq.H.a * aq.SO4.a / aq.HSO4.a
+    #    eq.r12.K_eq * eq.k12_unit ~ aq.NH3.a / g.NH3.p
+    #    eq.r13.K_eq * eq.k13_unit ~ aq.NH4.a * aq.OH.a / aq.NH3.a / RH
+        #eq.r14.K_eq * eq.k14_unit ~ aq.a_HNO3 / g.HNO3.p # K1
+        #eq.r15.K_eq * eq.k15_unit ~ aq.HNO3_aq.a / g.HNO3.p # K1a
         eq.r14.K_eq / eq.r15.K_eq * eq.k1b_unit ~ aq.a_HNO3 / aq.HNO3_aq.a # K1b, from Table 2 footnote ♠
         # eq.r16.K_eq * eq.k16_unit ~ aq.a_HCl / g.HCl.p # K2
         # eq.r17.K_eq * eq.k17_unit ~ aq.HCl_aq.a / g.HCl.p # K2a
-        eq.r16.K_eq / eq.r17.K_eq * eq.k2b_unit ~ aq.a_HCl / aq.HCl_aq.a # K2b, from Table 2 footnote ♦
-        eq.r18.K_eq * eq.k18_unit ~ aq.H.a * aq.OH.a / RH
-        # eq.r19.K_eq * eq.k19_unit ~ aq.a_Na2SO4
-        # eq.r20.K_eq * eq.k20_unit ~ aq.a_NH42SO4
+        #eq.r16.K_eq / eq.r17.K_eq * eq.k2b_unit ~ aq.a_HCl / aq.HCl_aq.a # K2b, from Table 2 footnote ♦
+        #eq.r18.K_eq * eq.k18_unit ~ aq.H.a * aq.OH.a / RH
+        eq.r19.K_eq * eq.k19_unit ~ aq.a_Na2SO4
+        eq.r20.K_eq * eq.k20_unit ~ aq.a_NH42SO4
         # eq.r21.K_eq * eq.k21_unit ~ g.NH3.p * g.HCl.p
         #eq.r22.K_eq * eq.k22_unit ~ aq.a_NaNO3
         #eq.r23.K_eq * eq.k23_unit ~ aq.a_NaCl
-        eq.r24.K_eq * eq.k24_unit ~ aq.a_NaHSO4
+        #eq.r24.K_eq * eq.k24_unit ~ aq.a_NaHSO4
         # eq.r25.K_eq * eq.k25_unit ~ g.NH3.p * g.HNO3.p
         eq.r26.K_eq * eq.k26_unit ~ aq.a_NH4HSO4
-        #eq.r27.K_eq * eq.k27_unit ~ aq.a_NH43HSO42
+        eq.r27.K_eq * eq.k27_unit ~ aq.a_NH43HSO42
 
-        # Mass Balance
-        aqNH ~ (aq.NH3.m + aq.NH4.m) * aq.W
-        sNH ~ s.NH4Cl.M + s.NH4NO3.M + 2s.NH42SO4.M + s.NH4HSO4.M + 3s.NH43HSO42.M
-        TotalNH ~ g.NH3.M + aqNH + sNH
+        # # Mass Balance
+        TotalNH ~ (aq.NH4.m ) * aq.W #+ s.NH4 #+ g.NH3.M + aq.NH3.m
+        TotalNa ~ aq.Na.m * aq.W #+ s.Na
+        TotalCa ~ aq.Ca.m * aq.W #+ s.Ca
+        TotalK ~ aq.K.m * aq.W #+ s.K
+        TotalMg ~ aq.Mg.m * aq.W #+ s.Mg
+        TotalCl ~  aq.Cl.m * aq.W #+ s.Cl #+ g.HCl.M
+        TotalNO3 ~ aq.NO3.m * aq.W #+ s.NO3 #+ g.HNO3.M
+        TotalSO4 ~ (aq.SO4.m + aq.HSO4.m) * aq.W #+ s.SO4 + s.HSO4 #+ g.H2SO4.M
 
-        aqNa ~ aq.Na.m * aq.W
-        sNa ~ s.NaCl.M + s.NaNO3.M + 2s.Na2SO4.M + s.NaHSO4.M
-        TotalNa ~ aqNa + sNa
+        aq.NH3.m ~ m_one
+        aq.HCl_aq.m ~ m_one
+        aq.HNO3_aq.m ~ m_one
 
-        aqCa ~ aq.Ca.m * aq.W
-        sCa ~ s.CaNO32.M + s.CaCl2.M + s.CaSO4.M
-        TotalCa ~ aqCa + sCa
+        # g.NH3.M ~ 0.0
+        # g.HNO3.M ~ 0.0
+        # g.HCl.M ~ 0.0
 
-        aqK ~ aq.K.m * aq.W
-        sK ~ s.KHSO4.M + 2s.K2SO4.M + s.KNO3.M + s.KCl.M
-        TotalK ~ aqK + sK
-
-        aqMg ~ aq.Mg.m * aq.W
-        sMg ~ s.MgSO4.M + s.MgNO32.M + s.MgCl2.M
-        TotalMg ~ aqMg + sMg
-
-        aqCl ~ (aq.HCl_aq.m + aq.Cl.m) * aq.W
-        sCl ~ 2s.CaCl2.M + s.KCl.M + 2s.MgCl2.M + s.NaCl.M + s.NH4Cl.M
-        TotalCl ~ g.HCl.M + aqCl + sCl
-
-        aqNO3 ~ (aq.HNO3_aq.m + aq.NO3.m) * aq.W
-        sNO3 ~ 2s.CaNO32.M + s.KNO3.M + 2s.MgNO32.M + s.NaNO3.M + s.NH4NO3.M
-        TotalNO3 ~ g.HNO3.M + aqNO3 + sNO3
-
-        aqSO4 ~ (aq.SO4.m + aq.HSO4.m) * aq.W
-        sSO4 ~ s.CaSO4.M + s.KHSO4.M + s.K2SO4.M + s.MgSO4.M + s.Na2SO4.M + s.NaHSO4.M +
-               s.NH42SO4.M + s.NH4HSO4.M + 2s.NH43HSO42.M
-        TotalSO4 ~ g.H2SO4.M + aqSO4 + sSO4
-
+       # D(aq.NH42SO4.M) ~ 0.0
         D(TotalNH) ~ 0.0
-        D(TotalNa) ~ 0.0
-        D(TotalCa) ~ 0.0
-        D(TotalK) ~ 0.0
-        D(TotalMg) ~ 0.0
-        D(TotalCl) ~ 0.0
-        D(TotalNO3) ~ 0.0
-        D(TotalSO4) ~ 0.0
+        # D(TotalNa) ~ 0.0
+        # D(TotalCa) ~ 0.0
+        # D(TotalK) ~ 0.0
+        # D(TotalMg) ~ 0.0
+        # D(TotalCl) ~ 0.0
+        # D(TotalNO3) ~ 0.0
+        # D(TotalSO4) ~ 0.0
 
-        aq.NH4Cl.M ~ 0 # Not present in Table 2?
-        aq.NH4NO3.M ~ 0 # Not present in Table 2?
+        # aq.NH4Cl.M ~ 0 # Not present in Table 2?
+        # aq.NH4NO3.M ~ 0 # Not present in Table 2?
 
-        aq.Mg.m ~ 0
-        aq.OH.m ~ 0
-        aq.CaNO32.M ~ 0
-        aq.CaCl2.M ~ 0
-        aq.K2SO4.M ~ 0
-        aq.KNO3.M ~ 0
-        aq.KCl.M ~ 0
-        aq.MgSO4.M ~ 0
-        aq.MgNO32.M ~ 0
-        aq.MgCl2.M ~ 0
-        #aq.NaCl.M ~ 0
-        # aq.Na2SO4.M ~ 0
-        aq.NaNO3.M ~ 0
-        aq.NH42SO4.M ~ 0
-        aq.NH4NO3.M ~ 0
-        aq.NH4Cl.M ~ 0
-        aq.NH43HSO42.M ~ 0
-        # aq.HNO3.M ~ 0
-        #aq.HCl.M ~ 0
-        s.CaNO32.M ~ 0
-        s.CaCl2.M ~ 0
-        s.K2SO4.M ~ 0
-        s.KNO3.M ~ 0
-        s.KCl.M ~ 0
-        #s.MgSO4.M ~ 0
-        s.MgNO32.M ~ 0
-        s.MgCl2.M ~ 0
-        s.NaCl.M ~ 0
-        s.NaNO3.M ~ 0
-        s.Na2SO4.M ~ 0
-        s.NH4Cl.M ~ 0
-        s.NH4NO3.M ~ 0
-        #s.NH42SO4.M ~ 0
-        s.NH43HSO42.M ~ 0
-        g.HNO3.M ~ 0
-        g.HCl.M ~ 0
+        # aq.Mg.m ~ 0
+        # aq.OH.m ~ 0
+        # aq.CaNO32.M ~ 0
+        # aq.CaCl2.M ~ 0
+        # aq.K2SO4.M ~ 0
+        # aq.KNO3.M ~ 0
+        # aq.KCl.M ~ 0
+        # aq.MgSO4.M ~ 0
+        # aq.MgNO32.M ~ 0
+        # aq.MgCl2.M ~ 0
+        # #aq.NaCl.M ~ 0
+        # # aq.Na2SO4.M ~ 0
+        # aq.NaNO3.M ~ 0
+        # aq.NH42SO4.M ~ 0
+        # aq.NH4NO3.M ~ 0
+        # aq.NH4Cl.M ~ 0
+        # aq.NH43HSO42.M ~ 0
+        # # aq.HNO3.M ~ 0
+        # #aq.HCl.M ~ 0
+        # s.CaNO32.M ~ 0
+        # s.CaCl2.M ~ 0
+        # s.K2SO4.M ~ 0
+        # s.KNO3.M ~ 0
+        # s.KCl.M ~ 0
+        # #s.MgSO4.M ~ 0
+        # s.MgNO32.M ~ 0
+        # s.MgCl2.M ~ 0
+        # s.NaCl.M ~ 0
+        # s.NaNO3.M ~ 0
+        # s.Na2SO4.M ~ 0
+        # s.NH4Cl.M ~ 0
+        # s.NH4NO3.M ~ 0
+        # #s.NH42SO4.M ~ 0
+        # s.NH43HSO42.M ~ 0
+        # g.HNO3.M ~ 0
+        # g.HCl.M ~ 0
     end
 end
 

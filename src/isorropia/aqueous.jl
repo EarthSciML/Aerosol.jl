@@ -25,6 +25,19 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         anion = Ion(; name = :anion, z = 1)
     end
     @constants begin
+        # NOTE: The paper (between equations 6 and 7) says that the units of Aᵧ are kg^0.5 mol^−0.5, but the equation
+        # doesn't work unless those units are inverted, and Bromley (1973) agrees with that.
+        Aᵧ = 0.511, [
+            unit = u"mol^0.5/kg^0.5",
+            description = "Debye-Hückel constant at 298.15 K"
+        ]
+        T₀₂ = 273.15, [unit = u"K", description = "Standard temperature 2"]
+        c_1 = 0.005,
+        [
+            unit = u"K^-1",
+            description = "Constant for Fountoukis and Nenes (2007) Eq. 14"
+        ]
+
         # Salt properties
         drh, [description = "Deliquescence relative humidity at 298.15K"]
         l_t, [description = "Enthalpy term (-18/1000R L_s m_s)"]
@@ -37,18 +50,34 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         # Unit conversions
         I_one = 1, [unit = u"mol/kg", description = "An ionic strength of 1"]
     end
+    @parameters begin
+        T = 293.15, [description = "Temperature", unit = u"K"]
+    end
     @variables begin
         M(t), [description = "Molarity of the salt in air", unit = u"mol/m^3", guess = 1e-8]
         X(t)
         Y(t)
         I(t), [description = "Ionic strength", unit = u"mol/kg", guess = 1e-8]
-        logγ⁰(t), [description = "Log of the standard state activity coefficient"]
+        #! format: off
+        logγ⁰(t), [description = "Log of the mean ionic activity coefficient for the single solute solution", guess=1]
+        logγₜ₀(t), [description = "Log of the multi-component activity coefficient at 298.15K", guess=1]
+        logγ(t), [description = "Log of the activity coefficient", guess=1]
+        #! format: on
         Γ⁰(t), [unit = u"mol/kg"]
         Γ⁺(t)
         C(t)
+        F_cat(t), [description = "Activity contribution from the cation"]
+        F_an(t), [description = "Activity contribution from the anion"]
+        A(t), [description = "Parameter used in Equation 14"]
     end
     @equations begin
         zz ~ ParentScope(cation.z) * ParentScope(anion.z)
+
+        # Equation 6
+        logγₜ₀ ~ -Aᵧ * zz * √I / (√I_one + √I) / √I_one + # NOTE: The last √I_one here is not in the paper but is needed to make the units balance.
+                        (zz / (ParentScope(cation.z) + ParentScope(anion.z))) *
+                        (F_cat / ParentScope(cation.z) + F_an / ParentScope(anion.z))
+
         # Supplemental equations after equations 7 and 8
         Y ~ ((ParentScope(cation.z) + ParentScope(anion.z)) / 2)^2 * ParentScope(anion.m) /
             I
@@ -64,6 +93,13 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         Γ⁺ ~ exp(-0.5107√I / (√I_one + C * √I))
         # Equation 13
         C ~ 1 + 0.055q * exp(-0.023I^3 / I_one^3)
+
+        # Equation 14
+        logγ ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀ -
+                      (0.125 - c_1 * (T - T₀₂)) * A
+
+        # Equation in text below Equation 14
+        A ~ -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
     end
 end
 
@@ -133,45 +169,6 @@ end
 
         Aᵧ_term(t), [description = "Debye-Hückel term used in Equation 7 and 8"]
         A(t), [description = "Parameter used in Equation 14"]
-
-        logγₜ₀_CaNO32(t), [description = "Log of the standard state activity coefficient of CaNO3_2 at 298.15K"]
-        logγₜ₀_CaCl2(t), [description = "Log of the standard state activity coefficient of CaCl2 at 298.15K"]
-        logγₜ₀_K2SO4(t), [description = "Log of the standard state activity coefficient of K2SO4 at 298.15K"]
-        logγₜ₀_KNO3(t), [description = "Log of the standard state activity coefficient of KNO3 at 298.15K"]
-        logγₜ₀_KCl(t), [description = "Log of the standard state activity coefficient of KCl at 298.15K"]
-        logγₜ₀_MgSO4(t), [description = "Log of the standard state activity coefficient of MgSO4 at 298.15K"]
-        logγₜ₀_MgNO32(t), [description = "Log of the standard state activity coefficient of MgNO3_2 at 298.15K"]
-        logγₜ₀_MgCl2(t), [description = "Log of the standard state activity coefficient of MgCl2 at 298.15K"]
-        logγₜ₀_NaCl(t), [description = "Log of the standard state activity coefficient of NaCl at 298.15K"]
-        logγₜ₀_Na2SO4(t), [description = "Log of the standard state activity coefficient of Na2SO4 at 298.15K"]
-        logγₜ₀_NaNO3(t), [description = "Log of the standard state activity coefficient of NaNO3 at 298.15K"]
-        logγₜ₀_NH42SO4(t), [description = "Log of the standard state activity coefficient of (NH4)2SO4 at 298.15K"]
-        logγₜ₀_NH4NO3(t), [description = "Log of the standard state activity coefficient of NH4NO3 at 298.15K"]
-        logγₜ₀_NH4Cl(t), [description = "Log of the standard state activity coefficient of NH4Cl at 298.15K"]
-        logγₜ₀_H2SO4(t), [description = "Log of the standard state activity coefficient of H2SO4 at 298.15K"]
-        logγₜ₀_HHSO4(t), [description = "Log of the standard state activity coefficient of HHSO4 at 298.15K"]
-        logγₜ₀_HNO3(t), [description = "Log of the standard state activity coefficient of HNO3 (aqueous) at 298.15K"]
-        logγₜ₀_HCl(t), [description = "Log of the standard state activity coefficient of HCl (aqueous) at 298.15K"]
-        #! format: on
-
-        logγ_CaNO32(t), [description = "Log of the activity coefficient of CaNO3_2"]
-        logγ_CaCl2(t), [description = "Log of the activity coefficient of CaCl2"]
-        logγ_K2SO4(t), [description = "Log of the activity coefficient of K2SO4"]
-        logγ_KNO3(t), [description = "Log of the activity coefficient of KNO3"]
-        logγ_KCl(t), [description = "Log of the activity coefficient of KCl"]
-        logγ_MgSO4(t), [description = "Log of the activity coefficient of MgSO4"]
-        logγ_MgNO32(t), [description = "Log of the activity coefficient of MgNO3_2"]
-        logγ_MgCl2(t), [description = "Log of the activity coefficient of MgCl2"]
-        logγ_NaCl(t), [description = "Log of the activity coefficient of NaCl"]
-        logγ_Na2SO4(t), [description = "Log of the activity coefficient of Na2SO4"]
-        logγ_NaNO3(t), [description = "Log of the activity coefficient of NaNO3"]
-        logγ_NH42SO4(t), [description = "Log of the activity coefficient of (NH4)2SO4"]
-        logγ_NH4NO3(t), [description = "Log of the activity coefficient of NH4NO3"]
-        logγ_NH4Cl(t), [description = "Log of the activity coefficient of NH4Cl"]
-        logγ_H2SO4(t), [description = "Log of the activity coefficient of H2SO4"]
-        logγ_HHSO4(t), [description = "Log of the activity coefficient of HHSO4"]
-        logγ_HNO3(t), [description = "Log of the activity coefficient of HNO3 (salt)"]
-        logγ_HCl(t), [description = "Log of the activity coefficient of HCl (salt)"]
 
         γ_CaNO32(t), [description = "Activity coefficient of CaNO3_2"]
         γ_CaCl2(t), [description = "Activity coefficient of CaCl2"]
@@ -246,29 +243,29 @@ end
         HCl_aq = Ion(z = 0)
 
         # Salts
-        CaNO32 = Salt(cation = Ca, anion = NO3, drh = 0.4906, l_t = 509.4, q = 0.93)
-        CaCl2 = Salt(cation = Ca, anion = Cl, drh = 0.2830, l_t = 551.1, q = 2.4)
-        CaSO4 = Salt(cation = Ca, anion = SO4, drh = 0.9700, l_t = NaN, q = q0)
-        KHSO4 = Salt(cation = K, anion = HSO4, drh = 0.8600, l_t = NaN, q = q0)
-        K2SO4 = Salt(cation = K, anion = SO4, drh = 0.9751, l_t = 35.6, q = -0.25)
-        KNO3 = Salt(cation = K, anion = NO3, drh = 0.9248, l_t = NaN, q = -2.33)
-        KCl = Salt(cation = K, anion = Cl, drh = 0.8426, l_t = 158.9, q = 0.92)
-        MgSO4 = Salt(cation = Mg, anion = SO4, drh = 0.8613, l_t = -714.5, q = 0.15)
-        MgNO32 = Salt(cation = Mg, anion = NO3, drh = 0.5400, l_t = 230.2, q = 2.32)
-        MgCl2 = Salt(cation = Mg, anion = Cl, drh = 0.3284, l_t = 42.23, q = 2.90)
-        NaCl = Salt(cation = Na, anion = Cl, drh = 0.7528, l_t = 25.0, q = 2.23)
-        Na2SO4 = Salt(cation = Na, anion = SO4, drh = 0.9300, l_t = 80.0, q = -0.19)
-        NaNO3 = Salt(cation = Na, anion = NO3, drh = 0.7379, l_t = 304.0, q = -0.39)
-        NH42SO4 = Salt(cation = NH4, anion = SO4, drh = 0.7997, l_t = 80.0, q = -0.25)
-        NH4NO3 = Salt(cation = NH4, anion = NO3, drh = 0.6183, l_t = 852.0, q = -1.15)
-        NH4Cl = Salt(cation = NH4, anion = Cl, drh = 0.7710, l_t = 239.0, q = 0.82)
-        NH4HSO4 = Salt(cation = NH4, anion = HSO4, drh = 0.4000, l_t = 384.0, q = q0)
-        NaHSO4 = Salt(cation = Na, anion = HSO4, drh = 0.5200, l_t = -45.0, q = q0)
-        NH43HSO42 = Salt(cation = NH4, anion = HSO4, drh = 0.6900, l_t = 186.0, q = q0)
-        H2SO4 = Salt(cation = H, anion = SO4, drh = 0.000, l_t = NaN, q = -0.1)
-        HHSO4 = Salt(cation = H, anion = HSO4, drh = 0.000, l_t = NaN, q = 8.00)
-        HNO3 = Salt(cation = H, anion = NO3, drh = NaN, l_t = NaN, q = 2.60)
-        HCl = Salt(cation = H, anion = Cl, drh = NaN, l_t = NaN, q = 6.00)
+        CaNO32 = Salt(cation = Ca, anion = NO3, drh = 0.4906, l_t = 509.4, q = 0.93, T=T)
+        CaCl2 = Salt(cation = Ca, anion = Cl, drh = 0.2830, l_t = 551.1, q = 2.4, T=T)
+        CaSO4 = Salt(cation = Ca, anion = SO4, drh = 0.9700, l_t = NaN, q = q0, T=T)
+        KHSO4 = Salt(cation = K, anion = HSO4, drh = 0.8600, l_t = NaN, q = q0, T=T)
+        K2SO4 = Salt(cation = K, anion = SO4, drh = 0.9751, l_t = 35.6, q = -0.25, T=T)
+        KNO3 = Salt(cation = K, anion = NO3, drh = 0.9248, l_t = NaN, q = -2.33, T=T)
+        KCl = Salt(cation = K, anion = Cl, drh = 0.8426, l_t = 158.9, q = 0.92, T=T)
+        MgSO4 = Salt(cation = Mg, anion = SO4, drh = 0.8613, l_t = -714.5, q = 0.15, T=T)
+        MgNO32 = Salt(cation = Mg, anion = NO3, drh = 0.5400, l_t = 230.2, q = 2.32, T=T)
+        MgCl2 = Salt(cation = Mg, anion = Cl, drh = 0.3284, l_t = 42.23, q = 2.90, T=T)
+        NaCl = Salt(cation = Na, anion = Cl, drh = 0.7528, l_t = 25.0, q = 2.23, T=T)
+        Na2SO4 = Salt(cation = Na, anion = SO4, drh = 0.9300, l_t = 80.0, q = -0.19, T=T)
+        NaNO3 = Salt(cation = Na, anion = NO3, drh = 0.7379, l_t = 304.0, q = -0.39, T=T)
+        NH42SO4 = Salt(cation = NH4, anion = SO4, drh = 0.7997, l_t = 80.0, q = -0.25, T=T)
+        NH4NO3 = Salt(cation = NH4, anion = NO3, drh = 0.6183, l_t = 852.0, q = -1.15, T=T)
+        NH4Cl = Salt(cation = NH4, anion = Cl, drh = 0.7710, l_t = 239.0, q = 0.82, T=T)
+        NH4HSO4 = Salt(cation = NH4, anion = HSO4, drh = 0.4000, l_t = 384.0, q = q0, T=T)
+        NaHSO4 = Salt(cation = Na, anion = HSO4, drh = 0.5200, l_t = -45.0, q = q0, T=T)
+        NH43HSO42 = Salt(cation = NH4, anion = HSO4, drh = 0.6900, l_t = 186.0, q = q0, T=T)
+        H2SO4 = Salt(cation = H, anion = SO4, drh = 0.000, l_t = NaN, q = -0.1, T=T)
+        HHSO4 = Salt(cation = H, anion = HSO4, drh = 0.000, l_t = NaN, q = 8.00, T=T)
+        HNO3 = Salt(cation = H, anion = NO3, drh = NaN, l_t = NaN, q = 2.60, T=T)
+        HCl = Salt(cation = H, anion = Cl, drh = NaN, l_t = NaN, q = 6.00, T=T)
 
         # Water content
         #! format: off
@@ -293,44 +290,6 @@ end
         #! format: on
     end
     @equations begin
-        # Equation 6
-        logγₜ₀_CaNO32 ~ -Aᵧ * CaNO32.zz * √I / (√I_one + √I) / √I_one + # NOTE: The last √I_one here is not in the paper but is needed to make the units balance.
-                        (CaNO32.zz / (Ca.z + NO3.z)) * (F_Ca / Ca.z + F_NO3 / NO3.z)
-        logγₜ₀_CaCl2 ~ -Aᵧ * CaCl2.zz * √I / (√I_one + √I) / √I_one +
-                       (CaCl2.zz / (Ca.z + Cl.z)) * (F_Ca / Ca.z + F_Cl / Cl.z)
-        logγₜ₀_K2SO4 ~ -Aᵧ * K2SO4.zz * √I / (√I_one + √I) / √I_one +
-                       (K2SO4.zz / (2K.z + SO4.z)) * (F_K / K.z + F_SO4 / SO4.z)
-        logγₜ₀_KNO3 ~ -Aᵧ * KNO3.zz * √I / (√I_one + √I) / √I_one +
-                      (KNO3.zz / (K.z + NO3.z)) * (F_K / K.z + F_NO3 / NO3.z)
-        logγₜ₀_KCl ~ -Aᵧ * KCl.zz * √I / (√I_one + √I) / √I_one +
-                     (KCl.zz / (K.z + Cl.z)) * (F_K / K.z + F_Cl / Cl.z)
-        logγₜ₀_MgSO4 ~ -Aᵧ * MgSO4.zz * √I / (√I_one + √I) / √I_one +
-                       (MgSO4.zz / (Mg.z + SO4.z)) * (F_Mg / Mg.z + F_SO4 / SO4.z)
-        logγₜ₀_MgNO32 ~ -Aᵧ * MgNO32.zz * √I / (√I_one + √I) / √I_one +
-                        (MgNO32.zz / (Mg.z + NO3.z)) * (F_Mg / Mg.z + F_NO3 / NO3.z)
-        logγₜ₀_MgCl2 ~ -Aᵧ * MgCl2.zz * √I / (√I_one + √I) / √I_one +
-                       (MgCl2.zz / (Mg.z + Cl.z)) * (F_Mg / Mg.z + F_Cl / Cl.z)
-        logγₜ₀_NaCl ~ -Aᵧ * NaCl.zz * √I / (√I_one + √I) / √I_one +
-                      (NaCl.zz / (Na.z + Cl.z)) * (F_Na / Na.z + F_Cl / Cl.z)
-        logγₜ₀_Na2SO4 ~ -Aᵧ * Na2SO4.zz * √I / (√I_one + √I) / √I_one +
-                        (Na2SO4.zz / (2Na.z + SO4.z)) * (F_Na / Na.z + F_SO4 / SO4.z)
-        logγₜ₀_NaNO3 ~ -Aᵧ * NaNO3.zz * √I / (√I_one + √I) / √I_one +
-                       (NaNO3.zz / (Na.z + NO3.z)) * (F_Na / Na.z + F_NO3 / NO3.z)
-        logγₜ₀_NH42SO4 ~ -Aᵧ * NH42SO4.zz * √I / (√I_one + √I) / √I_one +
-                         (NH42SO4.zz / (2NH4.z + SO4.z)) * (F_NH4 / NH4.z + F_SO4 / SO4.z)
-        logγₜ₀_NH4NO3 ~ -Aᵧ * NH4NO3.zz * √I / (√I_one + √I) / √I_one +
-                        (NH4NO3.zz / (NH4.z + NO3.z)) * (F_NH4 / NH4.z + F_NO3 / NO3.z)
-        logγₜ₀_NH4Cl ~ -Aᵧ * NH4Cl.zz * √I / (√I_one + √I) / √I_one +
-                       (NH4Cl.zz / (NH4.z + Cl.z)) * (F_NH4 / NH4.z + F_Cl / Cl.z)
-        logγₜ₀_H2SO4 ~ -Aᵧ * H2SO4.zz * √I / (√I_one + √I) / √I_one +
-                       (H2SO4.zz / (2H.z + SO4.z)) * (F_H / H.z + F_SO4 / SO4.z)
-        logγₜ₀_HHSO4 ~ -Aᵧ * HHSO4.zz * √I / (√I_one + √I) / √I_one +
-                       (HHSO4.zz / (H.z + HSO4.z)) * (F_H / H.z + F_HSO4 / HSO4.z)
-        logγₜ₀_HNO3 ~ -Aᵧ * HNO3.zz * √I / (√I_one + √I) / √I_one +
-                      (HNO3.zz / (H.z + NO3.z)) * (F_H / H.z + F_NO3 / NO3.z)
-        logγₜ₀_HCl ~ -Aᵧ * HCl.zz * √I / (√I_one + √I) / √I_one +
-                     (HCl.zz / (H.z + Cl.z)) * (F_H / H.z + F_Cl / Cl.z)
-
         Aᵧ_term ~ Aᵧ * √I / (√I_one + √I) / √I_one # NOTE: The last √I_one here is not in the paper but is needed to make the units balance.
         # Equation 7
         F_NH4 ~ sum([s.Y * s.logγ⁰ for s in [NH4NO3, NH4Cl, NH4HSO4, NH42SO4, NH43HSO42]]) +
@@ -361,66 +320,72 @@ end
                  Aᵧ_term *
                  sum([s.zz * s.X for s in [KHSO4, HHSO4, NaHSO4, NH4HSO4, NH43HSO42]])
 
-        # Equation 14
-        logγ_CaNO32 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_CaNO32 -
-                      (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_CaCl2 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_CaCl2 -
-                     (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_K2SO4 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_K2SO4 -
-                     (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_KNO3 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_KNO3 -
-                    (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_KCl ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_KCl -
-                   (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_MgSO4 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_MgSO4 -
-                     (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_MgNO32 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_MgNO32 -
-                      (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_MgCl2 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_MgCl2 -
-                     (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_NaCl ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_NaCl -
-                    (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_Na2SO4 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_Na2SO4 -
-                      (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_NaNO3 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_NaNO3 -
-                     (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_NH42SO4 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_NH42SO4 -
-                       (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_NH4NO3 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_NH4NO3 -
-                      (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_NH4Cl ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_NH4Cl -
-                     (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_H2SO4 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_H2SO4 -
-                     (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_HHSO4 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_HHSO4 -
-                     (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_HNO3 ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_HNO3 -
-                    (0.125 - c_1 * (T - T₀₂)) * A
-        logγ_HCl ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀_HCl -
-                   (0.125 - c_1 * (T - T₀₂)) * A
-
-        # Equation in text below Equation 14
-        A ~ -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
+        CaNO32.F_cat ~ F_Ca
+        CaNO32.F_an ~ F_NO3
+        CaCl2.F_cat ~ F_Ca
+        CaCl2.F_an ~ F_Cl
+        CaSO4.F_cat ~ F_Ca
+        CaSO4.F_an ~ F_SO4
+        KHSO4.F_cat ~ F_K
+        KHSO4.F_an ~ F_HSO4
+        K2SO4.F_cat ~ F_K
+        K2SO4.F_an ~ F_SO4
+        KNO3.F_cat ~ F_K
+        KNO3.F_an ~ F_NO3
+        KCl.F_cat ~ F_K
+        KCl.F_an ~ F_Cl
+        MgSO4.F_cat ~ F_Mg
+        MgSO4.F_an ~ F_SO4
+        MgNO32.F_cat ~ F_Mg
+        MgNO32.F_an ~ F_NO3
+        MgCl2.F_cat ~ F_Mg
+        MgCl2.F_an ~ F_Cl
+        NaCl.F_cat ~ F_Na
+        NaCl.F_an ~ F_Cl
+        Na2SO4.F_cat ~ F_Na
+        Na2SO4.F_an ~ F_SO4
+        NaNO3.F_cat ~ F_Na
+        NaNO3.F_an ~ F_NO3
+        NH42SO4.F_cat ~ F_NH4
+        NH42SO4.F_an ~ F_SO4
+        NH4NO3.F_cat ~ F_NH4
+        NH4NO3.F_an ~ F_NO3
+        NH4Cl.F_cat ~ F_NH4
+        NH4Cl.F_an ~ F_Cl
+        NH4HSO4.F_cat ~ F_NH4
+        NH4HSO4.F_an ~ F_HSO4
+        NaHSO4.F_cat ~ F_Na
+        NaHSO4.F_an ~ F_HSO4
+        NH43HSO42.F_cat ~ F_NH4
+        NH43HSO42.F_an ~ F_HSO4
+        H2SO4.F_cat ~ F_H
+        H2SO4.F_an ~ F_SO4
+        HHSO4.F_cat ~ F_H
+        HHSO4.F_an ~ F_HSO4
+        HNO3.F_cat ~ F_H
+        HNO3.F_an ~ F_NO3
+        HCl.F_cat ~ F_H
+        HCl.F_an ~ F_Cl
 
         # Activity coefficients
-        γ_CaNO32 ~ exp(logγ_CaNO32)
-        γ_CaCl2 ~ exp(logγ_CaCl2)
-        γ_K2SO4 ~ exp(logγ_K2SO4)
-        γ_KNO3 ~ exp(logγ_KNO3)
-        γ_KCl ~ exp(logγ_KCl)
-        γ_MgSO4 ~ exp(logγ_MgSO4)
-        γ_MgNO32 ~ exp(logγ_MgNO32)
-        γ_MgCl2 ~ exp(logγ_MgCl2)
-        γ_NaCl ~ exp(logγ_NaCl)
-        γ_Na2SO4 ~ exp(logγ_Na2SO4)
-        γ_NaNO3 ~ exp(logγ_NaNO3)
-        γ_NH42SO4 ~ exp(logγ_NH42SO4)
-        γ_NH4NO3 ~ exp(logγ_NH4NO3)
-        γ_NH4Cl ~ exp(logγ_NH4Cl)
-        γ_H2SO4 ~ exp(logγ_H2SO4)
-        γ_HHSO4 ~ exp(logγ_HHSO4)
-        γ_HNO3 ~ exp(logγ_HNO3)
-        γ_HCl ~ exp(logγ_HCl)
+        γ_CaNO32 ~ exp(CaNO32.logγ)
+        γ_CaCl2 ~ exp(CaCl2.logγ)
+        γ_K2SO4 ~ exp(K2SO4.logγ)
+        γ_KNO3 ~ exp(KNO3.logγ)
+        γ_KCl ~ exp(KCl.logγ)
+        γ_MgSO4 ~ exp(MgSO4.logγ)
+        γ_MgNO32 ~ exp(MgNO32.logγ)
+        γ_MgCl2 ~ exp(MgCl2.logγ)
+        γ_NaCl ~ exp(NaCl.logγ)
+        γ_Na2SO4 ~ exp(Na2SO4.logγ)
+        γ_NaNO3 ~ exp(NaNO3.logγ)
+        γ_NH42SO4 ~ exp(NH42SO4.logγ)
+        γ_NH4NO3 ~ exp(NH4NO3.logγ)
+        γ_NH4Cl ~ exp(NH4Cl.logγ)
+        γ_H2SO4 ~ exp(H2SO4.logγ)
+        γ_HHSO4 ~ exp(HHSO4.logγ)
+        γ_HNO3 ~ exp(HNO3.logγ)
+        γ_HCl ~ exp(HCl.logγ)
 
         # Table 4 footnotes
         γ_CaSO4 ~ 1.0 # From Table 4 footnote a, CaSO4 has an activity coefficient of zero,
@@ -477,7 +442,7 @@ end
         a_NaNO3 ~ Na.m * NO3.m * γ_NaNO3^(1 + 1)
         a_NH42SO4 ~ NH4.m^2 * SO4.m * γ_NH42SO4^(2 + 1)
         a_NH4NO3 ~ NH4.m * NO3.m * γ_NH4NO3^(1 + 1)
-        a_NH4Cl ~ NH4.m * Cl.m^1 * γ_NH4Cl^(1 + 1)
+        a_NH4Cl ~ NH4.m * Cl.m * γ_NH4Cl^(1 + 1)
         a_NH4HSO4 ~ NH4.m * HSO4.m * γ_NH4HSO4^(1 + 1)
         a_NaHSO4 ~ Na.m * HSO4.m * γ_NaHSO4^(1 + 1)
         a_NH43HSO42 ~ NH4.m^3 * HSO4.m^2 * γ_NH43HSO42^(3 + 2)
@@ -558,6 +523,7 @@ end
         MgSO4.M ~ Mg.m * W / 3
         MgNO32.M ~ Mg.m * W / 3
         #MgCl2.M ~ Mg.m * W / 3 # Leave one degree of freedom to set overall molarity level.
+        # FIXME(CT): This can result in negative MgCl2.M, which can effect water concentration.
 
         # Mass balance
         # NH4.m * W ~ sum([NH4NO3.M, NH4Cl.M, NH4HSO4.M, 2NH42SO4.M, 3NH43HSO42.M])
