@@ -47,8 +47,8 @@ prob = ODEProblem(sys,
     (0.0, 1.0),
     use_scc = false)
 
-    collect(zip(unknowns(sys), prob.u0))
-filter(x -> x[2] < 0, collect(zip(unknowns(sys), prob.u0)))
+#     collect(zip(unknowns(sys), prob.u0))
+# filter(x -> x[2] < 0, collect(zip(unknowns(sys), prob.u0)))
 
 sol = solve(prob, Rosenbrock23())
 
@@ -82,6 +82,11 @@ end
 let
     vars = [sys.g.NH3.p, sys.g.HCl.p, sys.g.HNO3.p, sys.g.H2SO4.p,
         sys.g.NH3.M, sys.g.HCl.M, sys.g.HNO3.M, sys.g.H2SO4.M]
+        collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
+
+let
+    vars = [sys.aq.NH3.m, sys.aq.HCl_aq.m, sys.aq.HNO3_aq.m]
         collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
