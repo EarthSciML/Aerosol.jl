@@ -87,22 +87,22 @@ end
     end
     @equations begin
         # Fix the molalities at the initial concentration.
-        D(aq.NH4.m) ~ no_change
-        D(aq.Na.m) ~ no_change
-        D(aq.H.m) ~ no_change
-        D(aq.Ca.m) ~ no_change
-        D(aq.K.m) ~ no_change
-        D(aq.Mg.m) ~ no_change
-        D(aq.Cl.m) ~ no_change
-        D(aq.NO3.m) ~ no_change
-        D(aq.SO4.m) ~ no_change
-        D(aq.HSO4.m) ~ no_change
+        D(aq.NH4.m) ~ 0
+        D(aq.Na.m) ~ 0
+        D(aq.H.m) ~ 0
+        D(aq.Ca.m) ~ 0
+        D(aq.K.m) ~ 0
+        D(aq.Mg.m) ~ 0
+        D(aq.Cl.m) ~ 0
+        D(aq.NO3.m) ~ 0
+        D(aq.SO4.m) ~ 0
+        D(aq.HSO4.m) ~ 0
 
         # These species are neutral and are not in any salts, so
         # we fix their concentration.
-        aq.NH3.m ~ m_one
-        aq.HCl_aq.m ~ m_one
-        aq.HNO3_aq.m ~ m_one
+        aq.NH3.m ~ 0
+        aq.HCl_aq.m ~ 0
+        aq.HNO3_aq.m ~ 0
 
         # We need to fix the molar concentration of one of the salts in
         # order to be able to calculate the water concentration.
@@ -133,12 +133,13 @@ prob = ODEProblem(sys,
 sol = solve(prob, Rosenbrock23())
 
 let
-vars = [sys.aq.a_NH4NO3, sys.aq.a_NH4Cl, sys.aq.a_NH4HSO4, sys.aq.a_NH42SO4, sys.aq.a_NH43HSO42,
-    sys.aq.a_NaCl, sys.aq.a_Na2SO4, sys.aq.a_NaNO3, sys.aq.a_NaHSO4,
-    sys.aq.a_H2SO4, sys.aq.a_HCl, sys.aq.a_HNO3, sys.aq.a_KHSO4, sys.aq.a_HHSO4,
-    sys.aq.a_CaNO32, sys.aq.a_CaCl2, sys.aq.a_CaSO4,
-    sys.aq.a_KHSO4, sys.aq.a_K2SO4, sys.aq.a_KNO3, sys.aq.a_KCl,
-    sys.aq.a_MgSO4, sys.aq.a_MgNO32, sys.aq.a_MgCl2]
+vars = [sys.aq.NH4NO3.loga, sys.aq.NH4Cl.loga, sys.aq.NH4HSO4.loga, sys.aq.NH42SO4.loga,
+    sys.aq.NH43HSO42.loga,
+    sys.aq.NaCl.loga, sys.aq.Na2SO4.loga, sys.aq.NaNO3.loga, sys.aq.NaHSO4.loga,
+    sys.aq.H2SO4.loga, sys.aq.HCl.loga, sys.aq.HNO3.loga, sys.aq.KHSO4.loga, sys.aq.HHSO4.loga,
+    sys.aq.CaNO32.loga, sys.aq.CaCl2.loga, sys.aq.CaSO4.loga,
+    sys.aq.KHSO4.loga, sys.aq.K2SO4.loga, sys.aq.KNO3.loga, sys.aq.KCl.loga,
+    sys.aq.MgSO4.loga, sys.aq.MgNO32.loga, sys.aq.MgCl2.loga]
 collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
@@ -161,16 +162,16 @@ end
     end
     @equations begin
         # This time, we fix the activities at their initial values.
-        D(aq.a_NH43HSO42) ~ m5_no_change
-        D(aq.a_CaCl2) ~ m3_no_change
-        D(aq.a_K2SO4) ~ m3_no_change
-        D(aq.a_MgNO32) ~ m3_no_change
-        D(aq.a_Na2SO4) ~ m3_no_change
-        D(aq.a_HNO3) ~ m2_no_change
-        D(aq.a_NH42SO4) ~ m3_no_change
-        D(aq.a_MgCl2) ~ m3_no_change
-        D(aq.a_MgSO4) ~ m2_no_change
-        D(aq.a_NH4HSO4) ~ m2_no_change
+        D(aq.NH43HSO42.loga) ~ 0
+        D(aq.CaCl2.loga) ~ 0
+        D(aq.K2SO4.loga) ~ 0
+        D(aq.MgNO32.loga) ~ 0
+        D(aq.Na2SO4.loga) ~ 0
+        D(aq.HNO3.loga) ~ 0
+        D(aq.NH42SO4.loga) ~ 0
+        D(aq.MgCl2.loga) ~ 0
+        D(aq.MgSO4.loga) ~ 0
+        D(aq.NH4HSO4.loga) ~ 0
 
         # These species are neutral and are not in any salts, so
         # we fix their concentration.
@@ -189,16 +190,16 @@ sys = mtkcompile(aqt)
 
 prob = ODEProblem(sys,
     [
-        sys.aq.a_NH43HSO42 => 0.079,
-        sys.aq.a_CaCl2 => 1.4,
-        sys.aq.a_K2SO4 => 0.039,
-        sys.aq.a_MgNO32 => 0.4,
-        sys.aq.a_Na2SO4 => 0.053,
-        sys.aq.a_HNO3 => 1.0,
-        sys.aq.a_NH42SO4 => 0.043,
-        sys.aq.a_MgCl2 => 2.4,
-        sys.aq.a_MgSO4 => 0.042,
-        sys.aq.a_NH4HSO4 => 0.83,
+        sys.aq.NH43HSO42.loga => log(0.079),
+        sys.aq.CaCl2.loga => log(1.4),
+        sys.aq.K2SO4.loga => log(0.039),
+        sys.aq.MgNO32.loga => log(0.4),
+        sys.aq.Na2SO4.loga => log(0.053),
+        sys.aq.HNO3.loga => log(1.0),
+        sys.aq.NH42SO4.loga => log(0.043),
+        sys.aq.MgCl2.loga => log(2.4),
+        sys.aq.MgSO4.loga => log(0.042),
+        sys.aq.NH4HSO4.loga => log(0.83),
 
         sys.aq.NH42SO4.M => 1.0e-8,
     ],
@@ -255,20 +256,20 @@ collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
 lb = 1.0e-2
-ub = 1.5
+ub = 1.2
 
 prob = ODEProblem(sys,
     [
-        sys.aq.a_NH43HSO42 =>  clamp(30.0, lb, ub),
-        sys.aq.a_CaCl2 => clamp(8.0e11, lb, ub),
-        sys.aq.a_K2SO4 => clamp(0.016, lb, ub),
-        sys.aq.a_MgNO32 => clamp(2.5e15, lb, ub),
-        sys.aq.a_Na2SO4 => clamp(0.48, lb, ub),
-        sys.aq.a_HNO3 => clamp(2.5e6, lb, ub),
-        sys.aq.a_NH42SO4 => clamp(1.9, lb, ub),
-        sys.aq.a_MgCl2 => clamp(9.6e21, lb, ub),
-        sys.aq.a_MgSO4 => clamp(110000.0, lb, ub),
-        sys.aq.a_NH4HSO4 => clamp(1.4, lb, ub),
+        sys.aq.NH43HSO42.loga =>  log(30.0),
+        sys.aq.CaCl2.loga => log(8.0e11),
+        sys.aq.K2SO4.loga => log(0.016),
+        sys.aq.MgNO32.loga => log(2.5e15),
+        sys.aq.Na2SO4.loga => log(0.48),
+        sys.aq.HNO3.loga => log(2.5e6),
+        sys.aq.NH42SO4.loga => log(1.9),
+        sys.aq.MgCl2.loga => log(9.6e21),
+        sys.aq.MgSO4.loga => log(110000.0),
+        sys.aq.NH4HSO4.loga => log(1.4),
 
         sys.aq.NH42SO4.M => 1.0e-8,
     ],
@@ -295,7 +296,7 @@ equations(prob.f.initializeprob.f.sys)
 iprob = prob.f.initializeprob
 iprob.u0
 
-ff(u, p) = iprob.f(abs.(u), p)
+ff(u, p) = iprob.f(max.(u, (1e-20)), p)
 iiprob = NonlinearProblem(ff, iprob.u0, iprob.p)
 sol = solve(iiprob)
 
@@ -393,43 +394,12 @@ unknowns(aqt)
 using Plots
 using Aerosol.ISORROPIA: Salt, Ion
 
-@mtkmodel NaClActivity begin
-    @components begin
-        Na = Ion(z=1)
-        Cl = Ion(z=abs(-1))
-        NaCl = Salt(cation = Na, anion = Cl, drh = 0.7528, l_t = 25.0, q = 2.23)
-    end
-    @constants begin
-        I_rate = 1.0, [unit = u"mol/kg/s"]
-    end
-    @equations begin
-        D(NaCl.I) ~ I_rate
-        Na.m ~ NaCl.I
-        Cl.m ~ NaCl.I
-    end
-end
-
-@mtkcompile nacl = NaClActivity()
-
-prob = ODEProblem(nacl,
-    [
-        nacl.NaCl.I => 0.1,
-    ],
-    (0.0, 40.0), saveat=1.0)
-sol = solve(prob, Rosenbrock23())
-
-plot(sol[nacl.NaCl.I], exp.(sol[nacl.NaCl.logγ⁰]))
-
 
 @mtkmodel BinarySalt begin
     @components begin
         cation = Ion(z)
         anion = Ion(z)
-        salt = Salt(cation = cation, anion = anion, drh = 0, l_t = 0, q)
-    end
-    @structural_parameters begin
-        ν_cat = 1
-        ν_an = 1
+        salt = Salt(cation = cation, anion = anion, drh = 0, l_t = 0, q, ν_cation=1, ν_anion=1)
     end
     @constants begin
         I_rate = 1.0, [unit = u"mol/kg/s"]
@@ -441,8 +411,8 @@ plot(sol[nacl.NaCl.I], exp.(sol[nacl.NaCl.logγ⁰]))
     end
     @equations begin
         D(salt.I) ~ I_rate
-        cation.m ~ ν_cat * salt.I
-        anion.m ~ ν_an * salt.I
+        cation.m ~ salt.ν_cation * salt.I
+        anion.m ~ salt.ν_anion * salt.I
 
         Aᵧ_term ~ salt.Aᵧ * √salt.I / (√salt.I_one + √salt.I) / √salt.I_one
         F_cat ~ salt.Y * salt.logγ⁰ + Aᵧ_term * salt.zz * salt.Y
@@ -456,6 +426,7 @@ end
 # Kim, Y.P., Seinfeld, J.H. and Saxena, P., 1993. Atmospheric gas-aerosol equilibrium I.
 # Thermodynamic model. Aerosol Science and Technology, 19(2), pp.157-181.
 
+let
 salts = [
     (n = :NaCl, ν_cat= 1, ν_an = 1, z_cat =1, z_an = abs(-1), q = 2.23),
     (n = :Na2SO4, ν_cat= 2, ν_an = 1, z_cat = 1, z_an = abs(-2), q = -0.19),
@@ -465,19 +436,21 @@ salts = [
 plots = []
 
 for s in salts
-    @mtkcompile slt = BinarySalt(cation.z=s.z_cat, ν_cat=s.ν_cat,
-    anion.z=s.z_an, ν_an=s.ν_an, salt.q=s.q)
+    @mtkcompile slt = BinarySalt(cation.z=s.z_cat, salt.ν_cation=s.ν_cat,
+    anion.z=s.z_an, salt.ν_anion=s.ν_an, salt.q=s.q)
 
 prob = ODEProblem(slt,
     [
         slt.salt.I => 0.00001,
     ],
-    (0.0, 40.0), saveat=1.0)
+    (0.0, 40.0), saveat=0.1)
 sol = solve(prob, Rosenbrock23())
 
 p = plot(sol[slt.salt.I], exp.(sol[slt.salt.logγₜ₀]), label=:none,
     title = string(s.n), xlabel = "I (mol/kg)", ylabel = "γₜ₀",
     yscale=:log10)
 push!(plots, p)
+@info s.n, exp(sol[slt.salt.logγₜ₀][end])
 end
 plot(plots..., layout = (2,2))
+end

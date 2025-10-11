@@ -28,7 +28,7 @@ unknowns(sys)
 
 prob = ODEProblem(sys,
     [
-        sys.TotalNH => 1.0e-8,
+        #sys.TotalNH => 1.0e-8,
         # sys.TotalNa => 1.0e-8,
         # sys.TotalCa => 1.0e-8,
         # sys.TotalK => 1.0e-8,
@@ -37,13 +37,34 @@ prob = ODEProblem(sys,
         # sys.TotalNO3 => 1.0e-8,
         # sys.TotalSO4 => 5.0e-8,
 
-        #sys.aq.NH42SO4.M => 1.0e-8,
+        sys.aq.NH42SO4.M => 1.0e-8,
     ],
         guesses = [
-        sys.aq.Ca.m => 0.5,
-        sys.aq.SO4.m => 0.5,
-        sys.aq.Mg.m => 0.5,
+ sys.aq.NO3.m => 2.58766068993378e-6,
+ sys.aq.H.m => 0.003967925913764908,
+ sys.aq.Na.m => 0.009506196497264207,
+ sys.aq.K.m => 0.00031687425644320324,
+ sys.aq.SO4.m => 0.0007586406701139102,
+ sys.aq.Ca.m => 2.998719036287425e-7,
+ sys.aq.HSO4.m => 0.41395322629634074,
+ sys.aq.Mg.m => 3598.450503551135,
+ sys.aq.Cl.m => 0.0028059719127294233,
+ sys.aq.OH.m => 7196.534148456016,
+ sys.aq.MgCl2.M => -0.004072877469889674,
+ sys.aq.W => 2.657538735666479e-6,
+ sys.aq.NH42SO4.M => 1.0e-8,
+ sys.aq.NH4HSO4.loga => 0.3364722366212129,
+ sys.aq.MgSO4.loga => 11.608235644774552,
+ sys.aq.MgCl2.loga => 50.61605005134875,
+ sys.aq.NH42SO4.loga => 0.6418538861723947,
+ sys.aq.HNO3.loga => 14.73180128983843,
+ sys.aq.Na2SO4.loga => -0.7339691750802004,
+ sys.aq.MgNO32.loga => 35.45506712678484,
+ sys.aq.K2SO4.loga => -4.135166556742356,
+ sys.aq.CaCl2.loga => 27.40787756461434,
+ sys.aq.NH43HSO42.loga => 3.4011973816621555
     ],
+#    initializealg = ShampineCollocationInit(),
     (0.0, 1.0),
     use_scc = false)
 
@@ -57,18 +78,36 @@ sol[sys.aq.W]
 sol[sys.aq.I]
 
 let
-vars = [sys.aq.a_NH4NO3, sys.aq.a_NH4Cl, sys.aq.a_NH4HSO4, sys.aq.a_NH42SO4, sys.aq.a_NH43HSO42,
-    sys.aq.a_NaCl, sys.aq.a_Na2SO4, sys.aq.a_NaNO3, sys.aq.a_NaHSO4,
-    sys.aq.a_H2SO4, sys.aq.a_HCl, sys.aq.a_HNO3, sys.aq.a_KHSO4, sys.aq.a_HHSO4,
-    sys.aq.a_CaNO32, sys.aq.a_CaCl2, sys.aq.a_CaSO4,
-    sys.aq.a_KHSO4, sys.aq.a_K2SO4, sys.aq.a_KNO3, sys.aq.a_KCl,
-    sys.aq.a_MgSO4, sys.aq.a_MgNO32, sys.aq.a_MgCl2]
+    vars = [        sys.aq.NH4.m,sys.aq.Na.m,sys.aq.H.m,        sys.aq.Ca.m,        sys.aq.K.m,
+        sys.aq.Mg.m,sys.aq.Cl.m,sys.aq.NO3.m,sys.aq.SO4.m,sys.aq.HSO4.m,sys.aq.OH.m,
+        sys.aq.NH3.m,sys.aq.HNO3_aq.m,sys.aq.HCl_aq.m]
+        collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
+
+let
+vars = [sys.aq.NH4NO3.loga, sys.aq.NH4Cl.loga, sys.aq.NH4HSO4.loga, sys.aq.NH42SO4.loga, sys.aq.NH43HSO42.loga,
+    sys.aq.NaCl.loga, sys.aq.Na2SO4.loga, sys.aq.NaNO3.loga, sys.aq.NaHSO4.loga,
+    sys.aq.H2SO4.loga, sys.aq.HCl.loga, sys.aq.HNO3.loga, sys.aq.KHSO4.loga, sys.aq.HHSO4.loga,
+    sys.aq.CaNO32.loga, sys.aq.CaCl2.loga, sys.aq.CaSO4.loga,
+    sys.aq.KHSO4.loga, sys.aq.K2SO4.loga, sys.aq.KNO3.loga, sys.aq.KCl.loga,
+    sys.aq.MgSO4.loga, sys.aq.MgNO32.loga, sys.aq.MgCl2.loga]
 collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
 let
-vars = [sys.eq.r2.K_eq, sys.eq.r4.K_eq, sys.eq.r8.K_eq, sys.eq.r9.K_eq, sys.eq.r10.K_eq,
-sys.eq.r14.K_eq, sys.eq.r19.K_eq, sys.eq.r20.K_eq, sys.eq.r26.K_eq, sys.eq.r27.K_eq,
+vars = [sys.aq.NH4NO3.M, sys.aq.NH4Cl.M, sys.aq.NH4HSO4.M, sys.aq.NH42SO4.M, sys.aq.NH43HSO42.M,
+    sys.aq.NaCl.M, sys.aq.Na2SO4.M, sys.aq.NaNO3.M, sys.aq.NaHSO4.M,
+    sys.aq.H2SO4.M, sys.aq.HCl.M, sys.aq.HNO3.M, sys.aq.KHSO4.M, sys.aq.HHSO4.M,
+    sys.aq.CaNO32.M, sys.aq.CaCl2.M, sys.aq.CaSO4.M,
+    sys.aq.KHSO4.M, sys.aq.K2SO4.M, sys.aq.KNO3.M, sys.aq.KCl.M,
+    sys.aq.MgSO4.M, sys.aq.MgNO32.M, sys.aq.MgCl2.M]
+collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
+
+let
+vars = [sys.eq.r2.logK_eq, sys.eq.r4.logK_eq, sys.eq.r8.logK_eq, sys.eq.r9.logK_eq,
+sys.eq.r10.logK_eq, sys.eq.r14.logK_eq,sys.eq.r15.logK_eq, sys.eq.r19.logK_eq,
+sys.eq.r20.logK_eq, sys.eq.r26.logK_eq, sys.eq.r27.logK_eq,
 ]
 collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end

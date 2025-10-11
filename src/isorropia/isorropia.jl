@@ -75,7 +75,7 @@ include("equilibria.jl")
     #    eq.r13.logK_eq ~ log(aq.NH4.a) + log(aq.OH.a) - log(aq.NH3.a) - log(RH)
         #eq.r14.logK_eq ~ aq.HNO3.loga - log(g.HNO3.p) # K1
         #eq.r15.logK_eq ~ log(aq.HNO3_aq.a) - log(g.HNO3.p) # K1a
-    #    eq.r14.logK_eq - eq.r15.logK_eq ~ aq.HNO3.loga - log(aq.HNO3_aq.a / m_one) # K1b, from Table 2 footnote ♠
+        eq.r14.logK_eq - eq.r15.logK_eq ~ aq.HNO3.loga - log(aq.HNO3_aq.a / m_one) # K1b, from Table 2 footnote ♠
         # eq.r16.logK_eq ~ aq.HCl.loga - log(g.HCl.p) # K2
         # eq.r17.logK_eq ~ log(aq.HCl_aq.a) - log( g.HCl.p) # K2a
         #eq.r16.logK_eq - eq.r17.logK_eq ~ aq.HCl.loga - log(aq.HCl_aq.a) # K2b, from Table 2 footnote ♦
