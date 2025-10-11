@@ -19,11 +19,12 @@ include("equilibria.jl")
 
         m_one = 1.0, [unit = u"mol/kg"]
         M_one = 1.0, [unit = u"mol/m^3"]
+        p_one = 1.0, [unit = u"Constants.atm"]
     end
     @components begin
         aq = Aqueous(T = T, RH = RH)
        # s = Solids()
-       g = Gases()
+       #g = Gases()
         eq = EquilibriumConstants(T = T)
     end
     @variables begin
@@ -59,56 +60,56 @@ include("equilibria.jl")
         # Reactions based on information in Table 2 of Fountoukis and Nenes (2007).
         # The left-hand side of the reaction equation is the equilibrium constant and the
         # right-hand side is the ratio of the product and reactant activities.
-        # eq.r1.K_eq * eq.k1_unit ~ aq.a_CaNO32
-        eq.r2.K_eq * eq.k2_unit ~ aq.a_CaCl2
-        # eq.r3.K_eq * eq.k3_unit ~ aq.a_CaSO4 * RH^2 # Not using because CaSO4 precipitates completely (Table 4 footnote a).
-        eq.r4.K_eq * eq.k4_unit ~ aq.a_K2SO4
-        #eq.r5.K_eq * eq.k5_unit ~ aq.a_KHSO4
-        # eq.r6.K_eq * eq.k6_unit ~ aq.a_KNO3
-        # eq.r7.K_eq * eq.k7_unit ~ aq.a_KCl
-        eq.r8.K_eq * eq.k8_unit ~ aq.a_MgSO4
-        eq.r9.K_eq * eq.k9_unit ~ aq.a_MgNO32
-        eq.r10.K_eq * eq.k10_unit ~ aq.a_MgCl2
-        #eq.r11.K_eq * eq.k11_unit ~ aq.H.a * aq.SO4.a / aq.HSO4.a
-        eq.r12.K_eq * eq.k12_unit ~ aq.NH3.a / g.NH3.p
-    #    eq.r13.K_eq * eq.k13_unit ~ aq.NH4.a * aq.OH.a / aq.NH3.a / RH
-        #eq.r14.K_eq * eq.k14_unit ~ aq.a_HNO3 / g.HNO3.p # K1
-        #eq.r15.K_eq * eq.k15_unit ~ aq.HNO3_aq.a / g.HNO3.p # K1a
-        eq.r14.K_eq / eq.r15.K_eq * eq.k1b_unit ~ aq.a_HNO3 / aq.HNO3_aq.a # K1b, from Table 2 footnote ♠
-        # eq.r16.K_eq * eq.k16_unit ~ aq.a_HCl / g.HCl.p # K2
-        # eq.r17.K_eq * eq.k17_unit ~ aq.HCl_aq.a / g.HCl.p # K2a
-        #eq.r16.K_eq / eq.r17.K_eq * eq.k2b_unit ~ aq.a_HCl / aq.HCl_aq.a # K2b, from Table 2 footnote ♦
-        #eq.r18.K_eq * eq.k18_unit ~ aq.H.a * aq.OH.a / RH
-        eq.r19.K_eq * eq.k19_unit ~ aq.a_Na2SO4
-        eq.r20.K_eq * eq.k20_unit ~ aq.a_NH42SO4
-        eq.r21.K_eq * eq.k21_unit ~ g.NH3.p * g.HCl.p
-        #eq.r22.K_eq * eq.k22_unit ~ aq.a_NaNO3
-        #eq.r23.K_eq * eq.k23_unit ~ aq.a_NaCl
-        #eq.r24.K_eq * eq.k24_unit ~ aq.a_NaHSO4
-        #eq.r25.K_eq * eq.k25_unit ~ g.NH3.p * g.HNO3.p
-        eq.r26.K_eq * eq.k26_unit ~ aq.a_NH4HSO4
-        eq.r27.K_eq * eq.k27_unit ~ aq.a_NH43HSO42
+        # eq.r1.logK_eq ~ aq.CaNO32.loga
+        eq.r2.logK_eq ~ aq.CaCl2.loga
+        # eq.r3.logK_eq ~ aq.CaSO4.loga * RH^2 # Not using because CaSO4 precipitates completely (Table 4 footnote a).
+        eq.r4.logK_eq ~ aq.K2SO4.loga
+        #eq.r5.logK_eq ~ aq.KHSO4.loga
+        # eq.r6.logK_eq ~ aq.KNO3.loga
+        # eq.r7.logK_eq ~ aq.KCl.loga
+        eq.r8.logK_eq ~ aq.MgSO4.loga
+        eq.r9.logK_eq ~ aq.MgNO32.loga
+        eq.r10.logK_eq ~ aq.MgCl2.loga
+        #eq.r11.logK_eq ~ log(aq.H.a) + log(aq.SO4.a) - log(aq.HSO4.a)
+     #   eq.r12.logK_eq ~ log(aq.NH3.a / m_one) - log(g.NH3.p / p_one)
+    #    eq.r13.logK_eq ~ log(aq.NH4.a) + log(aq.OH.a) - log(aq.NH3.a) - log(RH)
+        #eq.r14.logK_eq ~ aq.HNO3.loga - log(g.HNO3.p) # K1
+        #eq.r15.logK_eq ~ log(aq.HNO3_aq.a) - log(g.HNO3.p) # K1a
+    #    eq.r14.logK_eq - eq.r15.logK_eq ~ aq.HNO3.loga - log(aq.HNO3_aq.a / m_one) # K1b, from Table 2 footnote ♠
+        # eq.r16.logK_eq ~ aq.HCl.loga - log(g.HCl.p) # K2
+        # eq.r17.logK_eq ~ log(aq.HCl_aq.a) - log( g.HCl.p) # K2a
+        #eq.r16.logK_eq - eq.r17.logK_eq ~ aq.HCl.loga - log(aq.HCl_aq.a) # K2b, from Table 2 footnote ♦
+        #eq.r18.logK_eq ~ log(aq.H.a) + log(aq.OH.a) - log(RH)
+        eq.r19.logK_eq ~ aq.Na2SO4.loga
+        eq.r20.logK_eq ~ aq.NH42SO4.loga
+    #    eq.r21.logK_eq ~ log(g.NH3.p / p_one) + log(g.HCl.p / p_one)
+        #eq.r22.logK_eq ~ aq.NaNO3.loga
+        #eq.r23.logK_eq ~ aq.NaCl.loga
+        #eq.r24.logK_eq ~ aq.NaHSO4.loga
+        #eq.r25.logK_eq ~ log(g.NH3.p) + log(g.HNO3.p)
+        eq.r26.logK_eq ~ aq.NH4HSO4.loga
+        eq.r27.logK_eq ~ aq.NH43HSO42.loga
 
-        # # Mass Balance
-        TotalNH ~ (aq.NH4.m  + aq.NH3.m) * aq.W + g.NH3.M #+ s.NH4 #
-        TotalNa ~ aq.Na.m * aq.W #+ s.Na
-        TotalCa ~ aq.Ca.m * aq.W #+ s.Ca
-        TotalK ~ aq.K.m * aq.W #+ s.K
-        TotalMg ~ aq.Mg.m * aq.W #+ s.Mg
-        TotalCl ~  aq.Cl.m * aq.W + g.HCl.M #+ s.Cl #
-        TotalNO3 ~ aq.NO3.m * aq.W + g.HNO3.M #+ s.NO3 #
-        TotalSO4 ~ (aq.SO4.m + aq.HSO4.m) * aq.W+ g.H2SO4.M #+ s.SO4 + s.HSO4 #
+        # Mass Balance
+        # TotalNH ~ (aq.NH4.m  + aq.NH3.m) * aq.W #+ g.NH3.M #+ s.NH4 #
+        # TotalNa ~ aq.Na.m * aq.W #+ s.Na
+        # TotalCa ~ aq.Ca.m * aq.W #+ s.Ca
+        # TotalK ~ aq.K.m * aq.W #+ s.K
+        # TotalMg ~ aq.Mg.m * aq.W #+ s.Mg
+        # TotalCl ~  aq.Cl.m * aq.W #+ g.HCl.M #+ s.Cl #
+        # TotalNO3 ~ aq.NO3.m * aq.W #+ g.HNO3.M #+ s.NO3 #
+        # TotalSO4 ~ (aq.SO4.m + aq.HSO4.m) * aq.W #+ g.H2SO4.M #+ s.SO4 + s.HSO4 #
 
-   #     aq.NH3.m ~ m_one
+        aq.NH3.m ~ m_one
         aq.HCl_aq.m ~ m_one
         aq.HNO3_aq.m ~ m_one
 
-#        g.NH3.M ~ 0.0
-        g.HNO3.M ~ 0.0
-        g.HCl.M ~ M_one
+        # g.NH3.M ~ 0.0
+        # g.HNO3.M ~ 0.0
+        # g.HCl.M ~ M_one
 
-       # D(aq.NH42SO4.M) ~ 0.0
-        D(TotalNH) ~ 0.0
+        D(aq.NH42SO4.M) ~ 0.0
+        #D(TotalNH) ~ 0.0
         # D(TotalNa) ~ 0.0
         # D(TotalCa) ~ 0.0
         # D(TotalK) ~ 0.0

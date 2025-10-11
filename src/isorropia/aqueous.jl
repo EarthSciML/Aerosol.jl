@@ -23,11 +23,20 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
     @structural_parameters begin
         cation = Ion(; name = :cation, z = 1)
         anion = Ion(; name = :anion, z = 1)
+        is_CaSO4 = false # Is this salt CaSO4?
+        is_KHSO4 = false # Is this salt KHSO4?
+        is_NH4HSO4 = false # Is this salt NH4HSO4?
+        is_NaHSO4 = false # Is this salt NaHSO4?
+        is_NH43HSO42 = false # Is this salt NH43HSO42?
+        salt1 = nothing
+        salt2 = nothing
+        salt3 = nothing
     end
     @constants begin
         # NOTE: The paper (between equations 6 and 7) says that the units of Aᵧ are kg^0.5 mol^−0.5, but the equation
         # doesn't work unless those units are inverted, and Bromley (1973) agrees with that.
-        Aᵧ = 0.511, [
+        Aᵧ = 0.511,
+        [
             unit = u"mol^0.5/kg^0.5",
             description = "Debye-Hückel constant at 298.15 K"
         ]
@@ -42,6 +51,8 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         drh, [description = "Deliquescence relative humidity at 298.15K"]
         l_t, [description = "Enthalpy term (-18/1000R L_s m_s)"]
         q, [description = "Kusik-Meissner Binary activity parameter"]
+        ν_cation = 1, [description = "Number of moles of cation per mole of salt"]
+        ν_anion = 1, [description = "Number of moles of anion per mole of salt"]
 
         # Derived constants
         B
@@ -49,6 +60,7 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
 
         # Unit conversions
         I_one = 1, [unit = u"mol/kg", description = "An ionic strength of 1"]
+        m_one = 1, [unit = u"mol/kg", description = "A molality of 1"]
     end
     @parameters begin
         T = 293.15, [description = "Temperature", unit = u"K"]
@@ -63,20 +75,21 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         logγₜ₀(t), [description = "Log of the multi-component activity coefficient at 298.15K", guess=1]
         logγ(t), [description = "Log of the activity coefficient", guess=1]
         #! format: on
-        Γ⁰(t), [unit = u"mol/kg"]
-        Γ⁺(t)
+        logΓ⁰(t)
+        logΓ⁺(t)
         C(t)
         F_cat(t), [description = "Activity contribution from the cation"]
         F_an(t), [description = "Activity contribution from the anion"]
         A(t), [description = "Parameter used in Equation 14"]
+        loga(t), [description = "Log of the activity of the salt", guess = 0]
     end
     @equations begin
         zz ~ ParentScope(cation.z) * ParentScope(anion.z)
 
         # Equation 6
         logγₜ₀ ~ -Aᵧ * zz * √I / (√I_one + √I) / √I_one + # NOTE: The last √I_one here is not in the paper but is needed to make the units balance.
-                        (zz / (ParentScope(cation.z) + ParentScope(anion.z))) *
-                        (F_cat / ParentScope(cation.z) + F_an / ParentScope(anion.z))
+                 (zz / (ParentScope(cation.z) + ParentScope(anion.z))) *
+                 (F_cat / ParentScope(cation.z) + F_an / ParentScope(anion.z))
 
         # Supplemental equations after equations 7 and 8
         Y ~ ((ParentScope(cation.z) + ParentScope(anion.z)) / 2)^2 * ParentScope(anion.m) /
@@ -84,22 +97,37 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         X ~ ((ParentScope(cation.z) + ParentScope(anion.z)) / 2)^2 * ParentScope(cation.m) /
             I
         # Equation 9
-        logγ⁰ ~ zz * log(Γ⁰ / I_one)
+        logγ⁰ ~ zz * logΓ⁰
         # Equation 10
-        Γ⁰ ~ (I_one + B * ((I_one + 0.1I) / I_one)^q * I_one - I_one * B) * Γ⁺ # TODO(CT): Maybe this should be logΓ⁰ ~ (I_one + B * ((I_one + 0.1I) / I_one)^q * I_one - I_one * B) * logΓ⁺ ?
+        logΓ⁰ ~ log(1 + B * (1 + 0.1I / I_one)^q - B) + logΓ⁺
         # Equation 11
         B ~ 0.75 - 0.065q
         # Equation 12
-        Γ⁺ ~ exp(-0.5107√I / (√I_one + C * √I))
+        logΓ⁺ ~ -0.5107√I / (√I_one + C * √I)
         # Equation 13
         C ~ 1 + 0.055q * exp(-0.023I^3 / I_one^3)
 
         # Equation 14
-        logγ ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀ -
-                      (0.125 - c_1 * (T - T₀₂)) * A
+        if is_CaSO4
+            logγ ~ log(1.0) # From Table 4 footnote a, CaSO4 has an activity coefficient of zero,
+        # but that would mean that either the Ca or the SO4 concentration would have to be
+        # zero, so we set it to 1 here.
+        elseif is_KHSO4 || is_NH4HSO4 || is_NaHSO4  # From Table 4 footnote b, c & d
+            logγ ~ 0.5 * (ParentScope(salt1.logγ) + ParentScope(salt2.logγ) -
+                ParentScope(salt3.logγ))
+        elseif is_NH43HSO42
+            logγ ~ (ParentScope(salt1.logγ) * 3 + ParentScope(salt2.logγ)) * (1 / 5) # From Table 4 footnote e
+        else
+            logγ ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀ -
+                   (0.125 - c_1 * (T - T₀₂)) * A
+        end
 
         # Equation in text below Equation 14
         A ~ -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
+
+        # Activity (Section 2.2)
+        loga ~ ν_cation * log(ParentScope(cation.m) / m_one) +
+               ν_anion * log(ParentScope(anion.m) / m_one) + (ν_cation + ν_anion) * logγ
     end
 end
 
@@ -139,12 +167,6 @@ end
         ]
         I_one = 1, [unit = u"mol/kg", description = "An ionic strength of 1"]
 
-        T₀₂ = 273.15, [unit = u"K", description = "Standard temperature 2"]
-        c_1 = 0.005,
-        [
-            unit = u"K^-1",
-            description = "Constant for Fountoukis and Nenes (2007) Eq. 14"
-        ]
         m_one = 1.0, [unit = u"mol/kg", description = "unit molality"]
     end
     @parameters begin
@@ -168,55 +190,6 @@ end
         F_HSO4(t), [description = "Activity contribution from HSO4-containing salts"]
 
         Aᵧ_term(t), [description = "Debye-Hückel term used in Equation 7 and 8"]
-        A(t), [description = "Parameter used in Equation 14"]
-
-        γ_CaNO32(t), [description = "Activity coefficient of CaNO3_2"]
-        γ_CaCl2(t), [description = "Activity coefficient of CaCl2"]
-        γ_CaSO4(t), [description = "Activity coefficient of CaSO4"]
-        γ_KHSO4(t), [description = "Activity coefficient of KHSO4"]
-        γ_K2SO4(t), [description = "Activity coefficient of K2SO4"]
-        γ_KNO3(t), [description = "Activity coefficient of KNO3"]
-        γ_KCl(t), [description = "Activity coefficient of KCl"]
-        γ_MgSO4(t), [description = "Activity coefficient of MgSO4"]
-        γ_MgNO32(t), [description = "Activity coefficient of MgNO3_2"]
-        γ_MgCl2(t), [description = "Activity coefficient of MgCl2"]
-        γ_NaCl(t), [description = "Activity coefficient of NaCl"]
-        γ_Na2SO4(t), [description = "Activity coefficient of Na2SO4"]
-        γ_NaNO3(t), [description = "Activity coefficient of NaNO3"]
-        γ_NH42SO4(t), [description = "Activity coefficient of (NH4)2SO4"]
-        γ_NH4NO3(t), [description = "Activity coefficient of NH4NO3"]
-        γ_NH4Cl(t), [description = "Activity coefficient of NH4Cl"]
-        γ_NH4HSO4(t), [description = "Activity coefficient of NH4HSO4"]
-        γ_NaHSO4(t), [description = "Activity coefficient of NaHSO4"]
-        γ_NH43HSO42(t), [description = "Activity coefficient of (NH4)3HSO4_2"]
-        γ_H2SO4(t), [description = "Activity coefficient of H2SO4"]
-        γ_HHSO4(t), [description = "Activity coefficient of HHSO4"]
-        γ_HNO3(t), [description = "Activity coefficient of HNO3 (salt)"]
-        γ_HCl(t), [description = "Activity coefficient of HCl (salt)"]
-
-        a_CaNO32(t), [description = "CaNO32 Activity", unit = u"mol^3/kg^3", guess = 1.0]
-        a_CaCl2(t), [description = "Activity of CaCl2", unit = u"mol^3/kg^3", guess = 1.0]
-        a_CaSO4(t), [description = "Activity of CaSO4", unit = u"mol^2/kg^2", guess = 1.0]
-        a_KHSO4(t), [description = "Activity of KHSO4", unit = u"mol^2/kg^2", guess = 1.0]
-        a_K2SO4(t), [description = "Activity of K2SO4", unit = u"mol^3/kg^3", guess = 1.0]
-        a_KNO3(t), [description = "Activity of KNO3", unit = u"mol^2/kg^2", guess = 1.0]
-        a_KCl(t), [description = "Activity of KCl", unit = u"mol^2/kg^2", guess = 1.0]
-        a_MgSO4(t), [description = "Activity of MgSO4", unit = u"mol^2/kg^2", guess = 1.0]
-        a_MgNO32(t), [description = "Activity of MgNO32", unit = u"mol^3/kg^3", guess = 1.0]
-        a_MgCl2(t), [description = "Activity of MgCl2", unit = u"mol^3/kg^3", guess = 1.0]
-        a_NaCl(t), [description = "Activity of NaCl", unit = u"mol^2/kg^2", guess = 1.0]
-        a_Na2SO4(t), [description = "Activity of Na2SO4", unit = u"mol^3/kg^3", guess = 1.0]
-        a_NaNO3(t), [description = "Activity of NaNO3", unit = u"mol^2/kg^2", guess = 1.0]
-        a_NH42SO4(t), [description = "Activity", unit = u"mol^3/kg^3", guess = 1.0]
-        a_NH4NO3(t), [description = "Activity of NH4NO3", unit = u"mol^2/kg^2", guess = 1.0]
-        a_NH4Cl(t), [description = "Activity of NH4Cl", unit = u"mol^2/kg^2", guess = 1.0]
-        a_NH4HSO4(t), [description = "NH4HSO4 Activity", unit = u"mol^2/kg^2", guess = 1.0]
-        a_NaHSO4(t), [description = "Activity of NaHSO4", unit = u"mol^2/kg^2", guess = 1.0]
-        a_NH43HSO42(t), [description = "Activity", unit = u"mol^5/kg^5", guess = 1.0]
-        a_H2SO4(t), [description = "Activity of H2SO4", unit = u"mol^3/kg^3", guess = 1.0]
-        a_HHSO4(t), [description = "Activity of HHSO4", unit = u"mol^2/kg^2", guess = 1.0]
-        a_HNO3(t), [description = "HNO3 salt Activity", unit = u"mol^2/kg^2", guess = 1.0]
-        a_HCl(t), [description = "Activity of HCl salt", unit = u"mol^2/kg^2", guess = 1.0]
     end
     @structural_parameters begin
         q0 = 0.0 # Assume q=0 for salts in Table 4 with no data for q.
@@ -245,8 +218,6 @@ end
         # Salts
         CaNO32 = Salt(cation = Ca, anion = NO3, drh = 0.4906, l_t = 509.4, q = 0.93, T=T)
         CaCl2 = Salt(cation = Ca, anion = Cl, drh = 0.2830, l_t = 551.1, q = 2.4, T=T)
-        CaSO4 = Salt(cation = Ca, anion = SO4, drh = 0.9700, l_t = NaN, q = q0, T=T)
-        KHSO4 = Salt(cation = K, anion = HSO4, drh = 0.8600, l_t = NaN, q = q0, T=T)
         K2SO4 = Salt(cation = K, anion = SO4, drh = 0.9751, l_t = 35.6, q = -0.25, T=T)
         KNO3 = Salt(cation = K, anion = NO3, drh = 0.9248, l_t = NaN, q = -2.33, T=T)
         KCl = Salt(cation = K, anion = Cl, drh = 0.8426, l_t = 158.9, q = 0.92, T=T)
@@ -259,13 +230,20 @@ end
         NH42SO4 = Salt(cation = NH4, anion = SO4, drh = 0.7997, l_t = 80.0, q = -0.25, T=T)
         NH4NO3 = Salt(cation = NH4, anion = NO3, drh = 0.6183, l_t = 852.0, q = -1.15, T=T)
         NH4Cl = Salt(cation = NH4, anion = Cl, drh = 0.7710, l_t = 239.0, q = 0.82, T=T)
-        NH4HSO4 = Salt(cation = NH4, anion = HSO4, drh = 0.4000, l_t = 384.0, q = q0, T=T)
-        NaHSO4 = Salt(cation = Na, anion = HSO4, drh = 0.5200, l_t = -45.0, q = q0, T=T)
-        NH43HSO42 = Salt(cation = NH4, anion = HSO4, drh = 0.6900, l_t = 186.0, q = q0, T=T)
         H2SO4 = Salt(cation = H, anion = SO4, drh = 0.000, l_t = NaN, q = -0.1, T=T)
         HHSO4 = Salt(cation = H, anion = HSO4, drh = 0.000, l_t = NaN, q = 8.00, T=T)
         HNO3 = Salt(cation = H, anion = NO3, drh = NaN, l_t = NaN, q = 2.60, T=T)
         HCl = Salt(cation = H, anion = Cl, drh = NaN, l_t = NaN, q = 6.00, T=T)
+        CaSO4 = Salt(cation = Ca, anion = SO4, drh = 0.9700, l_t = NaN, q = q0, T=T,
+            is_CaSO4=true)
+        KHSO4 = Salt(cation = K, anion = HSO4, drh = 0.8600, l_t = NaN, q = q0, T=T,
+            is_KHSO4=true, salt1=HHSO4, salt2=KCl, salt3=HCl)
+        NH4HSO4 = Salt(cation = NH4, anion = HSO4, drh = 0.4000, l_t = 384.0, q = q0, T=T,
+            is_NH4HSO4=true, salt1=HHSO4, salt2=NH4Cl, salt3=HCl)
+        NaHSO4 = Salt(cation = Na, anion = HSO4, drh = 0.5200, l_t = -45.0, q = q0, T=T,
+            is_NaHSO4=true, salt1=HHSO4, salt2=NaCl, salt3=HCl)
+        NH43HSO42 = Salt(cation = NH4, anion = HSO4, drh = 0.6900, l_t = 186.0, q = q0, T=T,
+            is_NH43HSO42=true, salt1=NH42SO4, salt2=NH4HSO4)
 
         # Water content
         #! format: off
@@ -367,34 +345,6 @@ end
         HCl.F_cat ~ F_H
         HCl.F_an ~ F_Cl
 
-        # Activity coefficients
-        γ_CaNO32 ~ exp(CaNO32.logγ)
-        γ_CaCl2 ~ exp(CaCl2.logγ)
-        γ_K2SO4 ~ exp(K2SO4.logγ)
-        γ_KNO3 ~ exp(KNO3.logγ)
-        γ_KCl ~ exp(KCl.logγ)
-        γ_MgSO4 ~ exp(MgSO4.logγ)
-        γ_MgNO32 ~ exp(MgNO32.logγ)
-        γ_MgCl2 ~ exp(MgCl2.logγ)
-        γ_NaCl ~ exp(NaCl.logγ)
-        γ_Na2SO4 ~ exp(Na2SO4.logγ)
-        γ_NaNO3 ~ exp(NaNO3.logγ)
-        γ_NH42SO4 ~ exp(NH42SO4.logγ)
-        γ_NH4NO3 ~ exp(NH4NO3.logγ)
-        γ_NH4Cl ~ exp(NH4Cl.logγ)
-        γ_H2SO4 ~ exp(H2SO4.logγ)
-        γ_HHSO4 ~ exp(HHSO4.logγ)
-        γ_HNO3 ~ exp(HNO3.logγ)
-        γ_HCl ~ exp(HCl.logγ)
-
-        # Table 4 footnotes
-        γ_CaSO4 ~ 1.0 # From Table 4 footnote a, CaSO4 has an activity coefficient of zero,
-        # but that would mean that either the Ca or the SO4 concentration would have to be
-        # zero, so we set it to 1 here.
-        γ_KHSO4 ~ √(γ_HHSO4 * γ_KCl / γ_HCl) # From Table 4 footnote b.
-        γ_NH4HSO4 ~ √(γ_HHSO4 * γ_NH4Cl / γ_HCl) # From Table 4 footnote c
-        γ_NaHSO4 ~ √(γ_HHSO4 * γ_NaCl / γ_HCl) # From Table 4 footnote d
-        γ_NH43HSO42 ~ (γ_NH42SO4^3 * γ_NH4HSO4)^(1 / 5) # From Table 4 footnote e
 
         # Ionic strength (equation in text below Equation 8)
         # We take the absolute value to avoid numerical issues as negative concentrations
@@ -426,30 +376,6 @@ end
         HNO3.I ~ I
         HCl.I ~ I
 
-        # Activities (Section 2.2)
-        a_CaNO32 ~ Ca.m * NO3.m^2 * γ_CaNO32^(1 + 2)
-        a_CaCl2 ~ Ca.m * Cl.m^2 * γ_CaCl2^(1 + 2)
-        a_CaSO4 ~ Ca.m * SO4.m * γ_CaSO4^(1 + 1)
-        a_KHSO4 ~ K.m * HSO4.m * γ_KHSO4^(1 + 1)
-        a_K2SO4 ~ K.m^2 * SO4.m * γ_K2SO4^(2 + 1)
-        a_KNO3 ~ K.m * NO3.m * γ_KNO3^(1 + 1)
-        a_KCl ~ K.m * Cl.m * γ_KCl^(1 + 1)
-        a_MgSO4 ~ Mg.m * SO4.m * γ_MgSO4^(1 + 1)
-        a_MgNO32 ~ Mg.m * NO3.m^2 * γ_MgNO32^(1 + 2)
-        a_MgCl2 ~ Mg.m * Cl.m^2 * γ_MgCl2^(1 + 2)
-        a_NaCl ~ Na.m * Cl.m * γ_NaCl^(1 + 1)
-        a_Na2SO4 ~ Na.m^2 * SO4.m * γ_Na2SO4^(2 + 1)
-        a_NaNO3 ~ Na.m * NO3.m * γ_NaNO3^(1 + 1)
-        a_NH42SO4 ~ NH4.m^2 * SO4.m * γ_NH42SO4^(2 + 1)
-        a_NH4NO3 ~ NH4.m * NO3.m * γ_NH4NO3^(1 + 1)
-        a_NH4Cl ~ NH4.m * Cl.m * γ_NH4Cl^(1 + 1)
-        a_NH4HSO4 ~ NH4.m * HSO4.m * γ_NH4HSO4^(1 + 1)
-        a_NaHSO4 ~ Na.m * HSO4.m * γ_NaHSO4^(1 + 1)
-        a_NH43HSO42 ~ NH4.m^3 * HSO4.m^2 * γ_NH43HSO42^(3 + 2)
-        a_H2SO4 ~ H.m^2 * SO4.m * γ_H2SO4^(2 + 1)
-        a_HHSO4 ~ H.m * HSO4.m * γ_HHSO4^(1 + 1)
-        a_HNO3 ~ H.m * NO3.m * γ_HNO3^(1 + 1)
-        a_HCl ~ H.m * Cl.m * γ_HCl^(1 + 1)
 
         # Water content (Section 2.3)
         W ~ CaNO32.M / maw_CaNO32.m_aw +
