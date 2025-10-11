@@ -28,43 +28,40 @@ unknowns(sys)
 
 prob = ODEProblem(sys,
     [
-        #sys.TotalNH => 1.0e-8,
-        # sys.TotalNa => 1.0e-8,
-        # sys.TotalCa => 1.0e-8,
-        # sys.TotalK => 1.0e-8,
-        # sys.TotalMg => 1.0e-8,
-        # sys.TotalCl => 1.0e-8,
-        # sys.TotalNO3 => 1.0e-8,
-        # sys.TotalSO4 => 5.0e-8,
+#        sys.TotalNH => 3.6e-7,
+        # sys.TotalNa => 2.6e-8,
+        # sys.TotalCa => 7.9e-13,
+        # sys.TotalK => 8.4e-10,
+        # sys.TotalMg => 0.0095,
+        # sys.TotalCl => 7.2e-9,
+        # sys.TotalNO3 => 6.7e-12,
+        # sys.TotalSO4 => 1.1e-6,
 
         sys.aq.NH42SO4.M => 1.0e-8,
     ],
         guesses = [
- sys.aq.NO3.m => 2.58766068993378e-6,
- sys.aq.H.m => 0.003967925913764908,
- sys.aq.Na.m => 0.009506196497264207,
- sys.aq.K.m => 0.00031687425644320324,
- sys.aq.SO4.m => 0.0007586406701139102,
- sys.aq.Ca.m => 2.998719036287425e-7,
- sys.aq.HSO4.m => 0.41395322629634074,
- sys.aq.Mg.m => 3598.450503551135,
- sys.aq.Cl.m => 0.0028059719127294233,
- sys.aq.OH.m => 7196.534148456016,
- sys.aq.MgCl2.M => -0.004072877469889674,
- sys.aq.W => 2.657538735666479e-6,
- sys.aq.NH42SO4.M => 1.0e-8,
- sys.aq.NH4HSO4.loga => 0.3364722366212129,
- sys.aq.MgSO4.loga => 11.608235644774552,
- sys.aq.MgCl2.loga => 50.61605005134875,
- sys.aq.NH42SO4.loga => 0.6418538861723947,
- sys.aq.HNO3.loga => 14.73180128983843,
- sys.aq.Na2SO4.loga => -0.7339691750802004,
- sys.aq.MgNO32.loga => 35.45506712678484,
- sys.aq.K2SO4.loga => -4.135166556742356,
- sys.aq.CaCl2.loga => 27.40787756461434,
- sys.aq.NH43HSO42.loga => 3.4011973816621555
+      sys.aq.NH3.a => 5.032615680305679e7
+       sys.g.NH3.p => 873111.6725027211
+  sys.aq.HNO3_aq.a => 4.15060282398223e-23
+       sys.g.HCl.p => 1.2438271462882213e-22
+   sys.aq.HCl_aq.a => 3.109567865720556e-19
+      sys.g.HNO3.p => 4.809235899875041e-23
+      sys.aq.NO3.m => 2.5438502543999034e-6
+        sys.aq.H.m => 7.877841795370184e-31
+       sys.aq.Na.m => 0.009705080607278411
+        sys.aq.K.m => 0.000317301939985797
+      sys.aq.SO4.m => 0.0007334329544224122
+       sys.aq.Ca.m => 3.00641254139863e-7
+     sys.aq.HSO4.m => 0.4044098262494704
+       sys.aq.Mg.m => 3603.2341676309115
+       sys.aq.Cl.m => 0.002734148046641479
+       sys.aq.OH.m => 7206.107562245912
+    sys.aq.MgCl2.M => -0.0040579808546589696
+          sys.aq.W => 2.644286531554314e-6
+ sys.aq.HCl.logγₜ₀ => 14.256920312707601
+  sys.aq.NH42SO4.M => 1.0e-8
     ],
-#    initializealg = ShampineCollocationInit(),
+    initializealg = BrownFullBasicInit(nlsolve=RobustMultiNewton()),
     (0.0, 1.0),
     use_scc = false)
 
@@ -74,6 +71,9 @@ prob = ODEProblem(sys,
 sol = solve(prob, Rosenbrock23())
 
 collect(zip(unknowns(sys), sol.u[1]))
+
+[var => val for (var, val) in zip(unknowns(sys), sol.u[1])]
+
 sol[sys.aq.W]
 sol[sys.aq.I]
 
@@ -81,6 +81,12 @@ let
     vars = [        sys.aq.NH4.m,sys.aq.Na.m,sys.aq.H.m,        sys.aq.Ca.m,        sys.aq.K.m,
         sys.aq.Mg.m,sys.aq.Cl.m,sys.aq.NO3.m,sys.aq.SO4.m,sys.aq.HSO4.m,sys.aq.OH.m,
         sys.aq.NH3.m,sys.aq.HNO3_aq.m,sys.aq.HCl_aq.m]
+        collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
+
+let
+    vars = [sys.TotalNH, sys.TotalNa, sys.TotalCa, sys.TotalK,
+        sys.TotalMg, sys.TotalCl, sys.TotalNO3, sys.TotalSO4]
         collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
