@@ -30,19 +30,19 @@ end
     # end
     @variables begin
         #! format: off
-        #NH4(t), [description = "Molarity of NH4+ in the solid", unit = u"mol/m^3", guess=1e-8]
-        #Na(t), [description = "Molarity of Na+ in the solid", unit = u"mol/m^3", guess=1e-8]
-        #Ca(t), [description = "Molarity of Ca2+ in the solid", unit = u"mol/m^3", guess=1e-8]
-        #K(t), [description = "Molarity of K+ in the solid", unit = u"mol/m^3", guess=1e-8]
-        #Mg(t), [description = "Molarity of Mg2+ in the solid", unit = u"mol/m^3", guess=1e-8]
-        #Cl(t), [description = "Molarity of Cl- in the solid", unit = u"mol/m^3", guess=1e-8]
-        #NO3(t), [description = "Molarity of NO3- in the solid", unit = u"mol/m^3", guess=1e-8]
-        #SO4(t), [description = "Molarity of SO4-- in the solid", unit = u"mol/m^3", guess=1e-8]
-        #HSO4(t), [description = "Molarity of HSO4- in the solid", unit = u"mol/m^3", guess=1e-8]
+        NH4(t), [description = "Molarity of NH4+ in the solid", unit = u"mol/m^3", guess=1e-14]
+        Na(t), [description = "Molarity of Na+ in the solid", unit = u"mol/m^3", guess=1e-14]
+        Ca(t), [description = "Molarity of Ca2+ in the solid", unit = u"mol/m^3", guess=1e-14]
+        K(t), [description = "Molarity of K+ in the solid", unit = u"mol/m^3", guess=1e-14]
+        Mg(t), [description = "Molarity of Mg2+ in the solid", unit = u"mol/m^3", guess=1e-14]
+        Cl(t), [description = "Molarity of Cl- in the solid", unit = u"mol/m^3", guess=1e-14]
+        NO3(t), [description = "Molarity of NO3- in the solid", unit = u"mol/m^3", guess=1e-14]
+        #SO4(t), [description = "Molarity of SO4-- in the solid", unit = u"mol/m^3", guess=1e-14]
+        #HSO4(t), [description = "Molarity of HSO4- in the solid", unit = u"mol/m^3", guess=1e-14]
         #! format: on
     end
     @equations begin
-        #0 ~ min(NH4, Na, Ca, K, Mg, Cl, NO3, SO4, HSO4) # Non-negativity constraints
-        #SO4 ~ HSO4
+        #0 ~ min(NH4, Na, Ca, K, Mg, Cl, NO3, SO4)#, HSO4) # Non-negativity constraints
+#        SO4 ~ HSO4
     end
 end

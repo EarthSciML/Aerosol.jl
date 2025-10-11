@@ -28,16 +28,16 @@ unknowns(sys)
 
 prob = ODEProblem(sys,
     [
-#        sys.TotalNH => 3.6e-7,
-        # sys.TotalNa => 2.6e-8,
-        # sys.TotalCa => 7.9e-13,
-        # sys.TotalK => 8.4e-10,
-        # sys.TotalMg => 0.0095,
-        # sys.TotalCl => 7.2e-9,
-        # sys.TotalNO3 => 6.7e-12,
-        # sys.TotalSO4 => 1.1e-6,
+        sys.TotalNH => 3.6e-7,
+        sys.TotalNa => 2.6e-8,
+         sys.TotalCa => 7.9e-13,
+        sys.TotalK => 8.4e-10,
+        sys.TotalMg => 0.0095,
+         sys.TotalCl => 7.2e-9,
+         sys.TotalNO3 => 6.7e-12,
+        sys.TotalSO4 => 1.1e-6,
 
-        sys.aq.NH42SO4.M => 1.0e-8,
+        #sys.aq.NH42SO4.M => 1.0e-8,
     ],
         guesses = [
       sys.aq.NH3.a => 5.032615680305679e7

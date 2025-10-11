@@ -92,14 +92,14 @@ include("equilibria.jl")
         eq.r27.logK_eq ~ aq.NH43HSO42.loga
 
         # Mass Balance
-        TotalNH ~ (aq.NH4.m  + aq.NH3.m) * aq.W + g.NH3.M #+ s.NH4 #
-        TotalNa ~ aq.Na.m * aq.W #+ s.Na
-        TotalCa ~ aq.Ca.m * aq.W #+ s.Ca
-        TotalK ~ aq.K.m * aq.W #+ s.K
-        TotalMg ~ aq.Mg.m * aq.W #+ s.Mg
-        TotalCl ~  (aq.Cl.m + aq.HCl_aq.m) * aq.W + g.HCl.M #+ s.Cl #
-        TotalNO3 ~ aq.NO3.m * aq.W + g.HNO3.M #+ s.NO3 #
-        TotalSO4 ~ (aq.SO4.m + aq.HSO4.m) * aq.W + g.H2SO4.M #+ s.SO4 #+ s.HSO4 #
+        TotalNH ~ (aq.NH4.m  + aq.NH3.m) * aq.W + g.NH3.M + s.NH4
+        TotalNa ~ aq.Na.m * aq.W + s.Na
+        TotalCa ~ aq.Ca.m * aq.W + s.Ca
+        TotalK ~ aq.K.m * aq.W + s.K
+        TotalMg ~ aq.Mg.m * aq.W + s.Mg
+        TotalCl ~  (aq.Cl.m + aq.HCl_aq.m) * aq.W + g.HCl.M + s.Cl
+        TotalNO3 ~ aq.NO3.m * aq.W + g.HNO3.M + s.NO3
+        TotalSO4 ~ (aq.SO4.m + aq.HSO4.m) * aq.W + g.H2SO4.M #+ s.SO4 #+ s.HSO4
 
         #aq.NH3.m ~ m_one
         #aq.HCl_aq.m ~ m_one
@@ -109,15 +109,15 @@ include("equilibria.jl")
         #g.HNO3.M ~ M_one
         #g.HCl.M ~ M_one
 
-        D(aq.NH42SO4.M) ~ 0.0
-        #D(TotalNH) ~ 0.0
-        # D(TotalNa) ~ 0.0
-        # D(TotalCa) ~ 0.0
-        # D(TotalK) ~ 0.0
-        # D(TotalMg) ~ 0.0
-        # D(TotalCl) ~ 0.0
-        # D(TotalNO3) ~ 0.0
-        # D(TotalSO4) ~ 0.0
+        #D(aq.NH42SO4.M) ~ 0.0
+        D(TotalNH) ~ 0.0
+         D(TotalNa) ~ 0.0
+         D(TotalCa) ~ 0.0
+        D(TotalK) ~ 0.0
+         D(TotalMg) ~ 0.0
+        D(TotalCl) ~ 0.0
+        D(TotalNO3) ~ 0.0
+         D(TotalSO4) ~ 0.0
 
         # aq.NH4Cl.M ~ 0 # Not present in Table 2?
         # aq.NH4NO3.M ~ 0 # Not present in Table 2?
