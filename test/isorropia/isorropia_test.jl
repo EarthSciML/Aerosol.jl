@@ -62,13 +62,20 @@ prob = ODEProblem(sys,
   sys.aq.NH42SO4.M => 1.0e-8
     ],
     initializealg = BrownFullBasicInit(nlsolve=RobustMultiNewton()),
-    (0.0, 1.0),
+    (0.0, 10.0),
     use_scc = false)
 
 #     collect(zip(unknowns(sys), prob.u0))
 # filter(x -> x[2] < 0, collect(zip(unknowns(sys), prob.u0)))
 
 sol = solve(prob, Rosenbrock23())
+
+using Plots
+plot(sol, vars=[sys.TotalSO4, sys.TotalNO3, sys.TotalNH, sys.TotalNa, sys.TotalCl,
+    sys.TotalK, sys.TotalMg, sys.TotalCa], lw=2, xlabel="Time (s)", ylabel="Total Concentration (mol/m³)",
+    title="Total Concentrations vs Time", label=["Total SO4--" "Total NO3-" "Total NH4+" "Total Na+" "Total Cl-" "Total K+" "Total Mg++" "Total Ca++"],
+    yscale=:log10)
+plot(sol, vars=[sys.aq.W])
 
 collect(zip(unknowns(sys), sol.u[1]))
 

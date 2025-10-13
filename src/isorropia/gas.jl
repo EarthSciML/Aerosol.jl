@@ -27,15 +27,10 @@ end
         HNO3 = Gas()
         HCl = Gas()
         NH3 = Gas()
-        H2SO4 = Gas()
     end
     @equations begin
-        # From Section 3.3 (item 1) in Fountoukis and Nenes (2007), all H2SO4 immediately goes to aerosol phase.
-        H2SO4.p ~ 0.0
-
         HNO3.T ~ T
         HCl.T ~ T
         NH3.T ~ T
-        H2SO4.T ~ T
     end
 end

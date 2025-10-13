@@ -20,6 +20,8 @@ include("equilibria.jl")
         m_one = 1.0, [unit = u"mol/kg"]
         M_one = 1.0, [unit = u"mol/m^3"]
         p_one = 1.0, [unit = u"Constants.atm"]
+
+        t_one = 1.0, [unit = u"s"]
     end
     @components begin
         aq = Aqueous(T = T, RH = RH)
@@ -111,13 +113,13 @@ include("equilibria.jl")
 
         #D(aq.NH42SO4.M) ~ 0.0
         D(TotalNH) ~ 0.0
-         D(TotalNa) ~ 0.0
+         D(TotalNa) ~ 0.2*TotalNa/M_one * cos(0.5π * t/t_one) * M_one / t_one
          D(TotalCa) ~ 0.0
         D(TotalK) ~ 0.0
          D(TotalMg) ~ 0.0
         D(TotalCl) ~ 0.0
-        D(TotalNO3) ~ 0.0
-         D(TotalSO4) ~ 0.0
+        D(TotalNO3) ~ 0.2*TotalNO3/M_one * cos(3π * t/t_one) * M_one / t_one
+         D(TotalSO4) ~ 0.2*TotalSO4/M_one * sin(2π * t/t_one) * M_one / t_one
 
         # aq.NH4Cl.M ~ 0 # Not present in Table 2?
         # aq.NH4NO3.M ~ 0 # Not present in Table 2?

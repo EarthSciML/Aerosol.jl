@@ -1,5 +1,5 @@
 using Aerosol
-import Aerosol.ISORROPIA: Aqueous
+import Aerosol.ISORROPIA: Aqueous, Ion, Salt
 using ModelingToolkit
 using ModelingToolkit: t, D
 using DynamicQuantities
@@ -161,17 +161,28 @@ end
         m5_no_change = 0.0, [unit = u"(mol/kg)^5/s"]
     end
     @equations begin
-        # This time, we fix the activities at their initial values.
-        D(aq.NH43HSO42.loga) ~ 0
-        D(aq.CaCl2.loga) ~ 0
-        D(aq.K2SO4.loga) ~ 0
-        D(aq.MgNO32.loga) ~ 0
-        D(aq.Na2SO4.loga) ~ 0
-        D(aq.HNO3.loga) ~ 0
-        D(aq.NH42SO4.loga) ~ 0
-        D(aq.MgCl2.loga) ~ 0
-        D(aq.MgSO4.loga) ~ 0
-        D(aq.NH4HSO4.loga) ~ 0
+        # aqueous activities set by Table 2.
+        aq.CaNO32.loga ~ 0 # r1
+        aq.CaCl2.loga ~ 0 # r2
+        aq.CaSO4.loga ~ 0 # r3
+        aq.K2SO4.loga ~ 0 # r4
+        aq.KHSO4.loga ~ 0 # r5
+        aq.KNO3.loga ~ 0 # r6
+        aq.KCl.loga ~ 0 # r7
+        aq.MgSO4.loga ~ 0 # r8
+        aq.MgNO32.loga ~ 0 # r9
+        aq.MgCl2.loga ~ 0 # r10
+        aq.HNO3.loga ~ 0 # r14
+        aq.HCl.loga ~ 0 # r16
+        aq.Na2SO4.loga ~ 0 # r19
+        aq.NH42SO4.loga ~ 0 # r20
+        aq.NaNO3.loga ~ 0 # r22
+        aq.NaCl.loga ~ 0 # r23
+        aq.NaHSO4.loga ~ 0 # r24
+        aq.NH4HSO4.loga ~ 0 # r26
+        aq.NH43HSO42.loga ~ 0 # r27
+
+        D(aq.NH4.M) ~ 0
 
         # These species are neutral and are not in any salts, so
         # we fix their concentration.
@@ -179,29 +190,46 @@ end
         aq.HCl_aq.m ~ m_one
         aq.HNO3_aq.m ~ m_one
 
-        # We need to fix the molar concentration of one of the salts in
-        # order to be able to calculate the water concentration.
-        D(aq.NH42SO4.M) ~ M_no_change
+        aq.OH.m ~ m_one
     end
 end
+
+        # 22 salts, 17 salt activity equations.
+# Missing from reactions
+# NH4NO3 # Gas to solid
+# NH4Cl # Gas to solid
+# HHSO4 # Only used to calculate activity coefficient for other salts.
+# HNO3 # gas to aqueous
+# HCl # gas to aqueous
+
 
 @named aqt = AqueousTestActivity()
 sys = mtkcompile(aqt)
 
 prob = ODEProblem(sys,
     [
-        sys.aq.NH43HSO42.loga => log(0.079),
-        sys.aq.CaCl2.loga => log(1.4),
-        sys.aq.K2SO4.loga => log(0.039),
-        sys.aq.MgNO32.loga => log(0.4),
-        sys.aq.Na2SO4.loga => log(0.053),
-        sys.aq.HNO3.loga => log(1.0),
-        sys.aq.NH42SO4.loga => log(0.043),
-        sys.aq.MgCl2.loga => log(2.4),
-        sys.aq.MgSO4.loga => log(0.042),
-        sys.aq.NH4HSO4.loga => log(0.83),
+    #     # sys.aq.CaNO32.loga => log(6.067e5)
+    #     # sys.aq.CaCl2.loga => log(7.974e11)
+    #     # #sys.aq.CaSO4.loga => 0
+    #     # sys.aq.K2SO4.loga => 0
+    #     # sys.aq.KHSO4.loga => 0
+    #     # sys.aq.KNO3.loga => 0
+    #     # sys.aq.KCl.loga => 0
+    #     # sys.aq.MgSO4.loga => 0
+    #     # sys.aq.MgNO32.loga => 0
+    #     # sys.aq.MgCl2.loga => 0
+    #     # sys.aq.HSO4.a => 0
+    #     # sys.aq.NH4.a => 0
+    #     # sys.aq.H.a => 0
+    #     # sys.aq.Na2SO4.loga => 0
+    #     # sys.aq.NH42SO4.loga => 0
+    #     # sys.aq.NaNO3.loga => 0
+    #     # sys.aq.NaCl.loga => 0
+    #     # sys.aq.NaHSO4.loga => 0
+    #     # sys.aq.NH4HSO4.loga => 0
+    #     # sys.aq.NH43HSO42.loga => 0
 
-        sys.aq.NH42SO4.M => 1.0e-8,
+        sys.aq.NH4.M => 1.0e-8
     ],
     (0.0, 1.0), use_scc=false,
     # guesses = [
@@ -228,7 +256,7 @@ end
 let
 vars = [sys.aq.NH4NO3.M, sys.aq.NH4Cl.M, sys.aq.NH4HSO4.M, sys.aq.NH42SO4.M, sys.aq.NH43HSO42.M,
     sys.aq.NaCl.M, sys.aq.Na2SO4.M, sys.aq.NaNO3.M, sys.aq.NaHSO4.M,
-    sys.aq.H2SO4.M, sys.aq.HCl.M, sys.aq.HNO3.M, sys.aq.KHSO4.M, sys.aq.HHSO4.M,
+    sys.aq.HCl.M, sys.aq.HNO3.M, sys.aq.KHSO4.M, sys.aq.HHSO4.M,
     sys.aq.CaNO32.M, sys.aq.CaCl2.M, sys.aq.CaSO4.M,
     sys.aq.KHSO4.M, sys.aq.K2SO4.M, sys.aq.KNO3.M, sys.aq.KCl.M,
     sys.aq.MgSO4.M, sys.aq.MgNO32.M, sys.aq.MgCl2.M]
@@ -394,15 +422,14 @@ unknowns(aqt)
 using Plots
 using Aerosol.ISORROPIA: Salt, Ion
 
-
-@mtkmodel BinarySalt begin
+@mtkmodel BinarySolution begin
     @components begin
-        cation = Ion(z)
-        anion = Ion(z)
-        salt = Salt(cation = cation, anion = anion, drh = 0, l_t = 0, q, ν_cation=1, ν_anion=1)
+        salt = Salt(drh = 0, l_t = 0, q,  ν_cation, ν_anion,
+            z_cation, z_anion)
     end
     @constants begin
         I_rate = 1.0, [unit = u"mol/kg/s"]
+        W = 1.0e-6, [unit = u"kg/m^3"]
     end
     @variables begin
         Aᵧ_term(t), [description = "Debye-Hückel term used in Equation 7 and 8"]
@@ -411,8 +438,8 @@ using Aerosol.ISORROPIA: Salt, Ion
     end
     @equations begin
         D(salt.I) ~ I_rate
-        cation.m ~ salt.ν_cation * salt.I
-        anion.m ~ salt.ν_anion * salt.I
+        salt.logm ~ log(salt.I / salt.m_one)
+        salt.W ~ W
 
         Aᵧ_term ~ salt.Aᵧ * √salt.I / (√salt.I_one + √salt.I) / √salt.I_one
         F_cat ~ salt.Y * salt.logγ⁰ + Aᵧ_term * salt.zz * salt.Y
@@ -436,8 +463,8 @@ salts = [
 plots = []
 
 for s in salts
-    @mtkcompile slt = BinarySalt(cation.z=s.z_cat, salt.ν_cation=s.ν_cat,
-    anion.z=s.z_an, salt.ν_anion=s.ν_an, salt.q=s.q)
+    @mtkcompile slt = BinarySolution(salt.z_cation=s.z_cat, salt.ν_cation=s.ν_cat,
+    salt.z_anion=s.z_an, salt.ν_anion=s.ν_an, salt.q=s.q)
 
 prob = ODEProblem(slt,
     [
