@@ -39,28 +39,38 @@ prob = ODEProblem(sys,
         sys.aq.RH => 1.0
         sys.aq.NH4.M => 1.0e-8
     ],
-#         guesses = [
-#       sys.aq.NH3.a => 5.032615680305679e7
-#        sys.g.NH3.p => 873111.6725027211
-#   sys.aq.HNO3_aq.a => 4.15060282398223e-23
-#        sys.g.HCl.p => 1.2438271462882213e-22
-#    sys.aq.HCl_aq.a => 3.109567865720556e-19
-#       sys.g.HNO3.p => 4.809235899875041e-23
-#       sys.aq.NO3.m => 2.5438502543999034e-6
-#         sys.aq.H.m => 7.877841795370184e-31
-#        sys.aq.Na.m => 0.009705080607278411
-#         sys.aq.K.m => 0.000317301939985797
-#       sys.aq.SO4.m => 0.0007334329544224122
-#        sys.aq.Ca.m => 3.00641254139863e-7
-#      sys.aq.HSO4.m => 0.4044098262494704
-#        sys.aq.Mg.m => 3603.2341676309115
-#        sys.aq.Cl.m => 0.002734148046641479
-#        sys.aq.OH.m => 7206.107562245912
-#     sys.aq.MgCl2.M => -0.0040579808546589696
-#           sys.aq.W => 2.644286531554314e-6
-#  sys.aq.HCl.logγₜ₀ => 14.256920312707601
-#   sys.aq.NH42SO4.M => 1.0e-8
-#     ],
+         guesses = [
+       sys.aq.NH4.m => 13.0
+       sys.aq.NO3.m => 620.0
+         sys.aq.H.m => 0.095
+        sys.aq.Na.m => 87.0
+         sys.aq.K.m => 3.0
+       sys.aq.SO4.m => 4.7
+        sys.aq.Ca.m => 14.0
+      sys.aq.HSO4.m => 93.0
+        sys.aq.Mg.m => 990.0
+        sys.aq.Cl.m => 1400.0
+      sys.aq.HSO4.W => 7.9e-10
+    sys.aq.CaNO32.m => 7.5
+     sys.aq.CaCl2.m => 6.3
+     sys.aq.CaSO4.m => 0.0096
+     sys.aq.K2SO4.m => 0.069
+      sys.aq.KNO3.m => 0.017
+       sys.aq.KCl.m => 0.00026
+     sys.aq.MgSO4.m => 0.01
+    sys.aq.MgNO32.m => 300.0
+     sys.aq.MgCl2.m => 690.0
+      sys.aq.NaCl.m => 0.00052
+    sys.aq.Na2SO4.m => 0.39
+     sys.aq.NaNO3.m => 0.065
+   sys.aq.NH42SO4.m => 0.77
+      sys.aq.HNO3.m => 7.7e-5
+       sys.aq.HCl.m => 0.095
+     sys.aq.KHSO4.m => 2.9
+   sys.aq.NH4HSO4.m => 0.68
+    sys.aq.NaHSO4.m => 86.0
+ sys.aq.NH43HSO42.m => 3.5
+     ],
     initializealg = BrownFullBasicInit(nlsolve=RobustMultiNewton()),
     (0.0, 10.0),
     use_scc = false)
@@ -69,16 +79,9 @@ prob = ODEProblem(sys,
 
 sol = solve(prob, Rosenbrock23())
 
-using Plots
-plot(sol, vars=[sys.TotalSO4, sys.TotalNO3, sys.TotalNH, sys.TotalNa, sys.TotalCl,
-    sys.TotalK, sys.TotalMg, sys.TotalCa], lw=2, xlabel="Time (s)", ylabel="Total Concentration (mol/m³)",
-    title="Total Concentrations vs Time", label=["Total SO4--" "Total NO3-" "Total NH4+" "Total Na+" "Total Cl-" "Total K+" "Total Mg++" "Total Ca++"],
-    yscale=:log10)
-plot(sol, vars=[sys.aq.W])
-
 collect(zip(unknowns(sys), sol.u[1]))
 
-[var => val for (var, val) in zip(unknowns(sys), sol.u[1])]
+[var => round(val; sigdigits=2) for (var, val) in zip(unknowns(sys), sol.u[1])]
 
 sol[sys.aq.W]
 sol[sys.aq.I]

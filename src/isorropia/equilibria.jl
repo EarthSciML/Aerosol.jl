@@ -11,7 +11,7 @@ parameterized by values from Table 2 in the same paper."""
         T, [unit = u"K", description = "Temperature"]
     end
     @variables begin
-        logK_eq(t), [description = "Log of the equilibrium constant"]
+        logK_eq(t), [description = "Log of the equilibrium constant", guess=logK⁰]
     end
     @equations begin
         logK_eq ~ logK⁰ + (-H⁺ * (T₀ / T - 1) - C⁺ * (1 + log(T₀ / T) - T₀ / T))
