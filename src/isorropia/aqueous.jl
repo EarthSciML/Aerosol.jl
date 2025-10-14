@@ -68,7 +68,7 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         T = 293.15, [description = "Temperature", unit = u"K"]
     end
     @variables begin
-        logm(t), [description = "Log of molality of the salt in water", guess = 0]
+        m(t), [description = "molality of the salt in water", unit=u"mol/kg", guess = 1]
         M(t), [description = "Molarity of the salt in air", unit = u"mol/m^3", guess = 1e-8]
         W(t), [description = "Aerosol water content in air", unit = u"kg/m^3", guess = 1e-6]
         X(t)
@@ -88,7 +88,7 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         loga(t), [description = "Log of the activity of the salt", guess = 0]
     end
     @equations begin
-        M ~ exp(logm) * m_one * W
+        M ~ m * W
         zz ~ z_cation * z_anion
 
         # Equation 6
@@ -97,8 +97,8 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
                  (F_cat / z_cation + F_an / z_anion)
 
         # Supplemental equations after equations 7 and 8
-        Y ~ ((z_cation + z_anion) / 2)^2 * ν_anion * exp(logm) * m_one / I
-        X ~ ((z_cation + z_anion) / 2)^2 * ν_cation * exp(logm) * m_one / I
+        Y ~ ((z_cation + z_anion) / 2)^2 * ν_anion * m / I
+        X ~ ((z_cation + z_anion) / 2)^2 * ν_cation * m / I
         # Equation 9
         logγ⁰ ~ zz * logΓ⁰
         # Equation 10
@@ -117,15 +117,15 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         elseif is_NH43HSO42
             logγ ~ (ParentScope(salt1.logγ) * 3 + ParentScope(salt2.logγ)) * (1 / 5) # From Table 4 footnote e
         else
-            logγ ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀ -
-                   (0.125 - c_1 * (T - T₀₂)) * A
+            logγ ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀ - (0.125 - c_1 * (T - T₀₂)) * A
         end
 
         # Equation in text below Equation 14
         A ~ -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
 
         # Activity (Section 2.2)
-        loga ~ ν_cation * logm + ν_anion * logm + (ν_cation + ν_anion) * logγ
+        loga ~ ν_cation * log(m/m_one) + ν_anion * log(m/m_one) +
+            (ν_cation + ν_anion) * logγ
     end
 end
 
@@ -432,7 +432,7 @@ end
         HNO3.W ~ W
         HCl.W ~ W
 
-        abs(NH4.W) ~ W
+        NH4.W ~ W
         Na.W ~ W
         H.W ~ W
         Ca.W ~ W
@@ -449,12 +449,12 @@ end
 
          # HHSO4 is only used to calculate activity coefficients of other species, so we
          # assume the concentration is zero.
-        HHSO4.logm ~ -20.0
+        HHSO4.m ~ 1e-20 * m_one
 
         # NH4Cl and NH4NO3 precipitate directly from gas, so we assume
         # the aqueous concentration is zero.
-        NH4Cl.logm ~ -20.0
-        NH4NO3.logm ~ -20.0
+        NH4Cl.m ~ 1e-20 * m_one
+        NH4NO3.m ~ 1e-20 * m_one
 
         # Mass balance
         NH4.M ~ sum([NH4NO3.M, NH4Cl.M, NH4HSO4.M, 2NH42SO4.M, 3NH43HSO42.M])

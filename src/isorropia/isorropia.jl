@@ -62,104 +62,66 @@ include("equilibria.jl")
         # Reactions based on information in Table 2 of Fountoukis and Nenes (2007).
         # The left-hand side of the reaction equation is the equilibrium constant and the
         # right-hand side is the ratio of the product and reactant activities.
-        # eq.r1.logK_eq ~ aq.CaNO32.loga
+        eq.r1.logK_eq ~ aq.CaNO32.loga
         eq.r2.logK_eq ~ aq.CaCl2.loga
-        # eq.r3.logK_eq ~ aq.CaSO4.loga * RH^2 # Not using because CaSO4 precipitates completely (Table 4 footnote a).
+        eq.r3.logK_eq ~ aq.CaSO4.loga #+ 2log(RH)
         eq.r4.logK_eq ~ aq.K2SO4.loga
-        #eq.r5.logK_eq ~ aq.KHSO4.loga
-        # eq.r6.logK_eq ~ aq.KNO3.loga
-        # eq.r7.logK_eq ~ aq.KCl.loga
+        eq.r5.logK_eq ~ aq.KHSO4.loga
+        eq.r6.logK_eq ~ aq.KNO3.loga
+        eq.r7.logK_eq ~ aq.KCl.loga
         eq.r8.logK_eq ~ aq.MgSO4.loga
         eq.r9.logK_eq ~ aq.MgNO32.loga
         eq.r10.logK_eq ~ aq.MgCl2.loga
         #eq.r11.logK_eq ~ log(aq.H.a) + log(aq.SO4.a) - log(aq.HSO4.a)
-        eq.r12.logK_eq ~ log(aq.NH3.a / m_one) - log(g.NH3.p / p_one)
-        eq.r13.logK_eq ~ log(aq.NH4.a / m_one) + log(aq.OH.a / m_one) -
-            log(aq.NH3.a / m_one) - log(RH)
-        #eq.r14.logK_eq ~ aq.HNO3.loga - log(g.HNO3.p / p_one) # K1
+        #eq.r12.logK_eq ~ log(aq.NH3.a / m_one) - log(g.NH3.p / p_one)
+        #eq.r13.logK_eq ~ log(aq.NH4.a / m_one) + log(aq.OH.a / m_one) -
+        #    log(aq.NH3.a / m_one) - log(RH)
+        eq.r14.logK_eq ~ aq.HNO3.loga #- log(g.HNO3.p / p_one) # K1
         #eq.r15.logK_eq ~ log(aq.HNO3_aq.a / m_one) - log(g.HNO3.p / p_one) # K1a
-        eq.r14.logK_eq - eq.r15.logK_eq ~ aq.HNO3.loga - log(aq.HNO3_aq.a / m_one) # K1b, from Table 2 footnote ♠
-        eq.r16.logK_eq ~ aq.HCl.loga - log(g.HCl.p / p_one) # K2
-        eq.r17.logK_eq ~ log(aq.HCl_aq.a / m_one) - log( g.HCl.p / p_one) # K2a
+        #eq.r14.logK_eq - eq.r15.logK_eq ~ aq.HNO3.loga - log(aq.HNO3_aq.a / m_one) # K1b, from Table 2 footnote ♠
+        eq.r16.logK_eq ~ aq.HCl.loga #- log(g.HCl.p / p_one) # K2
+        #eq.r17.logK_eq ~ log(aq.HCl_aq.a / m_one) - log( g.HCl.p / p_one) # K2a
         #eq.r16.logK_eq - eq.r17.logK_eq ~ aq.HCl.loga - log(aq.HCl_aq.a) # K2b, from Table 2 footnote ♦
         #eq.r18.logK_eq ~ log(aq.H.a / m_one) + log(aq.OH.a / m_one) - log(RH)
         eq.r19.logK_eq ~ aq.Na2SO4.loga
         eq.r20.logK_eq ~ aq.NH42SO4.loga
-        eq.r21.logK_eq ~ log(g.NH3.p / p_one) + log(g.HCl.p / p_one)
-        #eq.r22.logK_eq ~ aq.NaNO3.loga
-        #eq.r23.logK_eq ~ aq.NaCl.loga
-        #eq.r24.logK_eq ~ aq.NaHSO4.loga
-        eq.r25.logK_eq ~ log(g.NH3.p / p_one) + log(g.HNO3.p / p_one)
+        #eq.r21.logK_eq ~ log(g.NH3.p / p_one) + log(g.HCl.p / p_one)
+        eq.r22.logK_eq ~ aq.NaNO3.loga
+        eq.r23.logK_eq ~ aq.NaCl.loga
+        eq.r24.logK_eq ~ aq.NaHSO4.loga
+        #eq.r25.logK_eq ~ log(g.NH3.p / p_one) + log(g.HNO3.p / p_one)
         eq.r26.logK_eq ~ aq.NH4HSO4.loga
         eq.r27.logK_eq ~ aq.NH43HSO42.loga
 
         # Mass Balance
-        TotalNH ~ (aq.NH4.m  + aq.NH3.m) * aq.W + g.NH3.M + s.NH4
-        TotalNa ~ aq.Na.m * aq.W + s.Na
-        TotalCa ~ aq.Ca.m * aq.W + s.Ca
-        TotalK ~ aq.K.m * aq.W + s.K
-        TotalMg ~ aq.Mg.m * aq.W + s.Mg
-        TotalCl ~  (aq.Cl.m + aq.HCl_aq.m) * aq.W + g.HCl.M + s.Cl
-        TotalNO3 ~ aq.NO3.m * aq.W + g.HNO3.M + s.NO3
-        TotalSO4 ~ (aq.SO4.m + aq.HSO4.m) * aq.W + g.H2SO4.M #+ s.SO4 #+ s.HSO4
+        # TotalNH ~ (aq.NH4.m  + aq.NH3.m) * aq.W + g.NH3.M + s.NH4
+        # TotalNa ~ aq.Na.m * aq.W + s.Na
+        # TotalCa ~ aq.Ca.m * aq.W + s.Ca
+        # TotalK ~ aq.K.m * aq.W + s.K
+        # TotalMg ~ aq.Mg.m * aq.W + s.Mg
+        # TotalCl ~  (aq.Cl.m + aq.HCl_aq.m) * aq.W + g.HCl.M + s.Cl
+        # TotalNO3 ~ aq.NO3.m * aq.W + g.HNO3.M + s.NO3
+        # TotalSO4 ~ (aq.SO4.m + aq.HSO4.m) * aq.W + g.H2SO4.M #+ s.SO4 #+ s.HSO4
 
-        #aq.NH3.m ~ m_one
-        #aq.HCl_aq.m ~ m_one
-        #aq.HNO3_aq.m ~ m_one
+        aq.NH3.m ~ m_one
+        aq.HCl_aq.m ~ m_one
+        aq.HNO3_aq.m ~ m_one
+        aq.OH.m ~ m_one
 
-        #g.NH3.M ~ M_one
-        #g.HNO3.M ~ M_one
-        #g.HCl.M ~ M_one
+        g.NH3.M ~ M_one * 1e-10
+        g.HNO3.M ~ M_one * 1e-10
+        g.HCl.M ~ M_one * 1e-10
 
+        D(aq.NH4.M) ~ 0
         #D(aq.NH42SO4.M) ~ 0.0
-        D(TotalNH) ~ 0.0
-         D(TotalNa) ~ 0.2*TotalNa/M_one * cos(0.5π * t/t_one) * M_one / t_one
-         D(TotalCa) ~ 0.0
-        D(TotalK) ~ 0.0
-         D(TotalMg) ~ 0.0
-        D(TotalCl) ~ 0.0
-        D(TotalNO3) ~ 0.2*TotalNO3/M_one * cos(3π * t/t_one) * M_one / t_one
-         D(TotalSO4) ~ 0.2*TotalSO4/M_one * sin(2π * t/t_one) * M_one / t_one
-
-        # aq.NH4Cl.M ~ 0 # Not present in Table 2?
-        # aq.NH4NO3.M ~ 0 # Not present in Table 2?
-
-        # aq.Mg.m ~ 0
-        # aq.OH.m ~ 0
-        # aq.CaNO32.M ~ 0
-        # aq.CaCl2.M ~ 0
-        # aq.K2SO4.M ~ 0
-        # aq.KNO3.M ~ 0
-        # aq.KCl.M ~ 0
-        # aq.MgSO4.M ~ 0
-        # aq.MgNO32.M ~ 0
-        # aq.MgCl2.M ~ 0
-        # #aq.NaCl.M ~ 0
-        # # aq.Na2SO4.M ~ 0
-        # aq.NaNO3.M ~ 0
-        # aq.NH42SO4.M ~ 0
-        # aq.NH4NO3.M ~ 0
-        # aq.NH4Cl.M ~ 0
-        # aq.NH43HSO42.M ~ 0
-        # # aq.HNO3.M ~ 0
-        # #aq.HCl.M ~ 0
-        # s.CaNO32.M ~ 0
-        # s.CaCl2.M ~ 0
-        # s.K2SO4.M ~ 0
-        # s.KNO3.M ~ 0
-        # s.KCl.M ~ 0
-        # #s.MgSO4.M ~ 0
-        # s.MgNO32.M ~ 0
-        # s.MgCl2.M ~ 0
-        # s.NaCl.M ~ 0
-        # s.NaNO3.M ~ 0
-        # s.Na2SO4.M ~ 0
-        # s.NH4Cl.M ~ 0
-        # s.NH4NO3.M ~ 0
-        # #s.NH42SO4.M ~ 0
-        # s.NH43HSO42.M ~ 0
-        # g.HNO3.M ~ 0
-        # g.HCl.M ~ 0
+        # D(TotalNH) ~ 0.0
+        #  D(TotalNa) ~ 0.2*TotalNa/M_one * cos(0.5π * t/t_one) * M_one / t_one
+        #  D(TotalCa) ~ 0.0
+        # D(TotalK) ~ 0.0
+        #  D(TotalMg) ~ 0.0
+        # D(TotalCl) ~ 0.0
+        # D(TotalNO3) ~ 0.2*TotalNO3/M_one * cos(3π * t/t_one) * M_one / t_one
+        #  D(TotalSO4) ~ 0.2*TotalSO4/M_one * sin(2π * t/t_one) * M_one / t_one
     end
 end
 

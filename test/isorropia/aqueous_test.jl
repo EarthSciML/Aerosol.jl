@@ -4,6 +4,7 @@ using ModelingToolkit
 using ModelingToolkit: t, D
 using DynamicQuantities
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
+using NonlinearSolve
 using OrdinaryDiffEq
 using Test
 
@@ -143,7 +144,7 @@ vars = [sys.aq.NH4NO3.loga, sys.aq.NH4Cl.loga, sys.aq.NH4HSO4.loga, sys.aq.NH42S
 collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
-
+lb, ub = -20, 100
 
 @mtkmodel AqueousTestActivity begin
     @components begin
@@ -162,25 +163,25 @@ end
     end
     @equations begin
         # aqueous activities set by Table 2.
-        aq.CaNO32.loga ~ 0 # r1
-        aq.CaCl2.loga ~ 0 # r2
-        aq.CaSO4.loga ~ 0 # r3
-        aq.K2SO4.loga ~ 0 # r4
-        aq.KHSO4.loga ~ 0 # r5
-        aq.KNO3.loga ~ 0 # r6
-        aq.KCl.loga ~ 0 # r7
-        aq.MgSO4.loga ~ 0 # r8
-        aq.MgNO32.loga ~ 0 # r9
-        aq.MgCl2.loga ~ 0 # r10
-        aq.HNO3.loga ~ 0 # r14
-        aq.HCl.loga ~ 0 # r16
-        aq.Na2SO4.loga ~ 0 # r19
-        aq.NH42SO4.loga ~ 0 # r20
-        aq.NaNO3.loga ~ 0 # r22
-        aq.NaCl.loga ~ 0 # r23
-        aq.NaHSO4.loga ~ 0 # r24
-        aq.NH4HSO4.loga ~ 0 # r26
-        aq.NH43HSO42.loga ~ 0 # r27
+        aq.CaNO32.loga ~ clamp(13.0, lb, ub) # r1
+        aq.CaCl2.loga ~ clamp(27.0, lb, ub) # r2
+        aq.CaSO4.loga ~ clamp(-10.0, lb, ub) # r3
+        aq.K2SO4.loga ~ clamp(-4.2, lb, ub) # r4
+        aq.KHSO4.loga ~ clamp(3.2, lb, ub) # r5
+        aq.KNO3.loga ~ clamp(-0.14, lb, ub) # r6
+        aq.KCl.loga ~ clamp(2.2, lb, ub) # r7
+        aq.MgSO4.loga ~ clamp(12.0, lb, ub) # r8
+        aq.MgNO32.loga ~ clamp(35.0, lb, ub) # r9
+        aq.MgCl2.loga ~ clamp(51.0, lb, ub) # r10
+        aq.HNO3.loga ~ clamp(-11.0, lb, ub) # r14
+        aq.HCl.loga ~ clamp(14.0, lb, ub) # r16
+        aq.Na2SO4.loga ~ clamp(-0.73, lb, ub) # r19
+        aq.NH42SO4.loga ~ clamp(0.63, lb, ub) # r20
+        aq.NaNO3.loga ~ clamp(2.5, lb, ub) # r22
+        aq.NaCl.loga ~ clamp(3.6, lb, ub) # r23
+        aq.NaHSO4.loga ~ clamp(10.0, lb, ub) # r24
+        aq.NH4HSO4.loga ~ clamp(0.32, lb, ub) # r26
+        aq.NH43HSO42.loga ~ clamp(3.4, lb, ub) # r27
 
         D(aq.NH4.M) ~ 0
 
@@ -194,49 +195,16 @@ end
     end
 end
 
-        # 22 salts, 17 salt activity equations.
-# Missing from reactions
-# NH4NO3 # Gas to solid
-# NH4Cl # Gas to solid
-# HHSO4 # Only used to calculate activity coefficient for other salts.
-# HNO3 # gas to aqueous
-# HCl # gas to aqueous
-
 
 @named aqt = AqueousTestActivity()
 sys = mtkcompile(aqt)
 
 prob = ODEProblem(sys,
     [
-    #     # sys.aq.CaNO32.loga => log(6.067e5)
-    #     # sys.aq.CaCl2.loga => log(7.974e11)
-    #     # #sys.aq.CaSO4.loga => 0
-    #     # sys.aq.K2SO4.loga => 0
-    #     # sys.aq.KHSO4.loga => 0
-    #     # sys.aq.KNO3.loga => 0
-    #     # sys.aq.KCl.loga => 0
-    #     # sys.aq.MgSO4.loga => 0
-    #     # sys.aq.MgNO32.loga => 0
-    #     # sys.aq.MgCl2.loga => 0
-    #     # sys.aq.HSO4.a => 0
-    #     # sys.aq.NH4.a => 0
-    #     # sys.aq.H.a => 0
-    #     # sys.aq.Na2SO4.loga => 0
-    #     # sys.aq.NH42SO4.loga => 0
-    #     # sys.aq.NaNO3.loga => 0
-    #     # sys.aq.NaCl.loga => 0
-    #     # sys.aq.NaHSO4.loga => 0
-    #     # sys.aq.NH4HSO4.loga => 0
-    #     # sys.aq.NH43HSO42.loga => 0
-
         sys.aq.NH4.M => 1.0e-8
     ],
+        initializealg = BrownFullBasicInit(nlsolve=RobustMultiNewton()),
     (0.0, 1.0), use_scc=false,
-    # guesses = [
-    #     sys.aq.Ca.m => 0.5,
-    #     sys.aq.SO4.m => 0.5,
-    #     sys.aq.Mg.m => 0.5,
-    # ]
     )
 
 sol = solve(prob, Rosenbrock23())
@@ -245,6 +213,20 @@ collect(zip(unknowns(sys), prob.u0))
 collect(zip(unknowns(sys), sol.u[1]))
 
 collect(zip([sys.aq.I, sys.aq.W], sol[[sys.aq.I, sys.aq.W]][1]))
+
+salts = [:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl, :MgSO4, :MgNO32, :MgCl2,
+        :NaCl, :Na2SO4, :NaNO3,
+        :NH42SO4, :NH4NO3, :NH4Cl, :NH4HSO4, :NaHSO4, :NH43HSO42, :HHSO4, :HNO3, :HCl]
+
+let
+    vars = [reduce(getproperty, [sys, :aq, salt, :loga]) for salt in salts]
+    collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
+end
+
+let
+    vars = [reduce(getproperty, [sys, :aq, salt, :m]) for salt in salts]
+    collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
+end
 
 let
 vars = [sys.aq.NH4.m, sys.aq.Na.m, sys.aq.H.m, sys.aq.Ca.m, sys.aq.K.m, sys.aq.Mg.m,

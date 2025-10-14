@@ -28,45 +28,44 @@ unknowns(sys)
 
 prob = ODEProblem(sys,
     [
-        sys.TotalNH => 3.6e-7,
-        sys.TotalNa => 2.6e-8,
-         sys.TotalCa => 7.9e-13,
-        sys.TotalK => 8.4e-10,
-        sys.TotalMg => 0.0095,
-         sys.TotalCl => 7.2e-9,
-         sys.TotalNO3 => 6.7e-12,
-        sys.TotalSO4 => 1.1e-6,
-
-        #sys.aq.NH42SO4.M => 1.0e-8,
+        # sys.TotalNH => 3.6e-7,
+        # sys.TotalNa => 2.6e-8,
+        #  sys.TotalCa => 7.9e-13,
+        # sys.TotalK => 8.4e-10,
+        # sys.TotalMg => 0.0095,
+        #  sys.TotalCl => 7.2e-9,
+        #  sys.TotalNO3 => 6.7e-12,
+        # sys.TotalSO4 => 1.1e-6,
+        sys.aq.RH => 1.0
+        sys.aq.NH4.M => 1.0e-8
     ],
-        guesses = [
-      sys.aq.NH3.a => 5.032615680305679e7
-       sys.g.NH3.p => 873111.6725027211
-  sys.aq.HNO3_aq.a => 4.15060282398223e-23
-       sys.g.HCl.p => 1.2438271462882213e-22
-   sys.aq.HCl_aq.a => 3.109567865720556e-19
-      sys.g.HNO3.p => 4.809235899875041e-23
-      sys.aq.NO3.m => 2.5438502543999034e-6
-        sys.aq.H.m => 7.877841795370184e-31
-       sys.aq.Na.m => 0.009705080607278411
-        sys.aq.K.m => 0.000317301939985797
-      sys.aq.SO4.m => 0.0007334329544224122
-       sys.aq.Ca.m => 3.00641254139863e-7
-     sys.aq.HSO4.m => 0.4044098262494704
-       sys.aq.Mg.m => 3603.2341676309115
-       sys.aq.Cl.m => 0.002734148046641479
-       sys.aq.OH.m => 7206.107562245912
-    sys.aq.MgCl2.M => -0.0040579808546589696
-          sys.aq.W => 2.644286531554314e-6
- sys.aq.HCl.logγₜ₀ => 14.256920312707601
-  sys.aq.NH42SO4.M => 1.0e-8
-    ],
+#         guesses = [
+#       sys.aq.NH3.a => 5.032615680305679e7
+#        sys.g.NH3.p => 873111.6725027211
+#   sys.aq.HNO3_aq.a => 4.15060282398223e-23
+#        sys.g.HCl.p => 1.2438271462882213e-22
+#    sys.aq.HCl_aq.a => 3.109567865720556e-19
+#       sys.g.HNO3.p => 4.809235899875041e-23
+#       sys.aq.NO3.m => 2.5438502543999034e-6
+#         sys.aq.H.m => 7.877841795370184e-31
+#        sys.aq.Na.m => 0.009705080607278411
+#         sys.aq.K.m => 0.000317301939985797
+#       sys.aq.SO4.m => 0.0007334329544224122
+#        sys.aq.Ca.m => 3.00641254139863e-7
+#      sys.aq.HSO4.m => 0.4044098262494704
+#        sys.aq.Mg.m => 3603.2341676309115
+#        sys.aq.Cl.m => 0.002734148046641479
+#        sys.aq.OH.m => 7206.107562245912
+#     sys.aq.MgCl2.M => -0.0040579808546589696
+#           sys.aq.W => 2.644286531554314e-6
+#  sys.aq.HCl.logγₜ₀ => 14.256920312707601
+#   sys.aq.NH42SO4.M => 1.0e-8
+#     ],
     initializealg = BrownFullBasicInit(nlsolve=RobustMultiNewton()),
     (0.0, 10.0),
     use_scc = false)
 
-#     collect(zip(unknowns(sys), prob.u0))
-# filter(x -> x[2] < 0, collect(zip(unknowns(sys), prob.u0)))
+     collect(zip(unknowns(sys), prob.u0))
 
 sol = solve(prob, Rosenbrock23())
 
@@ -84,23 +83,25 @@ collect(zip(unknowns(sys), sol.u[1]))
 sol[sys.aq.W]
 sol[sys.aq.I]
 
+salts = [:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl, :MgSO4, :MgNO32, :MgCl2,
+        :NaCl, :Na2SO4, :NaNO3,
+        :NH42SO4, :NH4NO3, :NH4Cl, :NH4HSO4, :NaHSO4, :NH43HSO42, :HHSO4, :HNO3, :HCl]
+
 let
-    vars = [        sys.aq.NH4.m,sys.aq.Na.m,sys.aq.H.m,        sys.aq.Ca.m,        sys.aq.K.m,
-        sys.aq.Mg.m,sys.aq.Cl.m,sys.aq.NO3.m,sys.aq.SO4.m,sys.aq.HSO4.m,sys.aq.OH.m,
-        sys.aq.NH3.m,sys.aq.HNO3_aq.m,sys.aq.HCl_aq.m]
-        collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+    vars = [reduce(getproperty, [sys, :aq, salt, :loga]) for salt in salts]
+    collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
 end
 
 let
-    vars = [sys.TotalNH, sys.TotalNa, sys.TotalCa, sys.TotalK,
-        sys.TotalMg, sys.TotalCl, sys.TotalNO3, sys.TotalSO4]
-        collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+    vars = [reduce(getproperty, [sys, :aq, salt, :m]) for salt in salts]
+    collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
 end
+
 
 let
 vars = [sys.aq.NH4NO3.loga, sys.aq.NH4Cl.loga, sys.aq.NH4HSO4.loga, sys.aq.NH42SO4.loga, sys.aq.NH43HSO42.loga,
     sys.aq.NaCl.loga, sys.aq.Na2SO4.loga, sys.aq.NaNO3.loga, sys.aq.NaHSO4.loga,
-    sys.aq.H2SO4.loga, sys.aq.HCl.loga, sys.aq.HNO3.loga, sys.aq.KHSO4.loga, sys.aq.HHSO4.loga,
+    sys.aq.HCl.loga, sys.aq.HNO3.loga, sys.aq.KHSO4.loga, sys.aq.HHSO4.loga,
     sys.aq.CaNO32.loga, sys.aq.CaCl2.loga, sys.aq.CaSO4.loga,
     sys.aq.KHSO4.loga, sys.aq.K2SO4.loga, sys.aq.KNO3.loga, sys.aq.KCl.loga,
     sys.aq.MgSO4.loga, sys.aq.MgNO32.loga, sys.aq.MgCl2.loga]
@@ -110,7 +111,7 @@ end
 let
 vars = [sys.aq.NH4NO3.M, sys.aq.NH4Cl.M, sys.aq.NH4HSO4.M, sys.aq.NH42SO4.M, sys.aq.NH43HSO42.M,
     sys.aq.NaCl.M, sys.aq.Na2SO4.M, sys.aq.NaNO3.M, sys.aq.NaHSO4.M,
-    sys.aq.H2SO4.M, sys.aq.HCl.M, sys.aq.HNO3.M, sys.aq.KHSO4.M, sys.aq.HHSO4.M,
+    sys.aq.HCl.M, sys.aq.HNO3.M, sys.aq.KHSO4.M, sys.aq.HHSO4.M,
     sys.aq.CaNO32.M, sys.aq.CaCl2.M, sys.aq.CaSO4.M,
     sys.aq.KHSO4.M, sys.aq.K2SO4.M, sys.aq.KNO3.M, sys.aq.KCl.M,
     sys.aq.MgSO4.M, sys.aq.MgNO32.M, sys.aq.MgCl2.M]
@@ -118,10 +119,7 @@ collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
 let
-vars = [sys.eq.r2.logK_eq, sys.eq.r4.logK_eq, sys.eq.r8.logK_eq, sys.eq.r9.logK_eq,
-sys.eq.r10.logK_eq, sys.eq.r14.logK_eq,sys.eq.r15.logK_eq, sys.eq.r19.logK_eq,
-sys.eq.r20.logK_eq, sys.eq.r26.logK_eq, sys.eq.r27.logK_eq,
-]
+vars = [reduce(getproperty, [sys, :eq, Symbol(:r, i), :logK_eq]) for i in 1:27]
 collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
@@ -132,7 +130,7 @@ let
 end
 
 let
-    vars = [sys.g.NH3.p, sys.g.HCl.p, sys.g.HNO3.p, sys.g.H2SO4.p,
+    vars = [sys.g.NH3.p, sys.g.HCl.p, sys.g.HNO3.p,
         sys.g.NH3.M, sys.g.HCl.M, sys.g.HNO3.M, sys.g.H2SO4.M]
         collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
