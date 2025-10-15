@@ -64,7 +64,7 @@ include("equilibria.jl")
         # right-hand side is the ratio of the product and reactant activities.
         eq.r1.logK_eq ~ aq.CaNO32.loga
         eq.r2.logK_eq ~ aq.CaCl2.loga
-        eq.r3.logK_eq ~ aq.CaSO4.loga #+ 2log(RH)
+        eq.r3.logK_eq ~ aq.CaSO4.loga + 2log(RH)
         eq.r4.logK_eq ~ aq.K2SO4.loga
         eq.r5.logK_eq ~ aq.KHSO4.loga
         eq.r6.logK_eq ~ aq.KNO3.loga
@@ -72,24 +72,24 @@ include("equilibria.jl")
         eq.r8.logK_eq ~ aq.MgSO4.loga
         eq.r9.logK_eq ~ aq.MgNO32.loga
         eq.r10.logK_eq ~ aq.MgCl2.loga
-        #eq.r11.logK_eq ~ log(aq.H.a) + log(aq.SO4.a) - log(aq.HSO4.a)
-        #eq.r12.logK_eq ~ log(aq.NH3.a / m_one) - log(g.NH3.p / p_one)
-        #eq.r13.logK_eq ~ log(aq.NH4.a / m_one) + log(aq.OH.a / m_one) -
-        #    log(aq.NH3.a / m_one) - log(RH)
-        eq.r14.logK_eq ~ aq.HNO3.loga #- log(g.HNO3.p / p_one) # K1
-        #eq.r15.logK_eq ~ log(aq.HNO3_aq.a / m_one) - log(g.HNO3.p / p_one) # K1a
+        eq.r11.logK_eq ~ 2log(aq.HSO4_dissociated.a / m_one) - log(aq.HSO4.a / m_one)
+        eq.r12.logK_eq ~ log(aq.NH3.a / m_one) - log(g.NH3.p / p_one)
+        eq.r13.logK_eq ~ log(aq.NH4.a / m_one) + log(aq.OH.a / m_one) -
+            log(aq.NH3.a / m_one) - log(RH)
+        eq.r14.logK_eq ~ aq.HNO3.loga - log(g.HNO3.p / p_one) # K1
+        eq.r15.logK_eq ~ log(aq.HNO3_aq.a / m_one) - log(g.HNO3.p / p_one) # K1a
         #eq.r14.logK_eq - eq.r15.logK_eq ~ aq.HNO3.loga - log(aq.HNO3_aq.a / m_one) # K1b, from Table 2 footnote ♠
-        eq.r16.logK_eq ~ aq.HCl.loga #- log(g.HCl.p / p_one) # K2
-        #eq.r17.logK_eq ~ log(aq.HCl_aq.a / m_one) - log( g.HCl.p / p_one) # K2a
-        #eq.r16.logK_eq - eq.r17.logK_eq ~ aq.HCl.loga - log(aq.HCl_aq.a) # K2b, from Table 2 footnote ♦
-        #eq.r18.logK_eq ~ log(aq.H.a / m_one) + log(aq.OH.a / m_one) - log(RH)
+        eq.r16.logK_eq ~ aq.HCl.loga - log(g.HCl.p / p_one) # K2
+        eq.r17.logK_eq ~ log(aq.HCl_aq.a / m_one) - log( g.HCl.p / p_one) # K2a
+        #eq.r16.logK_eq - eq.r17.logK_eq ~ aq.HCl.loga - log(aq.HCl_aq.a / m_one) # K2b, from Table 2 footnote ♦
+        #eq.r18.logK_eq ~ log(aq.H.a / m_one) + log(aq.OH.a / m_one) - log(RH) # TODO(CT): Not sure what to do with this.
         eq.r19.logK_eq ~ aq.Na2SO4.loga
         eq.r20.logK_eq ~ aq.NH42SO4.loga
-        #eq.r21.logK_eq ~ log(g.NH3.p / p_one) + log(g.HCl.p / p_one)
+        eq.r21.logK_eq ~ log(g.NH3.p / p_one) + log(g.HCl.p / p_one)
         eq.r22.logK_eq ~ aq.NaNO3.loga
         eq.r23.logK_eq ~ aq.NaCl.loga
         eq.r24.logK_eq ~ aq.NaHSO4.loga
-        #eq.r25.logK_eq ~ log(g.NH3.p / p_one) + log(g.HNO3.p / p_one)
+        eq.r25.logK_eq ~ log(g.NH3.p / p_one) + log(g.HNO3.p / p_one)
         eq.r26.logK_eq ~ aq.NH4HSO4.loga
         eq.r27.logK_eq ~ aq.NH43HSO42.loga
 
@@ -101,15 +101,15 @@ include("equilibria.jl")
         # TotalMg ~ aq.Mg.m * aq.W + s.Mg
         # TotalCl ~  (aq.Cl.m + aq.HCl_aq.m) * aq.W + g.HCl.M + s.Cl
         # TotalNO3 ~ aq.NO3.m * aq.W + g.HNO3.M + s.NO3
-        # TotalSO4 ~ (aq.SO4.m + aq.HSO4.m) * aq.W + g.H2SO4.M #+ s.SO4 #+ s.HSO4
+        # TotalSO4 ~ (aq.SO4.m + aq.HSO4.m + aq.HSO4_dissociated.m) * aq.W + g.H2SO4.M #+ s.SO4 #+ s.HSO4
 
-        aq.NH3.m ~ m_one
-        aq.HCl_aq.m ~ m_one
-        aq.HNO3_aq.m ~ m_one
-        aq.OH.m ~ m_one
+        #aq.NH3.m ~ m_one
+        #aq.HCl_aq.m ~ m_one
+        #aq.HNO3_aq.m ~ m_one
+        #aq.OH.m ~ m_one
 
-        g.NH3.M ~ M_one * 1e-10
-        g.HNO3.M ~ M_one * 1e-10
+        #g.NH3.M ~ M_one * 1e-10
+        #g.HNO3.M ~ M_one * 1e-10
         g.HCl.M ~ M_one * 1e-10
 
         D(aq.NH4.M) ~ 0

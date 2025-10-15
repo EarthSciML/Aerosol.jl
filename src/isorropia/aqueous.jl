@@ -206,6 +206,7 @@ end
         NO3 = Ion(z = abs(-1))
         SO4 = Ion(z = abs(-2))
         HSO4 = Ion(z = abs(-1))
+        HSO4_dissociated = Ion(z = abs(-1))
         OH = Ion(z = abs(-1))
 
         # Neutral species
@@ -442,6 +443,7 @@ end
         NO3.W ~ W
         SO4.W ~ W
         HSO4.W ~ W
+        HSO4_dissociated.W ~ W
         OH.W ~ W
         NH3.W ~ W
         HNO3_aq.W ~ W
@@ -459,17 +461,18 @@ end
         # Mass balance
         NH4.M ~ sum([NH4NO3.M, NH4Cl.M, NH4HSO4.M, 2NH42SO4.M, 3NH43HSO42.M])
         Na.M ~ sum([NaCl.M, 2Na2SO4.M, NaNO3.M, NaHSO4.M])
-        H.M ~ sum([HCl.M, HNO3.M, HHSO4.M])
+        H.M ~ sum([HCl.M, HNO3.M, HHSO4.M, HSO4_dissociated.M])
         Ca.M ~ sum([CaNO32.M, CaCl2.M, CaSO4.M])
         K.M ~ sum([KHSO4.M, 2K2SO4.M, KNO3.M, KCl.M])
         Mg.M ~ sum([MgSO4.M, MgNO32.M, MgCl2.M])
         Cl.M ~ sum([NaCl.M, KCl.M, 2MgCl2.M, 2CaCl2.M, NH4Cl.M, HCl.M])
         NO3.M ~ sum([NaNO3.M, KNO3.M, 2MgNO32.M, 2CaNO32.M, NH4NO3.M, HNO3.M])
-        SO4.M ~ sum([Na2SO4.M, K2SO4.M, MgSO4.M, CaSO4.M, NH42SO4.M, NH43HSO42.M])
+        SO4.M ~ sum([Na2SO4.M, K2SO4.M, MgSO4.M, CaSO4.M, NH42SO4.M, NH43HSO42.M,
+            HSO4_dissociated.M])
         HSO4.M ~ sum([KHSO4.M, NaHSO4.M, NH4HSO4.M, NH43HSO42.M, HHSO4.M])
 
         # Charge balance
         # 0 ~ sum([i.m * i.z for i in [NH4, Na, H, Ca, K, Mg]]) -
-        #     sum([i.m * i.z for i in [Cl, NO3, SO4, HSO4, OH]])
+        #      sum([i.m * i.z for i in [Cl, NO3, SO4, HSO4, HSO4_dissociated, OH]])
     end
 end

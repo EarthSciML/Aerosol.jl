@@ -36,40 +36,46 @@ prob = ODEProblem(sys,
         #  sys.TotalCl => 7.2e-9,
         #  sys.TotalNO3 => 6.7e-12,
         # sys.TotalSO4 => 1.1e-6,
-        sys.aq.RH => 1.0
+        sys.aq.RH => 0.3
         sys.aq.NH4.M => 1.0e-8
     ],
          guesses = [
-       sys.aq.NH4.m => 13.0
-       sys.aq.NO3.m => 620.0
-         sys.aq.H.m => 0.095
-        sys.aq.Na.m => 87.0
-         sys.aq.K.m => 3.0
-       sys.aq.SO4.m => 4.7
-        sys.aq.Ca.m => 14.0
-      sys.aq.HSO4.m => 93.0
-        sys.aq.Mg.m => 990.0
-        sys.aq.Cl.m => 1400.0
-      sys.aq.HSO4.W => 7.9e-10
-    sys.aq.CaNO32.m => 7.5
-     sys.aq.CaCl2.m => 6.3
-     sys.aq.CaSO4.m => 0.0096
-     sys.aq.K2SO4.m => 0.069
-      sys.aq.KNO3.m => 0.017
-       sys.aq.KCl.m => 0.00026
-     sys.aq.MgSO4.m => 0.01
-    sys.aq.MgNO32.m => 300.0
-     sys.aq.MgCl2.m => 690.0
-      sys.aq.NaCl.m => 0.00052
-    sys.aq.Na2SO4.m => 0.39
-     sys.aq.NaNO3.m => 0.065
-   sys.aq.NH42SO4.m => 0.77
-      sys.aq.HNO3.m => 7.7e-5
-       sys.aq.HCl.m => 0.095
-     sys.aq.KHSO4.m => 2.9
-   sys.aq.NH4HSO4.m => 0.68
-    sys.aq.NaHSO4.m => 86.0
- sys.aq.NH43HSO42.m => 3.5
+        sys.aq.NH3.a => 0.0026
+               sys.g.NH3.p => 4.5e-5
+              sys.g.HNO3.p => 9.3e-13
+          sys.aq.HNO3_aq.a => 2.0e-7
+           sys.aq.HCl_aq.a => 6.0e-9
+              sys.aq.NH4.m => 12.0
+              sys.aq.NO3.m => 650.0
+                sys.aq.H.m => 0.99
+               sys.aq.Na.m => 90.0
+                sys.aq.K.m => 3.0
+              sys.aq.SO4.m => 5.6
+               sys.aq.Ca.m => 16.0
+             sys.aq.HSO4.m => 96.0
+               sys.aq.Mg.m => 1000.0
+               sys.aq.Cl.m => 1400.0
+               sys.aq.HSO4_dissociated.W => 8.1e-10
+               sys.aq.HSO4_dissociated.m => 0.99
+               sys.aq.CaNO32.m => 7.1
+               sys.aq.CaCl2.m => 9.0
+            sys.aq.CaSO4.m => 0.03
+            sys.aq.K2SO4.m => 0.068
+             sys.aq.KNO3.m => 0.015
+              sys.aq.KCl.m => 0.00029
+            sys.aq.MgSO4.m => 0.0083
+           sys.aq.MgNO32.m => 320.0
+            sys.aq.MgCl2.m => 690.0
+             sys.aq.NaCl.m => 0.0006
+           sys.aq.Na2SO4.m => 0.38
+            sys.aq.NaNO3.m => 0.056
+          sys.aq.NH42SO4.m => 0.75
+             sys.aq.HNO3.m => 2.5e-5
+              sys.aq.HCl.m => 2.1e-7
+            sys.aq.KHSO4.m => 2.8
+          sys.aq.NH4HSO4.m => 0.67
+           sys.aq.NaHSO4.m => 89.0
+        sys.aq.NH43HSO42.m => 3.4
      ],
     initializealg = BrownFullBasicInit(nlsolve=RobustMultiNewton()),
     (0.0, 10.0),
@@ -82,6 +88,8 @@ sol = solve(prob, Rosenbrock23())
 collect(zip(unknowns(sys), sol.u[1]))
 
 [var => round(val; sigdigits=2) for (var, val) in zip(unknowns(sys), sol.u[1])]
+
+
 
 sol[sys.aq.W]
 sol[sys.aq.I]
