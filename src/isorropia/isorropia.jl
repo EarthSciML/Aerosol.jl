@@ -20,43 +20,54 @@ include("equilibria.jl")
         m_one = 1.0, [unit = u"mol/kg"]
         M_one = 1.0, [unit = u"mol/m^3"]
         p_one = 1.0, [unit = u"Constants.atm"]
-
-        t_one = 1.0, [unit = u"s"]
+    end
+    @constants begin
+        M_zero = 0.0, [unit = u"mol/m^3"]
     end
     @components begin
         aq = Aqueous(T = T, RH = RH)
         s = Solids()
-       g = Gases()
+        g = Gases()
         eq = EquilibriumConstants(T = T)
     end
     @variables begin
-        aqNH(t), [unit = u"mol/m^3", description = "Aqueous NH3 + NH4+", guess = 1e-20]
-        sNH(t), [unit = u"mol/m^3", description = "Solid NH3 + NH4+", guess = 1e-20]
-        aqNa(t), [unit = u"mol/m^3", description = "Aqueous Na+", guess = 1e-20]
-        sNa(t), [unit = u"mol/m^3", description = "Solid Na+", guess = 1e-20]
-        aqCa(t), [unit = u"mol/m^3", description = "Aqueous Ca2+", guess = 1e-20]
-        sCa(t), [unit = u"mol/m^3", description = "Solid Ca2+", guess = 1e-20]
-        aqK(t), [unit = u"mol/m^3", description = "Aqueous K+", guess = 1e-20]
-        sK(t), [unit = u"mol/m^3", description = "Solid K+", guess = 1e-20]
-        aqMg(t), [unit = u"mol/m^3", description = "Aqueous Mg2+", guess = 1e-20]
-        sMg(t), [unit = u"mol/m^3", description = "Solid Mg2+", guess = 1e-20]
-        aqCl(t), [unit = u"mol/m^3", description = "Aqueous Cl-", guess = 1e-20]
-        sCl(t), [unit = u"mol/m^3", description = "Solid Cl-", guess = 1e-20]
-        aqNO3(t), [unit = u"mol/m^3", description = "Aqueous NO3-", guess = 1e-20]
-        sNO3(t), [unit = u"mol/m^3", description = "Solid NO3-", guess = 1e-20]
-        aqSO4(t), [unit = u"mol/m^3", description = "Aqueous SO4 2-", guess = 1e-20]
-        sSO4(t), [unit = u"mol/m^3", description = "Solid SO4 2-", guess = 1e-20]
+        NH_eq(t), [unit = u"mol/m^3", description = "Equilibrium NH3 + NH4", guess = 1e-8]
+        Na_eq(t), [unit = u"mol/m^3", description = "Equilibrium Na+", guess = 1e-8]
+        Ca_eq(t), [unit = u"mol/m^3", description = "Equilibrium Ca2+", guess = 1e-8]
+        K_eq(t), [unit = u"mol/m^3", description = "Equilibrium K+", guess = 1e-8]
+        Mg_eq(t), [unit = u"mol/m^3", description = "Equilibrium Mg2+", guess = 1e-8]
+        Cl_eq(t), [unit = u"mol/m^3", description = "Equilibrium Cl-", guess = 1e-8]
+        NO3_eq(t), [unit = u"mol/m^3", description = "Equilibrium NO3-", guess = 1e-8]
+        SO4_eq(t), [unit = u"mol/m^3", description = "Equilibrium SO4 2-", guess = 1e-8]
 
-        #! format: off
-        TotalNH(t), [unit = u"mol/m^3", description = "Total NH3 + NH4 Molarity", guess = 1e-20]
-        TotalNa(t), [unit = u"mol/m^3", description = "Total Na+ Molarity", guess = 1e-20]
-        TotalCa(t), [unit = u"mol/m^3", description = "Total Ca2+ Molarity", guess = 1e-20]
-        TotalK(t), [unit = u"mol/m^3", description = "Total K+ Molarity", guess = 1e-20]
-        TotalMg(t), [unit = u"mol/m^3", description = "Total Mg2+ Molarity", guess = 1e-20]
-        TotalCl(t), [unit = u"mol/m^3", description = "Total Cl- Molarity", guess = 1e-20]
-        TotalNO3(t), [unit = u"mol/m^3", description = "Total NO3- Molarity", guess = 1e-20]
-        TotalSO4(t), [unit = u"mol/m^3", description = "Total SO4 2- Molarity", guess = 1e-20]
-        #! format: on
+        TotalNH(t), [unit = u"mol/m^3", description = "Total NH3 + NH4", guess = 1e-8]
+        TotalNa(t), [unit = u"mol/m^3", description = "Total Na+", guess = 1e-8]
+        TotalCa(t), [unit = u"mol/m^3", description = "Total Ca2+", guess = 1e-8]
+        TotalK(t), [unit = u"mol/m^3", description = "Total K+", guess = 1e-8]
+        TotalMg(t), [unit = u"mol/m^3", description = "Total Mg2+", guess = 1e-8]
+        TotalCl(t), [unit = u"mol/m^3", description = "Total Cl-", guess = 1e-8]
+        TotalNO3(t), [unit = u"mol/m^3", description = "Total NO3-", guess = 1e-8]
+        TotalSO4(t), [unit = u"mol/m^3", description = "Total SO4 2-", guess = 1e-8]
+        mass_total(t), [unit = u"mol/m^3", description = "Total mass in the system"]
+
+        NH_extra(t), [unit = u"mol/m^3", description = "Extra NH above equilibrium"]
+        Na_extra(t), [unit = u"mol/m^3", description = "Extra Na above equilibrium"]
+        Ca_extra(t), [unit = u"mol/m^3", description = "Extra Ca above equilibrium"]
+        K_extra(t), [unit = u"mol/m^3", description = "Extra K above equilibrium"]
+        Mg_extra(t), [unit = u"mol/m^3", description = "Extra Mg above equilibrium"]
+        Cl_extra(t), [unit = u"mol/m^3", description = "Extra Cl above equilibrium"]
+        NO3_extra(t), [unit = u"mol/m^3", description = "Extra NO3 above equilibrium"]
+        SO4_extra(t), [unit = u"mol/m^3", description = "Extra SO4 above equilibrium"]
+
+        R_1(t), [description = "Total sulfate ratio from (Section 3.1)"]
+        R_2(t), [description = "Crustal species and sodium ratio (Section 3.1)"]
+        R_3(t), [description = "Crustal species ratio (Section 3.1)"]
+
+        type1(t), [description = "Sulfate rich (free acid) aerosol type (Table 3)"]
+        type2(t), [description = "Sulfate rich aerosol type (Table 3)"]
+        type3(t), [description = "Sulfate poor, crustal & sodium poor aerosol (Table 3)"]
+        type4(t), [description = "Sulfate poor, crustal & sodium rich, crustal poor"]
+        type5(t), [description = "Sulfate poor, crustal & sodium rich, crustal rich"]
     end
     @equations begin
         # Reactions based on information in Table 2 of Fountoukis and Nenes (2007).
@@ -74,15 +85,15 @@ include("equilibria.jl")
         eq.r10.logK_eq ~ aq.MgCl2.loga
         eq.r11.logK_eq ~ 2log(aq.HSO4_dissociated.a / m_one) - log(aq.HSO4.a / m_one)
         eq.r12.logK_eq ~ log(aq.NH3.a / m_one) - log(g.NH3.p / p_one)
-        eq.r13.logK_eq ~ log(aq.NH4.a / m_one) + log(aq.OH.a / m_one) -
+        eq.r13.logK_eq ~ 2log(aq.NH3_dissociated.a / m_one) -
             log(aq.NH3.a / m_one) - log(RH)
         eq.r14.logK_eq ~ aq.HNO3.loga - log(g.HNO3.p / p_one) # K1
         eq.r15.logK_eq ~ log(aq.HNO3_aq.a / m_one) - log(g.HNO3.p / p_one) # K1a
         #eq.r14.logK_eq - eq.r15.logK_eq ~ aq.HNO3.loga - log(aq.HNO3_aq.a / m_one) # K1b, from Table 2 footnote ♠
         eq.r16.logK_eq ~ aq.HCl.loga - log(g.HCl.p / p_one) # K2
-        eq.r17.logK_eq ~ log(aq.HCl_aq.a / m_one) - log( g.HCl.p / p_one) # K2a
+        eq.r17.logK_eq ~ log(aq.HCl_aq.a / m_one) - log(g.HCl.p / p_one) # K2a
         #eq.r16.logK_eq - eq.r17.logK_eq ~ aq.HCl.loga - log(aq.HCl_aq.a / m_one) # K2b, from Table 2 footnote ♦
-        #eq.r18.logK_eq ~ log(aq.H.a / m_one) + log(aq.OH.a / m_one) - log(RH) # TODO(CT): Not sure what to do with this.
+        eq.r18.logK_eq ~ 2log(aq.H2O_dissociated.a / m_one) - log(RH)
         eq.r19.logK_eq ~ aq.Na2SO4.loga
         eq.r20.logK_eq ~ aq.NH42SO4.loga
         eq.r21.logK_eq ~ log(g.NH3.p / p_one) + log(g.HCl.p / p_one)
@@ -93,35 +104,49 @@ include("equilibria.jl")
         eq.r26.logK_eq ~ aq.NH4HSO4.loga
         eq.r27.logK_eq ~ aq.NH43HSO42.loga
 
-        # Mass Balance
-        # TotalNH ~ (aq.NH4.m  + aq.NH3.m) * aq.W + g.NH3.M + s.NH4
-        # TotalNa ~ aq.Na.m * aq.W + s.Na
-        # TotalCa ~ aq.Ca.m * aq.W + s.Ca
-        # TotalK ~ aq.K.m * aq.W + s.K
-        # TotalMg ~ aq.Mg.m * aq.W + s.Mg
-        # TotalCl ~  (aq.Cl.m + aq.HCl_aq.m) * aq.W + g.HCl.M + s.Cl
-        # TotalNO3 ~ aq.NO3.m * aq.W + g.HNO3.M + s.NO3
-        # TotalSO4 ~ (aq.SO4.m + aq.HSO4.m + aq.HSO4_dissociated.m) * aq.W + g.H2SO4.M #+ s.SO4 #+ s.HSO4
+        g.HCl.M ~ g.NH3.M
 
-        #aq.NH3.m ~ m_one
-        #aq.HCl_aq.m ~ m_one
-        #aq.HNO3_aq.m ~ m_one
-        #aq.OH.m ~ m_one
+        # Aqueous equilibrium mass Balance
+        NH_eq ~ aq.NH4.M + aq.NH3.M #+ g.NH3.M
+        Na_eq ~ aq.Na.M
+        Ca_eq ~ aq.Ca.M
+        K_eq ~ aq.K.M
+        Mg_eq ~ aq.Mg.M
+        Cl_eq ~ aq.Cl.M + aq.HCl_aq.M #+ g.HCl.M
+        NO3_eq ~ aq.NO3.M + aq.HNO3_aq.M #+ g.HNO3.M
+        SO4_eq ~ aq.SO4.M + aq.HSO4.M #+ aq.HSO4_dissociated.M
 
-        #g.NH3.M ~ M_one * 1e-10
-        #g.HNO3.M ~ M_one * 1e-10
-        g.HCl.M ~ M_one * 1e-10
+        NH_extra ~ TotalNH - NH_eq
+        Na_extra ~ TotalNa - Na_eq
+        Ca_extra ~ TotalCa - Ca_eq
+        K_extra ~ TotalK - K_eq
+        Mg_extra ~ TotalMg - Mg_eq
+        Cl_extra ~ TotalCl - Cl_eq
+        NO3_extra ~ TotalNO3 - NO3_eq
+        SO4_extra ~ TotalSO4 - SO4_eq
+        M_zero ~ min(NH_extra, Na_extra, Ca_extra, K_extra, Mg_extra,
+            Cl_extra, NO3_extra, SO4_extra)
 
-        D(aq.NH4.M) ~ 0
-        #D(aq.NH42SO4.M) ~ 0.0
-        # D(TotalNH) ~ 0.0
-        #  D(TotalNa) ~ 0.2*TotalNa/M_one * cos(0.5π * t/t_one) * M_one / t_one
-        #  D(TotalCa) ~ 0.0
-        # D(TotalK) ~ 0.0
-        #  D(TotalMg) ~ 0.0
-        # D(TotalCl) ~ 0.0
-        # D(TotalNO3) ~ 0.2*TotalNO3/M_one * cos(3π * t/t_one) * M_one / t_one
-        #  D(TotalSO4) ~ 0.2*TotalSO4/M_one * sin(2π * t/t_one) * M_one / t_one
+        D(TotalNH) ~ 0.0
+        D(TotalNa) ~ 0.0 # 0.2*TotalNa/M_one * cos(0.5π * t/t_one) * M_one / t_one
+        D(TotalCa) ~ 0.0
+        D(TotalK) ~ 0.0
+        D(TotalMg) ~ 0.0
+        D(TotalCl) ~ 0.0
+        D(TotalNO3) ~ 0.0 # 0.2*TotalNO3/M_one * cos(3π * t/t_one) * M_one / t_one
+        D(TotalSO4) ~ 0.0 # 0.2*TotalSO4/M_one * sin(2π * t/t_one) * M_one / t_one
+
+        # Aerosol types from Section 3.1 and Table 3
+        R_1 ~ (TotalNH + TotalCa + TotalK + TotalMg + TotalNa) / TotalSO4
+        R_2 ~ (TotalCa + TotalK + TotalMg + TotalNa) / TotalSO4
+        R_3 ~ (TotalCa + TotalK + TotalMg) / TotalSO4
+        type1 ~ 1 - (tanh((R_1 - 1) * 30) + 1) / 2
+        type2 ~ min((tanh((R_1 - 1) * 30) + 1) / 2, 1-(tanh((R_1 - 2) * 30) + 1) / 2)
+        type3 ~ min((tanh((R_1 - 2) * 30) + 1) / 2, 1-(tanh((R_2 - 2) * 30) + 1) / 2)
+        type4 ~ min((tanh((R_1 - 2) * 30) + 1) / 2, (tanh((R_2 - 2) * 30) + 1) / 2,
+            1-(tanh((R_3 - 2) * 30) + 1) / 2)
+        type5 ~ min((tanh((R_1 - 2) * 30) + 1) / 2, (tanh((R_2 - 2) * 30) + 1) / 2,
+            1-(tanh((R_3 - 2) * 30) + 1) / 2)
     end
 end
 
@@ -175,10 +200,10 @@ mw = Dict(
     :Na2SO4_s => 142.0421
 )
 
-           # Ratios from Section 3.1
-           # R_1 ~ (totalNH + totalCa + totalK + totalMg + totalNa) / totalSO4
-           # R_2 ~ (totalCa + totalK + totalMg + totalNa) / totalSO4
-           # R_3 ~ (totalCa + totalK + totalMg) / totalSO4
+# Ratios from Section 3.1
+# R_1 ~ (totalNH + totalCa + totalK + totalMg + totalNa) / totalSO4
+# R_2 ~ (totalCa + totalK + totalMg + totalNa) / totalSO4
+# R_3 ~ (totalCa + totalK + totalMg) / totalSO4
 
 spc = [:CaNO32s
        :CaNO32aq

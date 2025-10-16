@@ -306,9 +306,9 @@ equations(prob.f.initializeprob.f.sys)
 iprob = prob.f.initializeprob
 iprob.u0
 
-ff(u, p) = iprob.f(max.(u, (1e-20)), p)
+ff(u, p) = iprob.f(abs.(u), p)
 iiprob = NonlinearProblem(ff, iprob.u0, iprob.p)
-sol = solve(iiprob)
+sol = solve(iiprob, RobustMultiNewton())
 
 sol = solve(iprob, abstol=5e-3, reltol = 5e-3)
 sol.stats

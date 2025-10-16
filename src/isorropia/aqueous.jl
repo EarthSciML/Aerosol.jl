@@ -14,7 +14,7 @@
     end
     @equations begin
         a ~ m
-        M ~ m * W
+        M ~ m * abs(W)
     end
 end
 
@@ -88,7 +88,7 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         loga(t), [description = "Log of the activity of the salt", guess = 0]
     end
     @equations begin
-        M ~ m * W
+        M ~ m * abs(W)
         zz ~ z_cation * z_anion
 
         # Equation 6
@@ -211,8 +211,10 @@ end
 
         # Neutral species
         NH3 = Ion(z = 0)
+        NH3_dissociated = Ion(z = 0) # NH4 + OH
         HNO3_aq = Ion(z = 0)
         HCl_aq = Ion(z = 0)
+        H2O_dissociated = Ion(z = 0) # H + OH
 
         # Salts
         CaNO32 = Salt(z_cation = 2, z_anion = 1, drh = 0.4906, l_t = 509.4, q = 0.93, T=T)
@@ -446,8 +448,10 @@ end
         HSO4_dissociated.W ~ W
         OH.W ~ W
         NH3.W ~ W
+        NH3_dissociated.W ~ W
         HNO3_aq.W ~ W
         HCl_aq.W ~ W
+        H2O_dissociated.W ~ W
 
          # HHSO4 is only used to calculate activity coefficients of other species, so we
          # assume the concentration is zero.
@@ -458,10 +462,13 @@ end
         NH4Cl.m ~ 1e-20 * m_one
         NH4NO3.m ~ 1e-20 * m_one
 
+        # Dissociation of NH3 is the only source of NH4.
+        #NH3_dissociated.m ~ NH4.m
+
         # Mass balance
         NH4.M ~ sum([NH4NO3.M, NH4Cl.M, NH4HSO4.M, 2NH42SO4.M, 3NH43HSO42.M])
         Na.M ~ sum([NaCl.M, 2Na2SO4.M, NaNO3.M, NaHSO4.M])
-        H.M ~ sum([HCl.M, HNO3.M, HHSO4.M, HSO4_dissociated.M])
+        H.M ~ sum([HCl.M, HNO3.M, HHSO4.M, HSO4_dissociated.M, H2O_dissociated.M])
         Ca.M ~ sum([CaNO32.M, CaCl2.M, CaSO4.M])
         K.M ~ sum([KHSO4.M, 2K2SO4.M, KNO3.M, KCl.M])
         Mg.M ~ sum([MgSO4.M, MgNO32.M, MgCl2.M])
@@ -470,6 +477,7 @@ end
         SO4.M ~ sum([Na2SO4.M, K2SO4.M, MgSO4.M, CaSO4.M, NH42SO4.M, NH43HSO42.M,
             HSO4_dissociated.M])
         HSO4.M ~ sum([KHSO4.M, NaHSO4.M, NH4HSO4.M, NH43HSO42.M, HHSO4.M])
+        OH.M ~ NH3_dissociated.M + H2O_dissociated.M
 
         # Charge balance
         # 0 ~ sum([i.m * i.z for i in [NH4, Na, H, Ca, K, Mg]]) -
