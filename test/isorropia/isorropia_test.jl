@@ -28,68 +28,72 @@ unknowns(sys)
 
 prob = ODEProblem(sys,
     [
-        sys.TotalNH => 1e-8
-        sys.TotalNa => 1e-8
-        sys.TotalCa => 1e-8
-        sys.TotalK => 1e-8
-        sys.TotalMg => 1e-8
-         sys.TotalCl => 1e-8
-         sys.TotalNO3 => 1e-8
-        sys.TotalSO4 => 8e-8
-        sys.aq.RH => 0.3
+        sys.Na_eq => 1e-8,
+        # sys.TotalNH => 2.3e-7
+        # sys.TotalNa => 1.0e-8
+        # sys.TotalCa => 7.5e-10
+        # sys.TotalK => 3.7e-10
+        # sys.TotalMg => 8.5e-9
+        #  sys.TotalCl => 1.7e-7
+        #  sys.TotalNO3 => 6.7e-8
+        # sys.TotalSO4 => 4.4e-10
+        # sys.aq.RH => 0.8
     ],
          guesses = [
-              sys.aq.NH3.a => 6.0e-7
-              sys.aq.NH3_dissociated.a => 1.8e-6
-              sys.g.HNO3.p => 4.0e-11
-              sys.aq.HNO3_aq.a => 0.00085
-              sys.aq.HCl_aq.a => 2.6e-5
-              sys.aq.H2O_dissociated.a => 5.5e-8
-              sys.g.NH3.M => 4.3e-9
-              sys.aq.NH4.m => 12.0
-              sys.aq.NO3.m => 650.0
-                sys.aq.H.m => 0.99
-               sys.aq.Na.m => 90.0
-                sys.aq.K.m => 3.0
-              sys.aq.SO4.m => 5.6
-               sys.aq.Ca.m => 16.0
-             sys.aq.HSO4.m => 96.0
-               sys.aq.Mg.m => 1000.0
-               sys.aq.Cl.m => 1400.0
-               sys.aq.OH.m => 1.9e-6
-  sys.aq.H2O_dissociated.W => 7.2e-12
- sys.aq.HSO4_dissociated.m => 0.99
-           sys.aq.CaNO32.m => 7.1
-            sys.aq.CaCl2.m => 9.0
-            sys.aq.CaSO4.m => 0.03
-            sys.aq.K2SO4.m => 0.068
-             sys.aq.KNO3.m => 0.015
-              sys.aq.KCl.m => 0.00029
-            sys.aq.MgSO4.m => 0.0083
-           sys.aq.MgNO32.m => 320.0
-            sys.aq.MgCl2.m => 690.0
-             sys.aq.NaCl.m => 0.0006
-           sys.aq.Na2SO4.m => 0.38
-            sys.aq.NaNO3.m => 0.056
-          sys.aq.NH42SO4.m => 0.75
-             sys.aq.HNO3.m => 0.0016
-              sys.aq.HCl.m => 1.4e-5
-            sys.aq.KHSO4.m => 2.8
-          sys.aq.NH4HSO4.m => 0.67
-           sys.aq.NaHSO4.m => 89.0
-        sys.aq.NH43HSO42.m => 3.4
+              sys.aq.NH3.m_aq => 3.1e-7
+              sys.g.NH3.p => 5.4e-9
+              sys.g.HNO3.p => 1.4e-9
+              sys.aq.HNO3_aq.m_aq => 0.0003
+              sys.g.HCl.p => 3.9e-9
+              sys.aq.HCl_aq.m_aq => 9.7e-6
+                 sys.aq.NH3.M => 3.6e-15
+              sys.aq.HCl_aq.M => 1.1e-13
+             sys.aq.HNO3_aq.M => 3.5e-12
+            sys.aq.K2SO4.m_eq => 0.42
+              sys.aq.KCl.m_eq => 0.011
+           sys.aq.MgNO32.m_eq => 52.0
+            sys.aq.CaCl2.m_eq => 6.3
+        sys.aq.NH43HSO42.m_eq => 2.7
+            sys.aq.KHSO4.m_eq => 4.9
+             sys.aq.KNO3.m_eq => 0.11
+          sys.aq.NH42SO4.m_eq => 2.1
+             sys.aq.NaCl.m_eq => 0.022
+          sys.aq.NH4HSO4.m_eq => 1.2
+           sys.aq.CaNO32.m_eq => 5.6
+                sys.aq.H.m_eq => 460.0
+            sys.aq.NaNO3.m_eq => 0.39
+           sys.aq.NaHSO4.m_eq => 160.0
+           sys.aq.Na2SO4.m_eq => 1.3
+            sys.aq.MgSO4.m_eq => 0.42
+            sys.aq.CaSO4.m_eq => 0.065
+            sys.aq.MgCl2.m_eq => 82.0
+               sys.aq.OH.m_eq => 13.0
+  sys.aq.H2O_dissociated.W_eq => 6.3e-11
+               sys.aq.Na.m_eq => 160.0
+               sys.aq.Ca.m_eq => 12.0
+                sys.aq.K.m_eq => 5.9
+               sys.aq.Mg.m_eq => 130.0
+              sys.aq.NH3.m_eq => 5.8e-5
+          sys.aq.HNO3_aq.m_eq => 0.056
+           sys.aq.HCl_aq.m_eq => 0.0018
+            sys.aq.H2SO4.m_eq => 160.0
+             sys.aq.HNO3.m_eq => 120.0
+              sys.aq.HCl.m_eq => 180.0
+ sys.aq.HSO4_dissociated.m_eq => 7.0
+  sys.aq.NH3_dissociated.m_eq => 13.0
+  sys.aq.H2O_dissociated.m_eq => 3.2e-7
      ],
     initializealg = BrownFullBasicInit(nlsolve=RobustMultiNewton()),
     (0.0, 10.0),
     use_scc = false)
 
-sol = solve(prob, Rosenbrock23(), abstol = 1e-10, reltol = 1e-10)
+sol = solve(prob, Rosenbrock23())
 
 [var => round(val; sigdigits=2) for (var, val) in zip(unknowns(sys), sol.u[1])]
 
 
 let
-    vars = [abs(sys.aq.W), sys.aq.I]
+    vars = [abs(sys.aq.W), sys.aq.W_eq, sys.aq.I]
     collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
 end
 
@@ -97,7 +101,7 @@ salts = [:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl, :MgSO4, :MgNO32, 
         :NaCl, :Na2SO4, :NaNO3,
         :NH42SO4, :NH4NO3, :NH4Cl, :NH4HSO4, :NaHSO4, :NH43HSO42, :HHSO4, :HNO3, :HCl]
 
-ions = [:NH4, :NH3, :NH3_dissociated, :Na, :Ca, :K, :Mg, :Cl, :NO3, :SO4, :HNO3_aq,
+ions = [:NH3, :NH3_dissociated, :Na, :Ca, :K, :Mg, :Cl, :NO3, :SO4, :HNO3_aq,
     :HCl_aq, :HSO4,
     :HSO4_dissociated, :H2O_dissociated, :H, :OH]
 
@@ -107,7 +111,12 @@ let
 end
 
 let
-    vars = [reduce(getproperty, [sys, :aq, salt, :m]) for salt in salts]
+    vars = [reduce(getproperty, [sys, :aq, salt, :m_aq]) for salt in salts]
+    collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
+end
+
+let
+    vars = [reduce(getproperty, [sys, :aq, salt, :m_eq]) for salt in salts]
     collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
 end
 
@@ -156,6 +165,25 @@ end
 let
     vars = [sys.s.NH4, sys.s.Na, sys.s.Ca, sys.s.K, sys.s.Mg, sys.s.Cl, sys.s.NO3,
         sys.s.SO4, sys.s.HSO4]
+        collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
+
+let
+    vars = [sys.aq.NH3_dissociated.M_aq, sys.aq.NH3.M, sys.g.NH3.M,
+        sys.aq.NH3_dissociated.m_aq, sys.aq.NH3.m_aq, sys.g.NH3.p]
+        collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
+
+let
+    vars = [sys.aq.HNO3.loga_aq, sys.aq.HNO3.logγ, sys.aq.HNO3.M_aq, sys.aq.HNO3_aq.M, sys.g.HNO3.M,
+        sys.aq.HNO3.m_aq, sys.aq.HNO3_aq.m_aq, sys.g.HNO3.p]
+        collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+end
+
+
+let
+    vars = [sys.aq.HCl.loga_aq, sys.aq.HCl.logγ, sys.aq.HCl.M_aq, sys.aq.HCl_aq.M, sys.g.HCl.M,
+        sys.aq.HCl.m_aq, sys.aq.HCl_aq.m_aq, sys.g.HCl.p]
         collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
@@ -213,32 +241,32 @@ solve(iprob2)
 using EarthSciMLBase
 
 allvars = filter(
-    x -> occursin("₊M", string(x)), EarthSciMLBase.var2symbol.(unknowns(isrpa)))
+    x -> occursin(".M", string(x)), EarthSciMLBase.var2symbol.(unknowns(isrpa)))
 
 # Variables for case 1, sulfate rich free acid.
 vars1 = [
     # major
-    :s₊NaHSO4₊M,
-    :s₊NH4HSO4₊M,
-    :s₊KHSO4₊M,
-    :s₊CaSO4₊M,
+    :s.NaHSO4.M,
+    :s.NH4HSO4.M,
+    :s.KHSO4.M,
+    :s.CaSO4.M,
 
-    :aq₊Na₊M,
-    :aq₊NH4₊M,
-    :aq₊H₊M,
+    :aq.Na.M,
+    :aq.NH4.M,
+    :aq.H.M,
 
-    :aq₊HSO4₊M,
-    :aq₊SO4₊M,
-    :aq₊NO3₊M,
-    :aq₊Cl₊M,
-    :aq₊Ca₊M,
-    :aq₊K₊M,
+    :aq.HSO4.M,
+    :aq.SO4.M,
+    :aq.NO3.M,
+    :aq.Cl.M,
+    :aq.Ca.M,
+    :aq.K.M,
 
     # minor
-    :g₊NH3₊M,
-    :aq₊NH3₊M,
-    :aq₊HNO3_aq₊M,
-    :aq₊HCl_aq₊M,
+    :g.NH3.M,
+    :aq.NH3.M,
+    :aq.HNO3_aq.M,
+    :aq.HCl_aq.M,
 ]
 
 @assert length(intersect(allvars, vars1)) == length(vars1)
