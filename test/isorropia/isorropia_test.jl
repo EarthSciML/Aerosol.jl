@@ -454,3 +454,100 @@ end
 #     push!(ps, p)
 # end
 # plot(p1, ps..., size = (600, 300))
+
+
+prob = ODEProblem(sys,
+[
+    sys.TotalNa => 0.01 / 	22.9897693 * 1e-6,
+    sys.TotalSO4 => 10 / 98.08 * 1e-6,
+    sys.TotalNH => 3.4 / 17.031 * 1e-6,
+    sys.TotalNO3 => 2 / 63.013 * 1e-6,
+    sys.TotalCl => 0.01 / 	36.46 * 1e-6,
+    sys.TotalCa => 0.4 / 40.08 * 1e-6,
+    sys.TotalK => 0.33 / 39.0983 * 1e-6,
+    sys.TotalMg => 0.01 / 24.305 * 1e-6
+],
+         guesses = [
+              sys.aq.NH3.m_aq => 3.1e-7
+              sys.g.NH3.p => 5.4e-9
+              sys.g.HNO3.p => 1.4e-9
+              sys.aq.HNO3_aq.m_aq => 0.0003
+              sys.g.HCl.p => 3.9e-9
+              sys.aq.HCl_aq.m_aq => 9.7e-6
+                 sys.aq.NH3.M => 3.6e-15
+              sys.aq.HCl_aq.M => 1.1e-13
+             sys.aq.HNO3_aq.M => 3.5e-12
+            sys.aq.K2SO4.m_eq => 0.42
+              sys.aq.KCl.m_eq => 0.011
+           sys.aq.MgNO32.m_eq => 52.0
+            sys.aq.CaCl2.m_eq => 6.3
+        sys.aq.NH43HSO42.m_eq => 2.7
+            sys.aq.KHSO4.m_eq => 4.9
+             sys.aq.KNO3.m_eq => 0.11
+          sys.aq.NH42SO4.m_eq => 2.1
+             sys.aq.NaCl.m_eq => 0.022
+          sys.aq.NH4HSO4.m_eq => 1.2
+           sys.aq.CaNO32.m_eq => 5.6
+                sys.aq.H.m_eq => 460.0
+            sys.aq.NaNO3.m_eq => 0.39
+           sys.aq.NaHSO4.m_eq => 160.0
+           sys.aq.Na2SO4.m_eq => 1.3
+            sys.aq.MgSO4.m_eq => 0.42
+            sys.aq.CaSO4.m_eq => 0.065
+            sys.aq.MgCl2.m_eq => 82.0
+               sys.aq.OH.m_eq => 13.0
+  sys.aq.H2O_dissociated.W_eq => 6.3e-11
+               sys.aq.Na.m_eq => 160.0
+               sys.aq.Ca.m_eq => 12.0
+                sys.aq.K.m_eq => 5.9
+               sys.aq.Mg.m_eq => 130.0
+              sys.aq.NH3.m_eq => 5.8e-5
+          sys.aq.HNO3_aq.m_eq => 0.056
+           sys.aq.HCl_aq.m_eq => 0.0018
+            sys.aq.H2SO4.m_eq => 160.0
+             sys.aq.HNO3.m_eq => 120.0
+              sys.aq.HCl.m_eq => 180.0
+ sys.aq.HSO4_dissociated.m_eq => 7.0
+  sys.aq.NH3_dissociated.m_eq => 13.0
+  sys.aq.H2O_dissociated.m_eq => 3.2e-7
+     ],
+    initializealg = BrownFullBasicInit(nlsolve=RobustMultiNewton()),
+    (0.0, 10.0),
+    use_scc = false)
+
+sol = solve(prob, Rosenbrock23())
+
+[var => round(val; sigdigits=2) for (var, val) in zip(unknowns(sys), sol.u[1])]
+
+
+iprob = prob.f.initializeprob
+iprob.u0
+
+ff(u, p) = iprob.f(abs.(u), p)
+iiprob = NonlinearProblem(ff, iprob.u0, iprob.p)
+isol = solve(iiprob, RobustMultiNewton())
+
+isol.stats
+
+guesses = unknowns(iprob.f.sys) .=> abs.(isol.u)
+
+
+prob = ODEProblem(sys,
+[
+    sys.TotalNa => 0.01 / 	22.9897693 * 1e-6,
+    sys.TotalSO4 => 10 / 98.08 * 1e-6,
+    sys.TotalNH => 3.4 / 17.031 * 1e-6,
+    sys.TotalNO3 => 2 / 63.013 * 1e-6,
+    sys.TotalCl => 0.01 / 	36.46 * 1e-6,
+    sys.TotalCa => 0.4 / 40.08 * 1e-6,
+    sys.TotalK => 0.33 / 39.0983 * 1e-6,
+    sys.TotalMg => 0.01 / 24.305 * 1e-6
+],
+guesses = guesses,
+    initializealg = BrownFullBasicInit(nlsolve=RobustMultiNewton()),
+    (0.0, 10.0),
+    use_scc = false)
+
+sol = solve(prob, Rosenbrock23())
+
+[var => round(val; sigdigits=2) for (var, val) in zip(unknowns(sys), sol.u[1])]
