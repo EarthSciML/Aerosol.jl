@@ -28,15 +28,15 @@ unknowns(sys)
 
 prob = ODEProblem(sys,
     [
-        sys.Na_eq => 1e-8,
-        # sys.TotalNH => 2.3e-7
-        # sys.TotalNa => 1.0e-8
-        # sys.TotalCa => 7.5e-10
-        # sys.TotalK => 3.7e-10
-        # sys.TotalMg => 8.5e-9
-        #  sys.TotalCl => 1.7e-7
-        #  sys.TotalNO3 => 6.7e-8
-        # sys.TotalSO4 => 4.4e-10
+#        sys.Na_eq => 1e-8,
+        sys.TotalNH => 2.3e-7
+        sys.TotalNa => 1.0e-8
+        sys.TotalCa => 7.5e-10
+        sys.TotalK => 3.7e-10
+        sys.TotalMg => 8.5e-9
+         sys.TotalCl => 1.7e-7
+         sys.TotalNO3 => 6.7e-8
+        sys.TotalSO4 => 4.4e-10
         # sys.aq.RH => 0.8
     ],
          guesses = [
@@ -136,7 +136,6 @@ let
 vars = [sys.TotalNH, sys.TotalNa, sys.TotalCa, sys.TotalK,
     sys.TotalMg, sys.TotalCl, sys.TotalNO3, sys.TotalSO4]
 collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
-round.(sol[vars][1]; sigdigits = 2)
 end
 
 let
@@ -146,15 +145,27 @@ collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
 let
-vars = [sys.NH_eq + sys.NH_extra - sys.TotalNH,
-    sys.Na_eq + sys.Na_extra - sys.TotalNa,
-    sys.Ca_eq + sys.Ca_extra - sys.TotalCa,
-    sys.K_eq + sys.K_extra - sys.TotalK,
-    sys.Mg_eq + sys.Mg_extra - sys.TotalMg,
-    sys.Cl_eq + sys.Cl_extra - sys.TotalCl,
-    sys.NO3_eq + sys.NO3_extra - sys.TotalNO3,
-    sys.SO4_eq + sys.SO4_extra - sys.TotalSO4]
-collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
+vars = [
+    sys.TotalNH - sum([sys.aq.NH4NO3.M_aq, sys.aq.NH4Cl.M_aq, sys.aq.NH4HSO4.M_aq,
+        2sys.aq.NH42SO4.M_aq, 3sys.aq.NH43HSO42.M_aq]) - sys.g.NH3.M - sys.NH_extra,
+    sys.TotalNa - sum([sys.aq.NaCl.M_aq, 2sys.aq.Na2SO4.M_aq, sys.aq.NaNO3.M_aq,
+        sys.aq.NaHSO4.M_aq]) - sys.Na_extra,
+    sys.TotalCa - sum([sys.aq.CaNO32.M_aq, sys.aq.CaCl2.M_aq, sys.aq.CaSO4.M_aq]) -
+        sys.Ca_extra,
+    sys.TotalK - sum([sys.aq.KHSO4.M_aq, 2sys.aq.K2SO4.M_aq, sys.aq.KNO3.M_aq,
+        sys.aq.KCl.M_aq]) - sys.K_extra,
+    sys.TotalMg - sum([sys.aq.MgSO4.M_aq, sys.aq.MgNO32.M_aq, sys.aq.MgCl2.M_aq]) -
+        sys.Mg_extra,
+    sys.TotalCl - sum([sys.aq.NaCl.M_aq, sys.aq.KCl.M_aq, 2sys.aq.MgCl2.M_aq,
+        2sys.aq.CaCl2.M_aq, sys.aq.NH4Cl.M_aq]) - sys.g.HCl.M - sys.Cl_extra,
+    sys.TotalNO3 - sum([sys.aq.NaNO3.M_aq, sys.aq.KNO3.M_aq, 2sys.aq.MgNO32.M_aq,
+        2sys.aq.CaNO32.M_aq, sys.aq.NH4NO3.M_aq]) - sys.g.HNO3.M - sys.NO3_extra,
+    sys.TotalSO4 - sum([sys.aq.Na2SO4.M_aq, sys.aq.K2SO4.M_aq, sys.aq.MgSO4.M_aq,
+        sys.aq.CaSO4.M_aq, sys.aq.NH42SO4.M_aq, sys.aq.NH43HSO42.M_aq]) -
+        sum([sys.aq.KHSO4.M_eq, sys.aq.NaHSO4.M_eq, sys.aq.NH4HSO4.M_eq,
+        sys.aq.NH43HSO42.M_eq]) - sys.SO4_extra,
+    ]
+    collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
 let

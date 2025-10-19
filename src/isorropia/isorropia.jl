@@ -31,14 +31,14 @@ include("equilibria.jl")
         eq = EquilibriumConstants(T = T)
     end
     @variables begin
-        NH_eq(t), [unit = u"mol/m^3", description = "Equilibrium NH3 + NH4", guess = 1e-8]
-        Na_eq(t), [unit = u"mol/m^3", description = "Equilibrium Na+", guess = 1e-8]
-        Ca_eq(t), [unit = u"mol/m^3", description = "Equilibrium Ca2+", guess = 1e-8]
-        K_eq(t), [unit = u"mol/m^3", description = "Equilibrium K+", guess = 1e-8]
-        Mg_eq(t), [unit = u"mol/m^3", description = "Equilibrium Mg2+", guess = 1e-8]
-        Cl_eq(t), [unit = u"mol/m^3", description = "Equilibrium Cl-", guess = 1e-8]
-        NO3_eq(t), [unit = u"mol/m^3", description = "Equilibrium NO3-", guess = 1e-8]
-        SO4_eq(t), [unit = u"mol/m^3", description = "Equilibrium SO4 2-", guess = 1e-8]
+        NH_eq(t), [unit = u"mol/kg", description = "Equilibrium NH3 + NH4", guess = 1]
+        Na_eq(t), [unit = u"mol/kg", description = "Equilibrium Na+", guess = 1]
+        Ca_eq(t), [unit = u"mol/kg", description = "Equilibrium Ca2+", guess = 1]
+        K_eq(t), [unit = u"mol/kg", description = "Equilibrium K+", guess = 1]
+        Mg_eq(t), [unit = u"mol/kg", description = "Equilibrium Mg2+", guess = 1]
+        Cl_eq(t), [unit = u"mol/kg", description = "Equilibrium Cl-", guess = 1]
+        NO3_eq(t), [unit = u"mol/kg", description = "Equilibrium NO3-", guess = 1]
+        SO4_eq(t), [unit = u"mol/kg", description = "Equilibrium SO4 2-", guess = 1]
 
         TotalNH(t), [unit = u"mol/m^3", description = "Total NH3 + NH4", guess = 1e-8]
         TotalNa(t), [unit = u"mol/m^3", description = "Total Na+", guess = 1e-8]
@@ -83,8 +83,8 @@ include("equilibria.jl")
         eq.r8.logK_eq ~ aq.MgSO4.loga_eq
         eq.r9.logK_eq ~ aq.MgNO32.loga_eq
         eq.r10.logK_eq ~ aq.MgCl2.loga_eq
-        eq.r12.logK_eq ~ log(aq.NH3.m_aq / m_one) - log(g.NH3.p / p_one)
-        eq.r13.logK_eq ~ log(aq.NH3.m_aq / m_one) + log(RH) -aq.NH3_dissociated.loga_aq # NOTE(CT): The paper says it should be aq.NH3_dissociated.loga_aq - log(aq.NH3.m_aq / m_one) - log(RH), but switching the terms gives more reasonable results.
+        eq.r12.logK_eq ~ log(aq.NH3.m_aq / m_one) - log(g.NH3.p / p_one) - 13 # FIXME(CT): Added -13 to get reasonable results; not sure why this is needed.
+        eq.r13.logK_eq ~ aq.NH3_dissociated.loga_aq - log(aq.NH3.m_aq / m_one) + log(RH) - 8 # FIXME(CT): Added -8 to get reasonable results; not sure why this is needed.
         eq.r14.logK_eq ~ aq.HNO3.loga_aq - log(g.HNO3.p / p_one) - 16 # FIXME(CT): Added -16 to get reasonable results; not sure why this is needed.
         eq.r15.logK_eq ~ log(aq.HNO3_aq.m_aq / m_one) - log(g.HNO3.p / p_one)
         eq.r16.logK_eq ~ aq.HCl.loga_aq - log(g.HCl.p / p_one) - 23 # FIXME(CT): Added -23 to get reasonable results; not sure why this is needed.
@@ -111,35 +111,45 @@ include("equilibria.jl")
  #g.NH3.M ~ 0
 
         # Aqueous equilibrium mass Balance
-        NH_eq ~ aq.NH3_dissociated.M_eq + aq.NH3.M + g.NH3.M
-        Na_eq ~ aq.Na.M
-        Ca_eq ~ aq.Ca.M
-        K_eq ~ aq.K.M
-        Mg_eq ~ aq.Mg.M
-        Cl_eq ~ aq.HCl.M_eq + aq.HCl_aq.M + g.HCl.M
-        NO3_eq ~ aq.HNO3.M_eq + aq.HNO3_aq.M + g.HNO3.M
-        SO4_eq ~ aq.HSO4_dissociated.M_eq + aq.HHSO4.M_aq
+        NH_eq ~ aq.NH3_dissociated.m_eq + aq.NH3.m_eq #+ g.NH3.M ## XXXXXXXX
+        Na_eq ~ aq.Na.m_eq
+        Ca_eq ~ aq.Ca.m_eq
+        K_eq ~ aq.K.m_eq
+        Mg_eq ~ aq.Mg.m_eq
+        Cl_eq ~ aq.HCl.m_eq + aq.HCl_aq.m_eq #+ g.HCl.M
+        NO3_eq ~ aq.HNO3.m_eq + aq.HNO3_aq.m_eq #+ g.HNO3.M
+        SO4_eq ~ aq.HSO4_dissociated.m_eq + aq.HHSO4.m_eq
 
-        D(Na_eq) ~ 0.0
-        # NH_extra ~ TotalNH - NH_eq
-        # Na_extra ~ TotalNa - Na_eq
-        # Ca_extra ~ TotalCa - Ca_eq
-        # K_extra ~ TotalK - K_eq
-        # Mg_extra ~ TotalMg - Mg_eq
-        # Cl_extra ~ TotalCl - Cl_eq
-        # NO3_extra ~ TotalNO3 - NO3_eq
-        # SO4_extra ~ TotalSO4 - SO4_eq
+#        D(Na_eq) ~ 0.0
+        NH_extra ~ TotalNH - g.NH3.M - NH_eq * aq.W_eq
+        Na_extra ~ TotalNa - Na_eq * aq.W_eq
+        Ca_extra ~ TotalCa - Ca_eq * aq.W_eq
+        K_extra ~ TotalK - K_eq * aq.W_eq
+        Mg_extra ~ TotalMg - Mg_eq * aq.W_eq
+        Cl_extra ~ TotalCl - g.HCl.M - Cl_eq * aq.W_eq
+        NO3_extra ~ TotalNO3 - g.HNO3.M - NO3_eq * aq.W_eq
+        SO4_extra ~ TotalSO4 - SO4_eq * aq.W_eq
+        aq.W_eq ~ min(
+            (TotalNH - g.NH3.M) / NH_eq,
+            TotalNa / Na_eq,
+            TotalCa / Ca_eq,
+            TotalK / K_eq,
+            TotalMg / Mg_eq,
+            (TotalCl - g.HCl.M) / Cl_eq,
+            (TotalNO3 - g.HNO3.M) / NO3_eq,
+            TotalSO4 / SO4_eq,
+        )
         # M_zero ~ min(NH_extra, Na_extra, Ca_extra, K_extra, Mg_extra,
         #     Cl_extra, NO3_extra, SO4_extra)
 
-        # D(TotalNH) ~ 0.0
-        # D(TotalNa) ~ 0.0 # 0.2*TotalNa/M_one * cos(0.5π * t/t_one) * M_one / t_one
-        # D(TotalCa) ~ 0.0
-        # D(TotalK) ~ 0.0
-        # D(TotalMg) ~ 0.0
-        # D(TotalCl) ~ 0.0
-        # D(TotalNO3) ~ 0.0 # 0.2*TotalNO3/M_one * cos(3π * t/t_one) * M_one / t_one
-        # D(TotalSO4) ~ 0.0 # 0.2*TotalSO4/M_one * sin(2π * t/t_one) * M_one / t_one
+        D(TotalNH) ~ 0.0
+        D(TotalNa) ~ 0.0 # 0.2*TotalNa/M_one * cos(0.5π * t/t_one) * M_one / t_one
+        D(TotalCa) ~ 0.0
+        D(TotalK) ~ 0.0
+        D(TotalMg) ~ 0.0
+        D(TotalCl) ~ 0.0
+        D(TotalNO3) ~ 0.0 # 0.2*TotalNO3/M_one * cos(3π * t/t_one) * M_one / t_one
+        D(TotalSO4) ~ 0.0 # 0.2*TotalSO4/M_one * sin(2π * t/t_one) * M_one / t_one
 
         # # Aerosol types from Section 3.1 and Table 3
         # R_1 ~ (TotalNH + TotalCa + TotalK + TotalMg + TotalNa) / TotalSO4
