@@ -98,29 +98,21 @@ include("equilibria.jl")
         eq.r26.logK_eq ~ aq.NH4HSO4.loga_eq
         eq.r27.logK_eq ~ aq.NH43HSO42.loga_eq
 
+        # These equations would result in an over-specified equilibrium.
         #eq.r11.logK_eq ~ 2log(aq.HSO4_dissociated.a / m_one) - aq.H2SO4.loga # H2SO4 fully dissociates, so the concentration of HSO4 is the same as the concentration of HHSO4.
         #eq.r21.logK_eq ~ log(g.NH3.p / p_one) + log(g.HCl.p / p_one)
         # eq.r25.logK_eq ~ log(g.NH3.p / p_one) + log(g.HNO3.p / p_one)
 
-        #aq.NH3.m ~ 0
-       #  aq.HCl_aq.m_eq ~ 1e-20 * m_one
-    #     aq.HNO3_aq.m_eq ~ 1e-20 * m_one
-    #     aq.H2O_dissociated.m_eq ~ 1e-20 * m_one
- #         g.HNO3.M ~ 0
- # g.HCl.M ~ 0
- #g.NH3.M ~ 0
-
         # Aqueous equilibrium mass Balance
-        NH_eq ~ aq.NH3_dissociated.m_eq + aq.NH3.m_eq #+ g.NH3.M ## XXXXXXXX
+        NH_eq ~ aq.NH3_dissociated.m_eq + aq.NH3.m_eq
         Na_eq ~ aq.Na.m_eq
         Ca_eq ~ aq.Ca.m_eq
         K_eq ~ aq.K.m_eq
         Mg_eq ~ aq.Mg.m_eq
-        Cl_eq ~ aq.HCl.m_eq + aq.HCl_aq.m_eq #+ g.HCl.M
-        NO3_eq ~ aq.HNO3.m_eq + aq.HNO3_aq.m_eq #+ g.HNO3.M
+        Cl_eq ~ aq.HCl.m_eq + aq.HCl_aq.m_eq
+        NO3_eq ~ aq.HNO3.m_eq + aq.HNO3_aq.m_eq
         SO4_eq ~ aq.HSO4_dissociated.m_eq + aq.HHSO4.m_eq
 
-#        D(Na_eq) ~ 0.0
         NH_extra ~ TotalNH - g.NH3.M - NH_eq * aq.W_eq
         Na_extra ~ TotalNa - Na_eq * aq.W_eq
         Ca_extra ~ TotalCa - Ca_eq * aq.W_eq
@@ -137,31 +129,29 @@ include("equilibria.jl")
             TotalMg / Mg_eq,
             (TotalCl - g.HCl.M) / Cl_eq,
             (TotalNO3 - g.HNO3.M) / NO3_eq,
-            TotalSO4 / SO4_eq,
+            TotalSO4 / SO4_eq
         )
-        # M_zero ~ min(NH_extra, Na_extra, Ca_extra, K_extra, Mg_extra,
-        #     Cl_extra, NO3_extra, SO4_extra)
 
         D(TotalNH) ~ 0.0
-        D(TotalNa) ~ 0.0 # 0.2*TotalNa/M_one * cos(0.5π * t/t_one) * M_one / t_one
+        D(TotalNa) ~ 0.0
         D(TotalCa) ~ 0.0
         D(TotalK) ~ 0.0
         D(TotalMg) ~ 0.0
         D(TotalCl) ~ 0.0
-        D(TotalNO3) ~ 0.0 # 0.2*TotalNO3/M_one * cos(3π * t/t_one) * M_one / t_one
-        D(TotalSO4) ~ 0.0 # 0.2*TotalSO4/M_one * sin(2π * t/t_one) * M_one / t_one
+        D(TotalNO3) ~ 0.0
+        D(TotalSO4) ~ 0.0
 
-        # # Aerosol types from Section 3.1 and Table 3
-        # R_1 ~ (TotalNH + TotalCa + TotalK + TotalMg + TotalNa) / TotalSO4
-        # R_2 ~ (TotalCa + TotalK + TotalMg + TotalNa) / TotalSO4
-        # R_3 ~ (TotalCa + TotalK + TotalMg) / TotalSO4
-        # type1 ~ 1 - (tanh((R_1 - 1) * 30) + 1) / 2
-        # type2 ~ min((tanh((R_1 - 1) * 30) + 1) / 2, 1-(tanh((R_1 - 2) * 30) + 1) / 2)
-        # type3 ~ min((tanh((R_1 - 2) * 30) + 1) / 2, 1-(tanh((R_2 - 2) * 30) + 1) / 2)
-        # type4 ~ min((tanh((R_1 - 2) * 30) + 1) / 2, (tanh((R_2 - 2) * 30) + 1) / 2,
-        #     1-(tanh((R_3 - 2) * 30) + 1) / 2)
-        # type5 ~ min((tanh((R_1 - 2) * 30) + 1) / 2, (tanh((R_2 - 2) * 30) + 1) / 2,
-        #     1-(tanh((R_3 - 2) * 30) + 1) / 2)
+        # Aerosol types from Section 3.1 and Table 3
+        R_1 ~ (TotalNH + TotalCa + TotalK + TotalMg + TotalNa) / TotalSO4
+        R_2 ~ (TotalCa + TotalK + TotalMg + TotalNa) / TotalSO4
+        R_3 ~ (TotalCa + TotalK + TotalMg) / TotalSO4
+        type1 ~ 1 - (tanh((R_1 - 1) * 30) + 1) / 2
+        type2 ~ min((tanh((R_1 - 1) * 30) + 1) / 2, 1 - (tanh((R_1 - 2) * 30) + 1) / 2)
+        type3 ~ min((tanh((R_1 - 2) * 30) + 1) / 2, 1 - (tanh((R_2 - 2) * 30) + 1) / 2)
+        type4 ~ min((tanh((R_1 - 2) * 30) + 1) / 2, (tanh((R_2 - 2) * 30) + 1) / 2,
+            1 - (tanh((R_3 - 2) * 30) + 1) / 2)
+        type5 ~ min((tanh((R_1 - 2) * 30) + 1) / 2, (tanh((R_2 - 2) * 30) + 1) / 2,
+            1 - (tanh((R_3 - 2) * 30) + 1) / 2)
     end
 end
 

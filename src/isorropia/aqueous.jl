@@ -134,9 +134,9 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
 
         # Activity (Section 2.2)
         loga_eq ~ ν_cation * log(m_eq / m_one) + ν_anion * log(m_eq / m_one) +
-               (ν_cation + ν_anion) * logγ
+                  (ν_cation + ν_anion) * logγ
         loga_aq ~ ν_cation * log(m_aq / m_one) + ν_anion * log(m_aq / m_one) +
-               (ν_cation + ν_anion) * logγ
+                  (ν_cation + ν_anion) * logγ
 
         M_eq ~ M_aq
     end
@@ -162,7 +162,7 @@ end
         m_aw(t), [description = "molality of the binary solution", unit = u"mol/kg"]
     end
     @equations begin
-        m_aw ~(k_0 + k_1 * RH + k_2 * RH^2 + k_3 * RH^3 + k_4 * RH^4 + k_5 * RH^5) * m_one
+        m_aw ~ (k_0 + k_1 * RH + k_2 * RH^2 + k_3 * RH^3 + k_4 * RH^4 + k_5 * RH^5) * m_one
     end
 end
 
@@ -209,7 +209,6 @@ end
     end
     @components begin
         # Cations
-        #NH4 = Ion(z = 1)
         Na = Ion(z = 1, m_eq_guess=160.0)
         H = Ion(z = 1, m_eq_guess=460.0)
         Ca = Ion(z = 2, m_eq_guess=12.0)
@@ -217,10 +216,6 @@ end
         Mg = Ion(z = 2, m_eq_guess=130.0)
 
         # Anions
-        #Cl = Ion(z = abs(-1))
-        #NO3 = Ion(z = abs(-1))
-        #SO4 = Ion(z = abs(-2))
-        #HSO4 = Ion(z = abs(-1))
         OH = Ion(z = abs(-1), m_eq_guess=13.0)
 
         # Neutral species
@@ -334,8 +329,8 @@ end
                  Aᵧ_term *
                  sum([s.zz * s.X for s in [KHSO4, NaHSO4, NH4HSO4, NH43HSO42]])
         F_OH ~ sum([s.X * s.logγ⁰ for s in [H2O_dissociated, NH3_dissociated]]) +
-                 Aᵧ_term *
-                 sum([s.zz * s.X for s in [H2O_dissociated, NH3_dissociated]])
+               Aᵧ_term *
+               sum([s.zz * s.X for s in [H2O_dissociated, NH3_dissociated]])
 
         CaNO32.F_cat ~ F_Ca
         CaNO32.F_an ~ F_NO3
@@ -401,7 +396,6 @@ end
                      MgCl2, NaCl, Na2SO4, NaNO3, NH42SO4, NH4NO3, NH4Cl, NH4HSO4,
                      NaHSO4, NH43HSO42]]) +
                  H.m_eq * H.z^2 + OH.m_eq * OH.z^2))
-
 
         CaNO32.I ~ I
         CaCl2.I ~ I
@@ -493,16 +487,11 @@ end
         HNO3.W_eq ~ W_eq
         HCl.W_eq ~ W_eq
 
-        #NH4.W ~ W
         Na.W_eq ~ W_eq
         H.W_eq ~ W_eq
         Ca.W_eq ~ W_eq
         K.W_eq ~ W_eq
         Mg.W_eq ~ W_eq
-        #Cl.W ~ W
-        #NO3.W ~ W
-        #SO4.W ~ W
-        #HSO4.W ~ W
         HSO4_dissociated.W_eq ~ W_eq
         OH.W_eq ~ W_eq
         NH3.W_eq ~ W_eq
@@ -535,16 +524,11 @@ end
         HNO3.W ~ W
         HCl.W ~ W
 
-        #NH4.W ~ W
         Na.W ~ W
         H.W ~ W
         Ca.W ~ W
         K.W ~ W
         Mg.W ~ W
-        #Cl.W ~ W
-        #NO3.W ~ W
-        #SO4.W ~ W
-        #HSO4.W ~ W
         HSO4_dissociated.W ~ W
         OH.W ~ W
         NH3.W ~ W
@@ -552,7 +536,6 @@ end
         HNO3_aq.W ~ W
         HCl_aq.W ~ W
         H2O_dissociated.W ~ W
-
 
         # NH4Cl and NH4NO3 precipitate directly from gas, so we assume
         # the aqueous concentration is zero.
@@ -563,16 +546,18 @@ end
         HHSO4.m_eq ~ 1e-20 * m_one
 
         # Mass balance
-        NH3_dissociated.M_eq ~ sum([NH4NO3.M_eq, NH4Cl.M_eq, NH4HSO4.M_eq, 2NH42SO4.M_eq, 3NH43HSO42.M_eq])
+        NH3_dissociated.M_eq ~ sum([NH4NO3.M_eq, NH4Cl.M_eq, NH4HSO4.M_eq, 2NH42SO4.M_eq,
+            3NH43HSO42.M_eq])
         Na.M ~ sum([NaCl.M_eq, 2Na2SO4.M_eq, NaNO3.M_eq, NaHSO4.M_eq])
-        H.M ~ sum([HCl.M_eq, H2SO4.M_eq, HSO4_dissociated.M_eq, H2O_dissociated.M_eq, HNO3.M_eq])
+        H.M ~ sum([
+            HCl.M_eq, H2SO4.M_eq, HSO4_dissociated.M_eq, H2O_dissociated.M_eq, HNO3.M_eq])
         Ca.M ~ sum([CaNO32.M_eq, CaCl2.M_eq, CaSO4.M_eq])
         K.M ~ sum([KHSO4.M_eq, 2K2SO4.M_eq, KNO3.M_eq, KCl.M_eq])
         Mg.M ~ sum([MgSO4.M_eq, MgNO32.M_eq, MgCl2.M_eq])
         HCl.M_eq ~ sum([NaCl.M_eq, KCl.M_eq, 2MgCl2.M_eq, 2CaCl2.M_eq, NH4Cl.M_eq])
         HNO3.M_eq ~ sum([NaNO3.M_eq, KNO3.M_eq, 2MgNO32.M_eq, 2CaNO32.M_eq, NH4NO3.M_eq])
-        HSO4_dissociated.M_eq ~ sum([Na2SO4.M_eq, K2SO4.M_eq, MgSO4.M_eq, CaSO4.M_eq, NH42SO4.M_eq,
-            NH43HSO42.M_eq])
+        HSO4_dissociated.M_eq ~ sum([Na2SO4.M_eq, K2SO4.M_eq, MgSO4.M_eq, CaSO4.M_eq,
+            NH42SO4.M_eq, NH43HSO42.M_eq])
         H2SO4.M_eq ~ sum([KHSO4.M_eq, NaHSO4.M_eq, NH4HSO4.M_eq, NH43HSO42.M_eq])
         OH.M ~ NH3_dissociated.M_eq + H2O_dissociated.M_eq
     end
