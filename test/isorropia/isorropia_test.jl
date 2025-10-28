@@ -2,17 +2,6 @@ using Aerosol
 using ModelingToolkit
 using Test
 
-@testitem "initialize Equilibrium Constants" begin
-    using ModelingToolkit
-    @named eq = ISORROPIA.EquilibriumConstants()
-end
-
-@testitem "Compile Isorropia" begin
-    using ModelingToolkit
-    @named isrpa = Isorropia()
-    mtkcompile(isrpa)
-end
-
 #@testitem "Run Isorropia" begin
 using ModelingToolkit
 using OrdinaryDiffEqRosenbrock
@@ -106,7 +95,7 @@ ions = [:NH3, :NH3_dissociated, :Na, :Ca, :K, :Mg, :Cl, :NO3, :SO4, :HNO3_aq,
     :HSO4_dissociated, :H2O_dissociated, :H, :OH]
 
 let
-    vars = [reduce(getproperty, [sys, :aq, salt, :loga]) for salt in salts]
+    vars = [reduce(getproperty, [sys, :aq, salt, :loga_eq]) for salt in salts]
     collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
 end
 
@@ -121,7 +110,7 @@ let
 end
 
 let
-    vars = [reduce(getproperty, [sys, :aq, salt, :M]) for salt in salts]
+    vars = [reduce(getproperty, [sys, :aq, salt, :M_eq]) for salt in salts]
     collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
 end
 
@@ -228,63 +217,8 @@ sol[[sys.aqNH + sys.sNH + sys.g.NH3.M - sys.TotalNH
      sys.aqNO3 + sys.sNO3 + sys.g.HNO3.M - sys.TotalNO3
      sys.aqSO4 + sys.sSO4 + sys.g.H2SO4.M - sys.TotalSO4]]
 
-iprob = prob.f.initializeprob
-sol = solve(iprob)
-sol.stats
-
-prob = SteadyStateProblem(iprob.f, iprob.u0, iprob.p)
-solve(prob, SSRootfind())
-
-equations(iprob.f.sys)
-
-collect(zip(unknowns(iprob.f.sys), round.(sol.u; sigdigits=2), round.(sol.resid; sigdigits=2)))
-
-using BracketingNonlinearSolve
-
-iprob.p
-
-uspan = (ones(14)*1e-20, ones(14)*10)
-iprob2 = IntervalNonlinearProblem{false}(iprob.f, uspan, iprob.p)
-solve(iprob2)
 
 
-     #end
-using EarthSciMLBase
-
-allvars = filter(
-    x -> occursin(".M", string(x)), EarthSciMLBase.var2symbol.(unknowns(isrpa)))
-
-# Variables for case 1, sulfate rich free acid.
-vars1 = [
-    # major
-    :s.NaHSO4.M,
-    :s.NH4HSO4.M,
-    :s.KHSO4.M,
-    :s.CaSO4.M,
-
-    :aq.Na.M,
-    :aq.NH4.M,
-    :aq.H.M,
-
-    :aq.HSO4.M,
-    :aq.SO4.M,
-    :aq.NO3.M,
-    :aq.Cl.M,
-    :aq.Ca.M,
-    :aq.K.M,
-
-    # minor
-    :g.NH3.M,
-    :aq.NH3.M,
-    :aq.HNO3_aq.M,
-    :aq.HCl_aq.M,
-]
-
-@assert length(intersect(allvars, vars1)) == length(vars1)
-
-setdiff(allvars, vars1)
-
-end
 ##### Reproducing Figures from Fountoukis and Nenes (2007)
 # function run_rh_sweep(sys, RHs, ics; mstable = 0)
 #     defaults = ModelingToolkit.get_defaults(sys)
@@ -455,17 +389,43 @@ end
 # end
 # plot(p1, ps..., size = (600, 300))
 
+@testset "Cases from paper" begin
+cases = (
+   Case = 1:16,
+    AerosolType = [
+        "Urban (1)", "Urban (2)", "Urban (3)", "Urban (4)",
+        "N-u Cont.b (1)", "N-u Cont. (2)", "N-u Cont. (3)", "N-u Cont. (4)",
+        "Marine (1)", "Marine (2)", "Marine (3)", "Marine (4)",
+        "Rem. Cont.b (1)", "Rem. Cont. (2)", "Rem. Cont. (3)", "Rem. Cont. (4)"
+    ],
+    Na = [0.000, 0.023, 0.000, 0.000, 0.200, 0.100, 0.023, 0.023, 2.000, 1.500, 2.500, 3.000, 0.000, 0.023, 0.100, 0.200],
+    H2SO4 = [10.000, 10.000, 15.000, 15.000, 2.000, 4.000, 5.664, 5.664, 1.000, 1.000, 3.000, 3.000, 10.000, 10.000, 15.000, 15.000],
+    NH3 = [3.400, 3.400, 2.000, 2.000, 8.000, 10.000, 12.000, 20.400, 0.010, 0.010, 0.001, 0.020, 4.250, 3.000, 3.000, 3.000],
+    HNO3 = [2.000, 2.000, 10.000, 10.000, 12.000, 7.000, 2.000, 0.611, 0.300, 1.500, 3.000, 2.000, 0.145, 1.000, 4.000, 8.000],
+    HCl = [0.000, 0.037, 0.000, 0.000, 0.200, 0.100, 0.037, 0.037, 3.121, 2.500, 2.500, 3.121, 0.000, 0.037, 0.100, 0.200],
+    Ca2 = [0.400, 0.900, 0.900, 0.400, 0.120, 0.120, 0.120, 0.120, 0.100, 0.360, 0.500, 0.360, 0.080, 0.080, 0.080, 0.080],
+    K = [0.330, 1.000, 1.000, 0.330, 0.180, 0.180, 0.180, 0.180, 0.100, 0.450, 1.000, 0.450, 0.090, 0.090, 0.090, 0.090],
+    Mg2 = [0.000, 0.000, 0.000, 0.000, 0.000, 0.050, 0.050, 0.000, 0.070, 0.050, 0.050, 0.130, 0.000, 0.000, 0.000, 0.040],
+   R1 = [2.14, 2.44, 1.27, 0.89, 23.9, 14.8, 12.4, 20.9, 9.36, 8.66, 4.86, 5.14, 2.49, 1.78, 1.21, 1.25],
+    R2 = [0.18, 0.48, 0.31, 0.12, 0.80, 0.34, 0.18, 0.15, 9.30, 8.60, 4.86, 5.10, 0.04, 0.05, 0.06, 0.10],
+    R3 = [0.18, 0.47, 0.32, 0.12, 0.37, 0.24, 0.17, 0.13, 0.80, 2.21, 1.31, 0.84, 0.04, 0.04, 0.03, 0.04]
+)
+
+minval = 0.01
+
+for i in cases.Case
+@testset "$(cases.AerosolType[i])" begin
 
 prob = ODEProblem(sys,
 [
-    sys.TotalNa => 0.01 / 	22.9897693 * 1e-6,
-    sys.TotalSO4 => 10 / 98.08 * 1e-6,
-    sys.TotalNH => 3.4 / 17.031 * 1e-6,
-    sys.TotalNO3 => 2 / 63.013 * 1e-6,
-    sys.TotalCl => 0.01 / 	36.46 * 1e-6,
-    sys.TotalCa => 0.4 / 40.08 * 1e-6,
-    sys.TotalK => 0.33 / 39.0983 * 1e-6,
-    sys.TotalMg => 0.01 / 24.305 * 1e-6
+    sys.TotalNa => max(cases.Na[i], minval) / 	22.9897693 * 1e-6,
+    sys.TotalSO4 => max(cases.H2SO4[i], minval) / 98.08 * 1e-6,
+    sys.TotalNH => max(cases.NH3[i], minval) / 17.031 * 1e-6,
+    sys.TotalNO3 => max(cases.HNO3[i], minval) / 63.013 * 1e-6,
+    sys.TotalCl => max(cases.HCl[i], minval) / 	36.46 * 1e-6,
+    sys.TotalCa => max(cases.Ca2[i], minval) / 40.08 * 1e-6,
+    sys.TotalK => max(cases.K[i], minval) / 39.0983 * 1e-6,
+    sys.TotalMg => max(cases.Mg2[i], minval) / 24.305 * 1e-6
 ],
          guesses = [
               sys.aq.NH3.m_aq => 3.1e-7
@@ -550,4 +510,8 @@ guesses = guesses,
 
 sol = solve(prob, Rosenbrock23())
 
-[var => round(val; sigdigits=2) for (var, val) in zip(unknowns(sys), sol.u[1])]
+@test sol.retcode == SciMLBase.ReturnCode.Success
+
+end
+end
+end
