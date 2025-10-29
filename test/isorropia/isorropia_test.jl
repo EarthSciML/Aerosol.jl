@@ -11,12 +11,61 @@ sys = mtkcompile(isrpa)
 
 prob = ODEProblem(sys, [],
     initializealg = BrownFullBasicInit(nlsolve = RobustMultiNewton()),
+    guesses = [
+       sys.aq.NH43HSO42.m_eq => 2.7077033643314414
+           sys.aq.H2SO4.m_eq => 164.92775568117182
+            sys.aq.HNO3.m_eq => 115.4892998645992
+         sys.aq.HNO3_aq.m_eq => 0.05622990807042508
+             sys.aq.NH3.m_eq => 5.337486773683763
+ sys.aq.NH3_dissociated.m_eq => 13.482210465994047
+          sys.aq.HCl_aq.m_eq => 0.0017884729025467545
+                   sys.Cl_eq => 177.4083678490504
+                   sys.Mg_eq => 134.65917365719395
+                 sys.g.NH3.M => 4.6931978621320305e-8
+                sys.g.HNO3.M => 6.003885040024658e-8
+                 sys.g.HCl.M => 1.6040822937392659e-7
+              sys.aq.Na.m_eq => 159.17639267952742
+                   sys.Ca_eq => 12.00641294331137
+                    sys.K_eq => 5.883740758313111
+           sys.aq.K2SO4.m_eq => 0.422536422218256
+             sys.aq.KCl.m_eq => 0.010688599911850177
+          sys.aq.MgNO32.m_eq => 51.84749703931382
+           sys.aq.CaCl2.m_eq => 6.293771203936254
+           sys.aq.KHSO4.m_eq => 4.92221503614245
+            sys.aq.KNO3.m_eq => 0.10576427782229897
+         sys.aq.NH42SO4.m_eq => 2.0880341178608917
+            sys.aq.NaCl.m_eq => 0.02229007278269932
+         sys.aq.NH4HSO4.m_eq => 1.18303213727794
+          sys.aq.CaNO32.m_eq => 5.648111764614805
+               sys.aq.H.m_eq => 464.84857632882114
+           sys.aq.NaNO3.m_eq => 0.3923179789196486
+          sys.aq.NaHSO4.m_eq => 156.11480514341997
+          sys.aq.Na2SO4.m_eq => 1.3234897422025436
+           sys.aq.MgSO4.m_eq => 0.41864747008975794
+           sys.aq.CaSO4.m_eq => 0.06452997476030989
+           sys.aq.MgCl2.m_eq => 82.39302914779037
+              sys.aq.OH.m_eq => 13.482210781433075
+                  sys.SO4_eq => 7.024941091463253
+ sys.aq.H2O_dissociated.m_eq => 3.1543902732542984e-7
+    ],
     (0.0, 10.0), use_scc = false)
 
 iprob = prob.f.initializeprob
-iiprob = NonlinearProblem((u, p) -> iprob.f(abs.(u), p), iprob.u0, iprob.p)
+
+f_abs = let
+    logname = [occursin("log", string(var)) for var in unknowns(iprob.f.sys)]
+    function f_abs(u0)
+    u0[.!logname] .= abs.(u0[.!logname])
+    return u0
+    end
+end
+
+iiprob = NonlinearProblem((u, p) -> iprob.f(f_abs(u), p), iprob.u0, iprob.p)
+unknowns(iprob.f.sys) .=> iprob.u0
 isol = solve(iiprob, RobustMultiNewton())
-guesses = unknowns(iprob.f.sys) .=> abs.(isol.u)
+unknowns(iprob.f.sys) .=> round.(isol.resid, sigdigits = 2)
+"sys." .* replace.(replace.(string.(unknowns(iprob.f.sys)), ("₊" => ".",)), ("(t)" => "",)) .=> f_abs(isol.u)
+guesses = unknowns(iprob.f.sys) .=> f_abs(isol.u)
 
 prob = ODEProblem(sys, [], guesses = guesses,
     initializealg = BrownFullBasicInit(nlsolve = RobustMultiNewton()),
@@ -33,11 +82,10 @@ end
 
 salts = [:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl, :MgSO4, :MgNO32, :MgCl2,
     :NaCl, :Na2SO4, :NaNO3,
-    :NH42SO4, :NH4NO3, :NH4Cl, :NH4HSO4, :NaHSO4, :NH43HSO42, :HHSO4, :HNO3, :HCl]
+    :NH42SO4, :NH4NO3, :NH4Cl, :NH4HSO4, :NaHSO4, :NH43HSO42, :HHSO4, :HNO3, :HCl,
+    :H2SO4, :NH3_dissociated,:H2O_dissociated,      :HSO4_dissociated]
 
-ions = [:NH3, :NH3_dissociated, :Na, :Ca, :K, :Mg, :Cl, :NO3, :SO4, :HNO3_aq,
-    :HCl_aq, :HSO4,
-    :HSO4_dissociated, :H2O_dissociated, :H, :OH]
+ions = [:Na, :H, :Ca, :K, :Mg, :OH, :NH3, :HNO3_aq, :HCl_aq]
 
 let
     vars = [reduce(getproperty, [sys, :aq, salt, :loga_eq]) for salt in salts]
@@ -50,12 +98,43 @@ let
 end
 
 let
+    vars = [sys.aq.F_Ca, sys.aq.F_K, sys.aq.F_Mg, sys.aq.F_Na,
+        sys.aq.F_NH4, sys.aq.F_Cl, sys.aq.F_NO3, sys.aq.F_SO4, sys.aq.F_HSO4, sys.aq.F_OH]
+    collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
+end
+
+let
     vars = [reduce(getproperty, [sys, :aq, salt, :m_eq]) for salt in salts]
     collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
 end
 
 let
     vars = [reduce(getproperty, [sys, :aq, salt, :M_eq]) for salt in salts]
+    collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
+end
+
+let
+    vars = [reduce(getproperty, [sys, :aq, salt, :M_aq]) for salt in salts]
+    collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
+end
+
+let
+    vars = [reduce(getproperty, [sys, :aq, salt, :deliquesced]) for salt in salts]
+    collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
+end
+
+let
+    vars = [reduce(getproperty, [sys, :aq, salt, :M_salt]) for salt in salts]
+    collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
+end
+
+let
+    vars = [reduce(getproperty, [sys, :aq, salt, :M_precip]) for salt in salts]
+    collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
+end
+
+let
+    vars = [reduce(getproperty, [sys, :aq, salt, :M_dissolved]) for salt in salts]
     collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
 end
 
@@ -133,7 +212,7 @@ let
 end
 
 let
-    vars = [reduce(getproperty, [sys, :aq, ion, :m]) for ion in ions]
+    vars = [reduce(getproperty, [sys, :aq, ion, :m_eq]) for ion in ions]
     collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
 end
 
@@ -148,10 +227,6 @@ let
     collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
-let
-    vars = [sys.aq.NH3.m, sys.aq.HCl_aq.m, sys.aq.HNO3_aq.m]
-    collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
-end
 
 sol[[sys.aqNH + sys.sNH + sys.g.NH3.M - sys.TotalNH
      sys.aqNa + sys.sNa - sys.TotalNa

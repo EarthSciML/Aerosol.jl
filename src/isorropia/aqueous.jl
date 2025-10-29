@@ -8,7 +8,7 @@
     end
     @variables begin
         #! format: off
-        m_eq(t), [description = "Molality of ion in water at equilibrium", unit = u"mol/kg", guess = m_eq_guess]
+        m_eq(t), [description = "Molality of ion in water at equilibrium", unit = u"mol/kg", guess = m_eq_guess, state_priority=10]
         m_aq(t), [description = "Molality of ion in water", unit = u"mol/kg", guess = 1]
         M(t), [description = "Molarity of ion in air", unit = u"mol/m^3", guess = 1e-8]
         W_eq(t), [description = "Aerosol water content in air at equilibrium", unit = u"kg/m^3", guess = 1e-6]
@@ -70,21 +70,26 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
     end
     @parameters begin
         T = 293.15, [description = "Temperature", unit = u"K"]
+        RH = 0.3, [description = "Relative humidity (0-1)"]
     end
     @variables begin
         #! format: off
-        m_eq(t), [description = "molality of the salt in water at equilibrium", unit = u"mol/kg", guess = m_eq_guess]
+        m_eq(t), [description = "molality of the salt in water at equilibrium", unit = u"mol/kg", guess = m_eq_guess, state_priority=10]
         m_aq(t), [description = "molality of the salt in water", unit = u"mol/kg", guess = 1]
         M_eq(t), [description = "Molarity of the salt in air at equilibrium", unit = u"mol/m^3", guess = 1e-8]
         M_aq(t), [description = "Molarity of the salt in air", unit = u"mol/m^3", guess = 1e-8]
+        M_precip(t), [description = "Precipitated solid", unit = u"mol/m^3", guess=1e-10]
+        M_dissolved(t), [description = "Dissolved precipitate", unit = u"mol/m^3", guess=1e-10]
+        M_salt(t), [description = "Salt concentration (either precipitated or dissolved)", unit = u"mol/m^3", guess=1e-10]
+        deliquesced(t), [description = "Whether the salt is deliquesced (1) or not (0)"]
         W_eq(t), [description = "Aerosol water content in air associated with equilibrium concentration", unit = u"kg/m^3", guess = 1e-6]
         W(t), [description = "Aerosol water content in air", unit = u"kg/m^3", guess = 1e-6]
         X(t)
         Y(t)
-        I(t), [description = "Ionic strength", unit = u"mol/kg", guess = 1e-8]
-        logγ⁰(t), [description = "Log of the mean ionic activity coefficient for the single solute solution", guess=0]
-        logγₜ₀(t), [description = "Log of the multi-component activity coefficient at 298.15K", guess=0]
-        logγ(t), [description = "Log of the activity coefficient", guess=0]
+        I(t), [description = "Ionic strength", unit = u"mol/kg", state_priority=-10]
+        logγ⁰(t), [description = "Log of the mean ionic activity coefficient for the single solute solution"]
+        logγₜ₀(t), [description = "Log of the multi-component activity coefficient at 298.15K", state_priority=-10]
+        logγ(t), [description = "Log of the activity coefficient"]
         #! format: on
         logΓ⁰(t)
         logΓ⁺(t)
@@ -138,7 +143,10 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         loga_aq ~ ν_cation * log(m_aq / m_one) + ν_anion * log(m_aq / m_one) +
                   (ν_cation + ν_anion) * logγ
 
-        M_eq ~ M_aq
+        deliquesced ~  (tanh((RH - drh) * 30) + 1) / 2
+        M_precip ~ M_salt * (1 - deliquesced)
+         M_dissolved ~ M_salt * deliquesced
+        M_eq ~ M_aq - M_dissolved
     end
 end
 
@@ -225,55 +233,58 @@ end
 
         # Salts
         CaNO32 = Salt(z_cation = 2, ν_anion=2, drh = 0.4906, l_t = 509.4, q = 0.93, T=T,
-            m_eq_guess=5.6)
+             RH=RH,m_eq_guess=5.6)
         CaCl2 = Salt(z_cation = 2, ν_anion=2, drh = 0.2830, l_t = 551.1, q = 2.4, T=T,
-            m_eq_guess=6.3)
+            RH=RH,m_eq_guess=6.3)
         CaSO4 = Salt(z_cation = 2, z_anion = 2, drh = 0.9700, l_t = NaN, q = q0, T=T,
-            m_eq_guess=0.065)
+             RH=RH,m_eq_guess=0.065)
         K2SO4 = Salt(ν_cation = 2, z_anion = 2, drh = 0.9751, l_t = 35.6, q = -0.25, T=T,
-            m_eq_guess=0.42)
+             RH=RH,m_eq_guess=0.42)
         KNO3 = Salt(z_cation = 1, z_anion = 1, drh = 0.9248, l_t = NaN, q = -2.33, T=T,
-            m_eq_guess=0.11)
+             RH=RH,m_eq_guess=0.11)
         KCl = Salt(z_cation = 1, z_anion = 1, drh = 0.8426, l_t = 158.9, q = 0.92, T=T,
-            m_eq_guess=0.011)
+             RH=RH,m_eq_guess=0.011)
         MgSO4 = Salt(z_cation = 2, z_anion = 2, drh = 0.8613, l_t = -714.5, q = 0.15, T=T,
-            m_eq_guess=0.42)
+            RH=RH,m_eq_guess=0.42)
         MgNO32 = Salt(z_cation = 2, ν_anion = 2, drh = 0.5400, l_t = 230.2, q = 2.32, T=T,
-            m_eq_guess=52.0)
+            RH=RH,m_eq_guess=52.0)
         MgCl2 = Salt(z_cation = 2, ν_anion = 2, drh = 0.3284, l_t = 42.23, q = 2.90, T=T,
-            m_eq_guess=82.0)
+            RH=RH,m_eq_guess=82.0)
         NaCl = Salt(z_cation = 1, z_anion = 1, drh = 0.7528, l_t = 25.0, q = 2.23, T=T,
-            m_eq_guess=0.022)
+            RH=RH,m_eq_guess=0.022)
         Na2SO4 = Salt(ν_cation = 2, z_anion = 2, drh = 0.9300, l_t = 80.0, q = -0.19, T=T,
-            m_eq_guess=1.3)
+            RH=RH,m_eq_guess=1.3)
         NaNO3 = Salt(z_cation = 1, z_anion = 1, drh = 0.7379, l_t = 304.0, q = -0.39, T=T,
-            m_eq_guess=0.39)
+             RH=RH,m_eq_guess=0.39)
         NH42SO4 = Salt(ν_cation = 2, z_anion = 2, drh = 0.7997, l_t = 80.0, q = -0.25, T=T,
-            m_eq_guess=2.1)
-        NH4NO3 = Salt(z_cation = 1, z_anion = 1, drh = 0.6183, l_t = 852.0, q = -1.15, T=T)
-        NH4Cl = Salt(z_cation = 1, z_anion = 1, drh = 0.7710, l_t = 239.0, q = 0.82, T=T)
-        HHSO4 = Salt(z_cation = 1, z_anion = 1, drh = 0.000, l_t = NaN, q = 8.00, T=T)
+             RH=RH,m_eq_guess=2.1)
+        NH4NO3 = Salt(z_cation = 1, z_anion = 1, drh = 0.6183, l_t = 852.0, q = -1.15, T=T,
+         RH=RH)
+        NH4Cl = Salt(z_cation = 1, z_anion = 1, drh = 0.7710, l_t = 239.0, q = 0.82, T=T,
+         RH=RH)
+        HHSO4 = Salt(z_cation = 1, z_anion = 1, drh = 0.000, l_t = NaN, q = 8.00, T=T,
+         RH=RH)
         H2SO4 = Salt(z_cation = 1, z_anion = 1, drh = 0.000, l_t = NaN, q = -0.1, T=T,
-            m_eq_guess=160.0)
-        HNO3 = Salt(z_cation = 1, z_anion = 1, drh = NaN, l_t = NaN, q = 2.60, T=T,
-            m_eq_guess=120.0)
-        HCl = Salt(z_cation = 1, z_anion = 1, drh = NaN, l_t = NaN, q = 6.00, T=T,
-            m_eq_guess=180.0)
+             RH=RH,m_eq_guess=160.0)
+        HNO3 = Salt(z_cation = 1, z_anion = 1, drh = 0, l_t = NaN, q = 2.60, T=T,
+             RH=RH,m_eq_guess=120.0)
+        HCl = Salt(z_cation = 1, z_anion = 1, drh = 0, l_t = NaN, q = 6.00, T=T,
+             RH=RH,m_eq_guess=180.0)
         KHSO4 = Salt(z_cation = 1, z_anion = 1, drh = 0.8600, l_t = NaN, q = q0, T=T,
-            is_KHSO4=true, salt1=HHSO4, salt2=KCl, salt3=HCl, m_eq_guess=4.9)
+             RH=RH,is_KHSO4=true, salt1=HHSO4, salt2=KCl, salt3=HCl, m_eq_guess=4.9)
         NH4HSO4 = Salt(z_cation = 1, z_anion = 1, drh = 0.4000, l_t = 384.0, q = q0, T=T,
-            is_NH4HSO4=true, salt1=HHSO4, salt2=NH4Cl, salt3=HCl, m_eq_guess=1.2)
+             RH=RH,is_NH4HSO4=true, salt1=HHSO4, salt2=NH4Cl, salt3=HCl, m_eq_guess=1.2)
         NaHSO4 = Salt(z_cation = 1, z_anion = 1, drh = 0.5200, l_t = -45.0, q = q0, T=T,
-            is_NaHSO4=true, salt1=HHSO4, salt2=NaCl, salt3=HCl, m_eq_guess=160.0)
+             RH=RH,is_NaHSO4=true, salt1=HHSO4, salt2=NaCl, salt3=HCl, m_eq_guess=160.0)
         NH43HSO42 = Salt(ν_cation = 3, ν_anion = 2, drh = 0.6900, l_t = 186.0, q = q0, T=T,
-            is_NH43HSO42=true, salt1=NH42SO4, salt2=NH4HSO4, m_eq_guess=2.7)
+             RH=RH,is_NH43HSO42=true, salt1=NH42SO4, salt2=NH4HSO4, m_eq_guess=2.7)
 
         # Species that are not in the paper. Assume q=0
-        HSO4_dissociated = Salt(z_anion = abs(-2), drh = NaN, l_t = NaN, q = 0.00, T=T,
+        HSO4_dissociated = Salt(z_anion = abs(-2), drh = 0, l_t = NaN, q = 0.00, T=T,
             m_eq_guess=7.0) # H + SO4
-        NH3_dissociated = Salt(drh = NaN, l_t = NaN, q = 0.00, T=T,
+        NH3_dissociated = Salt(drh = 0, l_t = NaN, q = 0.00, T=T,
             m_eq_guess=13.0) # NH4 + OH
-        H2O_dissociated = Salt(drh = NaN, l_t = NaN, q = 0.00, T=T,
+        H2O_dissociated = Salt(drh = 0, l_t = NaN, q = 0.00, T=T,
             m_eq_guess=3.2e-7) # H + OH
 
         # Water content
