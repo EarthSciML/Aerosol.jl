@@ -16,43 +16,44 @@ include("equilibria.jl")
     @parameters begin
         T = 293.15, [unit = u"K", description = "Temperature"]
         RH = 0.3, [unit = u"1", description = "Relative humidity (0 to 1)"]
-
+    end
+    @constants begin
         m_one = 1.0, [unit = u"mol/kg"]
         M_one = 1.0, [unit = u"mol/m^3"]
         p_one = 1.0, [unit = u"Constants.atm"]
-    end
-    @constants begin
         M_zero = 0.0, [unit = u"mol/m^3"]
+        m_zero = 0.0, [unit = u"mol/kg"]
+        w_inf = 1e30, [unit = u"kg/m^3"]
     end
     @components begin
         aq = Aqueous(T = T, RH = RH)
-        s = Solids()
+        #s = Solids()
         g = Gases()
         eq = EquilibriumConstants(T = T)
     end
     @variables begin
-        NH_eq(t), [unit = u"mol/kg", description = "Equilibrium NH3 + NH4", guess = 1]
-        Na_eq(t), [unit = u"mol/kg", description = "Equilibrium Na+", guess = 1]
-        Ca_eq(t), [unit = u"mol/kg", description = "Equilibrium Ca2+", guess = 1]
-        K_eq(t), [unit = u"mol/kg", description = "Equilibrium K+", guess = 1]
-        Mg_eq(t), [unit = u"mol/kg", description = "Equilibrium Mg2+", guess = 1]
-        Cl_eq(t), [unit = u"mol/kg", description = "Equilibrium Cl-", guess = 1]
-        NO3_eq(t), [unit = u"mol/kg", description = "Equilibrium NO3-", guess = 1]
-        SO4_eq(t), [unit = u"mol/kg", description = "Equilibrium SO4 2-", guess = 1]
+        NH_eq(t), [unit = u"mol/kg", description = "Equilibrium NH3 + NH4", guess = 19]
+        Na_eq(t), [unit = u"mol/kg", description = "Equilibrium Na+", guess = 159]
+        Ca_eq(t), [unit = u"mol/kg", description = "Equilibrium Ca2+", guess = 12]
+        K_eq(t), [unit = u"mol/kg", description = "Equilibrium K+", guess = 6]
+        Mg_eq(t), [unit = u"mol/kg", description = "Equilibrium Mg2+", guess = 134]
+        Cl_eq(t), [unit = u"mol/kg", description = "Equilibrium Cl-", guess = 177]
+        NO3_eq(t), [unit = u"mol/kg", description = "Equilibrium NO3-", guess = 116]
+        SO4_eq(t), [unit = u"mol/kg", description = "Equilibrium SO4 2-", guess = 7]
 
-        TotalNH(t)=2e-7, [unit = u"mol/m^3", description = "Total NH3 + NH4", guess = 1e-8]
-        TotalNa(t)=4e-10, [unit = u"mol/m^3", description = "Total Na+", guess = 1e-8]
-        TotalCa(t)=1e-8, [unit = u"mol/m^3", description = "Total Ca2+", guess = 1e-8]
-        TotalK(t)=8.4e-9, [unit = u"mol/m^3", description = "Total K+", guess = 1e-8]
-        TotalMg(t)=4.1e-10, [unit = u"mol/m^3", description = "Total Mg2+", guess = 1e-8]
-        TotalCl(t)=2.7e-10, [unit = u"mol/m^3", description = "Total Cl-", guess = 1e-8]
-        TotalNO3(t)=3.2e-8, [unit = u"mol/m^3", description = "Total NO3-", guess = 1e-8]
-        TotalSO4(t)=1e-7, [unit = u"mol/m^3", description = "Total SO4 2-", guess = 1e-8]
+        TotalNH(t)=2e-7, [unit = u"mol/m^3", description = "Total NH3 + NH4"]
+        TotalNa(t)=4e-10, [unit = u"mol/m^3", description = "Total Na+"]
+        TotalCa(t)=1e-8, [unit = u"mol/m^3", description = "Total Ca2+"]
+        TotalK(t)=8.4e-9, [unit = u"mol/m^3", description = "Total K+"]
+        TotalMg(t)=4.1e-10, [unit = u"mol/m^3", description = "Total Mg2+"]
+        TotalCl(t)=2.7e-10, [unit = u"mol/m^3", description = "Total Cl-"]
+        TotalNO3(t)=3.2e-8, [unit = u"mol/m^3", description = "Total NO3-"]
+        TotalSO4(t)=1e-7, [unit = u"mol/m^3", description = "Total SO4 2-"]
         mass_total(t), [unit = u"mol/m^3", description = "Total mass in the system"]
 
         #! format: off
-        NH_extra(t), [unit = u"mol/m^3", description = "Extra NH above equilibrium for allocation to salts"]
-        Na_extra(t), [unit = u"mol/m^3", description = "Extra Na above equilibrium for allocation to salts"]
+        NH_extra(t), [unit = u"mol/m^3", description = "Extra NH above equilibrium for allocation to salts", guess=1.4e-7]
+        Na_extra(t), [unit = u"mol/m^3", description = "Extra Na above equilibrium for allocation to salts", guess=1.4e-7]
         Ca_extra(t), [unit = u"mol/m^3", description = "Extra Ca above equilibrium for allocation to salts"]
         K_extra(t), [unit = u"mol/m^3", description = "Extra K above equilibrium for allocation to salts"]
         Mg_extra(t), [unit = u"mol/m^3", description = "Extra Mg above equilibrium for allocation to salts"]
@@ -92,7 +93,7 @@ include("equilibria.jl")
         eq.r10.logK_eq ~ aq.MgCl2.loga_eq
         eq.r12.logK_eq ~ log(abs(aq.NH3.m_aq) / m_one) - log(g.NH3.p / p_one) - 13 # FIXME(CT): Added -13 to get reasonable results; not sure why this is needed.
         eq.r13.logK_eq ~ aq.NH3_dissociated.loga_aq - log(abs(aq.NH3.m_aq) / m_one) + log(RH) - 8 # FIXME(CT): Added -8 to get reasonable results; not sure why this is needed.
-        eq.r14.logK_eq ~ aq.HNO3.loga_aq - log(g.HNO3.p / p_one) - 16 # FIXME(CT): Added -16 to get reasonable results; not sure why this is needed.
+        eq.r14.logK_eq ~ aq.HNO3.loga_aq - log(g.HNO3.p / p_one) - 18 # FIXME(CT): Added -18 to get reasonable results; not sure why this is needed.
         eq.r15.logK_eq ~ log(abs(aq.HNO3_aq.m_aq) / m_one) - log(g.HNO3.p / p_one)
         eq.r16.logK_eq ~ aq.HCl.loga_aq - log(g.HCl.p / p_one) - 23 # FIXME(CT): Added -23 to get reasonable results; not sure why this is needed.
         eq.r17.logK_eq ~ log(abs(aq.HCl_aq.m_aq) / m_one) - log(g.HCl.p / p_one)
@@ -106,17 +107,23 @@ include("equilibria.jl")
         eq.r27.logK_eq ~ aq.NH43HSO42.loga_eq
 
         # These equations would result in an over-specified equilibrium.
-        #eq.r11.logK_eq ~ 2log(aq.HSO4_dissociated.a / m_one) - aq.H2SO4.loga # H2SO4 fully dissociates, so the concentration of HSO4 is the same as the concentration of HHSO4.
-        #eq.r21.logK_eq ~ log(g.NH3.p / p_one) + log(g.HCl.p / p_one)
+        # eq.r11.logK_eq ~ 2log(aq.HSO4_dissociated.a / m_one) - aq.H2SO4.loga # H2SO4 fully dissociates, so the concentration of HSO4 is the same as the concentration of HHSO4.
+        # eq.r21.logK_eq ~ log(g.NH3.p / p_one) + log(g.HCl.p / p_one)
         # eq.r25.logK_eq ~ log(g.NH3.p / p_one) + log(g.HNO3.p / p_one)
 
-        # Aqueous equilibrium mass Balance
+        ## Aqueous equilibrium mass Balance
+        # The gaseous concentrations should never be larger than the total concentrations,
+        # but it is numerically possible so we handle that possibility to avoid negative
+        # numbers.
+        # NH_eq ~ ifelse(TotalNH > g.NH3.M, aq.NH3_dissociated.m_eq + aq.NH3.m_eq, m_zero)
         NH_eq ~ aq.NH3_dissociated.m_eq + aq.NH3.m_eq
         Na_eq ~ aq.Na.m_eq
         Ca_eq ~ aq.Ca.m_eq
         K_eq ~ aq.K.m_eq
         Mg_eq ~ aq.Mg.m_eq
+        #Cl_eq ~ ifelse(TotalCl > g.HCl.M, aq.HCl.m_eq + aq.HCl_aq.m_eq, m_zero)
         Cl_eq ~ aq.HCl.m_eq + aq.HCl_aq.m_eq
+        #NO3_eq ~ ifelse(TotalNO3 > g.HNO3.M, aq.HNO3.m_eq + aq.HNO3_aq.m_eq, m_zero)
         NO3_eq ~ aq.HNO3.m_eq + aq.HNO3_aq.m_eq
         SO4_eq ~ aq.HSO4_dissociated.m_eq + aq.HHSO4.m_eq
 
@@ -129,12 +136,15 @@ include("equilibria.jl")
         NO3_extra ~ TotalNO3 - g.HNO3.M - NO3_eq * aq.W_eq
         SO4_extra ~ TotalSO4 - SO4_eq * aq.W_eq
         aq.W_eq ~ min(
+            #ifelse(TotalNH > g.NH3.M, (TotalNH - g.NH3.M) / NH_eq, w_inf),
             (TotalNH - g.NH3.M) / NH_eq,
             TotalNa / Na_eq,
             TotalCa / Ca_eq,
             TotalK / K_eq,
             TotalMg / Mg_eq,
+            #ifelse(TotalCl > g.HCl.M, (TotalCl - g.HCl.M) / Cl_eq, w_inf),
             (TotalCl - g.HCl.M) / Cl_eq,
+            #ifelse(TotalNO3 > g.HNO3.M, (TotalNO3 - g.HNO3.M) / NO3_eq, w_inf),
             (TotalNO3 - g.HNO3.M) / NO3_eq,
             TotalSO4 / SO4_eq
         )

@@ -9,9 +9,12 @@
     @parameters begin
         T, [description = "Temperature", unit = u"K"]
     end
+    @structural_parameters begin
+        M_guess=nothing
+    end
     @variables begin
-        p(t), [description = "Partial pressure", unit = u"Constants.atm", guess=1e-8]
-        M(t), [description = "Molarity of the gas in air", unit = u"mol/m^3", guess=1e-8]
+        p(t), [description = "Partial pressure", unit = u"Constants.atm"]
+        M(t), [description = "Molarity of the gas in air", unit = u"mol/m^3", guess=M_guess]
     end
     @equations begin
         M ~ p * PaPerAtm / R / T
@@ -24,9 +27,9 @@ end
         T = 293.15, [unit = u"K", description = "Temperature"]
     end
     @components begin
-        HNO3 = Gas()
-        HCl = Gas()
-        NH3 = Gas()
+        HNO3 = Gas(M_guess=6e-8)
+        HCl = Gas(M_guess=1.6e-7)
+        NH3 = Gas(M_guess=4.7e-8)
     end
     @equations begin
         HNO3.T ~ T
