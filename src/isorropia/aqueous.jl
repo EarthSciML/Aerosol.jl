@@ -8,7 +8,7 @@
     end
     @variables begin
         #! format: off
-        m(t), [description = "Molality of ion in water", unit = u"mol/kg"]
+        m(t), [description = "Molality of ion in water", unit = u"mol/kg", guess=exp(logm_guess)]
         logm(t), [description = "Log of the molality of ion in water", guess = logm_guess]
         M(t), [description = "Molarity of ion in air", unit = u"mol/m^3"]
         W(t), [description = "Aerosol water content in air", unit = u"kg/m^3"]
@@ -214,13 +214,13 @@ end
     @components begin
         # Cations
         # Na = Ion(z = 1, m_guess=159)
-        # H = Ion(z = 1, m_guess=460)
+        H = Ion(z = 1, logm_guess=0)
         # Ca = Ion(z = 2, m_guess=12.0)
         # K = Ion(z = 1, m_guess=5.9)
         # Mg = Ion(z = 2, m_guess=130.0)
 
         # # Anions
-        # OH = Ion(z = abs(-1), m_guess=13)
+        OH = Ion(z = abs(-1), logm_guess=0)
 
         # # Neutral species
         NH3 = Ion(z = 0, logm_guess=0)
@@ -391,17 +391,13 @@ end
         HSO4_dissociated.F_an ~ F_SO4
 
         # Ionic strength (equation in text below Equation 8)
-        # We take the absolute value to avoid numerical issues as negative concentrations
-        # sometimes occur during DAE initialization.
-        # We also clip the ionic strength at 10 to avoid unrealistic values at low RH.
-        # I ~ abs(0.5 * (sum([salt.m_eq * salt.ν_cation * salt.z_cation^2 +
-        #               salt.m_eq * salt.ν_anion * salt.z_anion^2
-        #               for salt in [
-        #              CaNO32, CaCl2, CaSO4, KHSO4, K2SO4, KNO3, KCl, MgSO4, MgNO32,
-        #              MgCl2, NaCl, Na2SO4, NaNO3, NH42SO4, NH4NO3, NH4Cl, NH4HSO4,
-        #              NaHSO4, NH43HSO42]]) +
-        #          H.m_eq * H.z^2 + OH.m_eq * OH.z^2))
-        I ~ m_one
+        I ~ 0.5 * (sum([salt.m * salt.ν_cation * salt.z_cation^2 +
+                      salt.m * salt.ν_anion * salt.z_anion^2
+                      for salt in [
+                     CaNO32, CaCl2, CaSO4, KHSO4, K2SO4, KNO3, KCl, MgSO4, MgNO32,
+                     MgCl2, NaCl, Na2SO4, NaNO3, NH42SO4, NH4NO3, NH4Cl, NH4HSO4,
+                     NaHSO4, NH43HSO42]]) +
+                 H.m * H.z^2 + OH.m * OH.z^2)
 
         CaNO32.I ~ I
         CaCl2.I ~ I
@@ -431,24 +427,24 @@ end
         HSO4_dissociated.I ~ I
 
         # Water content (Section 2.3)
-        # W ~ CaNO32.M_aq / maw_CaNO32.m_aw +
-        #     CaCl2.M_aq / maw_CaCl2.m_aw +
-        #     KHSO4.M_aq / maw_KHSO4.m_aw +
-        #     K2SO4.M_aq / maw_K2SO4.m_aw +
-        #     KNO3.M_aq / maw_KNO3.m_aw +
-        #     KCl.M_aq / maw_KCl.m_aw +
-        #     MgSO4.M_aq / maw_MgSO4.m_aw +
-        #     MgNO32.M_aq / maw_MgNO32.m_aw +
-        #     MgCl2.M_aq / maw_MgCl2.m_aw +
-        #     NaCl.M_aq / maw_NaCl.m_aw +
-        #     Na2SO4.M_aq / maw_Na2SO4.m_aw +
-        #     NaNO3.M_aq / maw_NaNO3.m_aw +
-        #     NH42SO4.M_aq / maw_NH42SO4.m_aw +
-        #     NH4NO3.M_aq / maw_NH4NO3.m_aw +
-        #     NaHSO4.M_aq / maw_NaHSO4.m_aw +
-        #     NH4Cl.M_aq / maw_NH4Cl.m_aw +
-        #     NH4HSO4.M_aq / maw_NH4HSO4.m_aw +
-        #     NH43HSO42.M_aq / maw_NH43HSO42.m_aw
+        # W ~ CaNO32.M / maw_CaNO32.m_aw +
+        #     CaCl2.M / maw_CaCl2.m_aw +
+        #     KHSO4.M / maw_KHSO4.m_aw +
+        #     K2SO4.M / maw_K2SO4.m_aw +
+        #     KNO3.M / maw_KNO3.m_aw +
+        #     KCl.M / maw_KCl.m_aw +
+        #     MgSO4.M / maw_MgSO4.m_aw +
+        #     MgNO32.M / maw_MgNO32.m_aw +
+        #     MgCl2.M / maw_MgCl2.m_aw +
+        #     NaCl.M / maw_NaCl.m_aw +
+        #     Na2SO4.M / maw_Na2SO4.m_aw +
+        #     NaNO3.M / maw_NaNO3.m_aw +
+        #     NH42SO4.M / maw_NH42SO4.m_aw +
+        #     NH4NO3.M / maw_NH4NO3.m_aw +
+        #     NaHSO4.M / maw_NaHSO4.m_aw +
+        #     NH4Cl.M / maw_NH4Cl.m_aw +
+        #     NH4HSO4.M / maw_NH4HSO4.m_aw +
+        #     NH43HSO42.M / maw_NH43HSO42.m_aw
         W ~ w_c
 
         maw_CaNO32.RH ~ RH
@@ -495,12 +491,12 @@ end
         HCl.W ~ W
 
         # Na.W ~ W
-        # H.W ~ W
+        H.W ~ W
         # Ca.W ~ W
         # K.W ~ W
         # Mg.W ~ W
         HSO4_dissociated.W ~ W
-        # OH.W ~ W
+        OH.W ~ W
         NH3.W ~ W
         NH3_dissociated.W ~ W
         HNO3_aq.W ~ W
@@ -519,8 +515,8 @@ end
         # NH3_dissociated.M_eq ~ sum([NH4NO3.M_eq, NH4Cl.M_eq, NH4HSO4.M_eq, 2NH42SO4.M_eq,
         #     3NH43HSO42.M_eq])
         # Na.M ~ sum([NaCl.M_eq, 2Na2SO4.M_eq, NaNO3.M_eq, NaHSO4.M_eq])
-        # H.M ~ sum([
-        #     HCl.M_eq, H2SO4.M_eq, HSO4_dissociated.M_eq, H2O_dissociated.M_eq, HNO3.M_eq])
+        H.M ~ sum([
+            HCl.M, H2SO4.M, HSO4_dissociated.M, H2O_dissociated.M, HNO3.M])
         # Ca.M ~ sum([CaNO32.M_eq, CaCl2.M_eq, CaSO4.M_eq])
         # K.M ~ sum([KHSO4.M_eq, 2K2SO4.M_eq, KNO3.M_eq, KCl.M_eq])
         # Mg.M ~ sum([MgSO4.M_eq, MgNO32.M_eq, MgCl2.M_eq])
@@ -529,6 +525,6 @@ end
         # HSO4_dissociated.M_eq ~ sum([Na2SO4.M_eq, K2SO4.M_eq, MgSO4.M_eq, CaSO4.M_eq,
         #     NH42SO4.M_eq, NH43HSO42.M_eq])
         # H2SO4.M_eq ~ sum([KHSO4.M_eq, NaHSO4.M_eq, NH4HSO4.M_eq, NH43HSO42.M_eq])
-        # OH.M ~ NH3_dissociated.M_eq + H2O_dissociated.M_eq
+        OH.M ~ NH3_dissociated.M + H2O_dissociated.M
     end
 end

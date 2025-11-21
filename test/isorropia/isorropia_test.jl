@@ -80,10 +80,10 @@ solve(iprob)
 
 # iiprob = NonlinearProblem((u, p) -> iprob.f(abs.(u), p), iprob.u0, iprob.p)
 unknowns(iprob.f.sys) .=> iprob.u0
-# isol = solve(iiprob, RobustMultiNewton())
-# unknowns(iprob.f.sys) .=> round.(isol.resid, sigdigits = 2)
+isol = solve(iprob, RobustMultiNewton())
+unknowns(iprob.f.sys) .=> round.(isol.resid, sigdigits = 2)
 # "sys." .* replace.(replace.(string.(unknowns(iprob.f.sys)), ("₊" => ".",)), ("(t)" => "",)) .=> abs.(isol.u)
-# guesses = unknowns(iprob.f.sys) .=> abs.(isol.u)
+guesses = unknowns(iprob.f.sys) .=> abs.(isol.u)
 
 # obs = getproperty.(observed(iprob.f.sys), :lhs)
 # obs .=> isol[obs]
@@ -174,7 +174,7 @@ ISORROPIA.salt_group(sys.aq, :HSO4, :M) .*
 
 
 let
-    vars = [abs(sys.aq.W), sys.aq.W_eq, sys.aq.I]
+    vars = [sys.aq.W, sys.aq.I]
     collect(zip(vars, round.(sol[vars][end]; sigdigits = 2)))
 end
 
