@@ -67,6 +67,8 @@ prob = ODEProblem(sys, [],
     (0.0, 10.0), use_scc = false)
 
 iprob = prob.f.initializeprob
+solve(iprob)
+
 
 # f_abs = let
 #     logname = [occursin("log", string(var)) for var in unknowns(iprob.f.sys)]
@@ -76,21 +78,21 @@ iprob = prob.f.initializeprob
 #     end
 # end
 
-iiprob = NonlinearProblem((u, p) -> iprob.f(abs.(u), p), iprob.u0, iprob.p)
+# iiprob = NonlinearProblem((u, p) -> iprob.f(abs.(u), p), iprob.u0, iprob.p)
 unknowns(iprob.f.sys) .=> iprob.u0
-isol = solve(iprob, RobustMultiNewton())
-unknowns(iprob.f.sys) .=> round.(isol.resid, sigdigits = 2)
-"sys." .* replace.(replace.(string.(unknowns(iprob.f.sys)), ("₊" => ".",)), ("(t)" => "",)) .=> abs.(isol.u)
-guesses = unknowns(iprob.f.sys) .=> abs.(isol.u)
+# isol = solve(iiprob, RobustMultiNewton())
+# unknowns(iprob.f.sys) .=> round.(isol.resid, sigdigits = 2)
+# "sys." .* replace.(replace.(string.(unknowns(iprob.f.sys)), ("₊" => ".",)), ("(t)" => "",)) .=> abs.(isol.u)
+# guesses = unknowns(iprob.f.sys) .=> abs.(isol.u)
 
-obs = getproperty.(observed(iprob.f.sys), :lhs)
-obs .=> isol[obs]
-obs_hcl  = getproperty.(filter(s -> occursin("HCl", string(s)), observed(iprob.f.sys)), :lhs)
-obs_hcl .=> isol[obs_hcl]
+# obs = getproperty.(observed(iprob.f.sys), :lhs)
+# obs .=> isol[obs]
+# obs_hcl  = getproperty.(filter(s -> occursin("HCl", string(s)), observed(iprob.f.sys)), :lhs)
+# obs_hcl .=> isol[obs_hcl]
 
-prob = ODEProblem(sys, [], guesses = guesses,
-   initializealg = BrownFullBasicInit(nlsolve = RobustMultiNewton()),
-   (0.0, 10.0), use_scc = false)
+# prob = ODEProblem(sys, [], #guesses = guesses,
+#    initializealg = BrownFullBasicInit(nlsolve = RobustMultiNewton()),
+#    (0.0, 10.0), use_scc = false)
 
 sol = solve(prob, Rosenbrock23())
 

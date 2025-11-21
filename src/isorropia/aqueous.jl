@@ -191,23 +191,22 @@ end
         RH = 0.3, [description = "Relative humidity (0-1)"]
     end
     @variables begin
-        #! format: off
-        I(t), [description = "Ionic strength", unit = u"mol/kg", state_priority=10, guess=1]
-        W(t), [description = "Aerosol water content in air", unit = u"kg/m^3", guess=1.7e-7]
+        I(t), [description = "Ionic strength", unit = u"mol/kg", guess=1]
+        W(t), [description = "Aerosol water content in air", unit = u"kg/m^3", guess=1e-7]
 
-        # F_Ca(t), [description = "Activity contribution from Ca-containing salts"]
-        # F_K(t), [description = "Activity contribution from K-containing salts"]
-        # F_Mg(t), [description = "Activity contribution from Mg-containing salts"]
-        # F_Na(t), [description = "Activity contribution from Na-containing salts"]
-        # F_NH4(t), [description = "Activity contribution from NH4-containing salts"]
-        # F_Cl(t), [description = "Activity contribution from Cl-containing salts"]
-        # F_H(t), [description = "Activity contribution from H-containing salts"]
-        # F_NO3(t), [description = "Activity contribution from NO3-containing salts"]
-        # F_SO4(t), [description = "Activity contribution from SO4-containing salts"]
-        # F_HSO4(t), [description = "Activity contribution from HSO4-containing salts"]
-        # F_OH(t), [description = "Activity contribution from OH-containing salts"]
+        F_Ca(t), [description = "Activity contribution from Ca-containing salts"]
+        F_K(t), [description = "Activity contribution from K-containing salts"]
+        F_Mg(t), [description = "Activity contribution from Mg-containing salts"]
+        F_Na(t), [description = "Activity contribution from Na-containing salts"]
+        F_NH4(t), [description = "Activity contribution from NH4-containing salts"]
+        F_Cl(t), [description = "Activity contribution from Cl-containing salts"]
+        F_H(t), [description = "Activity contribution from H-containing salts"]
+        F_NO3(t), [description = "Activity contribution from NO3-containing salts"]
+        F_SO4(t), [description = "Activity contribution from SO4-containing salts"]
+        F_HSO4(t), [description = "Activity contribution from HSO4-containing salts"]
+        F_OH(t), [description = "Activity contribution from OH-containing salts"]
 
-        # Aᵧ_term(t), [description = "Debye-Hückel term used in Equation 7 and 8"]
+        Aᵧ_term(t), [description = "Debye-Hückel term used in Equation 7 and 8"]
     end
     @structural_parameters begin
         q0 = 0.0 # Assume q=0 for salts in Table 4 with no data for q.
@@ -224,9 +223,9 @@ end
         # OH = Ion(z = abs(-1), m_guess=13)
 
         # # Neutral species
-        NH3 = Ion(z = 0, m_guess=1)
-        HNO3_aq = Ion(z = 0, m_guess=1)
-        HCl_aq = Ion(z = 0, m_guess=1)
+        NH3 = Ion(z = 0, logm_guess=0)
+        HNO3_aq = Ion(z = 0, logm_guess=0)
+        HCl_aq = Ion(z = 0, logm_guess=0)
 
         # Salts
         CaNO32 = Salt(z_cation = 2, ν_anion=2, drh = 0.4906, l_t = 509.4, q = 0.93, T=T,
@@ -284,169 +283,112 @@ end
 
         # # Water content
         # #! format: off
-        # maw_CaNO32 = BinaryMolality(k_0=36.356, k_1=-165.66, k_2=447.46, k_3=-673.55, k_4=510.91, k_5=-155.56, k_6=0)
-        # maw_CaCl2 = BinaryMolality(k_0=20.847, k_1=-97.599, k_2=273.220, k_3=-422.120, k_4=331.160, k_5=-105.450, k_6=0)
-        # maw_KHSO4 = BinaryMolality(k_0=1.061, k_1=-0.101, k_2=1.579e-2, k_3=-1.950e-3, k_4=9.515e-5, k_5=-1.547e-6, k_6=0)
-        # maw_K2SO4 = BinaryMolality(k_0=1061.51, k_1=-4748.97, k_2=8096.16, k_3=-6166.16, k_4=1757.47, k_5=0, k_6=0)
-        # maw_KNO3 = BinaryMolality(k_0=1.2141e4, k_1=-5.1173e4, k_2=8.1252e4, k_3=-5.7527e4, k_4=1.5305e4, k_5=0, k_6=0)
-        # maw_KCl = BinaryMolality(k_0=179.721, k_1=-721.266, k_2=1161.03, k_3=-841.479, k_4=221 / 943, k_5=0, k_6=0)
-        # maw_MgSO4 = BinaryMolality(k_0=-0.778, k_1=177.74, k_2=-719.79, k_3=1174.6, k_4=-863.44, k_5=232.31, k_6=0)
-        # maw_MgNO32 = BinaryMolality(k_0=12.166, k_1=-16.154, k_2=0, k_3=10.886, k_4=0, k_5=-6.815, k_6=0)
-        # maw_MgCl2 = BinaryMolality(k_0=11.505, k_1=-26.518, k_2=34.937, k_3=-19.829, k_4=0, k_5=0, k_6=0)
-        # maw_NaNO3 = BinaryMolality(k_0=0.9988, k_1=-2.6947e-2, k_2=1.9610e-4, k_3=2.8154e-5, k_4=6.1359e-7, k_5=0, k_6=0)
-        # maw_NaHSO4 = BinaryMolality(k_0=1.0614, k_1=-0.1014, k_2=1.5796e-2, k_3=-1.9501e-3, k_4=9.5147e-5, k_5=-1.5473e-6, k_6=0)
-        # maw_NaCl = BinaryMolality(k_0=1.0084, k_1=-4.9390e-2, k_2=8.888e-3, k_3=-2.1570e-3, k_4=1.6170e-4, k_5=1.99e-6, k_6=-1.142e-7)
-        # maw_Na2SO4 = BinaryMolality(k_0=1.0052, k_1=-6.4840e-2, k_2=3.519e-2, k_3=-1.3190e-2, k_4=1.9250e-3, k_5=-1.224e-4, k_6=2.87e-6)
-        # maw_NH42SO4 = BinaryMolality(k_0=0.9968, k_1=-2.9690e-2, k_2=1.735e-5, k_3=-3.2530e-4, k_4=3.5710e-5, k_5=-9.7870e-7, k_6=0)
-        # maw_NH4Cl = BinaryMolality(k_0=0.9968, k_1=-2.6110e-2, k_2=-1.5990e-3, k_3=1.3550e-4, k_4=-2.317e-6, k_5=-1.113e-8, k_6=0)
-        # maw_NH4NO3 = BinaryMolality(k_0=1.0053, k_1=-2.4991e-2, k_2=4.4688e-4, k_3=1.6453e-5, k_4=-3.8940e-7, k_5=-4.7668e-8, k_6=1.3753e-9)
-        # maw_NH4HSO4 = BinaryMolality(k_0=1.0261, k_1=-4.9766e-2, k_2=3.2757e-3, k_3=-2.4477e-4, k_4=1.0766e-5, k_5=-1.8329e-7, k_6=0)
-        # maw_NH43HSO42 = BinaryMolality(k_0=1.0088, k_1=-5.3730e-2, k_2=1.4201e-3, k_3=-9.2484e-4, k_4=2.2796e-4, k_5=-1.5445e-5, k_6=0)
+        maw_CaNO32 = BinaryMolality(k_0=36.356, k_1=-165.66, k_2=447.46, k_3=-673.55, k_4=510.91, k_5=-155.56, k_6=0)
+        maw_CaCl2 = BinaryMolality(k_0=20.847, k_1=-97.599, k_2=273.220, k_3=-422.120, k_4=331.160, k_5=-105.450, k_6=0)
+        maw_KHSO4 = BinaryMolality(k_0=1.061, k_1=-0.101, k_2=1.579e-2, k_3=-1.950e-3, k_4=9.515e-5, k_5=-1.547e-6, k_6=0)
+        maw_K2SO4 = BinaryMolality(k_0=1061.51, k_1=-4748.97, k_2=8096.16, k_3=-6166.16, k_4=1757.47, k_5=0, k_6=0)
+        maw_KNO3 = BinaryMolality(k_0=1.2141e4, k_1=-5.1173e4, k_2=8.1252e4, k_3=-5.7527e4, k_4=1.5305e4, k_5=0, k_6=0)
+        maw_KCl = BinaryMolality(k_0=179.721, k_1=-721.266, k_2=1161.03, k_3=-841.479, k_4=221 / 943, k_5=0, k_6=0)
+        maw_MgSO4 = BinaryMolality(k_0=-0.778, k_1=177.74, k_2=-719.79, k_3=1174.6, k_4=-863.44, k_5=232.31, k_6=0)
+        maw_MgNO32 = BinaryMolality(k_0=12.166, k_1=-16.154, k_2=0, k_3=10.886, k_4=0, k_5=-6.815, k_6=0)
+        maw_MgCl2 = BinaryMolality(k_0=11.505, k_1=-26.518, k_2=34.937, k_3=-19.829, k_4=0, k_5=0, k_6=0)
+        maw_NaNO3 = BinaryMolality(k_0=0.9988, k_1=-2.6947e-2, k_2=1.9610e-4, k_3=2.8154e-5, k_4=6.1359e-7, k_5=0, k_6=0)
+        maw_NaHSO4 = BinaryMolality(k_0=1.0614, k_1=-0.1014, k_2=1.5796e-2, k_3=-1.9501e-3, k_4=9.5147e-5, k_5=-1.5473e-6, k_6=0)
+        maw_NaCl = BinaryMolality(k_0=1.0084, k_1=-4.9390e-2, k_2=8.888e-3, k_3=-2.1570e-3, k_4=1.6170e-4, k_5=1.99e-6, k_6=-1.142e-7)
+        maw_Na2SO4 = BinaryMolality(k_0=1.0052, k_1=-6.4840e-2, k_2=3.519e-2, k_3=-1.3190e-2, k_4=1.9250e-3, k_5=-1.224e-4, k_6=2.87e-6)
+        maw_NH42SO4 = BinaryMolality(k_0=0.9968, k_1=-2.9690e-2, k_2=1.735e-5, k_3=-3.2530e-4, k_4=3.5710e-5, k_5=-9.7870e-7, k_6=0)
+        maw_NH4Cl = BinaryMolality(k_0=0.9968, k_1=-2.6110e-2, k_2=-1.5990e-3, k_3=1.3550e-4, k_4=-2.317e-6, k_5=-1.113e-8, k_6=0)
+        maw_NH4NO3 = BinaryMolality(k_0=1.0053, k_1=-2.4991e-2, k_2=4.4688e-4, k_3=1.6453e-5, k_4=-3.8940e-7, k_5=-4.7668e-8, k_6=1.3753e-9)
+        maw_NH4HSO4 = BinaryMolality(k_0=1.0261, k_1=-4.9766e-2, k_2=3.2757e-3, k_3=-2.4477e-4, k_4=1.0766e-5, k_5=-1.8329e-7, k_6=0)
+        maw_NH43HSO42 = BinaryMolality(k_0=1.0088, k_1=-5.3730e-2, k_2=1.4201e-3, k_3=-9.2484e-4, k_4=2.2796e-4, k_5=-1.5445e-5, k_6=0)
         #! format: on
     end
     @equations begin
-        # Aᵧ_term ~ Aᵧ * √I / (√I_one + √I) / √I_one # NOTE: The last √I_one here is not in the paper but is needed to make the units balance.
-        # # Equation 7
-        # F_NH4 ~ sum([s.Y * s.logγ⁰ for s in [NH4NO3, NH4Cl, NH4HSO4, NH42SO4, NH43HSO42]]) +
-        #         Aᵧ_term *
-        #         sum([s.zz * s.Y for s in [NH4NO3, NH4Cl, NH4HSO4, NH42SO4, NH43HSO42]])
-        # F_Na ~ sum([s.Y * s.logγ⁰ for s in [NaCl, Na2SO4, NaNO3, NaHSO4]]) +
-        #        Aᵧ_term * sum([s.zz * s.Y for s in [NaCl, Na2SO4, NaNO3, NaHSO4]])
-        # F_H ~ sum([s.Y * s.logγ⁰ for s in [HCl, HNO3]]) +
-        #       Aᵧ_term * sum([s.zz * s.Y for s in [HCl, HNO3]])
-        # F_Ca ~ sum([s.Y * s.logγ⁰ for s in [CaNO32, CaCl2, CaSO4]]) +
-        #        Aᵧ_term * sum([s.zz * s.Y for s in [CaNO32, CaCl2, CaSO4]])
-        # F_K ~ sum([s.Y * s.logγ⁰ for s in [KHSO4, K2SO4, KNO3, KCl]]) +
-        #       Aᵧ_term * sum([s.zz * s.Y for s in [KHSO4, K2SO4, KNO3, KCl]])
-        # F_Mg ~ sum([s.Y * s.logγ⁰ for s in [MgSO4, MgNO32, MgCl2]]) +
-        #        Aᵧ_term * sum([s.zz * s.Y for s in [MgSO4, MgNO32, MgCl2]])
+        Aᵧ_term ~ Aᵧ * √I / (√I_one + √I) / √I_one # NOTE: The last √I_one here is not in the paper but is needed to make the units balance.
+        # Equation 7
+        F_NH4 ~ sum([s.Y * s.logγ⁰ for s in [NH4NO3, NH4Cl, NH4HSO4, NH42SO4, NH43HSO42]]) +
+                Aᵧ_term *
+                sum([s.zz * s.Y for s in [NH4NO3, NH4Cl, NH4HSO4, NH42SO4, NH43HSO42]])
+        F_Na ~ sum([s.Y * s.logγ⁰ for s in [NaCl, Na2SO4, NaNO3, NaHSO4]]) +
+               Aᵧ_term * sum([s.zz * s.Y for s in [NaCl, Na2SO4, NaNO3, NaHSO4]])
+        F_H ~ sum([s.Y * s.logγ⁰ for s in [HCl, HNO3]]) +
+              Aᵧ_term * sum([s.zz * s.Y for s in [HCl, HNO3]])
+        F_Ca ~ sum([s.Y * s.logγ⁰ for s in [CaNO32, CaCl2, CaSO4]]) +
+               Aᵧ_term * sum([s.zz * s.Y for s in [CaNO32, CaCl2, CaSO4]])
+        F_K ~ sum([s.Y * s.logγ⁰ for s in [KHSO4, K2SO4, KNO3, KCl]]) +
+              Aᵧ_term * sum([s.zz * s.Y for s in [KHSO4, K2SO4, KNO3, KCl]])
+        F_Mg ~ sum([s.Y * s.logγ⁰ for s in [MgSO4, MgNO32, MgCl2]]) +
+               Aᵧ_term * sum([s.zz * s.Y for s in [MgSO4, MgNO32, MgCl2]])
 
-        # # Equation 8
-        # F_Cl ~ sum([s.X * s.logγ⁰ for s in [NaCl, KCl, MgCl2, CaCl2, NH4Cl, HCl]]) +
-        #        Aᵧ_term *
-        #        sum([s.zz * s.X for s in [NaCl, KCl, MgCl2, CaCl2, NH4Cl, HCl]])
-        # F_NO3 ~ sum([s.X * s.logγ⁰ for s in [NaNO3, KNO3, MgNO32, CaNO32, NH4NO3, HNO3]]) +
-        #         Aᵧ_term *
-        #         sum([s.zz * s.X for s in [NaNO3, KNO3, MgNO32, CaNO32, NH4NO3, HNO3]])
-        # F_SO4 ~ sum([s.X * s.logγ⁰ for s in [Na2SO4, K2SO4, MgSO4, CaSO4, NH42SO4]]) +
-        #         Aᵧ_term *
-        #         sum([s.zz * s.X for s in [Na2SO4, K2SO4, MgSO4, CaSO4, NH42SO4]])
-        # F_HSO4 ~ sum([s.X * s.logγ⁰ for s in [KHSO4, NaHSO4, NH4HSO4, NH43HSO42]]) +
-        #          Aᵧ_term *
-        #          sum([s.zz * s.X for s in [KHSO4, NaHSO4, NH4HSO4, NH43HSO42]])
-        # F_OH ~ sum([s.X * s.logγ⁰ for s in [H2O_dissociated, NH3_dissociated]]) +
-        #        Aᵧ_term *
-        #        sum([s.zz * s.X for s in [H2O_dissociated, NH3_dissociated]])
+        # Equation 8
+        F_Cl ~ sum([s.X * s.logγ⁰ for s in [NaCl, KCl, MgCl2, CaCl2, NH4Cl, HCl]]) +
+               Aᵧ_term *
+               sum([s.zz * s.X for s in [NaCl, KCl, MgCl2, CaCl2, NH4Cl, HCl]])
+        F_NO3 ~ sum([s.X * s.logγ⁰ for s in [NaNO3, KNO3, MgNO32, CaNO32, NH4NO3, HNO3]]) +
+                Aᵧ_term *
+                sum([s.zz * s.X for s in [NaNO3, KNO3, MgNO32, CaNO32, NH4NO3, HNO3]])
+        F_SO4 ~ sum([s.X * s.logγ⁰ for s in [Na2SO4, K2SO4, MgSO4, CaSO4, NH42SO4]]) +
+                Aᵧ_term *
+                sum([s.zz * s.X for s in [Na2SO4, K2SO4, MgSO4, CaSO4, NH42SO4]])
+        F_HSO4 ~ sum([s.X * s.logγ⁰ for s in [KHSO4, NaHSO4, NH4HSO4, NH43HSO42]]) +
+                 Aᵧ_term *
+                 sum([s.zz * s.X for s in [KHSO4, NaHSO4, NH4HSO4, NH43HSO42]])
+        F_OH ~ sum([s.X * s.logγ⁰ for s in [H2O_dissociated, NH3_dissociated]]) +
+               Aᵧ_term *
+               sum([s.zz * s.X for s in [H2O_dissociated, NH3_dissociated]])
 
-        # CaNO32.F_cat ~ F_Ca
-        # CaNO32.F_an ~ F_NO3
-        # CaCl2.F_cat ~ F_Ca
-        # CaCl2.F_an ~ F_Cl
-        # CaSO4.F_cat ~ F_Ca
-        # CaSO4.F_an ~ F_SO4
-        # KHSO4.F_cat ~ F_K
-        # KHSO4.F_an ~ F_HSO4
-        # K2SO4.F_cat ~ F_K
-        # K2SO4.F_an ~ F_SO4
-        # KNO3.F_cat ~ F_K
-        # KNO3.F_an ~ F_NO3
-        # KCl.F_cat ~ F_K
-        # KCl.F_an ~ F_Cl
-        # MgSO4.F_cat ~ F_Mg
-        # MgSO4.F_an ~ F_SO4
-        # MgNO32.F_cat ~ F_Mg
-        # MgNO32.F_an ~ F_NO3
-        # MgCl2.F_cat ~ F_Mg
-        # MgCl2.F_an ~ F_Cl
-        # NaCl.F_cat ~ F_Na
-        # NaCl.F_an ~ F_Cl
-        # Na2SO4.F_cat ~ F_Na
-        # Na2SO4.F_an ~ F_SO4
-        # NaNO3.F_cat ~ F_Na
-        # NaNO3.F_an ~ F_NO3
-        # NH42SO4.F_cat ~ F_NH4
-        # NH42SO4.F_an ~ F_SO4
-        # NH4NO3.F_cat ~ F_NH4
-        # NH4NO3.F_an ~ F_NO3
-        # NH4Cl.F_cat ~ F_NH4
-        # NH4Cl.F_an ~ F_Cl
-        # NH4HSO4.F_cat ~ F_NH4
-        # NH4HSO4.F_an ~ F_HSO4
-        # NaHSO4.F_cat ~ F_Na
-        # NaHSO4.F_an ~ F_HSO4
-        # NH43HSO42.F_cat ~ F_NH4
-        # NH43HSO42.F_an ~ F_HSO4
-        # HHSO4.F_cat ~ F_H
-        # HHSO4.F_an ~ F_HSO4
-        # H2SO4.F_cat ~ F_H
-        # H2SO4.F_an ~ F_HSO4
-        H2SO4.F_cat ~ 1
-        H2SO4.F_an ~ 1
-        # # HNO3.F_cat ~ F_H
-        # # HNO3.F_an ~ F_NO3
-        HNO3.F_cat ~ 1
-        HNO3.F_an ~ 1
-        # # HCl.F_cat ~ F_H
-        # # HCl.F_an ~ F_Cl
-        HCl.F_cat ~ 1
-        HCl.F_an ~ 1
-        # # NH3_dissociated.F_cat ~ F_NH4
-        # # NH3_dissociated.F_an ~ F_OH
-        # # H2O_dissociated.F_cat ~ F_H
-        # # H2O_dissociated.F_an ~ F_OH
-        # # HSO4_dissociated.F_cat ~ F_H
-        # # HSO4_dissociated.F_an ~ F_SO4
-                NH3_dissociated.F_cat ~ 1
-        NH3_dissociated.F_an ~ 1
-        H2O_dissociated.F_cat ~ 1
-        H2O_dissociated.F_an ~ 1
-        HSO4_dissociated.F_cat ~ 1
-        HSO4_dissociated.F_an ~ 1
-
-        CaNO32.F_cat ~ 1
-        CaNO32.F_an ~ 1
-        CaCl2.F_cat ~ 1
-        CaCl2.F_an ~ 1
-        CaSO4.F_cat ~ 1
-        CaSO4.F_an ~ 1
-        KHSO4.F_cat ~ 1
-        KHSO4.F_an ~ 1
-        K2SO4.F_cat ~ 1
-        K2SO4.F_an ~ 1
-        KNO3.F_cat ~ 1
-        KNO3.F_an ~ 1
-        KCl.F_cat ~ 1
-        KCl.F_an ~ 1
-        MgSO4.F_cat ~ 1
-        MgSO4.F_an ~ 1
-        MgNO32.F_cat ~ 1
-        MgNO32.F_an ~ 1
-        MgCl2.F_cat ~ 1
-        MgCl2.F_an ~ 1
-        NaCl.F_cat ~ 1
-        NaCl.F_an ~ 1
-        Na2SO4.F_cat ~ 1
-        Na2SO4.F_an ~ 1
-        NaNO3.F_cat ~ 1
-        NaNO3.F_an ~ 1
-        NH42SO4.F_cat ~ 1
-        NH42SO4.F_an ~ 1
-        NH4NO3.F_cat ~ 1
-        NH4NO3.F_an ~ 1
-        NH4Cl.F_cat ~ 1
-        NH4Cl.F_an ~ 1
-        NH4HSO4.F_cat ~ 1
-        NH4HSO4.F_an ~ 1
-        NaHSO4.F_cat ~ 1
-        NaHSO4.F_an ~ 1
-        NH43HSO42.F_cat ~ 1
-        NH43HSO42.F_an ~ 1
-        HHSO4.F_cat ~ 1
-        HHSO4.F_an ~ 1
-
-
-
-
+        CaNO32.F_cat ~ F_Ca
+        CaNO32.F_an ~ F_NO3
+        CaCl2.F_cat ~ F_Ca
+        CaCl2.F_an ~ F_Cl
+        CaSO4.F_cat ~ F_Ca
+        CaSO4.F_an ~ F_SO4
+        KHSO4.F_cat ~ F_K
+        KHSO4.F_an ~ F_HSO4
+        K2SO4.F_cat ~ F_K
+        K2SO4.F_an ~ F_SO4
+        KNO3.F_cat ~ F_K
+        KNO3.F_an ~ F_NO3
+        KCl.F_cat ~ F_K
+        KCl.F_an ~ F_Cl
+        MgSO4.F_cat ~ F_Mg
+        MgSO4.F_an ~ F_SO4
+        MgNO32.F_cat ~ F_Mg
+        MgNO32.F_an ~ F_NO3
+        MgCl2.F_cat ~ F_Mg
+        MgCl2.F_an ~ F_Cl
+        NaCl.F_cat ~ F_Na
+        NaCl.F_an ~ F_Cl
+        Na2SO4.F_cat ~ F_Na
+        Na2SO4.F_an ~ F_SO4
+        NaNO3.F_cat ~ F_Na
+        NaNO3.F_an ~ F_NO3
+        NH42SO4.F_cat ~ F_NH4
+        NH42SO4.F_an ~ F_SO4
+        NH4NO3.F_cat ~ F_NH4
+        NH4NO3.F_an ~ F_NO3
+        NH4Cl.F_cat ~ F_NH4
+        NH4Cl.F_an ~ F_Cl
+        NH4HSO4.F_cat ~ F_NH4
+        NH4HSO4.F_an ~ F_HSO4
+        NaHSO4.F_cat ~ F_Na
+        NaHSO4.F_an ~ F_HSO4
+        NH43HSO42.F_cat ~ F_NH4
+        NH43HSO42.F_an ~ F_HSO4
+        HHSO4.F_cat ~ F_H
+        HHSO4.F_an ~ F_HSO4
+        H2SO4.F_cat ~ F_H
+        H2SO4.F_an ~ F_HSO4
+        HNO3.F_cat ~ F_H
+        HNO3.F_an ~ F_NO3
+        HCl.F_cat ~ F_H
+        HCl.F_an ~ F_Cl
+        NH3_dissociated.F_cat ~ F_NH4
+        NH3_dissociated.F_an ~ F_OH
+        H2O_dissociated.F_cat ~ F_H
+        H2O_dissociated.F_an ~ F_OH
+        HSO4_dissociated.F_cat ~ F_H
+        HSO4_dissociated.F_an ~ F_SO4
 
         # Ionic strength (equation in text below Equation 8)
         # We take the absolute value to avoid numerical issues as negative concentrations
@@ -509,24 +451,24 @@ end
         #     NH43HSO42.M_aq / maw_NH43HSO42.m_aw
         W ~ w_c
 
-        # maw_CaNO32.RH ~ RH
-        # maw_CaCl2.RH ~ RH
-        # maw_KHSO4.RH ~ RH
-        # maw_K2SO4.RH ~ RH
-        # maw_KNO3.RH ~ RH
-        # maw_KCl.RH ~ RH
-        # maw_MgSO4.RH ~ RH
-        # maw_MgNO32.RH ~ RH
-        # maw_MgCl2.RH ~ RH
-        # maw_NaNO3.RH ~ RH
-        # maw_NaHSO4.RH ~ RH
-        # maw_NaCl.RH ~ RH
-        # maw_Na2SO4.RH ~ RH
-        # maw_NH42SO4.RH ~ RH
-        # maw_NH4Cl.RH ~ RH
-        # maw_NH4NO3.RH ~ RH
-        # maw_NH4HSO4.RH ~ RH
-        # maw_NH43HSO42.RH ~ RH
+        maw_CaNO32.RH ~ RH
+        maw_CaCl2.RH ~ RH
+        maw_KHSO4.RH ~ RH
+        maw_K2SO4.RH ~ RH
+        maw_KNO3.RH ~ RH
+        maw_KCl.RH ~ RH
+        maw_MgSO4.RH ~ RH
+        maw_MgNO32.RH ~ RH
+        maw_MgCl2.RH ~ RH
+        maw_NaNO3.RH ~ RH
+        maw_NaHSO4.RH ~ RH
+        maw_NaCl.RH ~ RH
+        maw_Na2SO4.RH ~ RH
+        maw_NH42SO4.RH ~ RH
+        maw_NH4Cl.RH ~ RH
+        maw_NH4NO3.RH ~ RH
+        maw_NH4HSO4.RH ~ RH
+        maw_NH43HSO42.RH ~ RH
 
         CaNO32.W ~ W
         CaCl2.W ~ W

@@ -81,7 +81,7 @@ end
 
 @mtkmodel Species begin
     @structural_parameters begin
-        total_val=nothing
+        M_total=nothing
     end
     @variables begin
         total(t) = M_total, [unit = u"mol/m^3", description="Total concentration"]
