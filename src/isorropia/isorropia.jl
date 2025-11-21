@@ -12,6 +12,95 @@ include("solid.jl")
 include("gas.jl")
 include("equilibria.jl")
 
+function salt_group(sys, group, var)
+    salts = Dict(
+        :NH4 => [:NH4NO3, :NH4Cl, :NH4HSO4, :NH42SO4, :NH43HSO42],
+        :Na => [:NaCl, :Na2SO4, :NaNO3, :NaHSO4],
+        :Ca => [:CaNO32, :CaCl2, :CaSO4],
+        :K => [:KHSO4, :K2SO4, :KNO3, :KCl],
+        :Mg => [:MgSO4, :MgNO32, :MgCl2],
+        :Cl => [ :NaCl, :KCl, :MgCl2, :CaCl2, :NH4Cl],
+        :NO3 => [:NaNO3, :KNO3, :MgNO32, :CaNO32, :NH4NO3],
+        :SO4 => [:Na2SO4, :K2SO4, :MgSO4, :CaSO4,:NH42SO4],
+        :HSO4 => [:NH43HSO42, :KHSO4, :NaHSO4, :NH4HSO4, :NH43HSO42],
+    )[group]
+    [reduce(getproperty, [sys, s, var]) for s in salts]
+end
+
+function salt_group_ν(group)
+ν = Dict(
+          :NH4 => :ν_cation,
+        :Na => :ν_cation,
+        :Ca => :ν_cation,
+        :K => :ν_cation,
+        :Mg => :ν_cation,
+        :Cl => :ν_anion,
+        :NO3 => :ν_anion,
+        :SO4 => :ν_anion,
+        :HSO4 => :ν_anion,
+        :HSO42 => :ν_anion,
+    )[group]
+end
+
+function resid_moles(sys, val, group, var, prior_vars, quantity, q_zero)
+    ν = reduce(getproperty, [sys, var, salt_group_ν(group)])
+
+    priors = [reduce(getproperty, [sys, v, quantity]) for v in prior_vars]
+    prior_νs = [reduce(getproperty, [sys, v, salt_group_ν(group)]) for v in prior_vars]
+
+    max(val / ν - sum(priors .* prior_νs, init=0), q_zero)
+end
+
+function min_resid(sys, var, cat, an, cat_val, an_val, cat_priors, an_priors, q_zero)
+    salt = Dict(
+        (:Ca, :NO3) => :CaNO32,
+        (:Ca, :Cl) => :CaCl2,
+        (:Ca, :SO4) => :CaSO4,
+        (:K, :SO4) => :K2SO4,
+        (:K, :NO3) => :KNO3,
+        (:K, :Cl) => :KCl,
+        (:Mg, :SO4) => :MgSO4,
+        (:Mg, :NO3) => :MgNO32,
+        (:Mg, :Cl) => :MgCl2,
+        (:Na, :Cl) => :NaCl,
+        (:Na, :SO4) => :Na2SO4,
+        (:Na, :NO3) => :NaNO3,
+        (:NH4, :HSO4) => :NH4HSO4,
+        (:NH4, :NO3) => :NH4NO3,
+        (:NH4, :Cl) => :NH4Cl,
+        (:H, :HSO4) => :HHSO4,
+        (:K, :HSO4) => :KHSO4,
+        (:NH4, :SO4) => :NH42SO4,
+        (:NH4, :HSO4) => :NH4HSO4,
+        (:NH4, :HSO42) => :NH43HSO42,
+        (:Na, :HSO4) => :NaHSO4,
+    )[(cat, an)]
+    min(resid_moles(sys, cat_val, cat, salt, cat_priors, var, q_zero),
+             resid_moles(sys, an_val, an, salt, an_priors, var, q_zero))
+end
+
+@mtkmodel Species begin
+    @structural_parameters begin
+        total_val=nothing
+    end
+    @variables begin
+        total(t) = M_total, [unit = u"mol/m^3", description="Total concentration"]
+        #eq(t), [unit = u"mol/kg", description="Concentration at equilibrium", guess=1]
+        #! format: off
+        #extra(t), [unit = u"mol/m^3", description = "Extra concentration above equilibrium for allocation to salts"]
+        #! format: on
+        #resid(t), [unit = u"mol/m^3", description = "Residual conc. after salt formation"]
+        # aq(t), [unit = u"mol/m^3", description="Aqueous concentration"]
+        # precip(t), [unit = u"mol/m^3", description="Precipitated (solid) concentration"]
+        # aer(t), [unit=u"mol/m^3", description="Aerosol concentration"]
+        # f_aer(t), [description = "Mole fraction aerosol (vs. gas)"]
+    end
+    # @equations begin
+    #     aer ~ aq + precip
+    #     f_aer ~ aer / total
+    # end
+end
+
 @mtkmodel Isorropia begin
     @parameters begin
         T = 293.15, [unit = u"K", description = "Temperature"]
@@ -30,42 +119,51 @@ include("equilibria.jl")
         #s = Solids()
         g = Gases()
         eq = EquilibriumConstants(T = T)
+
+        NH = Species(M_total=2e-7)
+        Na = Species(M_total=4e-10)
+        Ca = Species(M_total=1e-8)
+        K = Species(M_total=8.4e-9)
+        Mg = Species(M_total=4.1e-10)
+        Cl = Species(M_total=2.7e-10)
+        NO3 = Species(M_total=3.2e-8)
+        SO4 = Species(M_total=1e-7)
     end
     @variables begin
-        NH_eq(t), [unit = u"mol/kg", description = "Equilibrium NH3 + NH4", guess = 19]
-        Na_eq(t), [unit = u"mol/kg", description = "Equilibrium Na+", guess = 159]
-        Ca_eq(t), [unit = u"mol/kg", description = "Equilibrium Ca2+", guess = 12]
-        K_eq(t), [unit = u"mol/kg", description = "Equilibrium K+", guess = 6]
-        Mg_eq(t), [unit = u"mol/kg", description = "Equilibrium Mg2+", guess = 134]
-        Cl_eq(t), [unit = u"mol/kg", description = "Equilibrium Cl-", guess = 177]
-        NO3_eq(t), [unit = u"mol/kg", description = "Equilibrium NO3-", guess = 116]
-        SO4_eq(t), [unit = u"mol/kg", description = "Equilibrium SO4 2-", guess = 7]
+        # NH_eq(t), [unit = u"mol/kg", description = "Equilibrium NH3 + NH4", guess = 19]
+        # Na_eq(t), [unit = u"mol/kg", description = "Equilibrium Na+", guess = 159]
+        # Ca_eq(t), [unit = u"mol/kg", description = "Equilibrium Ca2+", guess = 12]
+        # K_eq(t), [unit = u"mol/kg", description = "Equilibrium K+", guess = 6]
+        # Mg_eq(t), [unit = u"mol/kg", description = "Equilibrium Mg2+", guess = 134]
+        # Cl_eq(t), [unit = u"mol/kg", description = "Equilibrium Cl-", guess = 177]
+        # NO3_eq(t), [unit = u"mol/kg", description = "Equilibrium NO3-", guess = 116]
+        # SO4_eq(t), [unit = u"mol/kg", description = "Equilibrium SO4 2-", guess = 7]
 
-        TotalNH(t)=2e-7, [unit = u"mol/m^3", description = "Total NH3 + NH4"]
-        TotalNa(t)=4e-10, [unit = u"mol/m^3", description = "Total Na+"]
-        TotalCa(t)=1e-8, [unit = u"mol/m^3", description = "Total Ca2+"]
-        TotalK(t)=8.4e-9, [unit = u"mol/m^3", description = "Total K+"]
-        TotalMg(t)=4.1e-10, [unit = u"mol/m^3", description = "Total Mg2+"]
-        TotalCl(t)=2.7e-10, [unit = u"mol/m^3", description = "Total Cl-"]
-        TotalNO3(t)=3.2e-8, [unit = u"mol/m^3", description = "Total NO3-"]
-        TotalSO4(t)=1e-7, [unit = u"mol/m^3", description = "Total SO4 2-"]
-        mass_total(t), [unit = u"mol/m^3", description = "Total mass in the system"]
+        # TotalNH(t)=2e-7, [unit = u"mol/m^3", description = "Total NH3 + NH4"]
+        # TotalNa(t)=4e-10, [unit = u"mol/m^3", description = "Total Na+"]
+        # TotalCa(t)=1e-8, [unit = u"mol/m^3", description = "Total Ca2+"]
+        # TotalK(t)=8.4e-9, [unit = u"mol/m^3", description = "Total K+"]
+        # TotalMg(t)=4.1e-10, [unit = u"mol/m^3", description = "Total Mg2+"]
+        # TotalCl(t)=2.7e-10, [unit = u"mol/m^3", description = "Total Cl-"]
+        # TotalNO3(t)=3.2e-8, [unit = u"mol/m^3", description = "Total NO3-"]
+        # TotalSO4(t)=1e-7, [unit = u"mol/m^3", description = "Total SO4 2-"]
+        # mass_total(t), [unit = u"mol/m^3", description = "Total mass in the system"]
 
         #! format: off
-        NH_extra(t), [unit = u"mol/m^3", description = "Extra NH above equilibrium for allocation to salts", guess=1.4e-7]
-        Na_extra(t), [unit = u"mol/m^3", description = "Extra Na above equilibrium for allocation to salts", guess=1.4e-7]
-        Ca_extra(t), [unit = u"mol/m^3", description = "Extra Ca above equilibrium for allocation to salts"]
-        K_extra(t), [unit = u"mol/m^3", description = "Extra K above equilibrium for allocation to salts"]
-        Mg_extra(t), [unit = u"mol/m^3", description = "Extra Mg above equilibrium for allocation to salts"]
-        Cl_extra(t), [unit = u"mol/m^3", description = "Extra Cl above equilibrium for allocation to salts"]
-        NO3_extra(t), [unit = u"mol/m^3", description = "Extra NO3 above equilibrium for allocation to salts"]
-        SO4_extra(t), [unit = u"mol/m^3", description = "Extra SO4 above equilibrium for allocation to salts"]
+        # NH_extra(t), [unit = u"mol/m^3", description = "Extra NH above equilibrium for allocation to salts", guess=1.4e-7]
+        # Na_extra(t), [unit = u"mol/m^3", description = "Extra Na above equilibrium for allocation to salts", guess=1.4e-7]
+        # Ca_extra(t), [unit = u"mol/m^3", description = "Extra Ca above equilibrium for allocation to salts"]
+        # K_extra(t), [unit = u"mol/m^3", description = "Extra K above equilibrium for allocation to salts"]
+        # Mg_extra(t), [unit = u"mol/m^3", description = "Extra Mg above equilibrium for allocation to salts"]
+        # Cl_extra(t), [unit = u"mol/m^3", description = "Extra Cl above equilibrium for allocation to salts"]
+        # NO3_extra(t), [unit = u"mol/m^3", description = "Extra NO3 above equilibrium for allocation to salts"]
+        # SO4_extra(t), [unit = u"mol/m^3", description = "Extra SO4 above equilibrium for allocation to salts"]
         #! format: on
 
-        SO4_resid(t), [unit = u"mol/m^3", description = "Residual SO4 after salt formation"]
-        NO3_resid(t), [unit = u"mol/m^3", description = "Residual NO3 after salt formation"]
-        NH_resid(t), [unit = u"mol/m^3", description = "Residual NH after salt formation"]
-        Cl_resid(t), [unit = u"mol/m^3", description = "Residual Cl after salt formation"]
+        # SO4_resid(t), [unit = u"mol/m^3", description = "Residual SO4 after salt formation"]
+        # NO3_resid(t), [unit = u"mol/m^3", description = "Residual NO3 after salt formation"]
+        # NH_resid(t), [unit = u"mol/m^3", description = "Residual NH after salt formation"]
+        # Cl_resid(t), [unit = u"mol/m^3", description = "Residual Cl after salt formation"]
 
         R_1(t), [description = "Total sulfate ratio from (Section 3.1)"]
         R_2(t), [description = "Crustal species and sodium ratio (Section 3.1)"]
@@ -81,34 +179,34 @@ include("equilibria.jl")
         # Reactions based on information in Table 2 of Fountoukis and Nenes (2007).
         # The left-hand side of the reaction equation is the equilibrium constant and the
         # right-hand side is the ratio of the product and reactant activities.
-        eq.r1.logK_eq ~ aq.CaNO32.loga_eq
-        eq.r2.logK_eq ~ aq.CaCl2.loga_eq
-        eq.r3.logK_eq ~ aq.CaSO4.loga_eq + 2log(RH)
-        eq.r4.logK_eq ~ aq.K2SO4.loga_eq
-        eq.r5.logK_eq ~ aq.KHSO4.loga_eq
-        eq.r6.logK_eq ~ aq.KNO3.loga_eq
-        eq.r7.logK_eq ~ aq.KCl.loga_eq
-        eq.r8.logK_eq ~ aq.MgSO4.loga_eq
-        eq.r9.logK_eq ~ aq.MgNO32.loga_eq
-        eq.r10.logK_eq ~ aq.MgCl2.loga_eq
-        eq.r12.logK_eq ~ log(abs(aq.NH3.m_aq) / m_one) - log(g.NH3.p / p_one) - 13 # FIXME(CT): Added -13 to get reasonable results; not sure why this is needed.
-        eq.r13.logK_eq ~ aq.NH3_dissociated.loga_aq - log(abs(aq.NH3.m_aq) / m_one) + log(RH) - 8 # FIXME(CT): Added -8 to get reasonable results; not sure why this is needed.
-        eq.r14.logK_eq ~ aq.HNO3.loga_aq - log(g.HNO3.p / p_one) - 18 # FIXME(CT): Added -18 to get reasonable results; not sure why this is needed.
-        eq.r15.logK_eq ~ log(abs(aq.HNO3_aq.m_aq) / m_one) - log(g.HNO3.p / p_one)
-        eq.r16.logK_eq ~ aq.HCl.loga_aq - log(g.HCl.p / p_one) - 23 # FIXME(CT): Added -23 to get reasonable results; not sure why this is needed.
-        eq.r17.logK_eq ~ log(abs(aq.HCl_aq.m_aq) / m_one) - log(g.HCl.p / p_one)
-        eq.r18.logK_eq ~ aq.H2O_dissociated.loga_aq - log(RH)
-        eq.r19.logK_eq ~ aq.Na2SO4.loga_eq
-        eq.r20.logK_eq ~ aq.NH42SO4.loga_eq
-        eq.r22.logK_eq ~ aq.NaNO3.loga_eq
-        eq.r23.logK_eq ~ aq.NaCl.loga_eq
-        eq.r24.logK_eq ~ aq.NaHSO4.loga_eq
-        eq.r26.logK_eq ~ aq.NH4HSO4.loga_eq
-        eq.r27.logK_eq ~ aq.NH43HSO42.loga_eq
+        # eq.r1.logK_eq ~ aq.CaNO32.loga_eq
+        # eq.r2.logK_eq ~ aq.CaCl2.loga_eq
+        # eq.r3.logK_eq ~ aq.CaSO4.loga_eq + 2log(RH)
+        # eq.r4.logK_eq ~ aq.K2SO4.loga_eq
+        # eq.r5.logK_eq ~ aq.KHSO4.loga_eq
+        # eq.r6.logK_eq ~ aq.KNO3.loga_eq
+        # eq.r7.logK_eq ~ aq.KCl.loga_eq
+        # eq.r8.logK_eq ~ aq.MgSO4.loga_eq
+        # eq.r9.logK_eq ~ aq.MgNO32.loga_eq
+        # eq.r10.logK_eq ~ aq.MgCl2.loga_eq
+        eq.r11.logK_eq ~ aq.HSO4_dissociated.loga - aq.H2SO4.loga # H2SO4 fully dissociates, so the concentration of HSO4 is the same as the concentration of HHSO4.
+        eq.r12.logK_eq ~ aq.NH3.logm - g.NH3.logp
+        eq.r13.logK_eq ~ aq.NH3_dissociated.loga - aq.NH3.logm + log(RH)
+        eq.r14.logK_eq ~ aq.HNO3.loga - g.HNO3.logp
+        eq.r15.logK_eq ~ aq.HNO3_aq.logm - g.HNO3.logp
+        eq.r16.logK_eq ~ aq.HCl.loga - g.HCl.logp
+        eq.r17.logK_eq ~ aq.HCl_aq.logm - g.HCl.logp
+        eq.r18.logK_eq ~ aq.H2O_dissociated.loga - log(RH)
+        # eq.r19.logK_eq ~ aq.Na2SO4.loga_eq
+        # eq.r20.logK_eq ~ aq.NH42SO4.loga_eq
+        # eq.r22.logK_eq ~ aq.NaNO3.loga_eq
+        # eq.r23.logK_eq ~ aq.NaCl.loga_eq
+        # eq.r24.logK_eq ~ aq.NaHSO4.loga_eq
+        # eq.r26.logK_eq ~ aq.NH4HSO4.loga_eq
+        # eq.r27.logK_eq ~ aq.NH43HSO42.loga_eq
 
         # These equations would result in an over-specified equilibrium.
-        # eq.r11.logK_eq ~ 2log(aq.HSO4_dissociated.a / m_one) - aq.H2SO4.loga # H2SO4 fully dissociates, so the concentration of HSO4 is the same as the concentration of HHSO4.
-        # eq.r21.logK_eq ~ log(g.NH3.p / p_one) + log(g.HCl.p / p_one)
+        #eq.r21.logK_eq ~ log(g.NH3.p / p_one) + log(g.HCl.p / p_one)
         # eq.r25.logK_eq ~ log(g.NH3.p / p_one) + log(g.HNO3.p / p_one)
 
         ## Aqueous equilibrium mass Balance
@@ -116,52 +214,57 @@ include("equilibria.jl")
         # but it is numerically possible so we handle that possibility to avoid negative
         # numbers.
         # NH_eq ~ ifelse(TotalNH > g.NH3.M, aq.NH3_dissociated.m_eq + aq.NH3.m_eq, m_zero)
-        NH_eq ~ aq.NH3_dissociated.m_eq + aq.NH3.m_eq
-        Na_eq ~ aq.Na.m_eq
-        Ca_eq ~ aq.Ca.m_eq
-        K_eq ~ aq.K.m_eq
-        Mg_eq ~ aq.Mg.m_eq
-        #Cl_eq ~ ifelse(TotalCl > g.HCl.M, aq.HCl.m_eq + aq.HCl_aq.m_eq, m_zero)
-        Cl_eq ~ aq.HCl.m_eq + aq.HCl_aq.m_eq
-        #NO3_eq ~ ifelse(TotalNO3 > g.HNO3.M, aq.HNO3.m_eq + aq.HNO3_aq.m_eq, m_zero)
-        NO3_eq ~ aq.HNO3.m_eq + aq.HNO3_aq.m_eq
-        SO4_eq ~ aq.HSO4_dissociated.m_eq + aq.HHSO4.m_eq
+        # NH_eq ~ aq.NH3_dissociated.m_eq + aq.NH3.m_eq
+        # Na_eq ~ aq.Na.m_eq
+        # Ca_eq ~ aq.Ca.m_eq
+        # K_eq ~ aq.K.m_eq
+        # Mg_eq ~ aq.Mg.m_eq
+        # #Cl_eq ~ ifelse(TotalCl > g.HCl.M, aq.HCl.m_eq + aq.HCl_aq.m_eq, m_zero)
+        # Cl_eq ~ aq.HCl.m_eq + aq.HCl_aq.m_eq
+        # #NO3_eq ~ ifelse(TotalNO3 > g.HNO3.M, aq.HNO3.m_eq + aq.HNO3_aq.m_eq, m_zero)
+        # NO3_eq ~ aq.HNO3.m_eq + aq.HNO3_aq.m_eq
+        # SO4_eq ~ aq.HSO4_dissociated.m_eq + aq.HHSO4.m_eq
 
-        NH_extra ~ TotalNH - g.NH3.M - NH_eq * aq.W_eq
-        Na_extra ~ TotalNa - Na_eq * aq.W_eq
-        Ca_extra ~ TotalCa - Ca_eq * aq.W_eq
-        K_extra ~ TotalK - K_eq * aq.W_eq
-        Mg_extra ~ TotalMg - Mg_eq * aq.W_eq
-        Cl_extra ~ TotalCl - g.HCl.M - Cl_eq * aq.W_eq
-        NO3_extra ~ TotalNO3 - g.HNO3.M - NO3_eq * aq.W_eq
-        SO4_extra ~ TotalSO4 - SO4_eq * aq.W_eq
-        aq.W_eq ~ min(
-            #ifelse(TotalNH > g.NH3.M, (TotalNH - g.NH3.M) / NH_eq, w_inf),
-            (TotalNH - g.NH3.M) / NH_eq,
-            TotalNa / Na_eq,
-            TotalCa / Ca_eq,
-            TotalK / K_eq,
-            TotalMg / Mg_eq,
-            #ifelse(TotalCl > g.HCl.M, (TotalCl - g.HCl.M) / Cl_eq, w_inf),
-            (TotalCl - g.HCl.M) / Cl_eq,
-            #ifelse(TotalNO3 > g.HNO3.M, (TotalNO3 - g.HNO3.M) / NO3_eq, w_inf),
-            (TotalNO3 - g.HNO3.M) / NO3_eq,
-            TotalSO4 / SO4_eq
-        )
+        NH.total ~ g.NH3.M + aq.NH3.M + aq.NH3_dissociated.M
+        Cl.total ~ g.HCl.M + aq.HCl.M + aq.HCl_aq.M
+        NO3.total ~ g.HNO3.M + aq.HNO3.M + aq.HNO3_aq.M
+        SO4.total ~ aq.HSO4_dissociated.M + aq.H2SO4.M
 
-        D(TotalNH) ~ 0.0
-        D(TotalNa) ~ 0.0
-        D(TotalCa) ~ 0.0
-        D(TotalK) ~ 0.0
-        D(TotalMg) ~ 0.0
-        D(TotalCl) ~ 0.0
-        D(TotalNO3) ~ 0.0
-        D(TotalSO4) ~ 0.0
+        # NH_extra ~  aq.NH3_dissociated.M
+        # Na_extra ~ TotalNa
+        # Ca_extra ~ TotalCa
+        # K_extra ~ TotalK
+        # Mg_extra ~ TotalMg
+        # Cl_extra ~ aq.HCl.M
+        # NO3_extra ~ aq.HNO3.M
+        # SO4_extra ~ TotalSO4
+        # aq.W_eq ~ min(
+        #     #ifelse(TotalNH > g.NH3.M, (TotalNH - g.NH3.M) / NH_eq, w_inf),
+        #     (TotalNH - g.NH3.M) / NH_eq,
+        #     TotalNa / Na_eq,
+        #     TotalCa / Ca_eq,
+        #     TotalK / K_eq,
+        #     TotalMg / Mg_eq,
+        #     #ifelse(TotalCl > g.HCl.M, (TotalCl - g.HCl.M) / Cl_eq, w_inf),
+        #     (TotalCl - g.HCl.M) / Cl_eq,
+        #     #ifelse(TotalNO3 > g.HNO3.M, (TotalNO3 - g.HNO3.M) / NO3_eq, w_inf),
+        #     (TotalNO3 - g.HNO3.M) / NO3_eq,
+        #     TotalSO4 / SO4_eq
+        # )
+
+        D(NH.total) ~ 0.0
+        D(Na.total) ~ 0.0
+        D(Ca.total) ~ 0.0
+        D(K.total) ~ 0.0
+        D(Mg.total) ~ 0.0
+        D(Cl.total) ~ 0.0
+        D(NO3.total) ~ 0.0
+        D(SO4.total) ~ 0.0
 
         # Aerosol types from Section 3.1 and Table 3
-        R_1 ~ (TotalNH + TotalCa + TotalK + TotalMg + TotalNa) / TotalSO4
-        R_2 ~ (TotalCa + TotalK + TotalMg + TotalNa) / TotalSO4
-        R_3 ~ (TotalCa + TotalK + TotalMg) / TotalSO4
+        R_1 ~ (NH.total + Ca.total + K.total + Mg.total + Na.total) / SO4.total
+        R_2 ~ (Ca.total + K.total + Mg.total + Na.total) / SO4.total
+        R_3 ~ (Ca.total + K.total + Mg.total) / SO4.total
         type1 ~ 1 - (tanh((R_1 - 1) * 30) + 1) / 2
         type2 ~ min((tanh((R_1 - 1) * 30) + 1) / 2, 1 - (tanh((R_1 - 2) * 30) + 1) / 2)
         type3 ~ min((tanh((R_1 - 2) * 30) + 1) / 2, 1 - (tanh((R_2 - 2) * 30) + 1) / 2)
@@ -170,96 +273,45 @@ include("equilibria.jl")
         type5 ~ min((tanh((R_1 - 2) * 30) + 1) / 2, (tanh((R_2 - 2) * 30) + 1) / 2,
             1 - (tanh((R_3 - 2) * 30) + 1) / 2)
 
-        # Solid mass balances
+        # Aqueous mass balances
         # First fill in salts that are needed to guarantee space, or that are otherwise prioritized.
-        aq.Na2SO4.M_salt ~ min(Na_extra/2, SO4_extra) # Na preferentially forms Na2SO4 over other salts (section 3.2)
-        aq.K2SO4.M_salt ~ min(K_extra/2, max(SO4_extra - aq.Na2SO4.M_salt, M_zero)) # K preferentially forms K2SO4 over other salts (section 3.2)
-        aq.CaCl2.M_salt ~ min(Ca_extra, Cl_extra/2)
-         aq.MgCl2.M_salt ~ min(Mg_extra, Cl_extra/2 - aq.CaCl2.M_salt)
-         aq.MgNO32.M_salt ~ min(Mg_extra - aq.MgCl2.M_salt, NO3_extra/2)
-        aq.NH4HSO4.M_salt ~ min(NH_extra, max(SO4_extra - aq.Na2SO4.M_salt -
-            aq.K2SO4.M_salt, M_zero))
-         aq.CaNO32.M_salt ~ min(Ca_extra, max(NO3_extra/2 - aq.CaNO32.M_salt, M_zero))
-        aq.NaHSO4.M_salt ~ min(max(Na_extra - 2aq.Na2SO4.M_salt, M_zero),
-            max(SO4_extra - aq.NH4HSO4.M_salt - aq.Na2SO4.M_salt - aq.K2SO4.M_salt, M_zero))
+        aq.Na2SO4.M ~ min_resid(aq, :M, :Na, :SO4, Na.total, aq.HSO4_dissociated.M,
+            [], [], M_zero) # Na preferentially forms Na2SO4 over other salts (section 3.2)
+        aq.K2SO4.M ~ min_resid(aq, :M, :K, :SO4, K.total, aq.HSO4_dissociated.M,
+            [], [:Na2SO4], M_zero) # K preferentially forms K2SO4 over other salts (section 3.2)
+        aq.CaCl2.M ~ min_resid(aq, :M, :Ca, :Cl, Ca.total, aq.HCl.M, [], [], M_zero)
+        aq.MgCl2.M ~ min_resid(aq, :M, :Mg, :Cl, Mg.total, aq.HCl.M, [], [:CaCl2], M_zero)
+        aq.MgNO32.M ~ min_resid(aq, :M, :Mg, :NO3, Mg.total, aq.HNO3.M,
+            [:MgCl2], [], M_zero)
+        aq.NH4HSO4.M ~ min_resid(aq, :M, :NH4, :HSO4, aq.NH3_dissociated.M, aq.H2SO4.M,
+            [], [], M_zero)
+        aq.CaNO32.M ~ min_resid(aq, :M, :Ca, :NO3, Ca.total, aq.HNO3.M,
+            [:CaCl2], [:MgNO32], M_zero)
+        aq.NaHSO4.M ~ min_resid(aq, :M, :Na, :HSO4, Na.total, aq.H2SO4.M,
+            [:Na2SO4], [:NH4HSO4], M_zero)
         # Next, fill in salts in order of increasing DRH unless otherwise noted.
-        aq.NH4NO3.M_salt ~ min(max(NH_extra - aq.NH4HSO4.M_salt, M_zero),
-            max(NO3_extra - 2aq.CaNO32.M_salt - 2aq.MgNO32.M_salt, M_zero))
-        aq.NH43HSO42.M_salt ~ min(
-            max((NH_extra  - aq.NH4HSO4.M_salt- aq.NH4NO3.M_salt )/3, M_zero),
-            max((SO4_extra - aq.Na2SO4.M_salt- aq.K2SO4.M_salt - aq.NH4HSO4.M_salt -
-                aq.NH4HSO4.M_salt)/2, M_zero))
-        aq.NaNO3.M_salt ~ min(max(Na_extra - 2aq.Na2SO4.M_salt - aq.NaHSO4.M_salt, M_zero),
-            max(NO3_extra - 2aq.CaNO32.M_salt - 2aq.MgNO32.M_salt - aq.NH4NO3.M_salt, M_zero))
-        aq.NaCl.M_salt ~ min(max(Na_extra - 2aq.Na2SO4.M_salt - aq.NaHSO4.M_salt -
-            aq.NaNO3.M_salt, M_zero),
-            max(Cl_extra - 2aq.CaCl2.M_salt - 2aq.MgCl2.M_salt, M_zero))
-        aq.NH4Cl.M_salt ~ min(NH_extra - aq.NH4HSO4.M_salt - aq.NH4NO3.M_salt -
-            3aq.NH43HSO42.M_salt,
-            Cl_extra - 2aq.CaCl2.M_salt - 2aq.MgCl2.M_salt - aq.NaCl.M_salt)
-        aq.NH42SO4.M_salt ~ min(max((NH_extra - aq.NH4HSO4.M_salt - aq.NH4NO3.M_salt -
-            3aq.NH43HSO42.M_salt - aq.NH4Cl.M_salt)/2, M_zero),
-            max(SO4_extra - aq.NH4HSO4.M_salt - aq.Na2SO4.M_salt - aq.K2SO4.M_salt -
-            aq.NaHSO4.M_salt - 2aq.NH43HSO42.M_salt, M_zero))
-        aq.KCl.M_salt ~ min(max(K_extra - 2aq.K2SO4.M_salt, M_zero),
-            max(Cl_extra - 2aq.CaCl2.M_salt - 2aq.MgCl2.M_salt - aq.NaCl.M_salt -
-                aq.NH4Cl.M_salt, M_zero))
-        aq.KHSO4.M_salt ~ min(max(K_extra - 2aq.K2SO4.M_salt - aq.KCl.M_salt, M_zero),
-            max(SO4_extra - aq.K2SO4.M_salt  - aq.NH4HSO4.M_salt - aq.Na2SO4.M_salt -
-            aq.NaHSO4.M_salt - 2aq.NH43HSO42.M_salt - aq.NH42SO4.M_salt, M_zero))
-        aq.MgSO4.M_salt ~ min(max(Mg_extra - aq.MgCl2.M_salt - aq.MgNO32.M_salt, M_zero),
-            max(SO4_extra - aq.KHSO4.M_salt- aq.K2SO4.M_salt  - aq.NH4HSO4.M_salt -
-            aq.Na2SO4.M_salt - aq.NaHSO4.M_salt - 2aq.NH43HSO42.M_salt -
-            aq.NH42SO4.M_salt, M_zero))
-        aq.KNO3.M_salt ~ min(
-            max(K_extra - 2aq.K2SO4.M_salt - aq.KCl.M_salt - aq.KHSO4.M_salt, M_zero),
-            max(NO3_extra - aq.NaNO3.M_salt - 2aq.CaNO32.M_salt - 2aq.MgNO32.M_salt -
-            aq.NH4NO3.M_salt, M_zero))
-       aq.CaSO4.M_salt ~ min(max(Ca_extra - aq.CaCl2.M_salt - aq.CaNO32.M_salt, M_zero),
-            max(SO4_extra - aq.MgSO4.M_salt - aq.KHSO4.M_salt- aq.K2SO4.M_salt  -
-            aq.NH4HSO4.M_salt - aq.Na2SO4.M_salt -
-            aq.NaHSO4.M_salt - 2aq.NH43HSO42.M_salt - aq.NH42SO4.M_salt, M_zero))
-
-     #aq.CaCl2.M_salt ~ 0
-#aq.MgCl2.M_salt ~ 0
-   #     aq.NH4HSO4.M_salt ~ 0
-   # aq.CaNO32.M_salt ~ 0
-    #aq.Na2SO4.M_salt ~ 0
-    #aq.NaHSO4.M_salt ~ 0
-    #aq.MgNO32.M_salt ~ 0
-    #aq.NH4NO3.M_salt ~ 0
-    #aq.NH43HSO42.M_salt ~ 0
-    #aq.NaNO3.M_salt ~ 0
-    #aq.NaCl.M_salt ~ 0
-    #aq.NH4Cl.M_salt ~ 0
-   # aq.NH42SO4.M_salt ~ 0
-   # aq.K2SO4.M_salt ~ 0
-    #aq.KCl.M_salt ~ 0
-#aq.KHSO4.M_salt ~ 0
-      #  aq.MgSO4.M_salt ~ 0
-       # aq.KNO3.M_salt ~ 0
-    #    aq.CaSO4.M_salt ~ 0
-
-        # These salts don't exist in solid form at atmospheric conditions.
-        # We will use them to absorb any remaining extra mass.
-        aq.HHSO4.M_salt ~ 0
-        aq.H2SO4.M_salt ~ 0
-        aq.HNO3.M_salt ~ 0
-        aq.HCl.M_salt ~ 0
-        aq.NH3_dissociated.M_salt ~ 0
-        aq.H2O_dissociated.M_salt ~ 0
-        aq.HSO4_dissociated.M_salt ~ 0
-
-        # This is what's left over after allocating as much mass as possible to the salts.
-        SO4_resid ~ SO4_extra - aq.MgSO4.M_salt - aq.KHSO4.M_salt-
-            aq.K2SO4.M_salt  - aq.NH4HSO4.M_salt - aq.Na2SO4.M_salt - aq.NaHSO4.M_salt -
-            2aq.NH43HSO42.M_salt - aq.NH42SO4.M_salt - aq.CaSO4.M_salt
-        NO3_resid ~ NO3_extra - aq.NaNO3.M_salt - 2aq.CaNO32.M_salt -
-            2aq.MgNO32.M_salt - aq.NH4NO3.M_salt -aq.KNO3.M_salt
-         NH_resid ~NH_extra - aq.NH4HSO4.M_salt - aq.NH4NO3.M_salt -
-            3aq.NH43HSO42.M_salt - aq.NH4Cl.M_salt - 2aq.NH42SO4.M_salt
-        Cl_resid ~ Cl_extra - 2aq.CaCl2.M_salt - 2aq.MgCl2.M_salt - aq.NaCl.M_salt -
-                aq.NH4Cl.M_salt - aq.KCl.M_salt
+        aq.NH4NO3.M ~ min_resid(aq, :M, :NH4, :NO3, aq.NH3_dissociated.M, aq.HNO3.M,
+            [:NH4HSO4], [:MgNO32, :CaNO32], M_zero)
+        aq.NH43HSO42.M ~ min_resid(aq, :M, :NH4, :HSO42, aq.NH3_dissociated.M, aq.H2SO4.M,
+            [:NH4HSO4, :NH4NO3], [:NH4HSO4, :NaHSO4], M_zero)
+        aq.NaNO3.M ~ min_resid(aq, :M, :Na, :NO3, Na.total, aq.HNO3.M,
+            [:Na2SO4, :NaHSO4], [:MgNO32, :CaNO32, :NH4NO3], M_zero)
+        aq.NaCl.M ~ min_resid(aq, :M, :Na, :Cl, Na.total, aq.HCl.M,
+            [:Na2SO4, :NaHSO4, :NaNO3], [:CaCl2, :MgCl2], M_zero)
+        aq.NH4Cl.M ~ min_resid(aq, :M, :NH4, :Cl, aq.NH3_dissociated.M, aq.HCl.M,
+            [:NH4HSO4, :NH4NO3, :NH43HSO42], [:CaCl2, :MgCl2, :NaCl], M_zero)
+        aq.NH42SO4.M ~ min_resid(aq, :M, :NH4, :SO4, aq.NH3_dissociated.M, aq.HSO4_dissociated.M,
+            [:NH4HSO4, :NH4NO3, :NH43HSO42, :NH4Cl], [:Na2SO4, :K2SO4], M_zero)
+        aq.KCl.M ~ min_resid(aq, :M, :K, :Cl, K.total, aq.HCl.M,
+            [:K2SO4], [:CaCl2, :MgCl2, :NaCl, :NH4Cl], M_zero)
+        aq.KHSO4.M ~ min_resid(aq, :M, :K, :HSO4, K.total, aq.H2SO4.M,
+            [:K2SO4, :KCl], [:NH4HSO4, :NaHSO4, :NH43HSO42], M_zero)
+        aq.MgSO4.M ~ min_resid(aq, :M, :Mg, :SO4, Mg.total, aq.HSO4_dissociated.M,
+            [:MgCl2, :MgNO32], [:Na2SO4, :K2SO4, :NH42SO4], M_zero)
+        aq.KNO3.M ~ min_resid(aq, :M, :K, :NO3, K.total, aq.HNO3.M,
+            [:K2SO4, :KCl, :KHSO4], [:MgNO32, :CaNO32, :NH4NO3, :NaNO3], M_zero)
+        aq.CaSO4.M ~ min_resid(aq, :M, :Ca, :SO4, Ca.total, aq.HSO4_dissociated.M,
+            [:CaCl2, :CaNO32], [:Na2SO4, :K2SO4, :NH42SO4], M_zero)
     end
 end
 

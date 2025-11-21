@@ -4,7 +4,6 @@
     """
     @constants begin
         R = 8.31446261815324, [unit = u"m^3*Pa/K/mol", description = "Univ. gas constant"]
-        PaPerAtm = 101325, [unit = u"Pa/Constants.atm", description = "Unit conversion"]
     end
     @parameters begin
         T, [description = "Temperature", unit = u"K"]
@@ -12,12 +11,17 @@
     @structural_parameters begin
         M_guess=nothing
     end
+    @constants begin
+        p_one = 101325, [unit = u"Pa", description = "One atmosphere in Pascals"]
+    end
     @variables begin
-        p(t), [description = "Partial pressure", unit = u"Constants.atm"]
+        p(t), [description = "Partial pressure", unit = u"Pa"]
+        logp(t), [description = "Log of the partial pressure (in atm.)", guess=log(1e-8)]
         M(t), [description = "Molarity of the gas in air", unit = u"mol/m^3", guess=M_guess]
     end
     @equations begin
-        M ~ p * PaPerAtm / R / T
+        p ~ exp(logp) * p_one
+        M ~ p / R / T
     end
 end
 

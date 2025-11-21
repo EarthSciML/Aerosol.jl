@@ -5,6 +5,22 @@ using OrdinaryDiffEqRosenbrock
 using OrdinaryDiffEqNonlinearSolve
 using NonlinearSolve
 
+@test string.(ISORROPIA.salt_group(isrpa.aq, :NH4, :M_aq)) == [
+     "isrpa₊aq₊NH4NO3₊M_aq(t)"
+ "isrpa₊aq₊NH4Cl₊M_aq(t)"
+ "isrpa₊aq₊NH4HSO4₊M_aq(t)"
+ "isrpa₊aq₊NH42SO4₊M_aq(t)"
+ "isrpa₊aq₊NH43HSO42₊M_aq(t)"
+]
+
+@test string(sum(ISORROPIA.salt_group(isrpa.aq, :NH4, :M_aq) .* ISORROPIA.salt_group(isrpa.aq, :NH4,
+ISORROPIA.salt_group_ν(:NH4)) )) == "isrpa₊aq₊NH42SO4₊ν_cation*isrpa₊aq₊NH42SO4₊M_aq(t) + isrpa₊aq₊NH43HSO42₊ν_cation*isrpa₊aq₊NH43HSO42₊M_aq(t) + isrpa₊aq₊NH4Cl₊ν_cation*isrpa₊aq₊NH4Cl₊M_aq(t) + isrpa₊aq₊NH4HSO4₊ν_cation*isrpa₊aq₊NH4HSO4₊M_aq(t) + isrpa₊aq₊NH4NO3₊ν_cation*isrpa₊aq₊NH4NO3₊M_aq(t)"
+
+@test string(ISORROPIA.resid_moles(isrpa.aq, isrpa.TotalNH, :NH4, :NH43HSO42, [:NH4NO3, :NH4Cl], :M_aq, isrpa.M_zero)) ==
+"max(isrpa₊TotalNH(t) / isrpa₊aq₊NH43HSO42₊ν_cation - isrpa₊aq₊NH4Cl₊ν_cation*isrpa₊aq₊NH4Cl₊M_aq(t) - isrpa₊aq₊NH4NO3₊ν_cation*isrpa₊aq₊NH4NO3₊M_aq(t), isrpa₊M_zero)"
+@test string(ISORROPIA.resid_moles(isrpa.aq, isrpa.TotalSO4, :SO4, :NH43HSO42, [:CaSO4, :MgSO4], :M_aq, isrpa.M_zero)) ==
+"max(isrpa₊TotalSO4(t) / isrpa₊aq₊NH43HSO42₊ν_anion - isrpa₊aq₊CaSO4₊ν_anion*isrpa₊aq₊CaSO4₊M_aq(t) - isrpa₊aq₊MgSO4₊ν_anion*isrpa₊aq₊MgSO4₊M_aq(t), isrpa₊M_zero)"
+
 @named isrpa = Isorropia()
 
 sys = mtkcompile(isrpa)
@@ -62,10 +78,15 @@ iprob = prob.f.initializeprob
 
 iiprob = NonlinearProblem((u, p) -> iprob.f(abs.(u), p), iprob.u0, iprob.p)
 unknowns(iprob.f.sys) .=> iprob.u0
-isol = solve(iiprob, RobustMultiNewton())
+isol = solve(iprob, RobustMultiNewton())
 unknowns(iprob.f.sys) .=> round.(isol.resid, sigdigits = 2)
 "sys." .* replace.(replace.(string.(unknowns(iprob.f.sys)), ("₊" => ".",)), ("(t)" => "",)) .=> abs.(isol.u)
 guesses = unknowns(iprob.f.sys) .=> abs.(isol.u)
+
+obs = getproperty.(observed(iprob.f.sys), :lhs)
+obs .=> isol[obs]
+obs_hcl  = getproperty.(filter(s -> occursin("HCl", string(s)), observed(iprob.f.sys)), :lhs)
+obs_hcl .=> isol[obs_hcl]
 
 prob = ODEProblem(sys, [], guesses = guesses,
    initializealg = BrownFullBasicInit(nlsolve = RobustMultiNewton()),
@@ -74,6 +95,80 @@ prob = ODEProblem(sys, [], guesses = guesses,
 sol = solve(prob, Rosenbrock23())
 
 [var => round(val; sigdigits = 2) for (var, val) in zip(unknowns(sys), sol.u[1])]
+
+
+x = sol[[sys.NH.total, sys.g.NH3.M, sys.aq.NH3.M, sys.aq.NH3_dissociated.M]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+x = sol[[sys.Cl.total, sys.g.HCl.M, sys.aq.HCl.M, sys.aq.HCl_aq.M]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+x = sol[[sys.NO3.total, sys.g.HNO3.M, sys.aq.HNO3.M, sys.aq.HNO3_aq.M]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+x = sol[[sys.SO4.total, sys.aq.HSO4_dissociated.M, sys.aq.H2SO4.M]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0 atol=1e-22
+
+x = sol[[sys.aq.NH3_dissociated.M;
+ISORROPIA.salt_group(sys.aq, :NH4, :M) .*
+    ISORROPIA.salt_group(sys.aq, :NH4, ISORROPIA.salt_group_ν(:NH4))]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+x = sol[[sys.Na.total;
+ISORROPIA.salt_group(sys.aq, :Na, :M) .*
+    ISORROPIA.salt_group(sys.aq, :Na, ISORROPIA.salt_group_ν(:Na))]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+x = sol[[sys.Ca.total;
+ISORROPIA.salt_group(sys.aq, :Ca, :M) .*
+    ISORROPIA.salt_group(sys.aq, :Ca, ISORROPIA.salt_group_ν(:Ca))]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+x = sol[[sys.K.total;
+ISORROPIA.salt_group(sys.aq, :K, :M) .*
+    ISORROPIA.salt_group(sys.aq, :K, ISORROPIA.salt_group_ν(:K))]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+x = sol[[sys.Mg.total;
+ISORROPIA.salt_group(sys.aq, :Mg, :M) .*
+    ISORROPIA.salt_group(sys.aq, :Mg, ISORROPIA.salt_group_ν(:Mg))]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+x = sol[[sys.aq.HCl.M;
+ISORROPIA.salt_group(sys.aq, :Cl, :M) .*
+    ISORROPIA.salt_group(sys.aq, :Cl, ISORROPIA.salt_group_ν(:Cl))]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+ISORROPIA.salt_group(sys.aq, :NO3, :M)
+x = sol[[sys.aq.HNO3.M;
+ISORROPIA.salt_group(sys.aq, :NO3, :M) .*
+    ISORROPIA.salt_group(sys.aq, :NO3, ISORROPIA.salt_group_ν(:NO3))]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+x = sol[[sys.aq.H2SO4.M;
+ISORROPIA.salt_group(sys.aq, :SO4, :M) .*
+    ISORROPIA.salt_group(sys.aq, :SO4, ISORROPIA.salt_group_ν(:SO4))]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+x = sol[[sys.aq.HSO4_dissociated.M;
+ISORROPIA.salt_group(sys.aq, :HSO4, :M) .*
+    ISORROPIA.salt_group(sys.aq, :HSO4, ISORROPIA.salt_group_ν(:HSO4))]][end]
+@test all(x .>= 0)
+@test x[1] - sum(x[2:end]) ≈ 0.0
+
+
 
 
 let
