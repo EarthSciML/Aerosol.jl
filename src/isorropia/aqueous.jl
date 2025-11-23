@@ -199,6 +199,7 @@ end
 
         m_one = 1.0, [unit = u"mol/kg", description = "unit molality"]
         w_c = 1e-6, [unit = u"kg/m^3", description = "Water content in air"]
+        W_min = 1e-7, [unit = u"kg/m^3", description = "Minimum water content in air"]
     end
     @parameters begin
         T = 293.15, [description = "Temperature", unit = u"K"]
@@ -442,7 +443,7 @@ end
         HSO4_dissociated.I ~ I
 
         # Water content (Section 2.3)
-        W_x ~ CaNO32.M / maw_CaNO32.m_aw +
+        W ~ max(CaNO32.M / maw_CaNO32.m_aw +
             CaCl2.M / maw_CaCl2.m_aw +
             KHSO4.M / maw_KHSO4.m_aw +
             K2SO4.M / maw_K2SO4.m_aw +
@@ -459,8 +460,8 @@ end
             NaHSO4.M / maw_NaHSO4.m_aw +
             NH4Cl.M / maw_NH4Cl.m_aw +
             NH4HSO4.M / maw_NH4HSO4.m_aw +
-            NH43HSO42.M / maw_NH43HSO42.m_aw
-        W ~ w_c
+            NH43HSO42.M / maw_NH43HSO42.m_aw, W_min)
+        #W ~ w_c
 
         maw_CaNO32.RH ~ RH
         maw_CaCl2.RH ~ RH

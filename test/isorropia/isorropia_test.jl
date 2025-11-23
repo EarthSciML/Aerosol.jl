@@ -25,7 +25,7 @@ ISORROPIA.salt_group_ν(:NH4)) )) == "isrpa₊aq₊NH42SO4₊ν_cation*isrpa₊a
 
 sys = mtkcompile(isrpa)
 
-prob = ODEProblem(sys, [sys.aq.w_c => 1e-7],
+prob = ODEProblem(sys, [sys.aq.w_c => 1e-7, sys.RH => 0.7],
     guesses=[
            sys.aq.HNO3_aq.logm => -8.927865861808955
             sys.aq.HCl_aq.logm => -19.641409301928977
@@ -61,19 +61,11 @@ prob = ODEProblem(sys, [sys.aq.w_c => 1e-7],
     initializealg = BrownFullBasicInit(nlsolve = RobustMultiNewton()),
     (0.0, 10.0), use_scc = false)
 
-# iprob = prob.f.initializeprob
-# isol = solve(iprob, RobustMultiNewton())
-#iiprob = NonlinearProblem((u, p) -> iprob.f(abs.(u), p), iprob.u0, iprob.p)
-#unknowns(iprob.f.sys) .=> iprob.u0
-#isol = solve(iiprob, RobustMultiNewton())
-#unknowns(iprob.f.sys) .=> round.(isol.resid, sigdigits = 2)
-# "sys." .* replace.(replace.(string.(unknowns(iprob.f.sys)), ("₊" => ".",)), ("(t)" => "",)) .=> abs.(isol.u)
-# guesses = unknowns(iprob.f.sys) .=> abs.(isol.u)
-
 sol = solve(prob, Rosenbrock23())#, abstol = 1e-12, reltol = 1e-12)
 
 "sys." .* replace.(replace.(string.(unknowns(prob.f.sys)), ("₊" => ".",)), ("(t)" => "",)) .=> sol.u[1]
 
+sol[[sys.aq.W, sys.aq.W_x, sys.aq.I]][end]
 
 [var => round(val; sigdigits = 2) for (var, val) in zip(unknowns(sys), sol.u[1])]
 
