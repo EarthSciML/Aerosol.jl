@@ -8,7 +8,7 @@
     end
     @variables begin
         #! format: off
-        m(t), [description = "Molality of ion in water", unit = u"mol/kg", guess=exp(logm_guess)]
+        #m(t), [description = "Molality of ion in water", unit = u"mol/kg", guess=exp(logm_guess)]
         logm(t), [description = "Log of the molality of ion in water", guess = logm_guess]
         M(t), [description = "Molarity of ion in air", unit = u"mol/m^3"]
         W(t), [description = "Aerosol water content in air", unit = u"kg/m^3"]
@@ -18,8 +18,8 @@
         m_one = 1.0, [unit = u"mol/kg", description = "unit molality"]
     end
     @equations begin
-        m ~ exp(logm) * m_one
-        M ~ m * W
+        #m ~ exp(logm) * m_one
+        M ~ exp(logm) * m_one * W
     end
 end
 
@@ -36,6 +36,7 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         salt1 = nothing
         salt2 = nothing
         salt3 = nothing
+        can_precipitate = false # Whether this salt can precipitate to a solid
         logm_guess = nothing # Guess for molality
         M_salt_guess = nothing
     end
@@ -70,6 +71,7 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         # Unit conversions
         I_one = 1, [unit = u"mol/kg", description = "An ionic strength of 1"]
         m_one = 1, [unit = u"mol/kg", description = "A molality of 1"]
+        M_zero = 0, [unit = u"mol/m^3", description = "A molarity of 0"]
     end
     @parameters begin
         T = 293.15, [description = "Temperature", unit = u"K"]
@@ -77,10 +79,13 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
     end
     @variables begin
         #! format: off
-        m(t), [description = "molality of the salt in water", unit = u"mol/kg",
-            guess=isnothing(logm_guess) ? nothing : exp(logm_guess)]
+        # m(t), [description = "molality of the salt in water", unit = u"mol/kg",
+        #     guess=isnothing(logm_guess) ? nothing : exp(logm_guess)]
         logm(t), [description = "log of the molality of the salt in water", guess=logm_guess]
-        M(t), [description = "Molarity of the salt in air", unit = u"mol/m^3"]
+        M(t), [description = "Aqueous molarity of the salt in air", unit = u"mol/m^3"]
+        if can_precipitate
+            M₀(t), [description = "Candidate molarity (internal variable)", unit = u"mol/m^3"]
+        end
         M_precip(t), [description = "Precipitated solid", unit = u"mol/m^3"]
         deliquesced(t), [description = "Whether the salt is deliquesced (1) or not (0)"]
         W(t), [description = "Aerosol water content in air", unit = u"kg/m^3"]
@@ -88,8 +93,8 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         Y(t)
         I(t), [description = "Ionic strength", unit = u"mol/kg", guess=1]
         logγ⁰(t), [description = "Log of the mean ionic activity coefficient for the single solute solution"]
-        logγₜ₀(t), [description = "Log of the multi-component activity coefficient at 298.15K", state_priority=-10]
-        logγ(t), [description = "Log of the activity coefficient"]
+        logγₜ₀(t), [description = "Log of the multi-component activity coefficient at 298.15K", guess=0]
+        logγ(t), [description = "Log of the activity coefficient", guess=0]
         logΓ⁰(t)
         logΓ⁺(t)
         C(t)
@@ -102,8 +107,6 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         #! format: on
     end
     @equations begin
-        m ~ exp(logm) * m_one
-        M ~ m * W
         zz ~ z_cation * z_anion
 
         # Equation 6
@@ -112,8 +115,8 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
                  (F_cat / z_cation + F_an / z_anion)
 
         # Supplemental equations after equations 7 and 8
-        Y ~ ((z_cation + z_anion) / 2)^2 * ν_anion * m / I
-        X ~ ((z_cation + z_anion) / 2)^2 * ν_cation * m / I
+        Y ~ ((z_cation + z_anion) / 2)^2 * ν_anion * exp(logm) * m_one / I
+        X ~ ((z_cation + z_anion) / 2)^2 * ν_cation * exp(logm) * m_one / I
         # Equation 9
         logγ⁰ ~ zz * logΓ⁰
         # Equation 10
@@ -139,11 +142,22 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
         A ~ -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
 
         # Activity (Section 2.2)
-        # loga ~ loga_gas # min(loga_gas, loga_solid) # Activity is the minimum of two potential activities (in equilibrium with gas vs. solid).
-        loga ~ ν_cation * logm + ν_anion * logm + (ν_cation + ν_anion) * logγ
+        logm ~ (loga - (ν_cation + ν_anion) * logγ) / (ν_cation + ν_anion)
 
-        deliquesced ~  (tanh((RH - drh) * 30) + 1) / 2
+        if can_precipitate
+            M ~ (1-deliquesced) * min( # Below DRH, may not be fully dissolved
+                M₀, # Maximum dissolved concentration
+                exp(logm) * m_one * W, # Equilibrium with solid.
+            ) + deliquesced * M₀ # Fully dissolved above the DRH
+
+            #M_precip ~ M₀ - M
+        else
+            M ~ exp(logm) * m_one * W
+            #M_precip ~ 0
+        end
+
         M_precip ~ 0
+        deliquesced ~  (tanh((RH - drh) * 30) + 1) / 2
     end
 end
 
@@ -193,6 +207,7 @@ end
     @variables begin
         I(t), [description = "Ionic strength", unit = u"mol/kg", guess=1]
         W(t), [description = "Aerosol water content in air", unit = u"kg/m^3", guess=1e-7]
+        W_x(t), [description = "Aerosol water content in air", unit = u"kg/m^3", guess=1e-7]
 
         F_Ca(t), [description = "Activity contribution from Ca-containing salts"]
         F_K(t), [description = "Activity contribution from K-containing salts"]
@@ -229,13 +244,13 @@ end
 
         # Salts
         CaNO32 = Salt(z_cation = 2, ν_anion=2, drh = 0.4906, l_t = 509.4, q = 0.93, T=T,
-             RH=RH,logm_guess=0, M_salt_guess=1.9e-8)
+             RH=RH,logm_guess=0, M_salt_guess=1.9e-8, can_precipitate=false)
         CaCl2 = Salt(z_cation = 2, ν_anion=2, drh = 0.2830, l_t = 551.1, q = 2.4, T=T,
-            RH=RH,logm_guess=0)
+            RH=RH,logm_guess=0, can_precipitate=false)
         CaSO4 = Salt(z_cation = 2, z_anion = 2, drh = 0.9700, l_t = NaN, q = q0, T=T,
-             RH=RH,logm_guess=0)
+             RH=RH,logm_guess=0, can_precipitate=false)
         K2SO4 = Salt(ν_cation = 2, z_anion = 2, drh = 0.9751, l_t = 35.6, q = -0.25, T=T,
-             RH=RH,logm_guess=0)
+             RH=RH,logm_guess=0, can_precipitate=true)
         KNO3 = Salt(z_cation = 1, z_anion = 1, drh = 0.9248, l_t = NaN, q = -2.33, T=T,
              RH=RH,logm_guess=0)
         KCl = Salt(z_cation = 1, z_anion = 1, drh = 0.8426, l_t = 158.9, q = 0.92, T=T,
@@ -243,13 +258,13 @@ end
         MgSO4 = Salt(z_cation = 2, z_anion = 2, drh = 0.8613, l_t = -714.5, q = 0.15, T=T,
             RH=RH,logm_guess=0)
         MgNO32 = Salt(z_cation = 2, ν_anion = 2, drh = 0.5400, l_t = 230.2, q = 2.32, T=T,
-            RH=RH,logm_guess=0)
+            RH=RH,logm_guess=0, can_precipitate=false)
         MgCl2 = Salt(z_cation = 2, ν_anion = 2, drh = 0.3284, l_t = 42.23, q = 2.90, T=T,
-            RH=RH,logm_guess=0)
+            RH=RH,logm_guess=0, can_precipitate=false)
         NaCl = Salt(z_cation = 1, z_anion = 1, drh = 0.7528, l_t = 25.0, q = 2.23, T=T,
             RH=RH,logm_guess=0)
         Na2SO4 = Salt(ν_cation = 2, z_anion = 2, drh = 0.9300, l_t = 80.0, q = -0.19, T=T,
-            RH=RH,logm_guess=0)
+            RH=RH,logm_guess=0, can_precipitate=true)
         NaNO3 = Salt(z_cation = 1, z_anion = 1, drh = 0.7379, l_t = 304.0, q = -0.39, T=T,
              RH=RH,logm_guess=0)
         NH42SO4 = Salt(ν_cation = 2, z_anion = 2, drh = 0.7997, l_t = 80.0, q = -0.25, T=T,
@@ -391,13 +406,13 @@ end
         HSO4_dissociated.F_an ~ F_SO4
 
         # Ionic strength (equation in text below Equation 8)
-        I ~ 0.5 * (sum([salt.m * salt.ν_cation * salt.z_cation^2 +
-                      salt.m * salt.ν_anion * salt.z_anion^2
+        I ~ 0.5 * (sum([exp(salt.logm) * salt.ν_cation * salt.z_cation^2 +
+                      exp(salt.logm) * salt.ν_anion * salt.z_anion^2
                       for salt in [
                      CaNO32, CaCl2, CaSO4, KHSO4, K2SO4, KNO3, KCl, MgSO4, MgNO32,
                      MgCl2, NaCl, Na2SO4, NaNO3, NH42SO4, NH4NO3, NH4Cl, NH4HSO4,
                      NaHSO4, NH43HSO42]]) +
-                 H.m * H.z^2 + OH.m * OH.z^2)
+                 exp(H.logm) * H.z^2 + exp(OH.logm) * OH.z^2) * m_one
 
         CaNO32.I ~ I
         CaCl2.I ~ I
@@ -427,24 +442,24 @@ end
         HSO4_dissociated.I ~ I
 
         # Water content (Section 2.3)
-        # W ~ CaNO32.M / maw_CaNO32.m_aw +
-        #     CaCl2.M / maw_CaCl2.m_aw +
-        #     KHSO4.M / maw_KHSO4.m_aw +
-        #     K2SO4.M / maw_K2SO4.m_aw +
-        #     KNO3.M / maw_KNO3.m_aw +
-        #     KCl.M / maw_KCl.m_aw +
-        #     MgSO4.M / maw_MgSO4.m_aw +
-        #     MgNO32.M / maw_MgNO32.m_aw +
-        #     MgCl2.M / maw_MgCl2.m_aw +
-        #     NaCl.M / maw_NaCl.m_aw +
-        #     Na2SO4.M / maw_Na2SO4.m_aw +
-        #     NaNO3.M / maw_NaNO3.m_aw +
-        #     NH42SO4.M / maw_NH42SO4.m_aw +
-        #     NH4NO3.M / maw_NH4NO3.m_aw +
-        #     NaHSO4.M / maw_NaHSO4.m_aw +
-        #     NH4Cl.M / maw_NH4Cl.m_aw +
-        #     NH4HSO4.M / maw_NH4HSO4.m_aw +
-        #     NH43HSO42.M / maw_NH43HSO42.m_aw
+        W_x ~ CaNO32.M / maw_CaNO32.m_aw +
+            CaCl2.M / maw_CaCl2.m_aw +
+            KHSO4.M / maw_KHSO4.m_aw +
+            K2SO4.M / maw_K2SO4.m_aw +
+            KNO3.M / maw_KNO3.m_aw +
+            KCl.M / maw_KCl.m_aw +
+            MgSO4.M / maw_MgSO4.m_aw +
+            MgNO32.M / maw_MgNO32.m_aw +
+            MgCl2.M / maw_MgCl2.m_aw +
+            NaCl.M / maw_NaCl.m_aw +
+            Na2SO4.M / maw_Na2SO4.m_aw +
+            NaNO3.M / maw_NaNO3.m_aw +
+            NH42SO4.M / maw_NH42SO4.m_aw +
+            NH4NO3.M / maw_NH4NO3.m_aw +
+            NaHSO4.M / maw_NaHSO4.m_aw +
+            NH4Cl.M / maw_NH4Cl.m_aw +
+            NH4HSO4.M / maw_NH4HSO4.m_aw +
+            NH43HSO42.M / maw_NH43HSO42.m_aw
         W ~ w_c
 
         maw_CaNO32.RH ~ RH
@@ -528,3 +543,157 @@ end
         OH.M ~ NH3_dissociated.M + H2O_dissociated.M
     end
 end
+
+"xxx"
+
+# @parameters begin
+#     NH_total = 1.0
+#     Na_total = 1.0
+#     Ca_total = 1.0
+#     K_total = 1.0
+#     Mg_total = 1.0
+#     HCl_total = 2.0
+#     HNO3_total = 1.0
+#     HSO4_total = 1.0
+#     H2SO4_total = 1.0
+#     NH_f = 1
+#     Na_f = 1
+#     Ca_f = 1
+#     K_f = 1
+#     Mg_f = 1
+#     HCl_f = 1
+#     HNO3_f = 1
+#     HSO4_f = 1
+#     H2SO4_f = 1
+# end
+# @variables NH4NO3=0 NH4Cl=0 NH4HSO4=0 NH42SO4=0 NH43HSO42=0 NaCl=0 Na2SO4=0 NaNO3=0 NaHSO4=0 CaNO32=0 CaCl2=0 CaSO4=0 KHSO4=0 K2SO4=0 KNO3=0 KCl=0 MgSO4=0 MgNO32=0 MgCl2=0
+# @variables begin
+#     NH_precip = 0.0
+#     Na_precip = 0.0
+#     Ca_precip = 0.0
+#     K_precip = 0.0
+#     Mg_precip = 0.0
+#     HCl_precip = 0.0
+#     HNO3_precip = 0.0
+#     HSO4_precip = 0.0
+#     H2SO4_precip = 0.0
+#     NH_aq = 0.5
+#     Na_aq = 0.5
+#     Ca_aq = 0.5
+#     K_aq = 0.5
+#     Mg_aq = 0.5
+#     HCl_aq = 0.5
+#     HNO3_aq = 0.5
+#     HSO4_aq = 0.5
+#     H2SO4_aq = 0.5
+#     NH_gas = 0.5
+#     Na_gas = 0.5
+#     Ca_gas = 0.5
+#     K_gas = 0.5
+#     Mg_gas = 0.5
+#     HCl_gas = 0.5
+#     HNO3_gas = 0.5
+#     HSO4_gas = 0.5
+#     H2SO4_gas = 0.5
+# end
+
+# eqs = [
+# NH_total ~ NH_gas + NH_aq + NH_precip
+# Na_total ~ Na_gas + Na_aq + Na_precip
+# Ca_total ~ Ca_gas + Ca_aq + Ca_precip
+# K_total ~ K_gas + K_aq + K_precip
+# Mg_total ~ Mg_gas + Mg_aq + Mg_precip
+# HCl_total ~ HCl_gas + HCl_aq + HCl_precip
+# HNO3_total ~ HNO3_gas + HNO3_aq + HNO3_precip
+# HSO4_total ~ HSO4_gas + HSO4_aq + HSO4_precip
+# H2SO4_total ~ H2SO4_gas + H2SO4_aq + H2SO4_precip
+# NH_aq ~ NH4NO3 + NH4Cl + NH4HSO4 + 2NH42SO4 + 3NH43HSO42
+# Na_aq ~ NaCl + 2Na2SO4 + NaNO3 + NaHSO4
+# Ca_aq ~ CaNO32 + CaCl2 + CaSO4
+# K_aq ~ KHSO4 + 2K2SO4 + KNO3 + KCl
+# Mg_aq ~ MgSO4 + MgNO32 + MgCl2
+# HCl_aq ~ NaCl + KCl + 2MgCl2 + 2CaCl2 + NH4Cl
+# HNO3_aq ~ NaNO3 + KNO3 + 2MgNO32 + 2CaNO32 + NH4NO3
+# HSO4_aq ~ Na2SO4 + K2SO4 + MgSO4 + CaSO4 + NH42SO4
+# H2SO4_aq ~ KHSO4 + NaHSO4 + NH4HSO4 + 2NH43HSO42
+# NH_f ~ NH_gas / NH_aq
+# Na_f ~ Na_gas / Na_aq
+# Ca_f ~ Ca_gas / Ca_aq
+# K_f ~ K_gas / K_aq
+# Mg_f ~ Mg_gas / Mg_aq
+# HCl_f ~ HCl_gas / HCl_aq
+# HNO3_f ~ HNO3_gas / HNO3_aq
+# HSO4_f ~ HSO4_gas / HSO4_aq
+# H2SO4_f ~ H2SO4_gas / H2SO4_aq
+# sum(abs.([NH4NO3, NH4Cl, NH4HSO4, NH42SO4, NH43HSO42, NaCl, Na2SO4, NaNO3, NaHSO4 ,CaNO32, CaCl2, CaSO4, KHSO4, K2SO4, KNO3, KCl, MgSO4, MgNO32, MgCl2])) ~
+#     sum([NH4NO3, NH4Cl, NH4HSO4, NH42SO4, NH43HSO42, NaCl, Na2SO4, NaNO3, NaHSO4 ,CaNO32, CaCl2, CaSO4, KHSO4, K2SO4, KNO3, KCl, MgSO4, MgNO32, MgCl2])
+# sum(abs.([NH_precip, Na_precip, Ca_precip, K_precip, Mg_precip, HCl_precip, HNO3_precip, HSO4_precip, H2SO4_precip])) ~
+#     sum([NH_precip, Na_precip, Ca_precip, K_precip, Mg_precip, HCl_precip, HNO3_precip, HSO4_precip, H2SO4_precip])
+# NaHSO4 ~ clamp(NaHSO4, 0.01, 5)
+#  NaNO3 ~ abs(NaNO3)
+#  CaNO32 ~ abs(CaNO32)
+#  CaSO4 ~ abs(CaSO4)
+#  KCl ~ abs(KCl)
+#  KNO3 ~ abs(KNO3)
+#  K2SO4 ~ abs(K2SO4)
+#  MgCl2 ~ abs(MgCl2)
+# MgSO4 ~ abs(MgSO4)
+# # NaCl ~ abs(NaCl)
+# #NH_precip ~ abs(NH_precip)
+# Na_precip ~ abs(Na_precip)
+# Ca_precip ~ abs(Ca_precip)
+# K_precip ~ abs(K_precip)
+# Mg_precip ~ abs(Mg_precip)
+# HCl_precip ~ abs(HCl_precip)
+# HNO3_precip ~ abs(HNO3_precip)
+# HSO4_precip ~ abs(HSO4_precip)
+# H2SO4_precip ~ abs(H2SO4_precip)
+# ]
+
+# @mtkcompile sys = NonlinearSystem(eqs)
+# prob = NonlinearProblem(sys, [])
+# sol = solve(prob, abstol=1e-12, reltol=1e-12)
+
+# unknowns(sys) .=> round.(sol.u, sigdigits=3)
+# getproperty.(observed(sys), :lhs) .=> round.(sol[getproperty.(observed(sys), (:lhs,))], sigdigits=3)
+
+# sol.ps[Na_total]
+# sum(sol[[Na_aq, Na_gas, Na_precip]])
+# sol.ps[NH_total]
+# sum(sol[[NH_aq, NH_gas, NH_precip]])
+# sol.ps[Ca_total]
+# sum(sol[[Ca_aq, Ca_gas, Ca_precip]])
+# sol.ps[K_total]
+# sum(sol[[K_aq, K_gas, K_precip]])
+# sol.ps[Mg_total]
+# sum(sol[[Mg_aq, Mg_gas, Mg_precip]])
+# sol.ps[HCl_total]
+# sum(sol[[HCl_aq, HCl_gas, HCl_precip]])
+# sol.ps[HNO3_total]
+# sum(sol[[HNO3_aq, HNO3_gas, HNO3_precip]])
+# sol.ps[HSO4_total]
+# sum(sol[[HSO4_aq, HSO4_gas, HSO4_precip]])
+# sol.ps[H2SO4_total]
+# sum(sol[[H2SO4_aq, H2SO4_gas, H2SO4_precip]])
+
+
+# eqs = [
+#     Ca_total ~ Ca_gas + Ca_aq + Ca_precip
+#     HCl_total ~ HCl_gas + HCl_aq + HCl_precip
+#     Mg_total ~ Mg_gas + Mg_aq + Mg_precip
+#     Ca_f ~ Ca_gas / Ca_aq
+#     HCl_f ~ HCl_gas / HCl_aq
+#     Mg_f ~ Mg_gas / Mg_aq
+#     Ca_aq ~ CaCl2
+#     HCl_aq ~ 2CaCl2 + 2MgCl2
+#     Mg_aq ~ MgCl2
+#     CaCl2 ~ min(HCl_aq / 2, Ca_aq / 2)
+#     MgCl2 ~ min(HCl_aq / 2, Mg_aq / 2)
+# ]
+
+# @mtkcompile sys = NonlinearSystem(eqs)
+# prob = NonlinearProblem(sys, [])
+# sol = solve(prob, abstol=1e-12, reltol=1e-12)
+
+# unknowns(sys) .=> round.(sol.u, sigdigits=3)
+# getproperty.(observed(sys), :lhs) .=> round.(sol[getproperty.(observed(sys), (:lhs,))], sigdigits=3)
