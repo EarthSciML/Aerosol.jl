@@ -43,13 +43,13 @@ three lognormal modes calibrated to represent typical atmospheric conditions.
 ### State Variables
 
 ```@example size_dist
-using DataFrames, ModelingToolkit, Aerosol, DynamicQuantities
+using DataFrames, ModelingToolkit, Symbolics, Aerosol, DynamicQuantities
 
 sys = AerosolDistribution(3)
 vars = unknowns(sys)
 DataFrame(
-    :Name => [string(v) for v in vars],
-    :Units => [string(ModelingToolkit.get_unit(v)) for v in vars],
+    :Name => [string(Symbolics.tosymbol(v, escape = false)) for v in vars],
+    :Units => [dimension(ModelingToolkit.get_unit(v)) for v in vars],
     :Description => [ModelingToolkit.getdescription(v) for v in vars]
 )
 ```
@@ -59,8 +59,8 @@ DataFrame(
 ```@example size_dist
 pars = parameters(sys)
 DataFrame(
-    :Name => [string(p) for p in pars],
-    :Units => [string(ModelingToolkit.get_unit(p)) for p in pars],
+    :Name => [string(Symbolics.tosymbol(p, escape = false)) for p in pars],
+    :Units => [dimension(ModelingToolkit.get_unit(p)) for p in pars],
     :Description => [ModelingToolkit.getdescription(p) for p in pars]
 )
 ```
@@ -73,6 +73,17 @@ eqs = equations(sys)
 
 ## Analysis
 
+```@example size_dist
+# Helper to evaluate a system equation's RHS by substituting parameter values
+function eval_eq(sys, var, param_vals)
+    var_name = string(Symbolics.tosymbol(var, escape = false))
+    eq = only(filter(eq -> string(Symbolics.tosymbol(eq.lhs, escape = false)) == var_name, equations(sys)))
+    subs = merge(ModelingToolkit.defaults(sys), param_vals)
+    return Float64(Symbolics.substitute(eq.rhs, subs))
+end
+nothing # hide
+```
+
 ### Urban Aerosol Distribution (Figure 8.14)
 
 The urban aerosol distribution from Table 8.3 shows three distinct modes:
@@ -82,36 +93,28 @@ a nucleation mode, an Aitken mode, and an accumulation mode.
 using Plots
 
 urban = UrbanAerosol()
-defs = ModelingToolkit.defaults(urban)
 
-# Extract mode parameters from defaults
-N_modes = Float64[]
-D_g_modes = Float64[]
-logσ_modes = Float64[]
-for i in 1:3
-    n_key = filter(k -> string(k) == "UrbanAerosol₊N[$i]", collect(keys(defs)))
-    d_key = filter(k -> string(k) == "UrbanAerosol₊D_g[$i]", collect(keys(defs)))
-    s_key = filter(k -> string(k) == "UrbanAerosol₊logσ[$i]", collect(keys(defs)))
-    push!(N_modes, defs[n_key[1]])
-    push!(D_g_modes, defs[d_key[1]])
-    push!(logσ_modes, defs[s_key[1]])
-end
-
-# Compute distribution over a range of diameters
+# Evaluate the system's n_N_o equation over a range of diameters
 D_p_range = 10 .^ range(log10(1e-9), log10(100e-6), length=500)
-
-function lognormal_mode(D_p, N, D_g, logσ)
-    return N / (sqrt(2π) * logσ) * exp(-(log10(D_p / D_g))^2 / (2 * logσ^2))
+n_N_total = map(D_p_range) do D_p_val
+    eval_eq(urban, urban.n_N_o, Dict(urban.D_p => D_p_val))
 end
 
-n_N_total = zeros(length(D_p_range))
+# Also evaluate individual mode contributions using single-mode systems
 mode_contributions = [zeros(length(D_p_range)) for _ in 1:3]
-
-for (j, D_p) in enumerate(D_p_range)
-    for i in 1:3
-        val = lognormal_mode(D_p, N_modes[i], D_g_modes[i], logσ_modes[i])
-        mode_contributions[i][j] = val
-        n_N_total[j] += val
+defs = ModelingToolkit.defaults(urban)
+for i in 1:3
+    n_key = only(filter(k -> contains(string(k), "N[$i]"), collect(keys(defs))))
+    d_key = only(filter(k -> contains(string(k), "D_g[$i]"), collect(keys(defs))))
+    s_key = only(filter(k -> contains(string(k), "logσ[$i]"), collect(keys(defs))))
+    mode_sys = AerosolDistribution(1; name = Symbol("mode_$i"))
+    for (j, D_p_val) in enumerate(D_p_range)
+        mode_contributions[i][j] = eval_eq(mode_sys, mode_sys.n_N_o, Dict(
+            mode_sys.N[1] => defs[n_key],
+            mode_sys.D_g[1] => defs[d_key],
+            mode_sys.logσ[1] => defs[s_key],
+            mode_sys.D_p => D_p_val,
+        ))
     end
 end
 
@@ -134,16 +137,15 @@ The following figure compares the number distributions for all seven
 aerosol environment types from Table 8.3.
 
 ```@example size_dist
-# Define all distribution types and their parameters from Table 8.3
-dist_params = Dict(
-    "Urban" => [(9.93e4, 0.013e-6, 0.245), (1.11e3, 0.014e-6, 0.666), (3.64e4, 0.050e-6, 0.337)],
-    "Marine" => [(133.0, 0.008e-6, 0.657), (66.6, 0.266e-6, 0.210), (3.06, 0.580e-6, 0.396)],
-    "Rural" => [(6.65e3, 0.015e-6, 0.225), (147.0, 0.054e-6, 0.557), (1990.0, 0.084e-6, 0.266)],
-    "Remote continental" => [(3200.0, 0.020e-6, 0.161), (2900.0, 0.116e-6, 0.217), (0.300, 1.800e-6, 0.380)],
-    "Free troposphere" => [(129.0, 0.007e-6, 0.645), (59.7, 0.250e-6, 0.253), (63.5, 0.520e-6, 0.425)],
-    "Polar" => [(21.7, 0.138e-6, 0.164), (0.186, 0.750e-6, 0.521), (3.04e-4, 8.600e-6, 0.420)],
-    "Desert" => [(726.0, 0.002e-6, 0.247), (114.0, 0.038e-6, 0.770), (0.178, 21.60e-6, 0.438)],
-)
+dist_constructors = [
+    ("Desert", DesertAerosol),
+    ("Free troposphere", FreeTroposphereAerosol),
+    ("Marine", MarineAerosol),
+    ("Polar", PolarAerosol),
+    ("Remote continental", RemoteContinentalAerosol),
+    ("Rural", RuralAerosol),
+    ("Urban", UrbanAerosol),
+]
 
 D_p_range = 10 .^ range(log10(1e-9), log10(100e-6), length=500)
 p = plot(xlabel="Particle Diameter (μm)", ylabel="dN/d(log Dp) (cm⁻³)",
@@ -151,15 +153,13 @@ p = plot(xlabel="Particle Diameter (μm)", ylabel="dN/d(log Dp) (cm⁻³)",
     title="Model Aerosol Size Distributions (Table 8.3)",
     ylims=(1e-3, 1e6))
 
-for (env_name, modes) in sort(collect(dist_params), by=x->x[1])
-    n_N = zeros(length(D_p_range))
-    for (j, D_p) in enumerate(D_p_range)
-        for (N, D_g, logσ) in modes
-            # N is in cm^-3 here (not SI), compute directly in cm^-3
-            n_N[j] += lognormal_mode(D_p, N, D_g, logσ)
-        end
+for (env_name, constructor) in dist_constructors
+    dist_sys = constructor()
+    n_N = map(D_p_range) do D_p_val
+        eval_eq(dist_sys, dist_sys.n_N_o, Dict(dist_sys.D_p => D_p_val))
     end
-    plot!(p, D_p_range * 1e6, n_N, label=env_name, linewidth=1.5)
+    # Convert from m^-3 to cm^-3 for plotting
+    plot!(p, D_p_range * 1e6, n_N / 1e6, label=env_name, linewidth=1.5)
 end
 p
 ```
@@ -172,30 +172,20 @@ peaks at the volume median diameter ``D_{v,i} = D_{g,i}\exp(3\ln^2\sigma_{g,i})`
 (Eq. 8.52).
 
 ```@example size_dist
-# Urban volume distribution
+# Urban volume distribution using the system's n_V_o equation
+urban = UrbanAerosol()
+D_p_range = 10 .^ range(log10(1e-9), log10(100e-6), length=500)
+
+n_V_total = map(D_p_range) do D_p_val
+    eval_eq(urban, urban.n_V_o, Dict(urban.D_p => D_p_val))
+end
+
 p = plot(xlabel="Particle Diameter (μm)", ylabel="dV/d(log Dp) (μm³/cm³)",
     xscale=:log10, title="Urban Aerosol Volume Distribution",
     legend=:topright)
 
-# Volume distribution: n_V^o = (π/6) * N * D_pv^3 / (sqrt(2π) * logσ) * exp(...)
-# where D_pv = D_g * exp(3 * (logσ * ln10)^2)
-n_V_total = zeros(length(D_p_range))
-for (j, D_p) in enumerate(D_p_range)
-    for i in 1:3
-        N = [9.93e4, 1.11e3, 3.64e4][i]  # cm^-3
-        D_g = [0.013e-6, 0.014e-6, 0.050e-6][i]
-        logσ = [0.245, 0.666, 0.337][i]
-        lnσ = logσ * log(10)
-        D_pv = D_g * exp(3 * lnσ^2)
-        # Eq. 8.51 - volume distribution in log-space
-        n_V = (π / 6) * N * D_pv^3 / (sqrt(2π) * logσ) *
-              exp(-(log10(D_p / D_pv))^2 / (2 * logσ^2))
-        n_V_total[j] += n_V
-    end
-end
-
-# Convert from m³/cm³ to μm³/cm³ (multiply by 1e18)
-plot!(p, D_p_range * 1e6, n_V_total * 1e18, label="Total", linewidth=2, color=:black)
+# Convert from m³/m³ to μm³/cm³: m³→μm³ is ×1e18, m⁻³→cm⁻³ is ÷1e6, net ×1e12
+plot!(p, D_p_range * 1e6, n_V_total * 1e12, label="Total", linewidth=2, color=:black)
 p
 ```
 
@@ -205,15 +195,26 @@ The vertical variation of aerosol mass concentration follows an exponential
 decay with a characteristic scale height ``H_p``.
 
 ```@example size_dist
+# Evaluate the system's M_z equation for different scale heights
+sys = AerosolDistribution(3)
 z_range = range(0, 10000, length=100)
 H_p_values = [500, 1000, 2000, 5000]
+
+base_params = Dict(
+    sys.N[1] => 1e11, sys.D_g[1] => 1e-7, sys.logσ[1] => 0.3,
+    sys.N[2] => 1e10, sys.D_g[2] => 1e-6, sys.logσ[2] => 0.3,
+    sys.N[3] => 1e9,  sys.D_g[3] => 1e-5, sys.logσ[3] => 0.3,
+    sys.D_p => 1e-7,
+)
 
 p = plot(xlabel="M(z)/M(0)", ylabel="Altitude (m)",
     title="Vertical Aerosol Mass Profile (Eq. 8.55)",
     legend=:topright)
 
 for H_p in H_p_values
-    M_ratio = exp.(-z_range / H_p)
+    M_ratio = map(z_range) do z_val
+        eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => z_val, sys.H_p => Float64(H_p))))
+    end
     plot!(p, M_ratio, z_range, label="Hp = $H_p m", linewidth=1.5)
 end
 p

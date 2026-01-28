@@ -1,7 +1,20 @@
 @testsnippet SizeDistSetup begin
     using Test
     using ModelingToolkit
+    using Symbolics
     using Aerosol
+
+    """
+    Helper to evaluate a system equation's RHS by substituting parameter values.
+    Returns the numerical result of the RHS for the equation whose LHS matches `var`.
+    Uses symbol name comparison to handle namespaced vs un-namespaced variables.
+    """
+    function eval_eq(sys, var, param_vals)
+        var_name = string(Symbolics.tosymbol(var, escape = false))
+        eq = only(filter(eq -> string(Symbolics.tosymbol(eq.lhs, escape = false)) == var_name, equations(sys)))
+        subs = merge(ModelingToolkit.defaults(sys), param_vals)
+        return Float64(Symbolics.substitute(eq.rhs, subs))
+    end
 end
 
 @testitem "Structural Verification" setup=[SizeDistSetup] tags=[:size_dist] begin
@@ -71,132 +84,146 @@ end
 end
 
 @testitem "Lognormal Number Distribution" setup=[SizeDistSetup] tags=[:size_dist] begin
-    # Eq. 8.44: n_N^o(log D_p) = N / (sqrt(2π) * log(σ_g)) * exp(-(log D_p - log D_pg)^2 / (2 log^2(σ_g)))
-    # Verify using a single-mode system
+    # Eq. 8.54: Verify the system's n_N_o equation evaluates correctly
     sys = AerosolDistribution(1)
 
     N_val = 1e11     # m^-3
     D_g_val = 1e-7   # 0.1 μm
     logσ_val = 0.3
-    D_p_val = 1e-7   # evaluate at geometric median
+    base_params = Dict(sys.N[1] => N_val, sys.D_g[1] => D_g_val, sys.logσ[1] => logσ_val)
 
     # At D_p = D_g, log10(D_p/D_g) = 0, so exp term = 1
-    # n_N_o = N / (sqrt(2π) * logσ) = 1e11 / (sqrt(2π) * 0.3)
+    # n_N_o = N / (sqrt(2π) * logσ)
     expected_peak = N_val / (sqrt(2π) * logσ_val)
-
-    # The symbolic system represents this correctly
-    # We can verify by direct computation
-    actual = N_val / (sqrt(2π) * logσ_val) * exp(-(log10(D_p_val / D_g_val))^2 / (2 * logσ_val^2))
-    @test actual ≈ expected_peak rtol=1e-10
+    result = eval_eq(sys, sys.n_N_o, merge(base_params, Dict(sys.D_p => D_g_val)))
+    @test result ≈ expected_peak rtol=1e-10
 
     # At D_p = D_g * 10^σ (one σ away), the value should be exp(-0.5) times the peak
     D_p_1sigma = D_g_val * 10^logσ_val
-    actual_1sigma = N_val / (sqrt(2π) * logσ_val) * exp(-(log10(D_p_1sigma / D_g_val))^2 / (2 * logσ_val^2))
-    @test actual_1sigma ≈ expected_peak * exp(-0.5) rtol=1e-10
+    result_1sig = eval_eq(sys, sys.n_N_o, merge(base_params, Dict(sys.D_p => D_p_1sigma)))
+    @test result_1sig ≈ expected_peak * exp(-0.5) rtol=1e-10
 end
 
 @testitem "Total Number Concentration" setup=[SizeDistSetup] tags=[:size_dist] begin
-    # Verify that N_t equals the sum of mode concentrations
-    # Table 8.3 values (converted to m^-3)
-    # Urban: 9.93e4 + 1.11e3 + 3.64e4 = 136810 cm^-3 = 1.3681e11 m^-3
-    urban_N_t = (9.93e4 + 1.11e3 + 3.64e4) * 1e6
-    @test urban_N_t ≈ 1.3681e11
+    # Verify the system's N_t equation sums mode concentrations correctly
+    sys = AerosolDistribution(3)
+
+    # Use Urban Table 8.3 values (converted to m^-3)
+    N_vals = [9.93e4 * 1e6, 1.11e3 * 1e6, 3.64e4 * 1e6]
+    params = Dict(
+        sys.N[1] => N_vals[1], sys.N[2] => N_vals[2], sys.N[3] => N_vals[3],
+        sys.D_g[1] => 0.013e-6, sys.D_g[2] => 0.014e-6, sys.D_g[3] => 0.050e-6,
+        sys.logσ[1] => 0.245, sys.logσ[2] => 0.666, sys.logσ[3] => 0.337,
+        sys.D_p => 1e-7,
+    )
+
+    result = eval_eq(sys, sys.N_t, params)
+    @test result ≈ sum(N_vals) rtol=1e-10
 
     # Marine: 133 + 66.6 + 3.06 = 202.66 cm^-3
-    marine_N_t = (133.0 + 66.6 + 3.06) * 1e6
-    @test marine_N_t ≈ 202.66e6
+    marine = MarineAerosol()
+    marine_params = Dict(marine.D_p => 1e-7)
+    marine_Nt = eval_eq(marine, marine.N_t, marine_params)
+    @test marine_Nt ≈ (133.0 + 66.6 + 3.06) * 1e6 rtol=1e-10
 
     # Remote continental: 3200 + 2900 + 0.3 = 6100.3 cm^-3
-    remote_N_t = (3200.0 + 2900.0 + 0.3) * 1e6
-    @test remote_N_t ≈ 6100.3e6
+    remote = RemoteContinentalAerosol()
+    remote_params = Dict(remote.D_p => 1e-7)
+    remote_Nt = eval_eq(remote, remote.N_t, remote_params)
+    @test remote_Nt ≈ (3200.0 + 2900.0 + 0.3) * 1e6 rtol=1e-10
 end
 
 @testitem "Hatch-Choate Equations" setup=[SizeDistSetup] tags=[:size_dist] begin
-    # Table 8.2 — Hatch-Choate equations for lognormal distributions
-    # Verify relationships between geometric median diameter and other diameters
+    # Verify the system's D_s, D_v, D_bar equations implement Table 8.2 correctly
+    sys = AerosolDistribution(1)
 
     D_pg = 0.1e-6  # 0.1 μm
     logσ = 0.3
     lnσ = logσ * log(10)  # convert to natural log
+    params = Dict(
+        sys.N[1] => 1e11, sys.D_g[1] => D_pg, sys.logσ[1] => logσ,
+        sys.D_p => D_pg,
+    )
 
     # Eq. 8.39: Mean diameter = D_pg * exp(0.5 * ln²(σ_g))
-    D_bar = D_pg * exp(0.5 * lnσ^2)
-    @test D_bar > D_pg  # mean > geometric median for lognormal
-
-    # Eq. 8.40: Mode diameter = D_pg * exp(-ln²(σ_g))
-    D_mode = D_pg * exp(-lnσ^2)
-    @test D_mode < D_pg  # mode < geometric median for lognormal
+    D_bar_result = eval_eq(sys, sys.D_bar, params)
+    @test D_bar_result ≈ D_pg * exp(0.5 * lnσ^2) rtol=1e-10
+    @test D_bar_result > D_pg  # mean > geometric median for lognormal
 
     # Eq. 8.49: Surface area median diameter = D_pg * exp(2 * ln²(σ_g))
-    D_ps = D_pg * exp(2 * lnσ^2)
-    @test D_ps > D_pg
+    D_s_result = eval_eq(sys, sys.D_s, params)
+    @test D_s_result ≈ D_pg * exp(2 * lnσ^2) rtol=1e-10
+    @test D_s_result > D_pg
 
     # Eq. 8.52: Volume median diameter = D_pg * exp(3 * ln²(σ_g))
-    D_pv = D_pg * exp(3 * lnσ^2)
-    @test D_pv > D_ps > D_pg
+    D_v_result = eval_eq(sys, sys.D_v, params)
+    @test D_v_result ≈ D_pg * exp(3 * lnσ^2) rtol=1e-10
+    @test D_v_result > D_s_result > D_pg
 
-    # Verify ordering: D_mode < D_pg < D_bar < D_ps < D_pv
-    @test D_mode < D_pg < D_bar < D_ps < D_pv
+    # Verify ordering: D_pg < D_bar < D_s < D_v
+    @test D_pg < D_bar_result < D_s_result < D_v_result
 
-    # Eq. 8.46/8.47: 84.1% and 15.9% quantile relationship
-    # D_p(84.1%) = D_pg * σ_g
-    σ_g = 10^logσ
-    D_84 = D_pg * σ_g
-    D_16 = D_pg / σ_g
-    @test D_84 > D_pg
-    @test D_16 < D_pg
-    @test D_84 / D_16 ≈ σ_g^2
+    # Verify D_v / D_s = exp(ln²σ)
+    @test D_v_result / D_s_result ≈ exp(lnσ^2) rtol=1e-10
 end
 
 @testitem "Moment Equations" setup=[SizeDistSetup] tags=[:size_dist] begin
+    # Verify the system's S_t and V_t equations implement moment-based formulas
     # Eq. 8.41: M_k = N_t * D_pg^k * exp(k^2 * ln²(σ_g) / 2)
-    N_t = 1e11  # m^-3
+    sys = AerosolDistribution(1)
+
+    N_val = 1e11  # m^-3
     D_pg = 0.1e-6  # m
     logσ = 0.3
     lnσ = logσ * log(10)
+    params = Dict(
+        sys.N[1] => N_val, sys.D_g[1] => D_pg, sys.logσ[1] => logσ,
+        sys.D_p => D_pg,
+    )
 
-    # k=0: M_0 = N_t (zeroth moment is total count)
-    M_0 = N_t * D_pg^0 * exp(0^2 * lnσ^2 / 2)
-    @test M_0 ≈ N_t
+    # Total surface area — Eq. 8.5 with Eq. 8.41 (k=2 moment)
+    # S_t = π * N * D_pg^2 * exp(2 * ln²σ)
+    S_t_result = eval_eq(sys, sys.S_t, params)
+    expected_S_t = π * N_val * D_pg^2 * exp(2 * lnσ^2)
+    @test S_t_result ≈ expected_S_t rtol=1e-10
+    @test S_t_result > 0
 
-    # k=1: M_1 = N_t * D_pg * exp(ln²σ/2) = N_t * D_bar (Eq. 8.39)
-    M_1 = N_t * D_pg * exp(lnσ^2 / 2)
-    D_bar = D_pg * exp(0.5 * lnσ^2)
-    @test M_1 ≈ N_t * D_bar
+    # Total volume — Eq. 8.7 with Eq. 8.41 (k=3 moment)
+    # V_t = (π/6) * N * D_pg^3 * exp(4.5 * ln²σ)
+    V_t_result = eval_eq(sys, sys.V_t, params)
+    expected_V_t = (π / 6) * N_val * D_pg^3 * exp(4.5 * lnσ^2)
+    @test V_t_result ≈ expected_V_t rtol=1e-10
+    @test V_t_result > 0
 
-    # k=2: relates to total surface area (Eq. 8.5)
-    # S_t = π * M_2 = π * N_t * D_pg^2 * exp(2 * ln²σ)
-    M_2 = N_t * D_pg^2 * exp(4 * lnσ^2 / 2)
-    S_t = π * M_2
-    @test S_t > 0
-
-    # k=3: relates to total volume (Eq. 8.7)
-    # V_t = (π/6) * M_3 = (π/6) * N_t * D_pg^3 * exp(9 * ln²σ / 2)
-    M_3 = N_t * D_pg^3 * exp(9 * lnσ^2 / 2)
-    V_t = (π / 6) * M_3
-    @test V_t > 0
-
-    # Verify that S_t calculation matches the implementation formula
-    S_t_impl = π * N_t * D_pg^2 * exp(2 * lnσ^2)
-    @test S_t ≈ S_t_impl
+    # Verify N_t for single mode equals N
+    N_t_result = eval_eq(sys, sys.N_t, params)
+    @test N_t_result ≈ N_val rtol=1e-10
 end
 
 @testitem "Vertical Mass Profile" setup=[SizeDistSetup] tags=[:size_dist] begin
-    # Eq. 8.55: M(z) = M(0) * exp(-z / H_p)
-    H_p = 1000.0  # m
+    # Eq. 8.55: Verify the system's M_z equation
+    sys = AerosolDistribution(1)
+    base_params = Dict(
+        sys.N[1] => 1e11, sys.D_g[1] => 1e-7, sys.logσ[1] => 0.3,
+        sys.D_p => 1e-7,
+    )
 
     # At z=0, M_z = 1.0
-    @test exp(-0.0 / H_p) ≈ 1.0
+    result_z0 = eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => 0.0, sys.H_p => 1000.0)))
+    @test result_z0 ≈ 1.0 rtol=1e-10
 
     # At z=H_p, M_z = exp(-1) ≈ 0.368
-    @test exp(-H_p / H_p) ≈ exp(-1) ≈ 0.36787944117144233
+    H_p = 1000.0
+    result_zHp = eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => H_p, sys.H_p => H_p)))
+    @test result_zHp ≈ exp(-1) rtol=1e-10
 
     # At z=2*H_p, M_z = exp(-2) ≈ 0.135
-    @test exp(-2 * H_p / H_p) ≈ exp(-2)
+    result_z2Hp = eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => 2 * H_p, sys.H_p => H_p)))
+    @test result_z2Hp ≈ exp(-2) rtol=1e-10
 
     # Monotonically decreasing
-    z_vals = [0, 500, 1000, 2000, 5000]
-    M_vals = [exp(-z / H_p) for z in z_vals]
+    z_vals = [0.0, 500.0, 1000.0, 2000.0, 5000.0]
+    M_vals = [eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => z, sys.H_p => H_p))) for z in z_vals]
     for i in 1:length(M_vals)-1
         @test M_vals[i] > M_vals[i+1]
     end
@@ -205,69 +232,94 @@ end
 @testitem "Distribution Symmetry" setup=[SizeDistSetup] tags=[:size_dist] begin
     # The lognormal distribution is symmetric in log-space around log D_pg
     # For a single mode, n_N_o(D_pg * 10^x) should equal n_N_o(D_pg * 10^(-x))
-    N = 1e11
-    D_g = 1e-7
-    logσ = 0.3
+    sys = AerosolDistribution(1)
 
-    lognormal_pdf(D_p) = N / (sqrt(2π) * logσ) * exp(-(log10(D_p / D_g))^2 / (2 * logσ^2))
+    N_val = 1e11
+    D_g_val = 1e-7
+    logσ_val = 0.3
+    base_params = Dict(sys.N[1] => N_val, sys.D_g[1] => D_g_val, sys.logσ[1] => logσ_val)
 
-    # Test symmetry at several offsets
+    # Test symmetry at several offsets using the system's n_N_o equation
     for x in [0.1, 0.2, 0.3, 0.5]
-        D_p_plus = D_g * 10^x
-        D_p_minus = D_g * 10^(-x)
-        @test lognormal_pdf(D_p_plus) ≈ lognormal_pdf(D_p_minus) rtol=1e-12
+        D_p_plus = D_g_val * 10^x
+        D_p_minus = D_g_val * 10^(-x)
+        val_plus = eval_eq(sys, sys.n_N_o, merge(base_params, Dict(sys.D_p => D_p_plus)))
+        val_minus = eval_eq(sys, sys.n_N_o, merge(base_params, Dict(sys.D_p => D_p_minus)))
+        @test val_plus ≈ val_minus rtol=1e-12
     end
 end
 
 @testitem "Surface and Volume Median Diameters" setup=[SizeDistSetup] tags=[:size_dist] begin
-    # Eq. 8.49: D_ps = D_pg * exp(2 * ln²(σ_g))
-    # Eq. 8.52: D_pv = D_pg * exp(3 * ln²(σ_g))
-    # For single mode, verify relationship: D_pv/D_ps = exp(ln²(σ_g))
+    # Verify the system's D_s and D_v equations for various parameter values
+    sys = AerosolDistribution(1)
 
     D_pg = 0.05e-6  # 50 nm
     logσ = 0.3
     lnσ = logσ * log(10)
+    params = Dict(
+        sys.N[1] => 1e11, sys.D_g[1] => D_pg, sys.logσ[1] => logσ,
+        sys.D_p => D_pg,
+    )
 
-    D_ps = D_pg * exp(2 * lnσ^2)
-    D_pv = D_pg * exp(3 * lnσ^2)
+    D_s_result = eval_eq(sys, sys.D_s, params)
+    D_v_result = eval_eq(sys, sys.D_v, params)
 
-    @test D_pv / D_ps ≈ exp(lnσ^2)
+    # Eq. 8.49 / 8.52: D_pv / D_ps = exp(ln²σ)
+    @test D_v_result / D_s_result ≈ exp(lnσ^2) rtol=1e-10
 
     # Verify D_ps > D_pg
-    @test D_ps > D_pg
+    @test D_s_result > D_pg
 
     # Verify D_pv > D_ps
-    @test D_pv > D_ps
+    @test D_v_result > D_s_result
 
-    # For σ_g = 1 (monodisperse), all diameters should equal D_pg
-    logσ_mono = 0.0 + eps()  # avoid division by zero
-    lnσ_mono = logσ_mono * log(10)
-    D_ps_mono = D_pg * exp(2 * lnσ_mono^2)
-    D_pv_mono = D_pg * exp(3 * lnσ_mono^2)
-    @test D_ps_mono ≈ D_pg atol=1e-20
-    @test D_pv_mono ≈ D_pg atol=1e-20
+    # For near-monodisperse (logσ → 0), all diameters should approach D_pg
+    logσ_mono = 1e-6
+    params_mono = Dict(
+        sys.N[1] => 1e11, sys.D_g[1] => D_pg, sys.logσ[1] => logσ_mono,
+        sys.D_p => D_pg,
+    )
+    D_s_mono = eval_eq(sys, sys.D_s, params_mono)
+    D_v_mono = eval_eq(sys, sys.D_v, params_mono)
+    @test D_s_mono ≈ D_pg rtol=1e-6
+    @test D_v_mono ≈ D_pg rtol=1e-6
 end
 
 @testitem "Table 8.3 Consistency" setup=[SizeDistSetup] tags=[:size_dist] begin
-    # Verify that all Table 8.3 entries have physically reasonable values
-
-    # Table 8.3 data (N in cm^-3, D_p in μm, log σ)
-    table_data = Dict(
-        "Urban" => [(9.93e4, 0.013, 0.245), (1.11e3, 0.014, 0.666), (3.64e4, 0.050, 0.337)],
-        "Marine" => [(133, 0.008, 0.657), (66.6, 0.266, 0.210), (3.06, 0.580, 0.396)],
-        "Rural" => [(6.65e3, 0.015, 0.225), (147, 0.054, 0.557), (1990, 0.084, 0.266)],
-        "Remote continental" => [(3200, 0.020, 0.161), (2900, 0.116, 0.217), (0.300, 1.800, 0.380)],
-        "Free troposphere" => [(129, 0.007, 0.645), (59.7, 0.250, 0.253), (63.5, 0.520, 0.425)],
-        "Polar" => [(21.7, 0.138, 0.164), (0.186, 0.750, 0.521), (3.04e-4, 8.600, 0.420)],
-        "Desert" => [(726, 0.002, 0.247), (114, 0.038, 0.770), (0.178, 21.60, 0.438)],
+    # Verify that all predefined distributions have physically reasonable defaults
+    distributions = Dict(
+        "Urban" => UrbanAerosol,
+        "Marine" => MarineAerosol,
+        "Rural" => RuralAerosol,
+        "Remote continental" => RemoteContinentalAerosol,
+        "Free troposphere" => FreeTroposphereAerosol,
+        "Polar" => PolarAerosol,
+        "Desert" => DesertAerosol,
     )
 
-    for (env_type, modes) in table_data
-        for (i, (N, D_p, logσ)) in enumerate(modes)
-            @test N > 0       # Positive concentrations
-            @test D_p > 0     # Positive diameters
-            @test logσ > 0    # Positive spread
-            @test logσ < 1.0  # Reasonable spread (σ_g < 10)
+    for (env_type, dist_fn) in distributions
+        sys = dist_fn()
+        defs = ModelingToolkit.defaults(sys)
+
+        # Check that N, D_g, logσ defaults exist and are physical
+        for i in 1:3
+            n_keys = filter(k -> contains(string(k), "N[$i]"), collect(keys(defs)))
+            d_keys = filter(k -> contains(string(k), "D_g[$i]"), collect(keys(defs)))
+            s_keys = filter(k -> contains(string(k), "logσ[$i]"), collect(keys(defs)))
+            @test length(n_keys) == 1
+            @test length(d_keys) == 1
+            @test length(s_keys) == 1
+            @test defs[n_keys[1]] > 0       # Positive concentrations
+            @test defs[d_keys[1]] > 0       # Positive diameters
+            @test defs[s_keys[1]] > 0       # Positive spread
+            @test defs[s_keys[1]] < 1.0     # Reasonable spread (σ_g < 10)
         end
+
+        # Verify N_t evaluates to the sum of mode N values
+        params = Dict(sys.D_p => 1e-7)
+        N_t_result = eval_eq(sys, sys.N_t, params)
+        n_keys = filter(k -> contains(string(k), "N["), collect(keys(defs)))
+        N_sum = sum(defs[k] for k in n_keys)
+        @test N_t_result ≈ N_sum rtol=1e-10
     end
 end

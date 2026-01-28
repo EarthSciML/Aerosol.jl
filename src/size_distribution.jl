@@ -124,7 +124,7 @@ Three lognormal modes with parameters:
 - Mode 2: Aitken mode (N=1.11×10³ cm⁻³, Dg=0.014 μm, log σ=0.666)
 - Mode 3: accumulation mode (N=3.64×10⁴ cm⁻³, Dg=0.050 μm, log σ=0.337)
 """
-function UrbanAerosol(; name = :UrbanAerosol)
+@component function UrbanAerosol(; name = :UrbanAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
         sys.N[1] => 9.93e4 * 1e6, sys.D_g[1] => 0.013e-6, sys.logσ[1] => 0.245,
@@ -145,7 +145,7 @@ Three lognormal modes with parameters:
 - Mode 2: (N=66.6 cm⁻³, Dg=0.266 μm, log σ=0.210)
 - Mode 3: (N=3.06 cm⁻³, Dg=0.580 μm, log σ=0.396)
 """
-function MarineAerosol(; name = :MarineAerosol)
+@component function MarineAerosol(; name = :MarineAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
         sys.N[1] => 133.0 * 1e6, sys.D_g[1] => 0.008e-6, sys.logσ[1] => 0.657,
@@ -166,7 +166,7 @@ Three lognormal modes with parameters:
 - Mode 2: (N=147 cm⁻³, Dg=0.054 μm, log σ=0.557)
 - Mode 3: (N=1990 cm⁻³, Dg=0.084 μm, log σ=0.266)
 """
-function RuralAerosol(; name = :RuralAerosol)
+@component function RuralAerosol(; name = :RuralAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
         sys.N[1] => 6.65e3 * 1e6, sys.D_g[1] => 0.015e-6, sys.logσ[1] => 0.225,
@@ -187,7 +187,7 @@ Three lognormal modes with parameters:
 - Mode 2: (N=2900 cm⁻³, Dg=0.116 μm, log σ=0.217)
 - Mode 3: (N=0.300 cm⁻³, Dg=1.800 μm, log σ=0.380)
 """
-function RemoteContinentalAerosol(; name = :RemoteContinentalAerosol)
+@component function RemoteContinentalAerosol(; name = :RemoteContinentalAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
         sys.N[1] => 3200.0 * 1e6, sys.D_g[1] => 0.020e-6, sys.logσ[1] => 0.161,
@@ -208,7 +208,7 @@ Three lognormal modes with parameters:
 - Mode 2: (N=59.7 cm⁻³, Dg=0.250 μm, log σ=0.253)
 - Mode 3: (N=63.5 cm⁻³, Dg=0.520 μm, log σ=0.425)
 """
-function FreeTroposphereAerosol(; name = :FreeTroposphereAerosol)
+@component function FreeTroposphereAerosol(; name = :FreeTroposphereAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
         sys.N[1] => 129.0 * 1e6, sys.D_g[1] => 0.007e-6, sys.logσ[1] => 0.645,
@@ -229,7 +229,7 @@ Three lognormal modes with parameters:
 - Mode 2: (N=0.186 cm⁻³, Dg=0.750 μm, log σ=0.521)
 - Mode 3: (N=3.04×10⁻⁴ cm⁻³, Dg=8.600 μm, log σ=0.420)
 """
-function PolarAerosol(; name = :PolarAerosol)
+@component function PolarAerosol(; name = :PolarAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
         sys.N[1] => 21.7 * 1e6,    sys.D_g[1] => 0.138e-6, sys.logσ[1] => 0.164,
@@ -250,7 +250,7 @@ Three lognormal modes with parameters:
 - Mode 2: (N=114 cm⁻³, Dg=0.038 μm, log σ=0.770)
 - Mode 3: (N=0.178 cm⁻³, Dg=21.60 μm, log σ=0.438)
 """
-function DesertAerosol(; name = :DesertAerosol)
+@component function DesertAerosol(; name = :DesertAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
         sys.N[1] => 726.0 * 1e6,  sys.D_g[1] => 0.002e-6, sys.logσ[1] => 0.247,
