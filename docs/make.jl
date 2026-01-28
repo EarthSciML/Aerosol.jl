@@ -19,10 +19,11 @@ makedocs(;
         "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
             "Isorropia" => [
-            "Overview" => "isorropia/overview.md",
-            "Examples" => "isorropia/examples.md",
-            "Implementation details" => "isorropia/implementation.md"
-        ],
+                "Overview" => "isorropia/overview.md",
+                "Examples" => "isorropia/examples.md",
+                "Implementation details" => "isorropia/implementation.md"
+            ],
+            "Seinfeld & Pandis" => "seinfeld_pandis.md",
         ],
         "API" => "api.md"
     ],

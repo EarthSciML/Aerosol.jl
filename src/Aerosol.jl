@@ -12,6 +12,8 @@ include("VBS.jl")
 include("elemental_carbon.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA
+include("seinfeld_pandis/seinfeld_pandis.jl")
+@reexport using .SeinfeldPandis
 
 # Aqueous chemistry module (Seinfeld & Pandis Chapter 7)
 include("henrys_law.jl")
