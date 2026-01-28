@@ -16,6 +16,7 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "VBS" => "VBS.md",
+        "Optical Properties" => "mie_scattering.md",
         "Thermodynamics" => [
             "Isorropia" => [
             "Overview" => "isorropia/overview.md",

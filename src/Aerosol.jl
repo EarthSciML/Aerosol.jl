@@ -10,6 +10,7 @@ using EarthSciMLBase
 
 include("VBS.jl")
 include("elemental_carbon.jl")
+include("mie_scattering.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA
 
