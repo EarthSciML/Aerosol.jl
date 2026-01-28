@@ -1,7 +1,7 @@
 @testsnippet AqueousTransportSetup begin
     using Test
     using ModelingToolkit
-    using OrdinaryDiffEqDefault
+    using OrdinaryDiffEq
     using NonlinearSolve
     using Aerosol
 end

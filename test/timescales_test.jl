@@ -1,7 +1,6 @@
 @testsnippet TimescalesSetup begin
     using Test
     using ModelingToolkit
-    using OrdinaryDiffEqDefault
     using NonlinearSolve
     using Aerosol
 end
