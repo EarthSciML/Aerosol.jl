@@ -10,6 +10,9 @@ using EarthSciMLBase
 
 include("VBS.jl")
 include("elemental_carbon.jl")
+include("mass_transfer.jl")
+include("timescales.jl")
+include("aqueous_transport.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA
 

@@ -16,6 +16,7 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "VBS" => "VBS.md",
+        "Mass Transfer" => "mass_transfer.md",
         "Thermodynamics" => [
             "Isorropia" => [
             "Overview" => "isorropia/overview.md",
