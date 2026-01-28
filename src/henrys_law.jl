@@ -11,9 +11,10 @@ Key equations:
 - Eq 7.7: f_A = H_A * R * T * w_L (distribution factor)
 - Eq 7.9: X_aq = (H_A * R * T * w_L) / (1 + H_A * R * T * w_L) (aqueous fraction)
 
-Note: Units are documented in descriptions but not enforced via DynamicQuantities
-due to non-SI units (atm) used in atmospheric chemistry conventions.
-All concentrations are in mol/L (M), pressures in atm, temperatures in K.
+All pressures are in Pa (SI). Henry's law constants from the textbook (M/atm) are
+converted to mol/m³/Pa for use in @component functions (SI units).
+Module-level constants retain M/Pa (mol/L/Pa) units for use in utility functions.
+Concentrations in @component functions are in mol/m³ (SI), temperatures in K.
 """
 
 # =============================================================================
@@ -21,9 +22,16 @@ All concentrations are in mol/L (M), pressures in atm, temperatures in K.
 # =============================================================================
 
 """
-Gas constant in atm L mol^-1 K^-1 for Henry's law calculations
+Standard atmosphere in Pa, used for converting Henry's law constants from M/atm to M/Pa.
 """
-const R_GAS_ATM = 0.08205  # atm L mol^-1 K^-1
+const ATM_TO_PA = 101325.0  # Pa/atm
+
+"""
+Gas constant in Pa L mol^-1 K^-1 for Henry's law calculations.
+R = 8.314 J/(mol·K) = 8.314 Pa·m³/(mol·K) = 8314.0 Pa·L/(mol·K) / 1000
+Actually R in L·atm/(mol·K) = 0.08205; in L·Pa/(mol·K) = 0.08205 * 101325 = 8314.46
+"""
+const R_GAS_PA = 8314.46  # Pa L mol^-1 K^-1
 
 """
 Gas constant in J mol^-1 K^-1 for van't Hoff equation
@@ -37,34 +45,34 @@ const T_REF = 298.0  # K
 
 # =============================================================================
 # Henry's Law Constants at 298 K (Table 7.2)
-# Units: M atm^-1
+# Units: M/Pa (converted from M/atm by dividing by 101325)
 # =============================================================================
 
 const HENRY_CONSTANTS_298 = Dict(
-    :O2 => 1.3e-3,
-    :O3 => 1.1e-2,
-    :CO2 => 3.4e-2,
-    :SO2 => 1.23,
-    :NH3 => 62.0,
-    :H2O2 => 1.0e5,
-    :HNO3 => 2.1e5,
-    :HCHO => 2.5,  # Without diol formation
-    :HCHO_diol => 6.3e3,  # With diol formation
-    :HCOOH => 3.6e3,
-    :CH3OOH => 310.0,
+    :O2 => 1.3e-3 / ATM_TO_PA,
+    :O3 => 1.1e-2 / ATM_TO_PA,
+    :CO2 => 3.4e-2 / ATM_TO_PA,
+    :SO2 => 1.23 / ATM_TO_PA,
+    :NH3 => 62.0 / ATM_TO_PA,
+    :H2O2 => 1.0e5 / ATM_TO_PA,
+    :HNO3 => 2.1e5 / ATM_TO_PA,
+    :HCHO => 2.5 / ATM_TO_PA,  # Without diol formation
+    :HCHO_diol => 6.3e3 / ATM_TO_PA,  # With diol formation
+    :HCOOH => 3.6e3 / ATM_TO_PA,
+    :CH3OOH => 310.0 / ATM_TO_PA,
 )
 
 # =============================================================================
 # Heat of Dissolution (Table 7.3)
-# Units: kcal mol^-1
+# Units: J mol^-1 (converted from kcal mol^-1 by multiplying by 4184)
 # =============================================================================
 
 const DELTA_H_DISSOLUTION = Dict(
-    :CO2 => -4.85,
-    :NH3 => -8.17,
-    :SO2 => -6.25,
-    :H2O2 => -14.5,
-    :O3 => -5.04,
+    :CO2 => -4.85 * 4184,
+    :NH3 => -8.17 * 4184,
+    :SO2 => -6.25 * 4184,
+    :H2O2 => -14.5 * 4184,
+    :O3 => -5.04 * 4184,
 )
 
 # =============================================================================
@@ -79,27 +87,28 @@ Basic Henry's law equilibrium at fixed temperature.
 Implements Eq 7.3: [A(aq)] = H_A * p_A
 
 Parameters:
-- H_A: Henry's law constant (M atm^-1)
+- H_A: Henry's law constant (mol/m³/Pa)
 
 Variables:
-- p_A: Partial pressure of gas A (atm)
-- C_aq: Aqueous concentration (mol/L = M)
+- p_A: Partial pressure of gas A (Pa)
+- C_aq: Aqueous concentration (mol/m³)
 
 This component establishes the equilibrium relationship between gas-phase
 partial pressure and aqueous-phase concentration.
 """
 @component function HenrysLaw(; name=:HenrysLaw)
     @parameters begin
-        H_A, [description = "Henry's law constant at reference temperature (M/atm)"]
+        H_A, [description = "Henry's law constant at reference temperature", unit = u"mol/m^3/Pa"]
     end
 
     @variables begin
-        p_A(t), [description = "Partial pressure of gas species A (atm)"]
-        C_aq(t), [description = "Aqueous concentration of species A (mol/L)"]
+        p_A(t), [description = "Partial pressure of gas species A", unit = u"Pa"]
+        C_aq(t), [description = "Aqueous concentration of species A", unit = u"mol/m^3"]
     end
 
     eqs = [
         # Eq 7.3: Henry's law equilibrium
+        # (mol/m^3/Pa) * (Pa) = (mol/m^3) ✓
         C_aq ~ H_A * p_A,
     ]
 
@@ -120,59 +129,64 @@ Implements:
 - Eq 7.5: H_A(T) = H_A(T_ref) * exp((ΔH_A/R) * (1/T_ref - 1/T))
 
 Parameters:
-- H_298: Henry's law constant at 298 K (M atm^-1)
-- dH_diss: Heat of dissolution (J mol^-1)
+- H_298: Henry's law constant at 298 K (mol/m³/Pa)
+- dH_diss: Heat of dissolution (J/mol)
 
 Variables:
 - T: Temperature (K)
-- p_A: Partial pressure (atm)
-- C_aq: Aqueous concentration (M)
-- H_T: Temperature-corrected Henry's law constant (M atm^-1)
+- p_A: Partial pressure (Pa)
+- C_aq: Aqueous concentration (mol/m³)
+- H_T: Temperature-corrected Henry's law constant (mol/m³/Pa)
 
 Also calculates:
-- w_L: Liquid water mixing ratio (vol/vol)
+- w_L: Liquid water mixing ratio (dimensionless, vol/vol)
 - f_A: Distribution factor (dimensionless)
 - X_aq: Aqueous fraction (dimensionless)
 """
 @component function HenrysLawTemperature(; name=:HenrysLawTemp)
     @constants begin
-        R_gas = 8.314, [description = "Gas constant (J/mol/K)"]
-        T_ref = 298.0, [description = "Reference temperature (K)"]
-        R_atm = 0.08205, [description = "Gas constant for distribution factor (L*atm/mol/K)"]
+        R_gas = 8.314, [description = "Gas constant", unit = u"J/mol/K"]
+        T_ref = 298.0, [description = "Reference temperature", unit = u"K"]
+        # Inverse water density: 1/(10^6 g/m^3) = 10^-6 m^3/g
+        rho_water_inv = 1e-6, [description = "Inverse water density for LWC conversion", unit = u"m^3/g"]
     end
 
     @parameters begin
-        H_298, [description = "Henry's law constant at 298 K (M/atm)"]
-        dH_diss, [description = "Heat of dissolution (J/mol)"]
-        L, [description = "Liquid water content (g/m^3)"]
+        H_298, [description = "Henry's law constant at 298 K", unit = u"mol/m^3/Pa"]
+        dH_diss, [description = "Heat of dissolution", unit = u"J/mol"]
+        L, [description = "Liquid water content", unit = u"g/m^3"]
     end
 
     @variables begin
-        T(t), [description = "Temperature (K)"]
-        p_A(t), [description = "Partial pressure of gas species A (atm)"]
-        C_aq(t), [description = "Aqueous concentration of species A (mol/L)"]
-        H_T(t), [description = "Temperature-corrected Henry's law constant (M/atm)"]
-        w_L(t), [description = "Liquid water mixing ratio (vol/vol, dimensionless)"]
-        f_A(t), [description = "Distribution factor (dimensionless)"]
-        X_aq(t), [description = "Aqueous fraction (dimensionless)"]
+        T(t), [description = "Temperature", unit = u"K"]
+        p_A(t), [description = "Partial pressure of gas species A", unit = u"Pa"]
+        C_aq(t), [description = "Aqueous concentration of species A", unit = u"mol/m^3"]
+        H_T(t), [description = "Temperature-corrected Henry's law constant", unit = u"mol/m^3/Pa"]
+        w_L(t), [description = "Liquid water mixing ratio (dimensionless)", unit = u"1"]
+        f_A(t), [description = "Distribution factor (dimensionless)", unit = u"1"]
+        X_aq(t), [description = "Aqueous fraction (dimensionless)", unit = u"1"]
     end
 
     eqs = [
         # Eq 7.5: Temperature dependence of Henry's law constant
         # H_A(T) = H_A(T_ref) * exp((dH/R) * (1/T_ref - 1/T))
+        # Units: (mol/m^3/Pa) * exp((J/mol) / (J/mol/K) * (1/K)) = (mol/m^3/Pa) ✓
         H_T ~ H_298 * exp((dH_diss / R_gas) * (1/T_ref - 1/T)),
 
         # Eq 7.3: Henry's law equilibrium at temperature T
+        # Units: (mol/m^3/Pa) * (Pa) = (mol/m^3) ✓
         C_aq ~ H_T * p_A,
 
         # Eq 7.1: Liquid water mixing ratio
-        # w_L (vol water/vol air) = 10^-6 * L (g m^-3)
-        # Assuming density of water = 10^6 g/m^3
-        w_L ~ 1e-6 * L,
+        # w_L (vol water/vol air) = L / rho_water = L * rho_water_inv
+        # Units: (g/m^3) * (m^3/g) = (1) ✓
+        w_L ~ rho_water_inv * L,
 
         # Eq 7.7: Distribution factor
         # f_A = H_A * R * T * w_L
-        f_A ~ H_T * R_atm * T * w_L,
+        # Using R_gas in J/(mol·K) = Pa·m³/(mol·K), consistent with H_T in mol/m³/Pa
+        # Units: (mol/m^3/Pa) * (Pa*m^3/mol/K) * (K) * (1) = (1) ✓
+        f_A ~ H_T * R_gas * T * w_L,
 
         # Eq 7.9: Aqueous fraction
         # X_aq = f_A / (1 + f_A)
@@ -201,29 +215,31 @@ Implements:
 - Eq 7.61: H*_HNO3 ~ H_HNO3 * K_n1 / [H+]
 
 Parameters:
-- H_intrinsic: Intrinsic Henry's law constant (M atm^-1)
-- K_1: First dissociation constant (M)
-- K_2: Second dissociation constant (M), set to 0 for monoprotic acids
+- H_intrinsic: Intrinsic Henry's law constant (mol/m³/Pa)
+- K_1: First dissociation constant (mol/m³)
+- K_2: Second dissociation constant (mol/m³), set to 0 for monoprotic acids
 
 Variables:
-- H_plus: Hydrogen ion concentration (M)
-- H_eff: Effective Henry's law constant (M atm^-1)
+- H_plus: Hydrogen ion concentration (mol/m³)
+- H_eff: Effective Henry's law constant (mol/m³/Pa)
 """
 @component function EffectiveHenrysLaw(; name=:EffectiveHenrys)
     @parameters begin
-        H_intrinsic, [description = "Intrinsic Henry's law constant (M/atm)"]
-        K_1, [description = "First dissociation constant (M)"]
-        K_2, [description = "Second dissociation constant (M)"]
+        H_intrinsic, [description = "Intrinsic Henry's law constant", unit = u"mol/m^3/Pa"]
+        K_1, [description = "First dissociation constant", unit = u"mol/m^3"]
+        K_2, [description = "Second dissociation constant", unit = u"mol/m^3"]
     end
 
     @variables begin
-        H_plus(t), [description = "Hydrogen ion concentration (mol/L)"]
-        H_eff(t), [description = "Effective Henry's law constant (M/atm)"]
+        H_plus(t), [description = "Hydrogen ion concentration", unit = u"mol/m^3"]
+        H_eff(t), [description = "Effective Henry's law constant", unit = u"mol/m^3/Pa"]
     end
 
     eqs = [
         # General form for diprotic species
         # H* = H * (1 + K_1/[H+] + K_1*K_2/[H+]^2)
+        # Units: K_1/H_plus = (mol/m^3)/(mol/m^3) = (1) ✓
+        # Units: K_1*K_2/H_plus^2 = (mol/m^3)^2/(mol/m^3)^2 = (1) ✓
         H_eff ~ H_intrinsic * (1 + K_1/H_plus + K_1*K_2/H_plus^2),
     ]
 
@@ -240,13 +256,13 @@ end
 Calculate effective Henry's law constant accounting for dissociation.
 
 Arguments:
-- H: Intrinsic Henry's law constant (M atm^-1)
-- K1: First dissociation constant (M)
-- K2: Second dissociation constant (M), use 0 for monoprotic
-- H_plus: Hydrogen ion concentration (M)
+- H: Intrinsic Henry's law constant (mol/L/Pa)
+- K1: First dissociation constant (mol/L)
+- K2: Second dissociation constant (mol/L), use 0 for monoprotic
+- H_plus: Hydrogen ion concentration (mol/L)
 
 Returns:
-- H_eff: Effective Henry's law constant (M atm^-1)
+- H_eff: Effective Henry's law constant (mol/L/Pa)
 """
 function effective_henrys_constant(H, K1, K2, H_plus)
     return H * (1 + K1/H_plus + K1*K2/H_plus^2)
@@ -258,8 +274,8 @@ end
 Calculate the fraction of species in aqueous phase (Eq 7.9).
 
 Arguments:
-- H: Henry's law constant (M atm^-1)
-- R: Gas constant (0.08205 atm L mol^-1 K^-1)
+- H: Henry's law constant (mol/L/Pa)
+- R: Gas constant (8314.46 Pa L mol^-1 K^-1)
 - T: Temperature (K)
 - w_L: Liquid water mixing ratio (vol/vol)
 
@@ -277,8 +293,8 @@ end
 Calculate the distribution factor f_A (Eq 7.7).
 
 Arguments:
-- H: Henry's law constant (M atm^-1)
-- R: Gas constant (0.08205 atm L mol^-1 K^-1)
+- H: Henry's law constant (mol/L/Pa)
+- R: Gas constant (8314.46 Pa L mol^-1 K^-1)
 - T: Temperature (K)
 - w_L: Liquid water mixing ratio (vol/vol)
 
@@ -295,12 +311,12 @@ end
 Calculate Henry's law constant at temperature T using van't Hoff equation (Eq 7.5).
 
 Arguments:
-- H_298: Henry's law constant at 298 K (M atm^-1)
-- dH_diss: Heat of dissolution (J mol^-1)
+- H_298: Henry's law constant at 298 K (mol/L/Pa)
+- dH_diss: Heat of dissolution (J/mol)
 - T: Temperature (K)
 
 Returns:
-- H_T: Henry's law constant at temperature T (M atm^-1)
+- H_T: Henry's law constant at temperature T (mol/L/Pa)
 """
 function henrys_constant_at_T(H_298, dH_diss, T)
     R = 8.314  # J mol^-1 K^-1

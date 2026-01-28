@@ -15,8 +15,7 @@ Key features:
 - Multiple S(IV) oxidation pathways
 - Rate conversion to atmospheric units
 
-Note: Units are documented in descriptions but not enforced via DynamicQuantities
-due to non-SI units (atm) used in atmospheric chemistry conventions.
+All concentrations are in mol/m³, pressures in Pa (SI), temperatures in K.
 """
 
 # =============================================================================
@@ -44,25 +43,25 @@ The pH is determined from the electroneutrality condition (Eq 7.114):
 [H+] + [NH4+] = [OH-] + [HCO3-] + 2[CO3^2-] + [HSO3-] + 2[SO3^2-] + [NO3-] + [Cl-] + 2[SO4^2-]
 
 Parameters:
-- L: Liquid water content (g m^-3)
+- L: Liquid water content (g/m³)
 - xi_SO2: SO2 mixing ratio for lifetime calculations (dimensionless)
 
 Input Variables (partial pressures and metal concentrations):
 - T: Temperature (K)
-- p_CO2: CO2 partial pressure (atm)
-- p_SO2: SO2 partial pressure (atm)
-- p_NH3: NH3 partial pressure (atm)
-- p_HNO3: HNO3 partial pressure (atm)
-- p_H2O2: H2O2 partial pressure (atm)
-- p_O3: O3 partial pressure (atm)
-- Fe_III: Fe(III) concentration in droplet (mol/L)
-- Mn_II: Mn(II) concentration in droplet (mol/L)
-- Cl_minus: Chloride concentration (mol/L)
-- SO4_2minus: Sulfate concentration (mol/L)
+- p_CO2: CO2 partial pressure (Pa)
+- p_SO2: SO2 partial pressure (Pa)
+- p_NH3: NH3 partial pressure (Pa)
+- p_HNO3: HNO3 partial pressure (Pa)
+- p_H2O2: H2O2 partial pressure (Pa)
+- p_O3: O3 partial pressure (Pa)
+- Fe_III: Fe(III) concentration in droplet (mol/m³)
+- Mn_II: Mn(II) concentration in droplet (mol/m³)
+- Cl_minus: Chloride concentration (mol/m³)
+- SO4_2minus: Sulfate concentration (mol/m³)
 
 Output Variables:
 - pH: Droplet pH (dimensionless)
-- H_plus: H+ concentration (mol/L)
+- H_plus: H+ concentration (mol/m³)
 - All aqueous species concentrations
 - S(IV) oxidation rates
 - Sulfate production rate
@@ -81,65 +80,66 @@ Output Variables:
     sulfate = SulfateFormation(; name=:sulfate)
 
     @constants begin
-        R_atm = 0.08205, [description = "Gas constant (L*atm/mol/K)"]
+        R_gas = 8.31446, [description = "Gas constant", unit = u"J/mol/K"]
+        rho_w_inv = 1e-6, [description = "Inverse water density for LWC conversion", unit = u"m^3/g"]
     end
 
     @parameters begin
-        L, [description = "Liquid water content (g/m^3)"]
-        xi_SO2, [description = "SO2 mixing ratio for lifetime calculation (dimensionless)"]
+        L, [description = "Liquid water content", unit = u"g/m^3"]
+        xi_SO2, [description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1"]
     end
 
     @variables begin
         # Primary state variables
-        T(t), [description = "Temperature (K)"]
-        H_plus(t), [description = "Hydrogen ion concentration (mol/L)"]
-        pH(t), [description = "Droplet pH (dimensionless)"]
+        T(t), [description = "Temperature", unit = u"K"]
+        H_plus(t), [description = "Hydrogen ion concentration", unit = u"mol/m^3"]
+        pH(t), [description = "Droplet pH (dimensionless)", unit = u"1"]
 
         # Gas-phase partial pressures (inputs)
-        p_CO2(t), [description = "Partial pressure of CO2 (atm)"]
-        p_SO2(t), [description = "Partial pressure of SO2 (atm)"]
-        p_NH3(t), [description = "Partial pressure of NH3 (atm)"]
-        p_HNO3(t), [description = "Partial pressure of HNO3 (atm)"]
-        p_H2O2(t), [description = "Partial pressure of H2O2 (atm)"]
-        p_O3(t), [description = "Partial pressure of O3 (atm)"]
+        p_CO2(t), [description = "Partial pressure of CO2", unit = u"Pa"]
+        p_SO2(t), [description = "Partial pressure of SO2", unit = u"Pa"]
+        p_NH3(t), [description = "Partial pressure of NH3", unit = u"Pa"]
+        p_HNO3(t), [description = "Partial pressure of HNO3", unit = u"Pa"]
+        p_H2O2(t), [description = "Partial pressure of H2O2", unit = u"Pa"]
+        p_O3(t), [description = "Partial pressure of O3", unit = u"Pa"]
 
         # Metal catalyst concentrations (inputs)
-        Fe_III(t), [description = "Fe(III) concentration in droplet (mol/L)"]
-        Mn_II(t), [description = "Mn(II) concentration in droplet (mol/L)"]
+        Fe_III(t), [description = "Fe(III) concentration in droplet", unit = u"mol/m^3"]
+        Mn_II(t), [description = "Mn(II) concentration in droplet", unit = u"mol/m^3"]
 
         # Background ion concentrations (inputs)
-        Cl_minus(t), [description = "Chloride concentration (mol/L)"]
-        SO4_2minus(t), [description = "Sulfate concentration (mol/L)"]
+        Cl_minus(t), [description = "Chloride concentration", unit = u"mol/m^3"]
+        SO4_2minus(t), [description = "Sulfate concentration", unit = u"mol/m^3"]
 
         # Derived aqueous concentrations
-        OH_minus(t), [description = "Hydroxide concentration (mol/L)"]
-        HCO3_minus(t), [description = "Bicarbonate concentration (mol/L)"]
-        CO3_2minus(t), [description = "Carbonate concentration (mol/L)"]
-        HSO3_minus(t), [description = "Bisulfite concentration (mol/L)"]
-        SO3_2minus(t), [description = "Sulfite concentration (mol/L)"]
-        NH4_plus(t), [description = "Ammonium concentration (mol/L)"]
-        NO3_minus(t), [description = "Nitrate concentration (mol/L)"]
-        H2O2_aq(t), [description = "Aqueous H2O2 concentration (mol/L)"]
-        O3_aq(t), [description = "Aqueous O3 concentration (mol/L)"]
-        SO2_aq(t), [description = "Aqueous SO2 concentration (mol/L)"]
+        OH_minus(t), [description = "Hydroxide concentration", unit = u"mol/m^3"]
+        HCO3_minus(t), [description = "Bicarbonate concentration", unit = u"mol/m^3"]
+        CO3_2minus(t), [description = "Carbonate concentration", unit = u"mol/m^3"]
+        HSO3_minus(t), [description = "Bisulfite concentration", unit = u"mol/m^3"]
+        SO3_2minus(t), [description = "Sulfite concentration", unit = u"mol/m^3"]
+        NH4_plus(t), [description = "Ammonium concentration", unit = u"mol/m^3"]
+        NO3_minus(t), [description = "Nitrate concentration", unit = u"mol/m^3"]
+        H2O2_aq(t), [description = "Aqueous H2O2 concentration", unit = u"mol/m^3"]
+        O3_aq(t), [description = "Aqueous O3 concentration", unit = u"mol/m^3"]
+        SO2_aq(t), [description = "Aqueous SO2 concentration", unit = u"mol/m^3"]
 
         # Total dissolved species
-        S_IV_total(t), [description = "Total S(IV) concentration (mol/L)"]
-        C_total(t), [description = "Total dissolved inorganic carbon (mol/L)"]
-        NH3_total(t), [description = "Total dissolved ammonia (mol/L)"]
-        HNO3_total(t), [description = "Total dissolved nitric acid (mol/L)"]
+        S_IV_total(t), [description = "Total S(IV) concentration", unit = u"mol/m^3"]
+        C_total(t), [description = "Total dissolved inorganic carbon", unit = u"mol/m^3"]
+        NH3_total(t), [description = "Total dissolved ammonia", unit = u"mol/m^3"]
+        HNO3_total(t), [description = "Total dissolved nitric acid", unit = u"mol/m^3"]
 
         # Rate outputs
-        R_total(t), [description = "Total S(IV) oxidation rate (mol/L/s)"]
-        R_O3(t), [description = "S(IV) oxidation rate by O3 (mol/L/s)"]
-        R_H2O2(t), [description = "S(IV) oxidation rate by H2O2 (mol/L/s)"]
-        R_FeMn(t), [description = "S(IV) oxidation rate by Fe/Mn (mol/L/s)"]
+        R_total(t), [description = "Total S(IV) oxidation rate", unit = u"mol/m^3/s"]
+        R_O3(t), [description = "S(IV) oxidation rate by O3", unit = u"mol/m^3/s"]
+        R_H2O2(t), [description = "S(IV) oxidation rate by H2O2", unit = u"mol/m^3/s"]
+        R_FeMn(t), [description = "S(IV) oxidation rate by Fe/Mn", unit = u"mol/m^3/s"]
 
         # Charge balance residual (should be zero at equilibrium)
-        charge_balance(t), [description = "Electroneutrality residual (mol/L)"]
+        charge_balance(t), [description = "Electroneutrality residual", unit = u"mol/m^3"]
 
         # Liquid water mixing ratio
-        w_L(t), [description = "Liquid water mixing ratio (vol/vol, dimensionless)"]
+        w_L(t), [description = "Liquid water mixing ratio (dimensionless)", unit = u"1"]
     end
 
     eqs = [
@@ -210,7 +210,7 @@ Output Variables:
         pH ~ water_eq.pH,
 
         # === Liquid water mixing ratio (Eq 7.1) ===
-        w_L ~ 1e-6 * L,
+        w_L ~ rho_w_inv * L,
 
         # === Electroneutrality (Eq 7.114) ===
         # [H+] + [NH4+] = [OH-] + [HCO3-] + 2[CO3^2-] + [HSO3-] + 2[SO3^2-] + [NO3-] + [Cl-] + 2[SO4^2-]
@@ -264,53 +264,54 @@ Input Variables:
     sulfate = SulfateFormation(; name=:sulfate)
 
     @constants begin
-        R_atm = 0.08205, [description = "Gas constant (L*atm/mol/K)"]
+        R_gas = 8.31446, [description = "Gas constant", unit = u"J/mol/K"]
+        C_ref = 1000.0, [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
     end
 
     @parameters begin
-        L, [description = "Liquid water content (g/m^3)"]
-        xi_SO2, [description = "SO2 mixing ratio for lifetime calculation (dimensionless)"]
+        L, [description = "Liquid water content", unit = u"g/m^3"]
+        xi_SO2, [description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1"]
     end
 
     @variables begin
         # Primary state variables
-        T(t), [description = "Temperature (K)"]
-        pH_input(t), [description = "Input pH value (dimensionless)"]
-        H_plus(t), [description = "Hydrogen ion concentration (mol/L)"]
+        T(t), [description = "Temperature", unit = u"K"]
+        pH_input(t), [description = "Input pH value (dimensionless)", unit = u"1"]
+        H_plus(t), [description = "Hydrogen ion concentration", unit = u"mol/m^3"]
 
         # Gas-phase partial pressures (inputs)
-        p_CO2(t), [description = "Partial pressure of CO2 (atm)"]
-        p_SO2(t), [description = "Partial pressure of SO2 (atm)"]
-        p_NH3(t), [description = "Partial pressure of NH3 (atm)"]
-        p_HNO3(t), [description = "Partial pressure of HNO3 (atm)"]
-        p_H2O2(t), [description = "Partial pressure of H2O2 (atm)"]
-        p_O3(t), [description = "Partial pressure of O3 (atm)"]
+        p_CO2(t), [description = "Partial pressure of CO2", unit = u"Pa"]
+        p_SO2(t), [description = "Partial pressure of SO2", unit = u"Pa"]
+        p_NH3(t), [description = "Partial pressure of NH3", unit = u"Pa"]
+        p_HNO3(t), [description = "Partial pressure of HNO3", unit = u"Pa"]
+        p_H2O2(t), [description = "Partial pressure of H2O2", unit = u"Pa"]
+        p_O3(t), [description = "Partial pressure of O3", unit = u"Pa"]
 
         # Metal catalyst concentrations (inputs)
-        Fe_III(t), [description = "Fe(III) concentration in droplet (mol/L)"]
-        Mn_II(t), [description = "Mn(II) concentration in droplet (mol/L)"]
+        Fe_III(t), [description = "Fe(III) concentration in droplet", unit = u"mol/m^3"]
+        Mn_II(t), [description = "Mn(II) concentration in droplet", unit = u"mol/m^3"]
 
         # Derived aqueous concentrations
-        OH_minus(t), [description = "Hydroxide concentration (mol/L)"]
-        HSO3_minus(t), [description = "Bisulfite concentration (mol/L)"]
-        SO3_2minus(t), [description = "Sulfite concentration (mol/L)"]
-        H2O2_aq(t), [description = "Aqueous H2O2 concentration (mol/L)"]
-        O3_aq(t), [description = "Aqueous O3 concentration (mol/L)"]
-        SO2_aq(t), [description = "Aqueous SO2 concentration (mol/L)"]
+        OH_minus(t), [description = "Hydroxide concentration", unit = u"mol/m^3"]
+        HSO3_minus(t), [description = "Bisulfite concentration", unit = u"mol/m^3"]
+        SO3_2minus(t), [description = "Sulfite concentration", unit = u"mol/m^3"]
+        H2O2_aq(t), [description = "Aqueous H2O2 concentration", unit = u"mol/m^3"]
+        O3_aq(t), [description = "Aqueous O3 concentration", unit = u"mol/m^3"]
+        SO2_aq(t), [description = "Aqueous SO2 concentration", unit = u"mol/m^3"]
 
         # Total S(IV)
-        S_IV_total(t), [description = "Total S(IV) concentration (mol/L)"]
+        S_IV_total(t), [description = "Total S(IV) concentration", unit = u"mol/m^3"]
 
         # Rate outputs
-        R_total(t), [description = "Total S(IV) oxidation rate (mol/L/s)"]
-        R_O3(t), [description = "S(IV) oxidation rate by O3 (mol/L/s)"]
-        R_H2O2(t), [description = "S(IV) oxidation rate by H2O2 (mol/L/s)"]
-        R_FeMn(t), [description = "S(IV) oxidation rate by Fe/Mn (mol/L/s)"]
+        R_total(t), [description = "Total S(IV) oxidation rate", unit = u"mol/m^3/s"]
+        R_O3(t), [description = "S(IV) oxidation rate by O3", unit = u"mol/m^3/s"]
+        R_H2O2(t), [description = "S(IV) oxidation rate by H2O2", unit = u"mol/m^3/s"]
+        R_FeMn(t), [description = "S(IV) oxidation rate by Fe/Mn", unit = u"mol/m^3/s"]
     end
 
     eqs = [
         # === H+ from input pH ===
-        H_plus ~ 10^(-pH_input),
+        H_plus ~ C_ref * 10^(-pH_input),
 
         # === Temperature coupling ===
         water_eq.T ~ T,
@@ -390,7 +391,7 @@ The system includes:
 - Sulfate accumulation
 
 State Variable:
-- SO4_2minus: Sulfate concentration (mol/L), evolves with time
+- SO4_2minus: Sulfate concentration (mol/m³), evolves with time
 
 Parameters and other variables same as CloudChemistryFixedpH.
 """
@@ -402,47 +403,48 @@ Parameters and other variables same as CloudChemistryFixedpH.
     sulfate = SulfateFormation(; name=:sulfate)
 
     @constants begin
-        R_atm = 0.08205, [description = "Gas constant (L*atm/mol/K)"]
+        R_gas = 8.31446, [description = "Gas constant", unit = u"J/mol/K"]
+        C_ref = 1000.0, [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
     end
 
     @parameters begin
-        L, [description = "Liquid water content (g/m^3)"]
-        xi_SO2, [description = "SO2 mixing ratio (dimensionless)"]
+        L, [description = "Liquid water content", unit = u"g/m^3"]
+        xi_SO2, [description = "SO2 mixing ratio (dimensionless)", unit = u"1"]
     end
 
     @variables begin
         # State variable - sulfate concentration
-        SO4_2minus(t), [description = "Sulfate concentration (mol/L)"]
+        SO4_2minus(t), [description = "Sulfate concentration", unit = u"mol/m^3"]
 
         # Primary inputs
-        T(t), [description = "Temperature (K)"]
-        pH_input(t), [description = "Input pH value (dimensionless)"]
-        H_plus(t), [description = "Hydrogen ion concentration (mol/L)"]
+        T(t), [description = "Temperature", unit = u"K"]
+        pH_input(t), [description = "Input pH value (dimensionless)", unit = u"1"]
+        H_plus(t), [description = "Hydrogen ion concentration", unit = u"mol/m^3"]
 
         # Gas-phase partial pressures
-        p_SO2(t), [description = "Partial pressure of SO2 (atm)"]
-        p_H2O2(t), [description = "Partial pressure of H2O2 (atm)"]
-        p_O3(t), [description = "Partial pressure of O3 (atm)"]
+        p_SO2(t), [description = "Partial pressure of SO2", unit = u"Pa"]
+        p_H2O2(t), [description = "Partial pressure of H2O2", unit = u"Pa"]
+        p_O3(t), [description = "Partial pressure of O3", unit = u"Pa"]
 
         # Metal catalysts
-        Fe_III(t), [description = "Fe(III) concentration (mol/L)"]
-        Mn_II(t), [description = "Mn(II) concentration (mol/L)"]
+        Fe_III(t), [description = "Fe(III) concentration", unit = u"mol/m^3"]
+        Mn_II(t), [description = "Mn(II) concentration", unit = u"mol/m^3"]
 
         # Derived concentrations
-        HSO3_minus(t), [description = "Bisulfite concentration (mol/L)"]
-        SO3_2minus(t), [description = "Sulfite concentration (mol/L)"]
-        SO2_aq(t), [description = "Aqueous SO2 concentration (mol/L)"]
-        H2O2_aq(t), [description = "Aqueous H2O2 concentration (mol/L)"]
-        O3_aq(t), [description = "Aqueous O3 concentration (mol/L)"]
-        S_IV_total(t), [description = "Total S(IV) concentration (mol/L)"]
+        HSO3_minus(t), [description = "Bisulfite concentration", unit = u"mol/m^3"]
+        SO3_2minus(t), [description = "Sulfite concentration", unit = u"mol/m^3"]
+        SO2_aq(t), [description = "Aqueous SO2 concentration", unit = u"mol/m^3"]
+        H2O2_aq(t), [description = "Aqueous H2O2 concentration", unit = u"mol/m^3"]
+        O3_aq(t), [description = "Aqueous O3 concentration", unit = u"mol/m^3"]
+        S_IV_total(t), [description = "Total S(IV) concentration", unit = u"mol/m^3"]
 
         # Rate
-        R_total(t), [description = "Total S(IV) oxidation rate (mol/L/s)"]
+        R_total(t), [description = "Total S(IV) oxidation rate", unit = u"mol/m^3/s"]
     end
 
     eqs = [
         # H+ from pH
-        H_plus ~ 10^(-pH_input),
+        H_plus ~ C_ref * 10^(-pH_input),
 
         # Temperature and H+ coupling
         so2_eq.T ~ T,
