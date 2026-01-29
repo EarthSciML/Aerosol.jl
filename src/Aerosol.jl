@@ -12,5 +12,6 @@ include("VBS.jl")
 include("elemental_carbon.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA
+include("aerosol_radiative_forcing.jl")
 
 end
