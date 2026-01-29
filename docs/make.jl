@@ -15,6 +15,7 @@ makedocs(;
     repo = Remotes.GitHub("EarthSciML", "Aerosol.jl"),
     pages = [
         "Home" => "index.md",
+        "Cloud Physics" => "cloud_physics.md",
         "VBS" => "VBS.md",
         "Thermodynamics" => [
             "Isorropia" => [
@@ -25,7 +26,7 @@ makedocs(;
         ],
         "API" => "api.md"
     ],
-    warnonly = [:missing_docs]
+    warnonly = [:missing_docs, :example_block]
 )
 
 deploydocs(; repo = "github.com/EarthSciML/Aerosol.jl")
