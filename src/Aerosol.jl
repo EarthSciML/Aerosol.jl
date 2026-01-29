@@ -12,6 +12,7 @@ include("VBS.jl")
 include("elemental_carbon.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA
+include("aerosol_radiative_forcing.jl")
 
 # Aqueous chemistry module (Seinfeld & Pandis Chapter 7)
 include("henrys_law.jl")

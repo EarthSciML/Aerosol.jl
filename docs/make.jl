@@ -24,6 +24,7 @@ makedocs(;
             "Implementation details" => "isorropia/implementation.md"
         ],
         ],
+        "Radiative Forcing" => "aerosol_radiative_forcing.md",
         "API" => "api.md"
     ],
     warnonly = [:missing_docs]
