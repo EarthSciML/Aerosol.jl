@@ -27,6 +27,7 @@ makedocs(;
             "ISORROPIA" => "isorropia.md",
             "Seinfeld & Pandis Ch. 10" => "seinfeld_pandis_ch10.md"
         ],
+        "Radiative Forcing" => "aerosol_radiative_forcing.md",
         "API" => "api.md"
     ],
     warnonly = [:missing_docs]

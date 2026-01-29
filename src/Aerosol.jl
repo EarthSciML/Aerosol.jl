@@ -49,4 +49,7 @@ export HENRY_CONSTANTS_298, DELTA_H_DISSOLUTION
 export K_W_298, K_C1_298, K_C2_298, K_S1_298, K_S2_298, K_A1_298
 export K0_O3, K1_O3, K2_O3, K_H2O2, K_MN_SIV, K_FE_SIV, K_FEMN_SIV
 
+# Aerosol radiative forcing (Seinfeld & Pandis Chapter 24)
+include("aerosol_radiative_forcing.jl")
+
 end
