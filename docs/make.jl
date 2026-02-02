@@ -16,6 +16,7 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "VBS" => "VBS.md",
+        "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
             "ISORROPIA" => "isorropia.md",
         ],
