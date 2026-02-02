@@ -17,7 +17,7 @@ Pkg.add("Aerosol")
 
 ## Features
 
-Currently, we have a mostly-working version of the [Isorropia aerosol thermodynamics model](@ref "isorropia").
+We are currently working on an implementation of the [ISORROPIA aerosol thermodynamics model](isorropia.md), which is still in progress.
 
 ## Contributing
 

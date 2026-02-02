@@ -17,11 +17,7 @@ makedocs(;
         "Home" => "index.md",
         "VBS" => "VBS.md",
         "Thermodynamics" => [
-            "Isorropia" => [
-            "Overview" => "isorropia/overview.md",
-            "Examples" => "isorropia/examples.md",
-            "Implementation details" => "isorropia/implementation.md"
-        ],
+            "ISORROPIA" => "isorropia.md",
         ],
         "API" => "api.md"
     ],
