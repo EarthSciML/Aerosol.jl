@@ -26,7 +26,7 @@ EarthSciData = "a293c155-435f-439d-9c11-a083b6b47337"
 EarthSciDataExt = "EarthSciData"
 
 [compat]
-BracketingNonlinearSolve = "1.4.0"
+BracketingNonlinearSolve = "1.5"
 Dates = "1"
 DynamicQuantities = "1.4.0"
 EarthSciData = "0.14"
