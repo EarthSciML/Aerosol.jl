@@ -143,14 +143,14 @@ Marine aerosol size distribution from Table 8.3 of Seinfeld and Pandis (2006).
 Three lognormal modes with parameters:
 - Mode 1: (N=133 cm⁻³, Dg=0.008 μm, log σ=0.657)
 - Mode 2: (N=66.6 cm⁻³, Dg=0.266 μm, log σ=0.210)
-- Mode 3: (N=3.06 cm⁻³, Dg=0.580 μm, log σ=0.396)
+- Mode 3: (N=3.1 cm⁻³, Dg=0.58 μm, log σ=0.396)
 """
 @component function MarineAerosol(; name = :MarineAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
         sys.N[1] => 133.0 * 1e6, sys.D_g[1] => 0.008e-6, sys.logσ[1] => 0.657,
         sys.N[2] => 66.6 * 1e6,  sys.D_g[2] => 0.266e-6, sys.logσ[2] => 0.210,
-        sys.N[3] => 3.06 * 1e6,  sys.D_g[3] => 0.580e-6, sys.logσ[3] => 0.396,
+        sys.N[3] => 3.1 * 1e6,   sys.D_g[3] => 0.58e-6,  sys.logσ[3] => 0.396,
     )
     return System(equations(sys), t; name, defaults,
         systems = ModelingToolkit.get_systems(sys))
@@ -225,16 +225,16 @@ end
 Polar aerosol size distribution from Table 8.3 of Seinfeld and Pandis (2006).
 
 Three lognormal modes with parameters:
-- Mode 1: (N=21.7 cm⁻³, Dg=0.138 μm, log σ=0.164)
-- Mode 2: (N=0.186 cm⁻³, Dg=0.750 μm, log σ=0.521)
-- Mode 3: (N=3.04×10⁻⁴ cm⁻³, Dg=8.600 μm, log σ=0.420)
+- Mode 1: (N=21.7 cm⁻³, Dg=0.138 μm, log σ=0.245)
+- Mode 2: (N=0.186 cm⁻³, Dg=0.75 μm, log σ=0.300)
+- Mode 3: (N=3×10⁻⁴ cm⁻³, Dg=8.6 μm, log σ=0.291)
 """
 @component function PolarAerosol(; name = :PolarAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
-        sys.N[1] => 21.7 * 1e6,    sys.D_g[1] => 0.138e-6, sys.logσ[1] => 0.164,
-        sys.N[2] => 0.186 * 1e6,   sys.D_g[2] => 0.750e-6, sys.logσ[2] => 0.521,
-        sys.N[3] => 3.04e-4 * 1e6, sys.D_g[3] => 8.600e-6, sys.logσ[3] => 0.420,
+        sys.N[1] => 21.7 * 1e6,   sys.D_g[1] => 0.138e-6, sys.logσ[1] => 0.245,
+        sys.N[2] => 0.186 * 1e6,  sys.D_g[2] => 0.75e-6,  sys.logσ[2] => 0.300,
+        sys.N[3] => 3e-4 * 1e6,   sys.D_g[3] => 8.6e-6,   sys.logσ[3] => 0.291,
     )
     return System(equations(sys), t; name, defaults,
         systems = ModelingToolkit.get_systems(sys))

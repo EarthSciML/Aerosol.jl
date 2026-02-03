@@ -5,15 +5,66 @@
     using Aerosol
 
     """
+    Helper to get the base name of a symbolic variable (part after last ₊),
+    and strip the (t) suffix if present.
+    """
+    function get_base_name(sym)
+        name = string(Symbolics.tosymbol(sym, escape = false))
+        name = contains(name, "₊") ? split(name, "₊")[end] : name
+        name = replace(name, r"\(t\)$" => "")
+        return name
+    end
+
+    """
     Helper to evaluate a system equation's RHS by substituting parameter values.
     Returns the numerical result of the RHS for the equation whose LHS matches `var`.
-    Uses symbol name comparison to handle namespaced vs un-namespaced variables.
+
+    This function handles namespaced variables by matching the actual symbols
+    in the equation RHS with the user-provided parameter values.
     """
     function eval_eq(sys, var, param_vals)
-        var_name = string(Symbolics.tosymbol(var, escape = false))
-        eq = only(filter(eq -> string(Symbolics.tosymbol(eq.lhs, escape = false)) == var_name, equations(sys)))
-        subs = merge(ModelingToolkit.defaults(sys), param_vals)
-        return Float64(Symbolics.substitute(eq.rhs, subs))
+        var_base = get_base_name(var)
+
+        # Find the equation for this variable
+        matching_eqs = filter(equations(sys)) do eq
+            lhs_base = get_base_name(eq.lhs)
+            return lhs_base == var_base
+        end
+        eq = only(matching_eqs)
+
+        # Get all variables that appear in the RHS
+        rhs_vars = Symbolics.get_variables(eq.rhs)
+
+        # Build substitution dict by matching RHS variables with:
+        # 1. System defaults (for constants like π_c, ln10)
+        # 2. User-provided values (matching by string representation)
+        subs = Dict{Any,Any}()
+        defs = ModelingToolkit.defaults(sys)
+
+        for rv in rhs_vars
+            rv_str = string(rv)
+
+            # Check system defaults
+            for (k, v) in defs
+                k_str = string(k)
+                # Match if rv equals k, or k is namespaced version of rv
+                if rv_str == k_str || endswith(k_str, "₊" * rv_str)
+                    subs[rv] = v
+                end
+            end
+
+            # Check user-provided values (these override defaults)
+            for (k, v) in param_vals
+                k_str = string(k)
+                # Match if rv equals k, or k is namespaced version of rv
+                if rv_str == k_str || endswith(k_str, "₊" * rv_str)
+                    subs[rv] = v
+                end
+            end
+        end
+
+        result = Symbolics.substitute(eq.rhs, subs)
+        return Float64(result)
     end
 end
 
@@ -120,11 +171,11 @@ end
     result = eval_eq(sys, sys.N_t, params)
     @test result ≈ sum(N_vals) rtol=1e-10
 
-    # Marine: 133 + 66.6 + 3.06 = 202.66 cm^-3
+    # Marine: 133 + 66.6 + 3.1 = 202.7 cm^-3 (Table 8.3)
     marine = MarineAerosol()
     marine_params = Dict(marine.D_p => 1e-7)
     marine_Nt = eval_eq(marine, marine.N_t, marine_params)
-    @test marine_Nt ≈ (133.0 + 66.6 + 3.06) * 1e6 rtol=1e-10
+    @test marine_Nt ≈ (133.0 + 66.6 + 3.1) * 1e6 rtol=1e-10
 
     # Remote continental: 3200 + 2900 + 0.3 = 6100.3 cm^-3
     remote = RemoteContinentalAerosol()

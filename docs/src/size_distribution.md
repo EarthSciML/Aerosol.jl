@@ -74,12 +74,58 @@ eqs = equations(sys)
 ## Analysis
 
 ```@example size_dist
-# Helper to evaluate a system equation's RHS by substituting parameter values
+# Helper to get the base name of a symbolic variable (part after last ₊),
+# and strip the (t) suffix if present.
+function get_base_name(sym)
+    name = string(Symbolics.tosymbol(sym, escape = false))
+    name = contains(name, "₊") ? split(name, "₊")[end] : name
+    name = replace(name, r"\(t\)$" => "")
+    return name
+end
+
+# Helper to evaluate a system equation's RHS by substituting parameter values.
+# Handles namespaced variables by matching the actual symbols in the equation RHS.
 function eval_eq(sys, var, param_vals)
-    var_name = string(Symbolics.tosymbol(var, escape = false))
-    eq = only(filter(eq -> string(Symbolics.tosymbol(eq.lhs, escape = false)) == var_name, equations(sys)))
-    subs = merge(ModelingToolkit.defaults(sys), param_vals)
-    return Float64(Symbolics.substitute(eq.rhs, subs))
+    var_base = get_base_name(var)
+
+    # Find the equation for this variable
+    matching_eqs = filter(equations(sys)) do eq
+        lhs_base = get_base_name(eq.lhs)
+        return lhs_base == var_base
+    end
+    eq = only(matching_eqs)
+
+    # Get all variables that appear in the RHS
+    rhs_vars = Symbolics.get_variables(eq.rhs)
+
+    # Build substitution dict by matching RHS variables with:
+    # 1. System defaults (for constants like π_c, ln10)
+    # 2. User-provided values (matching by string representation)
+    subs = Dict{Any,Any}()
+    defs = ModelingToolkit.defaults(sys)
+
+    for rv in rhs_vars
+        rv_str = string(rv)
+
+        # Check system defaults
+        for (k, v) in defs
+            k_str = string(k)
+            if rv_str == k_str || endswith(k_str, "₊" * rv_str)
+                subs[rv] = v
+            end
+        end
+
+        # Check user-provided values (these override defaults)
+        for (k, v) in param_vals
+            k_str = string(k)
+            if rv_str == k_str || endswith(k_str, "₊" * rv_str)
+                subs[rv] = v
+            end
+        end
+    end
+
+    result = Symbolics.substitute(eq.rhs, subs)
+    return Float64(result)
 end
 nothing # hide
 ```
