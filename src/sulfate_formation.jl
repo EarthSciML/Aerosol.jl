@@ -60,24 +60,29 @@ Implements Eq 7.79-7.80:
 R_O3 = (k0*[SO2.H2O] + k1*[HSO3-] + k2*[SO3^2-]) * [O3(aq)]
 
 where:
-- k0 = 2.4e4 M^-1 s^-1 (SO2.H2O + O3)
-- k1 = 3.7e5 M^-1 s^-1 (HSO3- + O3)
-- k2 = 1.5e9 M^-1 s^-1 (SO3^2- + O3)
+
+  - k0 = 2.4e4 M^-1 s^-1 (SO2.H2O + O3)
+  - k1 = 3.7e5 M^-1 s^-1 (HSO3- + O3)
+  - k2 = 1.5e9 M^-1 s^-1 (SO3^2- + O3)
 
 The reaction is fast at high pH due to the large k2 value for SO3^2-.
 
 Variables:
-- SO2_aq: [SO2.H2O] concentration (mol/m^3)
-- HSO3_minus: [HSO3-] concentration (mol/m^3)
-- SO3_2minus: [SO3^2-] concentration (mol/m^3)
-- O3_aq: [O3(aq)] concentration (mol/m^3)
-- R_O3: Oxidation rate (mol/m^3/s)
+
+  - SO2_aq: [SO2.H2O] concentration (mol/m^3)
+  - HSO3_minus: [HSO3-] concentration (mol/m^3)
+  - SO3_2minus: [SO3^2-] concentration (mol/m^3)
+  - O3_aq: [O3(aq)] concentration (mol/m^3)
+  - R_O3: Oxidation rate (mol/m^3/s)
 """
-@component function SulfateFormationO3(; name=:SulfateO3)
+@component function SulfateFormationO3(; name = :SulfateO3)
     @constants begin
-        k0 = 2.4e4 / 1000.0, [description = "Rate constant for SO2.H2O + O3", unit = u"m^3/mol/s"]
-        k1 = 3.7e5 / 1000.0, [description = "Rate constant for HSO3- + O3", unit = u"m^3/mol/s"]
-        k2 = 1.5e9 / 1000.0, [description = "Rate constant for SO3^2- + O3", unit = u"m^3/mol/s"]
+        k0 = 2.4e4 / 1000.0,
+        [description = "Rate constant for SO2.H2O + O3", unit = u"m^3/mol/s"]
+        k1 = 3.7e5 / 1000.0,
+        [description = "Rate constant for HSO3- + O3", unit = u"m^3/mol/s"]
+        k2 = 1.5e9 / 1000.0,
+        [description = "Rate constant for SO3^2- + O3", unit = u"m^3/mol/s"]
     end
 
     @variables begin
@@ -89,8 +94,8 @@ Variables:
     end
 
     eqs = [
-        # Eq 7.79: Total oxidation rate by O3
-        # R = (k0*[SO2.H2O] + k1*[HSO3-] + k2*[SO3^2-]) * [O3(aq)]
+    # Eq 7.79: Total oxidation rate by O3
+    # R = (k0*[SO2.H2O] + k1*[HSO3-] + k2*[SO3^2-]) * [O3(aq)]
         R_O3 ~ (k0*SO2_aq + k1*HSO3_minus + k2*SO3_2minus) * O3_aq,
     ]
 
@@ -110,22 +115,26 @@ Implements Eq 7.84:
 R_H2O2 = k*[H+]*[H2O2]*[HSO3-] / (1 + K*[H+])
 
 where:
-- k = 7.5e7 M^-2 s^-1
-- K = 13 M^-1
+
+  - k = 7.5e7 M^-2 s^-1
+  - K = 13 M^-1
 
 This reaction is relatively pH-independent due to the [H+] terms canceling,
 making it important across a wide pH range.
 
 Variables:
-- H_plus: Hydrogen ion concentration (mol/m^3)
-- H2O2_aq: Aqueous H2O2 concentration (mol/m^3)
-- HSO3_minus: Bisulfite concentration (mol/m^3)
-- R_H2O2: Oxidation rate (mol/m^3/s)
+
+  - H_plus: Hydrogen ion concentration (mol/m^3)
+  - H2O2_aq: Aqueous H2O2 concentration (mol/m^3)
+  - HSO3_minus: Bisulfite concentration (mol/m^3)
+  - R_H2O2: Oxidation rate (mol/m^3/s)
 """
-@component function SulfateFormationH2O2(; name=:SulfateH2O2)
+@component function SulfateFormationH2O2(; name = :SulfateH2O2)
     @constants begin
-        k = 7.5e7 / 1e6, [description = "Rate constant for H2O2 oxidation", unit = u"m^6/mol^2/s"]
-        K_eq = 13.0 / 1000.0, [description = "Equilibrium constant in denominator", unit = u"m^3/mol"]
+        k = 7.5e7 / 1e6,
+        [description = "Rate constant for H2O2 oxidation", unit = u"m^6/mol^2/s"]
+        K_eq = 13.0 / 1000.0,
+        [description = "Equilibrium constant in denominator", unit = u"m^3/mol"]
     end
 
     @variables begin
@@ -136,8 +145,8 @@ Variables:
     end
 
     eqs = [
-        # Eq 7.84: H2O2 oxidation rate
-        # R = k*[H+]*[H2O2]*[HSO3-] / (1 + K*[H+])
+    # Eq 7.84: H2O2 oxidation rate
+    # R = k*[H+]*[H2O2]*[HSO3-] / (1 + K*[H+])
         R_H2O2 ~ k * H_plus * H2O2_aq * HSO3_minus / (1 + K_eq * H_plus),
     ]
 
@@ -171,12 +180,13 @@ This implementation uses a simplified approach with the low-pH rate law,
 which is most relevant for typical cloud droplet conditions.
 
 Variables:
-- H_plus: Hydrogen ion concentration (mol/m^3)
-- Fe_III: Fe(III) concentration (mol/m^3)
-- S_IV_total: Total S(IV) concentration (mol/m^3)
-- R_Fe: Oxidation rate (mol/m^3/s)
+
+  - H_plus: Hydrogen ion concentration (mol/m^3)
+  - Fe_III: Fe(III) concentration (mol/m^3)
+  - S_IV_total: Total S(IV) concentration (mol/m^3)
+  - R_Fe: Oxidation rate (mol/m^3/s)
 """
-@component function SulfateFormationFe(; name=:SulfateFe)
+@component function SulfateFormationFe(; name = :SulfateFe)
     @constants begin
         k_low_pH = 6.0, [description = "Rate constant for pH 0-3.6", unit = u"s^-1"]
     end
@@ -185,12 +195,13 @@ Variables:
         H_plus(t), [description = "Hydrogen ion concentration", unit = u"mol/m^3"]
         Fe_III(t), [description = "Fe(III) concentration", unit = u"mol/m^3"]
         S_IV_total(t), [description = "Total S(IV) concentration", unit = u"mol/m^3"]
-        R_Fe(t), [description = "S(IV) oxidation rate by Fe(III)-catalyzed O2", unit = u"mol/m^3/s"]
+        R_Fe(t),
+        [description = "S(IV) oxidation rate by Fe(III)-catalyzed O2", unit = u"mol/m^3/s"]
     end
 
     eqs = [
-        # Eq 7.92: Fe(III)-catalyzed oxidation (low pH regime)
-        # R = k*[Fe(III)]*[S(IV)] / [H+]
+    # Eq 7.92: Fe(III)-catalyzed oxidation (low pH regime)
+    # R = k*[Fe(III)]*[S(IV)] / [H+]
         R_Fe ~ k_low_pH * Fe_III * S_IV_total / H_plus,
     ]
 
@@ -218,24 +229,27 @@ This implementation uses the low S(IV) rate law, which is first-order in
 both Mn and S(IV).
 
 Variables:
-- Mn_II: Mn(II) concentration (mol/m^3)
-- S_IV_total: Total S(IV) concentration (mol/m^3)
-- R_Mn: Oxidation rate (mol/m^3/s)
+
+  - Mn_II: Mn(II) concentration (mol/m^3)
+  - S_IV_total: Total S(IV) concentration (mol/m^3)
+  - R_Mn: Oxidation rate (mol/m^3/s)
 """
-@component function SulfateFormationMn(; name=:SulfateMn)
+@component function SulfateFormationMn(; name = :SulfateMn)
     @constants begin
-        k0 = 1000.0 / 1000.0, [description = "Rate constant for low S(IV)", unit = u"m^3/mol/s"]
+        k0 = 1000.0 / 1000.0,
+        [description = "Rate constant for low S(IV)", unit = u"m^3/mol/s"]
     end
 
     @variables begin
         Mn_II(t), [description = "Mn(II) concentration", unit = u"mol/m^3"]
         S_IV_total(t), [description = "Total S(IV) concentration", unit = u"mol/m^3"]
-        R_Mn(t), [description = "S(IV) oxidation rate by Mn(II)-catalyzed O2", unit = u"mol/m^3/s"]
+        R_Mn(t),
+        [description = "S(IV) oxidation rate by Mn(II)-catalyzed O2", unit = u"mol/m^3/s"]
     end
 
     eqs = [
-        # Eq 7.101: Mn(II)-catalyzed oxidation (low S(IV) regime)
-        # R = k0 * [Mn] * [S(IV)]
+    # Eq 7.101: Mn(II)-catalyzed oxidation (low S(IV) regime)
+    # R = k0 * [Mn] * [S(IV)]
         R_Mn ~ k0 * Mn_II * S_IV_total,
     ]
 
@@ -258,19 +272,23 @@ The synergistic term (10^10 coefficient) represents the greatly enhanced
 oxidation rate when both Fe(III) and Mn(II) are present.
 
 Variables:
-- Mn_II: Mn(II) concentration (mol/m^3)
-- Fe_III: Fe(III) concentration (mol/m^3)
-- S_IV_total: Total S(IV) concentration (mol/m^3)
-- R_Mn_term: Mn-only contribution (mol/m^3/s)
-- R_Fe_term: Fe-only contribution (mol/m^3/s)
-- R_synergy_term: Synergistic contribution (mol/m^3/s)
-- R_FeMn: Total oxidation rate (mol/m^3/s)
+
+  - Mn_II: Mn(II) concentration (mol/m^3)
+  - Fe_III: Fe(III) concentration (mol/m^3)
+  - S_IV_total: Total S(IV) concentration (mol/m^3)
+  - R_Mn_term: Mn-only contribution (mol/m^3/s)
+  - R_Fe_term: Fe-only contribution (mol/m^3/s)
+  - R_synergy_term: Synergistic contribution (mol/m^3/s)
+  - R_FeMn: Total oxidation rate (mol/m^3/s)
 """
-@component function SulfateFormationFeMn(; name=:SulfateFeMn)
+@component function SulfateFormationFeMn(; name = :SulfateFeMn)
     @constants begin
-        k_Mn = 750.0 / 1000.0, [description = "Rate constant for Mn-only term", unit = u"m^3/mol/s"]
-        k_Fe = 2600.0 / 1000.0, [description = "Rate constant for Fe-only term", unit = u"m^3/mol/s"]
-        k_FeMn = 1.0e10 / 1e6, [description = "Rate constant for synergistic term", unit = u"m^6/mol^2/s"]
+        k_Mn = 750.0 / 1000.0,
+        [description = "Rate constant for Mn-only term", unit = u"m^3/mol/s"]
+        k_Fe = 2600.0 / 1000.0,
+        [description = "Rate constant for Fe-only term", unit = u"m^3/mol/s"]
+        k_FeMn = 1.0e10 / 1e6,
+        [description = "Rate constant for synergistic term", unit = u"m^6/mol^2/s"]
     end
 
     @variables begin
@@ -279,8 +297,11 @@ Variables:
         S_IV_total(t), [description = "Total S(IV) concentration", unit = u"mol/m^3"]
         R_Mn_term(t), [description = "Mn-only contribution to rate", unit = u"mol/m^3/s"]
         R_Fe_term(t), [description = "Fe-only contribution to rate", unit = u"mol/m^3/s"]
-        R_synergy_term(t), [description = "Synergistic contribution to rate", unit = u"mol/m^3/s"]
-        R_FeMn(t), [description = "Total S(IV) oxidation rate with Fe/Mn synergism", unit = u"mol/m^3/s"]
+        R_synergy_term(t),
+        [description = "Synergistic contribution to rate", unit = u"mol/m^3/s"]
+        R_FeMn(t),
+        [
+            description = "Total S(IV) oxidation rate with Fe/Mn synergism", unit = u"mol/m^3/s"]
     end
 
     eqs = [
@@ -290,7 +311,7 @@ Variables:
         R_synergy_term ~ k_FeMn * Mn_II * Fe_III * S_IV_total,
 
         # Total rate
-        R_FeMn ~ R_Mn_term + R_Fe_term + R_synergy_term,
+        R_FeMn ~ R_Mn_term + R_Fe_term + R_synergy_term
     ]
 
     return System(eqs, t; name)
@@ -306,40 +327,47 @@ end
 Combined S(IV) to S(VI) oxidation kinetics including all pathways.
 
 Subsystems:
-- o3_ox: O3 oxidation pathway
-- h2o2_ox: H2O2 oxidation pathway
-- fe_ox: Fe(III)-catalyzed oxidation
-- mn_ox: Mn(II)-catalyzed oxidation
-- femn_ox: Fe/Mn synergistic oxidation
+
+  - o3_ox: O3 oxidation pathway
+  - h2o2_ox: H2O2 oxidation pathway
+  - fe_ox: Fe(III)-catalyzed oxidation
+  - mn_ox: Mn(II)-catalyzed oxidation
+  - femn_ox: Fe/Mn synergistic oxidation
 
 Variables:
-- R_total: Total S(IV) oxidation rate (mol/m^3/s)
-- S_VI_production: Sulfate production rate (mol/m^3/s)
+
+  - R_total: Total S(IV) oxidation rate (mol/m^3/s)
+  - S_VI_production: Sulfate production rate (mol/m^3/s)
 
 Also calculates rate conversion factors (Section 7.4):
-- R_ppb_hr: Rate in ppb hr^-1 (Eq 7.75)
-- R_percent_hr: Rate in % hr^-1 (Eq 7.76)
-- tau_SO2: SO2 lifetime (s) (Eq 7.78)
+
+  - R_ppb_hr: Rate in ppb hr^-1 (Eq 7.75)
+  - R_percent_hr: Rate in % hr^-1 (Eq 7.76)
+  - tau_SO2: SO2 lifetime (s) (Eq 7.78)    # Create subsystems
 """
-@component function SulfateFormation(; name=:SulfateForm)
+@component function SulfateFormation(; name = :SulfateForm)
     # Create subsystems
-    o3_ox = SulfateFormationO3(; name=:o3_ox)
-    h2o2_ox = SulfateFormationH2O2(; name=:h2o2_ox)
-    fe_ox = SulfateFormationFe(; name=:fe_ox)
-    mn_ox = SulfateFormationMn(; name=:mn_ox)
-    femn_ox = SulfateFormationFeMn(; name=:femn_ox)
+    o3_ox = SulfateFormationO3(; name = :o3_ox)
+    h2o2_ox = SulfateFormationH2O2(; name = :h2o2_ox)
+    fe_ox = SulfateFormationFe(; name = :fe_ox)
+    mn_ox = SulfateFormationMn(; name = :mn_ox)
+    femn_ox = SulfateFormationFeMn(; name = :femn_ox)
 
     @constants begin
-        R_gas = 8.31446, [description = "Gas constant for rate conversion", unit = u"J/mol/K"]
+        R_gas = 8.31446,
+        [description = "Gas constant for rate conversion", unit = u"J/mol/K"]
         p_total = 101325.0, [description = "Standard atmospheric pressure", unit = u"Pa"]
         # Inverse water density: 1/(10^6 g/m^3) = 10^-6 m^3/g
-        rho_w_inv = 1e-6, [description = "Inverse water density for LWC conversion", unit = u"m^3/g"]
+        rho_w_inv = 1e-6,
+        [description = "Inverse water density for LWC conversion", unit = u"m^3/g"]
         # Time conversion: seconds to hours
         s_per_hr = 3600.0, [description = "Seconds per hour (dimensionless)", unit = u"s"]
         # ppb scaling factor (dimensionless)
-        ppb_factor = 1e9, [description = "Parts per billion scaling factor (dimensionless)", unit = u"1"]
+        ppb_factor = 1e9,
+        [description = "Parts per billion scaling factor (dimensionless)", unit = u"1"]
         # percent scaling factor (dimensionless)
-        pct_factor = 100.0, [description = "Percent scaling factor (dimensionless)", unit = u"1"]
+        pct_factor = 100.0,
+        [description = "Percent scaling factor (dimensionless)", unit = u"1"]
     end
 
     @parameters begin
@@ -362,7 +390,8 @@ Also calculates rate conversion factors (Section 7.4):
         S_VI_production(t), [description = "Sulfate production rate", unit = u"mol/m^3/s"]
         w_L(t), [description = "Liquid water volume ratio (dimensionless)", unit = u"1"]
         R_ppb_hr(t), [description = "Rate in ppb/hr (Eq 7.75) (dimensionless)", unit = u"1"]
-        R_percent_hr(t), [description = "Rate in percent/hr (Eq 7.76) (dimensionless)", unit = u"1"]
+        R_percent_hr(t),
+        [description = "Rate in percent/hr (Eq 7.76) (dimensionless)", unit = u"1"]
         tau_SO2(t), [description = "SO2 lifetime (Eq 7.78)", unit = u"s"]
     end
 
@@ -411,15 +440,16 @@ Also calculates rate conversion factors (Section 7.4):
 
         # Eq 7.76: Rate conversion to %/hr
         # R_bar_a (%h^-1) = 100 * w_L * R * T * R_a / (p_total * xi_SO2) * 3600
-        R_percent_hr ~ pct_factor * s_per_hr * R_total * w_L * R_gas * T / (p_total * xi_SO2),
+        R_percent_hr ~
+        pct_factor * s_per_hr * R_total * w_L * R_gas * T / (p_total * xi_SO2),
 
         # Eq 7.78: SO2 lifetime
         # tau_SO2 (s) = xi_SO2 * p_total / (w_L * R * T * R_a)
-        tau_SO2 ~ xi_SO2 * p_total / (w_L * R_gas * T * R_total),
+        tau_SO2 ~ xi_SO2 * p_total / (w_L * R_gas * T * R_total)
     ]
 
     return System(eqs, t;
-        systems=[o3_ox, h2o2_ox, fe_ox, mn_ox, femn_ox],
+        systems = [o3_ox, h2o2_ox, fe_ox, mn_ox, femn_ox],
         name)
 end
 
@@ -433,15 +463,17 @@ end
 Convert aqueous-phase rate to atmospheric mixing ratio rate (Eq 7.75).
 
 Arguments:
-- R_a: Aqueous reaction rate (mol/L/s)
-- L: Liquid water content (g/m³)
-- T: Temperature (K)
-- p_total: Total pressure (Pa), default 101325 (1 atm)
+
+  - R_a: Aqueous reaction rate (mol/L/s)
+  - L: Liquid water content (g/m³)
+  - T: Temperature (K)
+  - p_total: Total pressure (Pa), default 101325 (1 atm)
 
 Returns:
-- Rate in ppb/hr
+
+  - Rate in ppb/hr
 """
-function rate_to_ppb_hr(R_a, L, T; p_total=101325.0)
+function rate_to_ppb_hr(R_a, L, T; p_total = 101325.0)
     R = 8314.46  # Pa L mol^-1 K^-1
     return 3.6e6 * L * R * T * R_a / p_total
 end
@@ -452,16 +484,18 @@ end
 Convert aqueous-phase rate to percent conversion rate (Eq 7.76).
 
 Arguments:
-- R_a: Aqueous reaction rate (mol/L/s)
-- L: Liquid water content (g/m³)
-- T: Temperature (K)
-- xi_SO2: SO2 mixing ratio (dimensionless)
-- p_total: Total pressure (Pa), default 101325 (1 atm)
+
+  - R_a: Aqueous reaction rate (mol/L/s)
+  - L: Liquid water content (g/m³)
+  - T: Temperature (K)
+  - xi_SO2: SO2 mixing ratio (dimensionless)
+  - p_total: Total pressure (Pa), default 101325 (1 atm)
 
 Returns:
-- Rate in %/hr
+
+  - Rate in %/hr
 """
-function rate_to_percent_hr(R_a, L, T, xi_SO2; p_total=101325.0)
+function rate_to_percent_hr(R_a, L, T, xi_SO2; p_total = 101325.0)
     R = 8314.46  # Pa L mol^-1 K^-1
     return 3.6e8 * R_a * L * R * T / (p_total * xi_SO2)
 end
@@ -472,16 +506,18 @@ end
 Calculate SO2 lifetime in seconds (Eq 7.78).
 
 Arguments:
-- R_a: Aqueous reaction rate (mol/L/s)
-- L: Liquid water content (g/m³)
-- T: Temperature (K)
-- xi_SO2: SO2 mixing ratio (dimensionless)
-- p_total: Total pressure (Pa), default 101325 (1 atm)
+
+  - R_a: Aqueous reaction rate (mol/L/s)
+  - L: Liquid water content (g/m³)
+  - T: Temperature (K)
+  - xi_SO2: SO2 mixing ratio (dimensionless)
+  - p_total: Total pressure (Pa), default 101325 (1 atm)
 
 Returns:
-- SO2 lifetime in seconds
+
+  - SO2 lifetime in seconds
 """
-function so2_lifetime(R_a, L, T, xi_SO2; p_total=101325.0)
+function so2_lifetime(R_a, L, T, xi_SO2; p_total = 101325.0)
     R = 8314.46  # Pa L mol^-1 K^-1
     return xi_SO2 * p_total / (1e3 * R_a * L * R * T)
 end

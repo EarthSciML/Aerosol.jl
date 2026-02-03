@@ -30,63 +30,70 @@ and S(IV) oxidation kinetics.
 
 This is the main component for modeling atmospheric aqueous-phase chemistry.
 It combines:
-1. Water autoionization equilibrium
-2. CO2/bicarbonate/carbonate equilibria
-3. SO2/bisulfite/sulfite (S(IV)) equilibria
-4. NH3/ammonium equilibria
-5. HNO3/nitrate equilibria
-6. H2O2 equilibria
-7. O3 dissolution
-8. S(IV) oxidation kinetics (O3, H2O2, Fe, Mn pathways)
+
+ 1. Water autoionization equilibrium
+ 2. CO2/bicarbonate/carbonate equilibria
+ 3. SO2/bisulfite/sulfite (S(IV)) equilibria
+ 4. NH3/ammonium equilibria
+ 5. HNO3/nitrate equilibria
+ 6. H2O2 equilibria
+ 7. O3 dissolution
+ 8. S(IV) oxidation kinetics (O3, H2O2, Fe, Mn pathways)
 
 The pH is determined from the electroneutrality condition (Eq 7.114):
 [H+] + [NH4+] = [OH-] + [HCO3-] + 2[CO3^2-] + [HSO3-] + 2[SO3^2-] + [NO3-] + [Cl-] + 2[SO4^2-]
 
 Parameters:
-- L: Liquid water content (g/m³)
-- xi_SO2: SO2 mixing ratio for lifetime calculations (dimensionless)
+
+  - L: Liquid water content (g/m³)
+  - xi_SO2: SO2 mixing ratio for lifetime calculations (dimensionless)
 
 Input Variables (partial pressures and metal concentrations):
-- T: Temperature (K)
-- p_CO2: CO2 partial pressure (Pa)
-- p_SO2: SO2 partial pressure (Pa)
-- p_NH3: NH3 partial pressure (Pa)
-- p_HNO3: HNO3 partial pressure (Pa)
-- p_H2O2: H2O2 partial pressure (Pa)
-- p_O3: O3 partial pressure (Pa)
-- Fe_III: Fe(III) concentration in droplet (mol/m³)
-- Mn_II: Mn(II) concentration in droplet (mol/m³)
-- Cl_minus: Chloride concentration (mol/m³)
-- SO4_2minus: Sulfate concentration (mol/m³)
+
+  - T: Temperature (K)
+  - p_CO2: CO2 partial pressure (Pa)
+  - p_SO2: SO2 partial pressure (Pa)
+  - p_NH3: NH3 partial pressure (Pa)
+  - p_HNO3: HNO3 partial pressure (Pa)
+  - p_H2O2: H2O2 partial pressure (Pa)
+  - p_O3: O3 partial pressure (Pa)
+  - Fe_III: Fe(III) concentration in droplet (mol/m³)
+  - Mn_II: Mn(II) concentration in droplet (mol/m³)
+  - Cl_minus: Chloride concentration (mol/m³)
+  - SO4_2minus: Sulfate concentration (mol/m³)
 
 Output Variables:
-- pH: Droplet pH (dimensionless)
-- H_plus: H+ concentration (mol/m³)
-- All aqueous species concentrations
-- S(IV) oxidation rates
-- Sulfate production rate
+
+  - pH: Droplet pH (dimensionless)
+  - H_plus: H+ concentration (mol/m³)
+  - All aqueous species concentrations
+  - S(IV) oxidation rates    # Create subsystems for equilibria
+  - Sulfate production rate
 """
-@component function CloudChemistry(; name=:CloudChem)
+@component function CloudChemistry(; name = :CloudChem)
     # Create subsystems for equilibria
-    water_eq = WaterEquilibrium(; name=:water_eq)
-    co2_eq = CO2Equilibria(; name=:co2_eq)
-    so2_eq = SO2Equilibria(; name=:so2_eq)
-    nh3_eq = NH3Equilibria(; name=:nh3_eq)
-    hno3_eq = HNO3Equilibria(; name=:hno3_eq)
-    h2o2_eq = H2O2Equilibria(; name=:h2o2_eq)
-    o3_eq = O3Equilibria(; name=:o3_eq)
+    water_eq = WaterEquilibrium(; name = :water_eq)
+    co2_eq = CO2Equilibria(; name = :co2_eq)
+    so2_eq = SO2Equilibria(; name = :so2_eq)
+    nh3_eq = NH3Equilibria(; name = :nh3_eq)
+    hno3_eq = HNO3Equilibria(; name = :hno3_eq)
+    h2o2_eq = H2O2Equilibria(; name = :h2o2_eq)
+    o3_eq = O3Equilibria(; name = :o3_eq)
 
     # Create subsystems for sulfate formation
-    sulfate = SulfateFormation(; name=:sulfate)
+    sulfate = SulfateFormation(; name = :sulfate)
 
     @constants begin
         R_gas = 8.31446, [description = "Gas constant", unit = u"J/mol/K"]
-        rho_w_inv = 1e-6, [description = "Inverse water density for LWC conversion", unit = u"m^3/g"]
+        rho_w_inv = 1e-6,
+        [description = "Inverse water density for LWC conversion", unit = u"m^3/g"]
     end
 
     @parameters begin
         L, [description = "Liquid water content", unit = u"g/m^3"]
-        xi_SO2, [description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1"]
+        xi_SO2,
+        [
+            description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1"]
     end
 
     @variables begin
@@ -215,14 +222,15 @@ Output Variables:
         # === Electroneutrality (Eq 7.114) ===
         # [H+] + [NH4+] = [OH-] + [HCO3-] + 2[CO3^2-] + [HSO3-] + 2[SO3^2-] + [NO3-] + [Cl-] + 2[SO4^2-]
         # Residual should be zero
-        charge_balance ~ (H_plus + NH4_plus) -
-                         (OH_minus + HCO3_minus + 2*CO3_2minus +
-                          HSO3_minus + 2*SO3_2minus + NO3_minus +
-                          Cl_minus + 2*SO4_2minus),
+        charge_balance ~
+        (H_plus + NH4_plus) -
+        (OH_minus + HCO3_minus + 2*CO3_2minus +
+         HSO3_minus + 2*SO3_2minus + NO3_minus +
+         Cl_minus + 2*SO4_2minus)
     ]
 
     return System(eqs, t;
-        systems=[water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq, sulfate],
+        systems = [water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq, sulfate],
         name)
 end
 
@@ -237,40 +245,46 @@ Simplified cloud chemistry system with pH as an input parameter.
 
 This variant takes pH as an input rather than calculating it from
 electroneutrality. This is useful for:
-- Sensitivity studies varying pH
-- Cases where additional ions (not modeled) affect pH
-- Quick calculations without solving the full equilibrium
+
+  - Sensitivity studies varying pH
+  - Cases where additional ions (not modeled) affect pH
+  - Quick calculations without solving the full equilibrium
 
 Parameters:
-- L: Liquid water content (g m^-3)
-- xi_SO2: SO2 mixing ratio for lifetime calculations (dimensionless)
+
+  - L: Liquid water content (g m^-3)
+  - xi_SO2: SO2 mixing ratio for lifetime calculations (dimensionless)
 
 Input Variables:
-- T: Temperature (K)
-- pH_input: Input pH value (dimensionless)
-- All partial pressures and metal concentrations
+
+  - T: Temperature (K)
+  - pH_input: Input pH value (dimensionless)
+  - All partial pressures and metal concentrations    # Create subsystems for equilibria
 """
-@component function CloudChemistryFixedpH(; name=:CloudChemFixedpH)
+@component function CloudChemistryFixedpH(; name = :CloudChemFixedpH)
     # Create subsystems for equilibria
-    water_eq = WaterEquilibrium(; name=:water_eq)
-    co2_eq = CO2Equilibria(; name=:co2_eq)
-    so2_eq = SO2Equilibria(; name=:so2_eq)
-    nh3_eq = NH3Equilibria(; name=:nh3_eq)
-    hno3_eq = HNO3Equilibria(; name=:hno3_eq)
-    h2o2_eq = H2O2Equilibria(; name=:h2o2_eq)
-    o3_eq = O3Equilibria(; name=:o3_eq)
+    water_eq = WaterEquilibrium(; name = :water_eq)
+    co2_eq = CO2Equilibria(; name = :co2_eq)
+    so2_eq = SO2Equilibria(; name = :so2_eq)
+    nh3_eq = NH3Equilibria(; name = :nh3_eq)
+    hno3_eq = HNO3Equilibria(; name = :hno3_eq)
+    h2o2_eq = H2O2Equilibria(; name = :h2o2_eq)
+    o3_eq = O3Equilibria(; name = :o3_eq)
 
     # Create subsystems for sulfate formation
-    sulfate = SulfateFormation(; name=:sulfate)
+    sulfate = SulfateFormation(; name = :sulfate)
 
     @constants begin
         R_gas = 8.31446, [description = "Gas constant", unit = u"J/mol/K"]
-        C_ref = 1000.0, [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
+        C_ref = 1000.0,
+        [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
     end
 
     @parameters begin
         L, [description = "Liquid water content", unit = u"g/m^3"]
-        xi_SO2, [description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1"]
+        xi_SO2,
+        [
+            description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1"]
     end
 
     @variables begin
@@ -365,11 +379,11 @@ Input Variables:
         R_total ~ sulfate.R_total,
         R_O3 ~ sulfate.o3_ox.R_O3,
         R_H2O2 ~ sulfate.h2o2_ox.R_H2O2,
-        R_FeMn ~ sulfate.femn_ox.R_FeMn,
+        R_FeMn ~ sulfate.femn_ox.R_FeMn
     ]
 
     return System(eqs, t;
-        systems=[water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq, sulfate],
+        systems = [water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq, sulfate],
         name)
 end
 
@@ -386,25 +400,28 @@ This system tracks the time evolution of sulfate concentration as S(IV)
 is oxidized to S(VI). It can be integrated using OrdinaryDiffEq.
 
 The system includes:
-- All equilibria (assumed fast, instantaneous)
-- S(IV) oxidation kinetics (rate-limiting)
-- Sulfate accumulation
+
+  - All equilibria (assumed fast, instantaneous)
+  - S(IV) oxidation kinetics (rate-limiting)
+  - Sulfate accumulation
 
 State Variable:
-- SO4_2minus: Sulfate concentration (mol/m³), evolves with time
+
+  - SO4_2minus: Sulfate concentration (mol/m³), evolves with time
 
 Parameters and other variables same as CloudChemistryFixedpH.
 """
-@component function CloudChemistryODE(; name=:CloudChemODE)
+@component function CloudChemistryODE(; name = :CloudChemODE)
     # Create subsystems
-    so2_eq = SO2Equilibria(; name=:so2_eq)
-    h2o2_eq = H2O2Equilibria(; name=:h2o2_eq)
-    o3_eq = O3Equilibria(; name=:o3_eq)
-    sulfate = SulfateFormation(; name=:sulfate)
+    so2_eq = SO2Equilibria(; name = :so2_eq)
+    h2o2_eq = H2O2Equilibria(; name = :h2o2_eq)
+    o3_eq = O3Equilibria(; name = :o3_eq)
+    sulfate = SulfateFormation(; name = :sulfate)
 
     @constants begin
         R_gas = 8.31446, [description = "Gas constant", unit = u"J/mol/K"]
-        C_ref = 1000.0, [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
+        C_ref = 1000.0,
+        [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
     end
 
     @parameters begin
@@ -450,9 +467,7 @@ Parameters and other variables same as CloudChemistryFixedpH.
         so2_eq.T ~ T,
         h2o2_eq.T ~ T,
         o3_eq.T ~ T,
-        sulfate.T ~ T,
-
-        so2_eq.H_plus ~ H_plus,
+        sulfate.T ~ T, so2_eq.H_plus ~ H_plus,
         h2o2_eq.H_plus ~ H_plus,
         sulfate.H_plus ~ H_plus,
 
@@ -479,16 +494,14 @@ Parameters and other variables same as CloudChemistryFixedpH.
         sulfate.Fe_III ~ Fe_III,
         sulfate.Mn_II ~ Mn_II,
         sulfate.L ~ L,
-        sulfate.xi_SO2 ~ xi_SO2,
-
-        R_total ~ sulfate.R_total,
+        sulfate.xi_SO2 ~ xi_SO2, R_total ~ sulfate.R_total,
 
         # ODE: Sulfate production
         # d[SO4^2-]/dt = R_total (S(IV) oxidation rate)
-        D(SO4_2minus) ~ R_total,
+        D(SO4_2minus) ~ R_total
     ]
 
     return System(eqs, t;
-        systems=[so2_eq, h2o2_eq, o3_eq, sulfate],
+        systems = [so2_eq, h2o2_eq, o3_eq, sulfate],
         name)
 end
