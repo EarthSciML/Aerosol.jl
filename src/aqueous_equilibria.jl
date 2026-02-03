@@ -60,24 +60,29 @@ const K_H1_298 = 2.2e-12  # M (H2O2 <-> H+ + HO2-)
 Water autoionization equilibrium with temperature dependence.
 
 Implements:
-- Eq 7.10-7.12: H2O <-> H+ + OH-
-- Eq 7.13: pH = -log10[H+]
-- Table 7.4: K_w(T) = K_w(298) * exp((-dH/R) * (1/T - 1/298))
+
+  - Eq 7.10-7.12: H2O <-> H+ + OH-
+  - Eq 7.13: pH = -log10[H+]
+  - Table 7.4: K_w(T) = K_w(298) * exp((-dH/R) * (1/T - 1/298))
 
 Variables:
-- T: Temperature (K)
-- H_plus: Hydrogen ion concentration (mol/m³)
-- OH_minus: Hydroxide ion concentration (mol/m³)
-- K_w: Water dissociation constant (mol²/m⁶)
-- pH: Negative log of H+ concentration (dimensionless)
+
+  - T: Temperature (K)
+  - H_plus: Hydrogen ion concentration (mol/m³)
+  - OH_minus: Hydroxide ion concentration (mol/m³)
+  - K_w: Water dissociation constant (mol²/m⁶)
+  - pH: Negative log of H+ concentration (dimensionless)
 """
-@component function WaterEquilibrium(; name=:WaterEq)
+@component function WaterEquilibrium(; name = :WaterEq)
     @constants begin
         R_gas = 8.314, [description = "Gas constant", unit = u"J/mol/K"]
         T_ref = 298.0, [description = "Reference temperature", unit = u"K"]
         K_w_298 = 1.0e-14 * 1e6, [description = "K_w at 298 K", unit = u"mol^2/m^6"]  # 1e6× for mol²/m⁶
-        dH_Kw = 55856.4, [description = "Enthalpy for K_w (13.35 kcal/mol converted to J/mol)", unit = u"J/mol"]
-        C_ref = 1000.0, [description = "Reference concentration (1 mol/L = 1000 mol/m³)", unit = u"mol/m^3"]
+        dH_Kw = 55856.4,
+        [
+            description = "Enthalpy for K_w (13.35 kcal/mol converted to J/mol)", unit = u"J/mol"]
+        C_ref = 1000.0,
+        [description = "Reference concentration (1 mol/L = 1000 mol/m³)", unit = u"mol/m^3"]
     end
 
     @variables begin
@@ -96,7 +101,7 @@ Variables:
         K_w ~ H_plus * OH_minus,
 
         # Eq 7.13: pH definition (pH = -log10([H+] in mol/L) = -log10([H+] in mol/m³ / 1000))
-        pH ~ -log10(H_plus / C_ref),
+        pH ~ -log10(H_plus / C_ref)
     ]
 
     return System(eqs, t; name)
@@ -112,33 +117,43 @@ end
 CO2 dissolution and dissociation equilibria with temperature dependence.
 
 Implements:
-- Eq 7.14-7.16: CO2(g) <-> CO2.H2O <-> H+ + HCO3- <-> H+ + CO3^2-
-- Eq 7.17: H_CO2 = [CO2.H2O] / p_CO2
-- Eq 7.18: K_c1 = [H+][HCO3-] / [CO2.H2O]
-- Eq 7.19: K_c2 = [H+][CO3^2-] / [HCO3-]
-- Eq 7.20-7.22: Species concentrations
-- Eq 7.24: H*_CO2 = H_CO2 * (1 + K_c1/[H+] + K_c1*K_c2/[H+]^2)
+
+  - Eq 7.14-7.16: CO2(g) <-> CO2.H2O <-> H+ + HCO3- <-> H+ + CO3^2-
+  - Eq 7.17: H_CO2 = [CO2.H2O] / p_CO2
+  - Eq 7.18: K_c1 = [H+][HCO3-] / [CO2.H2O]
+  - Eq 7.19: K_c2 = [H+][CO3^2-] / [HCO3-]
+  - Eq 7.20-7.22: Species concentrations
+  - Eq 7.24: H*_CO2 = H_CO2 * (1 + K_c1/[H+] + K_c1*K_c2/[H+]^2)
 
 Variables:
-- T: Temperature (K)
-- H_plus: Hydrogen ion concentration (mol/m³)
-- p_CO2: Partial pressure of CO2 (Pa)
-- CO2_aq: [CO2.H2O] concentration (mol/m³)
-- HCO3_minus: Bicarbonate concentration (mol/m³)
-- CO3_2minus: Carbonate concentration (mol/m³)
-- C_total: Total dissolved inorganic carbon (mol/m³)
-- H_CO2_eff: Effective Henry's law constant (mol/m³/Pa)
+
+  - T: Temperature (K)
+  - H_plus: Hydrogen ion concentration (mol/m³)
+  - p_CO2: Partial pressure of CO2 (Pa)
+  - CO2_aq: [CO2.H2O] concentration (mol/m³)
+  - HCO3_minus: Bicarbonate concentration (mol/m³)
+  - CO3_2minus: Carbonate concentration (mol/m³)
+  - C_total: Total dissolved inorganic carbon (mol/m³)
+  - H_CO2_eff: Effective Henry's law constant (mol/m³/Pa)
 """
-@component function CO2Equilibria(; name=:CO2Eq)
+@component function CO2Equilibria(; name = :CO2Eq)
     @constants begin
         R_gas = 8.314, [description = "Gas constant", unit = u"J/mol/K"]
         T_ref = 298.0, [description = "Reference temperature", unit = u"K"]
-        H_CO2_298 = 3.4e-2 / 101325.0 * 1000.0, [description = "Henry's law constant for CO2 at 298 K (converted from 3.4e-2 M/atm)", unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
-        dH_H_CO2 = -20292.4, [description = "Heat of dissolution for CO2 (-4.85 kcal/mol)", unit = u"J/mol"]
-        K_c1_298 = 4.3e-7 * 1000.0, [description = "First dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
-        K_c2_298 = 4.7e-11 * 1000.0, [description = "Second dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
-        dH_Kc1 = 7657.12, [description = "Enthalpy for K_c1 (1.83 kcal/mol)", unit = u"J/mol"]
-        dH_Kc2 = 14853.2, [description = "Enthalpy for K_c2 (3.55 kcal/mol)", unit = u"J/mol"]
+        H_CO2_298 = 3.4e-2 / 101325.0 * 1000.0,
+        [
+            description = "Henry's law constant for CO2 at 298 K (converted from 3.4e-2 M/atm)",
+            unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
+        dH_H_CO2 = -20292.4,
+        [description = "Heat of dissolution for CO2 (-4.85 kcal/mol)", unit = u"J/mol"]
+        K_c1_298 = 4.3e-7 * 1000.0,
+        [description = "First dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
+        K_c2_298 = 4.7e-11 * 1000.0,
+        [description = "Second dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
+        dH_Kc1 = 7657.12,
+        [description = "Enthalpy for K_c1 (1.83 kcal/mol)", unit = u"J/mol"]
+        dH_Kc2 = 14853.2,
+        [description = "Enthalpy for K_c2 (3.55 kcal/mol)", unit = u"J/mol"]
     end
 
     @variables begin
@@ -146,13 +161,15 @@ Variables:
         H_plus(t), [description = "Hydrogen ion concentration", unit = u"mol/m^3"]
         p_CO2(t), [description = "Partial pressure of CO2", unit = u"Pa"]
         CO2_aq(t), [description = "Aqueous CO2 concentration [CO2.H2O]", unit = u"mol/m^3"]
-        HCO3_minus(t), [description = "Bicarbonate concentration [HCO3-]", unit = u"mol/m^3"]
+        HCO3_minus(t),
+        [description = "Bicarbonate concentration [HCO3-]", unit = u"mol/m^3"]
         CO3_2minus(t), [description = "Carbonate concentration [CO3^2-]", unit = u"mol/m^3"]
         C_total(t), [description = "Total dissolved inorganic carbon", unit = u"mol/m^3"]
         H_CO2(t), [description = "Henry's law constant for CO2", unit = u"mol/m^3/Pa"]
         K_c1(t), [description = "First dissociation constant", unit = u"mol/m^3"]
         K_c2(t), [description = "Second dissociation constant", unit = u"mol/m^3"]
-        H_CO2_eff(t), [description = "Effective Henry's law constant for CO2", unit = u"mol/m^3/Pa"]
+        H_CO2_eff(t),
+        [description = "Effective Henry's law constant for CO2", unit = u"mol/m^3/Pa"]
     end
 
     eqs = [
@@ -176,7 +193,7 @@ Variables:
         C_total ~ CO2_aq + HCO3_minus + CO3_2minus,
 
         # Eq 7.24: Effective Henry's law constant
-        H_CO2_eff ~ H_CO2 * (1 + K_c1/H_plus + K_c1*K_c2/H_plus^2),
+        H_CO2_eff ~ H_CO2 * (1 + K_c1/H_plus + K_c1*K_c2/H_plus^2)
     ]
 
     return System(eqs, t; name)
@@ -193,39 +210,48 @@ SO2 dissolution and dissociation equilibria with temperature dependence.
 This is the S(IV) system.
 
 Implements:
-- Eq 7.30-7.32: SO2(g) <-> SO2.H2O <-> H+ + HSO3- <-> H+ + SO3^2-
-- Eq 7.33: H_SO2 = [SO2.H2O] / p_SO2
-- Eq 7.34: K_s1 = [H+][HSO3-] / [SO2.H2O]
-- Eq 7.35: K_s2 = [H+][SO3^2-] / [HSO3-]
-- Eq 7.36-7.38: S(IV) species concentrations
-- Eq 7.39: [S(IV)] = [SO2.H2O] + [HSO3-] + [SO3^2-]
-- Eq 7.40: [S(IV)] = H_SO2 * p_SO2 * (1 + K_s1/[H+] + K_s1*K_s2/[H+]^2)
-- Eq 7.41: H*_S(IV) = H_SO2 * (1 + K_s1/[H+] + K_s1*K_s2/[H+]^2)
-- Eq 7.43-7.45: S(IV) mole fractions (alpha values)
+
+  - Eq 7.30-7.32: SO2(g) <-> SO2.H2O <-> H+ + HSO3- <-> H+ + SO3^2-
+  - Eq 7.33: H_SO2 = [SO2.H2O] / p_SO2
+  - Eq 7.34: K_s1 = [H+][HSO3-] / [SO2.H2O]
+  - Eq 7.35: K_s2 = [H+][SO3^2-] / [HSO3-]
+  - Eq 7.36-7.38: S(IV) species concentrations
+  - Eq 7.39: [S(IV)] = [SO2.H2O] + [HSO3-] + [SO3^2-]
+  - Eq 7.40: [S(IV)] = H_SO2 * p_SO2 * (1 + K_s1/[H+] + K_s1*K_s2/[H+]^2)
+  - Eq 7.41: H*_S(IV) = H_SO2 * (1 + K_s1/[H+] + K_s1*K_s2/[H+]^2)
+  - Eq 7.43-7.45: S(IV) mole fractions (alpha values)
 
 Variables:
-- T: Temperature (K)
-- H_plus: Hydrogen ion concentration (mol/m³)
-- p_SO2: Partial pressure of SO2 (Pa)
-- SO2_aq: [SO2.H2O] concentration (mol/m³)
-- HSO3_minus: Bisulfite concentration (mol/m³)
-- SO3_2minus: Sulfite concentration (mol/m³)
-- S_IV_total: Total S(IV) concentration (mol/m³)
-- H_SO2_eff: Effective Henry's law constant (mol/m³/Pa)
-- alpha_0: Mole fraction of SO2.H2O (dimensionless)
-- alpha_1: Mole fraction of HSO3- (dimensionless)
-- alpha_2: Mole fraction of SO3^2- (dimensionless)
+
+  - T: Temperature (K)
+  - H_plus: Hydrogen ion concentration (mol/m³)
+  - p_SO2: Partial pressure of SO2 (Pa)
+  - SO2_aq: [SO2.H2O] concentration (mol/m³)
+  - HSO3_minus: Bisulfite concentration (mol/m³)
+  - SO3_2minus: Sulfite concentration (mol/m³)
+  - S_IV_total: Total S(IV) concentration (mol/m³)
+  - H_SO2_eff: Effective Henry's law constant (mol/m³/Pa)
+  - alpha_0: Mole fraction of SO2.H2O (dimensionless)
+  - alpha_1: Mole fraction of HSO3- (dimensionless)
+  - alpha_2: Mole fraction of SO3^2- (dimensionless)
 """
-@component function SO2Equilibria(; name=:SO2Eq)
+@component function SO2Equilibria(; name = :SO2Eq)
     @constants begin
         R_gas = 8.314, [description = "Gas constant", unit = u"J/mol/K"]
         T_ref = 298.0, [description = "Reference temperature", unit = u"K"]
-        H_SO2_298 = 1.23 / 101325.0 * 1000.0, [description = "Henry's law constant for SO2 at 298 K (converted from 1.23 M/atm)", unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
-        dH_H_SO2 = -26150.0, [description = "Heat of dissolution for SO2 (-6.25 kcal/mol)", unit = u"J/mol"]
-        K_s1_298 = 1.3e-2 * 1000.0, [description = "First dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
-        K_s2_298 = 6.6e-8 * 1000.0, [description = "Second dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
-        dH_Ks1 = -17405.44, [description = "Enthalpy for K_s1 (-4.16 kcal/mol)", unit = u"J/mol"]
-        dH_Ks2 = -9330.32, [description = "Enthalpy for K_s2 (-2.23 kcal/mol)", unit = u"J/mol"]
+        H_SO2_298 = 1.23 / 101325.0 * 1000.0,
+        [description = "Henry's law constant for SO2 at 298 K (converted from 1.23 M/atm)",
+            unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
+        dH_H_SO2 = -26150.0,
+        [description = "Heat of dissolution for SO2 (-6.25 kcal/mol)", unit = u"J/mol"]
+        K_s1_298 = 1.3e-2 * 1000.0,
+        [description = "First dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
+        K_s2_298 = 6.6e-8 * 1000.0,
+        [description = "Second dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
+        dH_Ks1 = -17405.44,
+        [description = "Enthalpy for K_s1 (-4.16 kcal/mol)", unit = u"J/mol"]
+        dH_Ks2 = -9330.32,
+        [description = "Enthalpy for K_s2 (-2.23 kcal/mol)", unit = u"J/mol"]
     end
 
     @variables begin
@@ -239,7 +265,8 @@ Variables:
         H_SO2(t), [description = "Henry's law constant for SO2", unit = u"mol/m^3/Pa"]
         K_s1(t), [description = "First dissociation constant", unit = u"mol/m^3"]
         K_s2(t), [description = "Second dissociation constant", unit = u"mol/m^3"]
-        H_SO2_eff(t), [description = "Effective Henry's law constant for SO2", unit = u"mol/m^3/Pa"]
+        H_SO2_eff(t),
+        [description = "Effective Henry's law constant for SO2", unit = u"mol/m^3/Pa"]
         alpha_0(t), [description = "Mole fraction of SO2.H2O (dimensionless)", unit = u"1"]
         alpha_1(t), [description = "Mole fraction of HSO3- (dimensionless)", unit = u"1"]
         alpha_2(t), [description = "Mole fraction of SO3^2- (dimensionless)", unit = u"1"]
@@ -276,7 +303,7 @@ Variables:
         alpha_1 ~ K_s1*H_plus / (H_plus^2 + K_s1*H_plus + K_s1*K_s2),
 
         # alpha_2 = K_s1*K_s2 / ([H+]^2 + K_s1*[H+] + K_s1*K_s2)
-        alpha_2 ~ K_s1*K_s2 / (H_plus^2 + K_s1*H_plus + K_s1*K_s2),
+        alpha_2 ~ K_s1*K_s2 / (H_plus^2 + K_s1*H_plus + K_s1*K_s2)
     ]
 
     return System(eqs, t; name)
@@ -292,33 +319,41 @@ end
 NH3 dissolution and dissociation equilibria with temperature dependence.
 
 Implements:
-- Eq 7.46-7.47: NH3(g) <-> NH3.H2O <-> NH4+ + OH-
-- Eq 7.48: H_NH3 = [NH3.H2O] / p_NH3
-- Eq 7.49: K_a1 = [NH4+][OH-] / [NH3.H2O]
-- Eq 7.50: [NH4+] = (H_NH3 * K_a1 / K_w) * p_NH3 * [H+]
-- Eq 7.51: [NH3_T] = H_NH3 * p_NH3 * (1 + K_a1*[H+]/K_w)
+
+  - Eq 7.46-7.47: NH3(g) <-> NH3.H2O <-> NH4+ + OH-
+  - Eq 7.48: H_NH3 = [NH3.H2O] / p_NH3
+  - Eq 7.49: K_a1 = [NH4+][OH-] / [NH3.H2O]
+  - Eq 7.50: [NH4+] = (H_NH3 * K_a1 / K_w) * p_NH3 * [H+]
+  - Eq 7.51: [NH3_T] = H_NH3 * p_NH3 * (1 + K_a1*[H+]/K_w)
 
 Variables:
-- T: Temperature (K)
-- H_plus: Hydrogen ion concentration (mol/m³)
-- OH_minus: Hydroxide ion concentration (mol/m³)
-- K_w: Water dissociation constant (mol²/m⁶)
-- p_NH3: Partial pressure of NH3 (Pa)
-- NH3_aq: [NH3.H2O] concentration (mol/m³)
-- NH4_plus: Ammonium concentration (mol/m³)
-- NH3_total: Total dissolved ammonia (mol/m³)
-- H_NH3_eff: Effective Henry's law constant (mol/m³/Pa)
+
+  - T: Temperature (K)
+  - H_plus: Hydrogen ion concentration (mol/m³)
+  - OH_minus: Hydroxide ion concentration (mol/m³)
+  - K_w: Water dissociation constant (mol²/m⁶)
+  - p_NH3: Partial pressure of NH3 (Pa)
+  - NH3_aq: [NH3.H2O] concentration (mol/m³)
+  - NH4_plus: Ammonium concentration (mol/m³)
+  - NH3_total: Total dissolved ammonia (mol/m³)
+  - H_NH3_eff: Effective Henry's law constant (mol/m³/Pa)
 """
-@component function NH3Equilibria(; name=:NH3Eq)
+@component function NH3Equilibria(; name = :NH3Eq)
     @constants begin
         R_gas = 8.314, [description = "Gas constant", unit = u"J/mol/K"]
         T_ref = 298.0, [description = "Reference temperature", unit = u"K"]
-        H_NH3_298 = 62.0 / 101325.0 * 1000.0, [description = "Henry's law constant for NH3 at 298 K (converted from 62.0 M/atm)", unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
-        dH_H_NH3 = -34183.28, [description = "Heat of dissolution for NH3 (-8.17 kcal/mol)", unit = u"J/mol"]
-        K_a1_298 = 1.7e-5 * 1000.0, [description = "Dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
-        dH_Ka1 = 36191.6, [description = "Enthalpy for K_a1 (8.65 kcal/mol)", unit = u"J/mol"]
+        H_NH3_298 = 62.0 / 101325.0 * 1000.0,
+        [description = "Henry's law constant for NH3 at 298 K (converted from 62.0 M/atm)",
+            unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
+        dH_H_NH3 = -34183.28,
+        [description = "Heat of dissolution for NH3 (-8.17 kcal/mol)", unit = u"J/mol"]
+        K_a1_298 = 1.7e-5 * 1000.0,
+        [description = "Dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
+        dH_Ka1 = 36191.6,
+        [description = "Enthalpy for K_a1 (8.65 kcal/mol)", unit = u"J/mol"]
         K_w_298 = 1.0e-14 * 1e6, [description = "K_w at 298 K", unit = u"mol^2/m^6"]  # 1e6× for mol²/m⁶
-        dH_Kw = 55856.4, [description = "Enthalpy for K_w (13.35 kcal/mol)", unit = u"J/mol"]
+        dH_Kw = 55856.4,
+        [description = "Enthalpy for K_w (13.35 kcal/mol)", unit = u"J/mol"]
     end
 
     @variables begin
@@ -332,7 +367,8 @@ Variables:
         NH3_total(t), [description = "Total dissolved ammonia", unit = u"mol/m^3"]
         H_NH3(t), [description = "Henry's law constant for NH3", unit = u"mol/m^3/Pa"]
         K_a1(t), [description = "Dissociation constant", unit = u"mol/m^3"]
-        H_NH3_eff(t), [description = "Effective Henry's law constant for NH3", unit = u"mol/m^3/Pa"]
+        H_NH3_eff(t),
+        [description = "Effective Henry's law constant for NH3", unit = u"mol/m^3/Pa"]
     end
 
     eqs = [
@@ -358,7 +394,7 @@ Variables:
 
         # Effective Henry's law constant
         # H*_NH3 = H_NH3 * (1 + K_a1*[H+]/K_w)
-        H_NH3_eff ~ H_NH3 * (1 + K_a1*H_plus/K_w),
+        H_NH3_eff ~ H_NH3 * (1 + K_a1*H_plus/K_w)
     ]
 
     return System(eqs, t; name)
@@ -374,30 +410,38 @@ end
 HNO3 dissolution and dissociation equilibria.
 
 Implements:
-- Eq 7.53-7.54: HNO3(g) <-> HNO3(aq) <-> H+ + NO3-
-- H_HNO3 = [HNO3(aq)] / p_HNO3 = 2.1e5 M/atm at 298 K
-- K_n1 = [H+][NO3-] / [HNO3(aq)] = 15.4 M at 298 K
-- Eq 7.58: [NO3-] ~ H_HNO3 * K_n1 / [H+] * p_HNO3 (for complete dissociation)
-- Eq 7.61: H*_HNO3 ~ H_HNO3 * K_n1 / [H+] = 3.2e6 / [H+]
+
+  - Eq 7.53-7.54: HNO3(g) <-> HNO3(aq) <-> H+ + NO3-
+  - H_HNO3 = [HNO3(aq)] / p_HNO3 = 2.1e5 M/atm at 298 K
+  - K_n1 = [H+][NO3-] / [HNO3(aq)] = 15.4 M at 298 K
+  - Eq 7.58: [NO3-] ~ H_HNO3 * K_n1 / [H+] * p_HNO3 (for complete dissociation)
+  - Eq 7.61: H*_HNO3 ~ H_HNO3 * K_n1 / [H+] = 3.2e6 / [H+]
 
 Note: HNO3 is a strong acid and essentially completely dissociates in water.
 
 Variables:
-- T: Temperature (K)
-- H_plus: Hydrogen ion concentration (mol/m³)
-- p_HNO3: Partial pressure of HNO3 (Pa)
-- HNO3_aq: Undissociated HNO3 concentration (mol/m³)
-- NO3_minus: Nitrate concentration (mol/m³)
-- HNO3_total: Total dissolved nitric acid (mol/m³)
-- H_HNO3_eff: Effective Henry's law constant (mol/m³/Pa)
+
+  - T: Temperature (K)
+  - H_plus: Hydrogen ion concentration (mol/m³)
+  - p_HNO3: Partial pressure of HNO3 (Pa)
+  - HNO3_aq: Undissociated HNO3 concentration (mol/m³)
+  - NO3_minus: Nitrate concentration (mol/m³)
+  - HNO3_total: Total dissolved nitric acid (mol/m³)
+  - H_HNO3_eff: Effective Henry's law constant (mol/m³/Pa)
 """
-@component function HNO3Equilibria(; name=:HNO3Eq)
+@component function HNO3Equilibria(; name = :HNO3Eq)
     @constants begin
         R_gas = 8.314, [description = "Gas constant", unit = u"J/mol/K"]
         T_ref = 298.0, [description = "Reference temperature", unit = u"K"]
-        H_HNO3_298 = 2.1e5 / 101325.0 * 1000.0, [description = "Henry's law constant for HNO3 at 298 K (converted from 2.1e5 M/atm)", unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
-        dH_H_HNO3 = 0.0, [description = "Heat of dissolution for HNO3 (negligible temperature dependence)", unit = u"J/mol"]
-        K_n1_298 = 15.4 * 1000.0, [description = "Dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
+        H_HNO3_298 = 2.1e5 / 101325.0 * 1000.0,
+        [
+            description = "Henry's law constant for HNO3 at 298 K (converted from 2.1e5 M/atm)",
+            unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
+        dH_H_HNO3 = 0.0,
+        [description = "Heat of dissolution for HNO3 (negligible temperature dependence)",
+            unit = u"J/mol"]
+        K_n1_298 = 15.4 * 1000.0,
+        [description = "Dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
     end
 
     @variables begin
@@ -409,7 +453,8 @@ Variables:
         HNO3_total(t), [description = "Total dissolved nitric acid", unit = u"mol/m^3"]
         H_HNO3(t), [description = "Henry's law constant for HNO3", unit = u"mol/m^3/Pa"]
         K_n1(t), [description = "Dissociation constant", unit = u"mol/m^3"]
-        H_HNO3_eff(t), [description = "Effective Henry's law constant for HNO3", unit = u"mol/m^3/Pa"]
+        H_HNO3_eff(t),
+        [description = "Effective Henry's law constant for HNO3", unit = u"mol/m^3/Pa"]
     end
 
     eqs = [
@@ -430,7 +475,7 @@ Variables:
 
         # Eq 7.61: Effective Henry's law constant
         # H*_HNO3 ~ H_HNO3 * (1 + K_n1/[H+])
-        H_HNO3_eff ~ H_HNO3 * (1 + K_n1/H_plus),
+        H_HNO3_eff ~ H_HNO3 * (1 + K_n1/H_plus)
     ]
 
     return System(eqs, t; name)
@@ -446,27 +491,34 @@ end
 H2O2 dissolution and (weak) dissociation equilibria.
 
 Implements:
-- H_H2O2 = [H2O2(aq)] / p_H2O2 = 1e5 M/atm at 298 K
-- K_h1 = [H+][HO2-] / [H2O2(aq)] = 2.2e-12 M (very weak, usually neglected)
+
+  - H_H2O2 = [H2O2(aq)] / p_H2O2 = 1e5 M/atm at 298 K
+  - K_h1 = [H+][HO2-] / [H2O2(aq)] = 2.2e-12 M (very weak, usually neglected)
 
 Note: H2O2 is a very weak acid and dissociation is typically neglected.
 
 Variables:
-- T: Temperature (K)
-- H_plus: Hydrogen ion concentration (mol/m³)
-- p_H2O2: Partial pressure of H2O2 (Pa)
-- H2O2_aq: Aqueous H2O2 concentration (mol/m³)
-- HO2_minus: Hydroperoxide anion concentration (mol/m³)
-- H2O2_total: Total dissolved hydrogen peroxide (mol/m³)
-- H_H2O2_eff: Effective Henry's law constant (mol/m³/Pa)
+
+  - T: Temperature (K)
+  - H_plus: Hydrogen ion concentration (mol/m³)
+  - p_H2O2: Partial pressure of H2O2 (Pa)
+  - H2O2_aq: Aqueous H2O2 concentration (mol/m³)
+  - HO2_minus: Hydroperoxide anion concentration (mol/m³)
+  - H2O2_total: Total dissolved hydrogen peroxide (mol/m³)
+  - H_H2O2_eff: Effective Henry's law constant (mol/m³/Pa)
 """
-@component function H2O2Equilibria(; name=:H2O2Eq)
+@component function H2O2Equilibria(; name = :H2O2Eq)
     @constants begin
         R_gas = 8.314, [description = "Gas constant", unit = u"J/mol/K"]
         T_ref = 298.0, [description = "Reference temperature", unit = u"K"]
-        H_H2O2_298 = 1.0e5 / 101325.0 * 1000.0, [description = "Henry's law constant for H2O2 at 298 K (converted from 1.0e5 M/atm)", unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
-        dH_H_H2O2 = -60668.0, [description = "Heat of dissolution for H2O2 (-14.5 kcal/mol)", unit = u"J/mol"]
-        K_h1_298 = 2.2e-12 * 1000.0, [description = "Dissociation constant at 298 K (very weak)", unit = u"mol/m^3"]  # 1000× for mol/m³
+        H_H2O2_298 = 1.0e5 / 101325.0 * 1000.0,
+        [
+            description = "Henry's law constant for H2O2 at 298 K (converted from 1.0e5 M/atm)",
+            unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
+        dH_H_H2O2 = -60668.0,
+        [description = "Heat of dissolution for H2O2 (-14.5 kcal/mol)", unit = u"J/mol"]
+        K_h1_298 = 2.2e-12 * 1000.0,
+        [description = "Dissociation constant at 298 K (very weak)", unit = u"mol/m^3"]  # 1000× for mol/m³
     end
 
     @variables begin
@@ -474,11 +526,14 @@ Variables:
         H_plus(t), [description = "Hydrogen ion concentration", unit = u"mol/m^3"]
         p_H2O2(t), [description = "Partial pressure of H2O2", unit = u"Pa"]
         H2O2_aq(t), [description = "Aqueous H2O2 concentration", unit = u"mol/m^3"]
-        HO2_minus(t), [description = "Hydroperoxide anion concentration [HO2-]", unit = u"mol/m^3"]
-        H2O2_total(t), [description = "Total dissolved hydrogen peroxide", unit = u"mol/m^3"]
+        HO2_minus(t),
+        [description = "Hydroperoxide anion concentration [HO2-]", unit = u"mol/m^3"]
+        H2O2_total(t),
+        [description = "Total dissolved hydrogen peroxide", unit = u"mol/m^3"]
         H_H2O2(t), [description = "Henry's law constant for H2O2", unit = u"mol/m^3/Pa"]
         K_h1(t), [description = "Dissociation constant (very weak)", unit = u"mol/m^3"]
-        H_H2O2_eff(t), [description = "Effective Henry's law constant for H2O2", unit = u"mol/m^3/Pa"]
+        H_H2O2_eff(t),
+        [description = "Effective Henry's law constant for H2O2", unit = u"mol/m^3/Pa"]
     end
 
     eqs = [
@@ -497,7 +552,7 @@ Variables:
         H2O2_total ~ H2O2_aq + HO2_minus,
 
         # Effective Henry's law constant
-        H_H2O2_eff ~ H_H2O2 * (1 + K_h1/H_plus),
+        H_H2O2_eff ~ H_H2O2 * (1 + K_h1/H_plus)
     ]
 
     return System(eqs, t; name)
@@ -515,17 +570,22 @@ O3 dissolution equilibrium with temperature dependence.
 O3 does not dissociate in water, so only Henry's law applies.
 
 Variables:
-- T: Temperature (K)
-- p_O3: Partial pressure of O3 (Pa)
-- O3_aq: Aqueous O3 concentration (mol/m³)
-- H_O3: Henry's law constant (mol/m³/Pa)
+
+  - T: Temperature (K)
+  - p_O3: Partial pressure of O3 (Pa)
+  - O3_aq: Aqueous O3 concentration (mol/m³)
+  - H_O3: Henry's law constant (mol/m³/Pa)
 """
-@component function O3Equilibria(; name=:O3Eq)
+@component function O3Equilibria(; name = :O3Eq)
     @constants begin
         R_gas = 8.314, [description = "Gas constant", unit = u"J/mol/K"]
         T_ref = 298.0, [description = "Reference temperature", unit = u"K"]
-        H_O3_298 = 1.1e-2 / 101325.0 * 1000.0, [description = "Henry's law constant for O3 at 298 K (converted from 1.1e-2 M/atm)", unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
-        dH_H_O3 = -21087.36, [description = "Heat of dissolution for O3 (-5.04 kcal/mol)", unit = u"J/mol"]
+        H_O3_298 = 1.1e-2 / 101325.0 * 1000.0,
+        [
+            description = "Henry's law constant for O3 at 298 K (converted from 1.1e-2 M/atm)",
+            unit = u"mol/m^3/Pa"]  # 1000× for mol/m³/Pa
+        dH_H_O3 = -21087.36,
+        [description = "Heat of dissolution for O3 (-5.04 kcal/mol)", unit = u"J/mol"]
     end
 
     @variables begin
@@ -540,7 +600,7 @@ Variables:
         H_O3 ~ H_O3_298 * exp((dH_H_O3 / R_gas) * (1/T_ref - 1/T)),
 
         # Henry's law for O3
-        O3_aq ~ H_O3 * p_O3,
+        O3_aq ~ H_O3 * p_O3
     ]
 
     return System(eqs, t; name)
@@ -559,23 +619,24 @@ This component combines all individual equilibrium systems into a single
 comprehensive system that can be used for cloud chemistry calculations.
 
 Subsystems:
-- water_eq: Water autoionization
-- co2_eq: CO2/bicarbonate/carbonate equilibria
-- so2_eq: SO2/bisulfite/sulfite (S(IV)) equilibria
-- nh3_eq: NH3/ammonium equilibria
-- hno3_eq: HNO3/nitrate equilibria
-- h2o2_eq: H2O2 equilibria
-- o3_eq: O3 dissolution
+
+  - water_eq: Water autoionization
+  - co2_eq: CO2/bicarbonate/carbonate equilibria
+  - so2_eq: SO2/bisulfite/sulfite (S(IV)) equilibria
+  - nh3_eq: NH3/ammonium equilibria
+  - hno3_eq: HNO3/nitrate equilibria
+  - h2o2_eq: H2O2 equilibria
+  - o3_eq: O3 dissolution
 """
-@component function AqueousEquilibria(; name=:AqEquilibria)
+@component function AqueousEquilibria(; name = :AqEquilibria)
     # Create subsystems
-    water_eq = WaterEquilibrium(; name=:water_eq)
-    co2_eq = CO2Equilibria(; name=:co2_eq)
-    so2_eq = SO2Equilibria(; name=:so2_eq)
-    nh3_eq = NH3Equilibria(; name=:nh3_eq)
-    hno3_eq = HNO3Equilibria(; name=:hno3_eq)
-    h2o2_eq = H2O2Equilibria(; name=:h2o2_eq)
-    o3_eq = O3Equilibria(; name=:o3_eq)
+    water_eq = WaterEquilibrium(; name = :water_eq)
+    co2_eq = CO2Equilibria(; name = :co2_eq)
+    so2_eq = SO2Equilibria(; name = :so2_eq)
+    nh3_eq = NH3Equilibria(; name = :nh3_eq)
+    hno3_eq = HNO3Equilibria(; name = :hno3_eq)
+    h2o2_eq = H2O2Equilibria(; name = :h2o2_eq)
+    o3_eq = O3Equilibria(; name = :o3_eq)
 
     @variables begin
         T(t), [description = "Temperature", unit = u"K"]
@@ -599,10 +660,10 @@ Subsystems:
         so2_eq.H_plus ~ H_plus,
         nh3_eq.H_plus ~ H_plus,
         hno3_eq.H_plus ~ H_plus,
-        h2o2_eq.H_plus ~ H_plus,
+        h2o2_eq.H_plus ~ H_plus
     ]
 
     return System(eqs, t;
-        systems=[water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq],
+        systems = [water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq],
         name)
 end
