@@ -15,14 +15,12 @@ makedocs(;
     repo = Remotes.GitHub("EarthSciML", "Aerosol.jl"),
     pages = [
         "Home" => "index.md",
+        "Size Distribution" => "size_distribution.md",
         "VBS" => "VBS.md",
         "Optical Properties" => "mie_scattering.md",
+        "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
-            "Isorropia" => [
-            "Overview" => "isorropia/overview.md",
-            "Examples" => "isorropia/examples.md",
-            "Implementation details" => "isorropia/implementation.md"
-        ],
+            "ISORROPIA" => "isorropia.md",
         ],
         "API" => "api.md"
     ],
