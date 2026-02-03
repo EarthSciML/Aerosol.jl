@@ -332,3 +332,48 @@ end
     # Larger particles have larger relaxation time
     @test sol2[csys.τ] > sol1[csys.τ]
 end
+
+@testitem "ParticleMobility structural" setup=[SPDSetup] tags=[:spd] begin
+    sys=ParticleMobility()
+    @test length(equations(sys)) >= 1  # B equation
+    vars=unknowns(sys)
+    @test any(v -> contains(string(v), "B"), vars)
+end
+
+@testitem "ParticleMobility B = C_c / (3πμD_p)" setup=[SPDSetup] tags=[:spd] begin
+    # Eq. 9.78: B = C_c / (3 π μ D_p)
+    sys=ParticleMobility()
+    csys=mtkcompile(sys)
+
+    D_p=1e-6  # 1 μm
+    μ=1.8e-5  # kg/(m·s)
+    C_c=1.164  # slip correction for 1 μm
+
+    prob=NonlinearProblem(csys, Dict(), Dict(
+        csys.D_p=>D_p,
+        csys.μ=>μ,
+        csys.C_c=>C_c
+    ))
+    sol=solve(prob)
+
+    # Calculate expected mobility
+    B_expected=C_c/(3*π*μ*D_p)
+    @test sol[csys.B] ≈ B_expected rtol = 1e-6
+end
+
+@testitem "ParticleMobility size dependence" setup=[SPDSetup] tags=[:spd] begin
+    # Mobility should decrease with increasing particle size
+    sys=ParticleMobility()
+    csys=mtkcompile(sys)
+
+    # Small particle (0.1 μm) with higher slip correction
+    prob1=NonlinearProblem(csys, Dict(), Dict(csys.D_p=>1e-7, csys.C_c=>2.85))
+    sol1=solve(prob1)
+
+    # Large particle (10 μm) with lower slip correction
+    prob2=NonlinearProblem(csys, Dict(), Dict(csys.D_p=>1e-5, csys.C_c=>1.016))
+    sol2=solve(prob2)
+
+    # Smaller particles have higher mobility
+    @test sol1[csys.B] > sol2[csys.B]
+end
