@@ -5,65 +5,66 @@ using OrdinaryDiffEqRosenbrock
 using OrdinaryDiffEqNonlinearSolve
 using NonlinearSolve
 
-@test string.(ISORROPIA.salt_group(isrpa.aq, :NH4, :M_aq)) == [
-     "isrpa₊aq₊NH4NO3₊M_aq(t)"
- "isrpa₊aq₊NH4Cl₊M_aq(t)"
- "isrpa₊aq₊NH4HSO4₊M_aq(t)"
- "isrpa₊aq₊NH42SO4₊M_aq(t)"
- "isrpa₊aq₊NH43HSO42₊M_aq(t)"
-]
+@test string.(ISORROPIA.salt_group(isrpa.aq, :NH4, :M_aq)) == ["isrpa₊aq₊NH4NO3₊M_aq(t)"
+       "isrpa₊aq₊NH4Cl₊M_aq(t)"
+       "isrpa₊aq₊NH4HSO4₊M_aq(t)"
+       "isrpa₊aq₊NH42SO4₊M_aq(t)"
+       "isrpa₊aq₊NH43HSO42₊M_aq(t)"]
 
-@test string(sum(ISORROPIA.salt_group(isrpa.aq, :NH4, :M_aq) .* ISORROPIA.salt_group(isrpa.aq, :NH4,
-ISORROPIA.salt_group_ν(:NH4)) )) == "isrpa₊aq₊NH42SO4₊ν_cation*isrpa₊aq₊NH42SO4₊M_aq(t) + isrpa₊aq₊NH43HSO42₊ν_cation*isrpa₊aq₊NH43HSO42₊M_aq(t) + isrpa₊aq₊NH4Cl₊ν_cation*isrpa₊aq₊NH4Cl₊M_aq(t) + isrpa₊aq₊NH4HSO4₊ν_cation*isrpa₊aq₊NH4HSO4₊M_aq(t) + isrpa₊aq₊NH4NO3₊ν_cation*isrpa₊aq₊NH4NO3₊M_aq(t)"
+@test string(sum(ISORROPIA.salt_group(isrpa.aq, :NH4, :M_aq) .*
+                 ISORROPIA.salt_group(isrpa.aq, :NH4,
+    ISORROPIA.salt_group_ν(:NH4)))) ==
+      "isrpa₊aq₊NH42SO4₊ν_cation*isrpa₊aq₊NH42SO4₊M_aq(t) + isrpa₊aq₊NH43HSO42₊ν_cation*isrpa₊aq₊NH43HSO42₊M_aq(t) + isrpa₊aq₊NH4Cl₊ν_cation*isrpa₊aq₊NH4Cl₊M_aq(t) + isrpa₊aq₊NH4HSO4₊ν_cation*isrpa₊aq₊NH4HSO4₊M_aq(t) + isrpa₊aq₊NH4NO3₊ν_cation*isrpa₊aq₊NH4NO3₊M_aq(t)"
 
-@test string(ISORROPIA.resid_moles(isrpa.aq, isrpa.TotalNH, :NH4, :NH43HSO42, [:NH4NO3, :NH4Cl], :M_aq, isrpa.M_zero)) ==
-"max(isrpa₊TotalNH(t) / isrpa₊aq₊NH43HSO42₊ν_cation - isrpa₊aq₊NH4Cl₊ν_cation*isrpa₊aq₊NH4Cl₊M_aq(t) - isrpa₊aq₊NH4NO3₊ν_cation*isrpa₊aq₊NH4NO3₊M_aq(t), isrpa₊M_zero)"
-@test string(ISORROPIA.resid_moles(isrpa.aq, isrpa.TotalSO4, :SO4, :NH43HSO42, [:CaSO4, :MgSO4], :M_aq, isrpa.M_zero)) ==
-"max(isrpa₊TotalSO4(t) / isrpa₊aq₊NH43HSO42₊ν_anion - isrpa₊aq₊CaSO4₊ν_anion*isrpa₊aq₊CaSO4₊M_aq(t) - isrpa₊aq₊MgSO4₊ν_anion*isrpa₊aq₊MgSO4₊M_aq(t), isrpa₊M_zero)"
+@test string(ISORROPIA.resid_moles(
+    isrpa.aq, isrpa.TotalNH, :NH4, :NH43HSO42, [:NH4NO3, :NH4Cl], :M_aq, isrpa.M_zero)) ==
+      "max(isrpa₊TotalNH(t) / isrpa₊aq₊NH43HSO42₊ν_cation - isrpa₊aq₊NH4Cl₊ν_cation*isrpa₊aq₊NH4Cl₊M_aq(t) - isrpa₊aq₊NH4NO3₊ν_cation*isrpa₊aq₊NH4NO3₊M_aq(t), isrpa₊M_zero)"
+@test string(ISORROPIA.resid_moles(
+    isrpa.aq, isrpa.TotalSO4, :SO4, :NH43HSO42, [:CaSO4, :MgSO4], :M_aq, isrpa.M_zero)) ==
+      "max(isrpa₊TotalSO4(t) / isrpa₊aq₊NH43HSO42₊ν_anion - isrpa₊aq₊CaSO4₊ν_anion*isrpa₊aq₊CaSO4₊M_aq(t) - isrpa₊aq₊MgSO4₊ν_anion*isrpa₊aq₊MgSO4₊M_aq(t), isrpa₊M_zero)"
 
 @named isrpa = Isorropia()
 
 sys = mtkcompile(isrpa)
 
 prob = ODEProblem(sys, [sys.aq.w_c => 1e-7, sys.RH => 0.7],
-    guesses=[
-           sys.aq.HNO3_aq.logm => -8.927865861808955
-            sys.aq.HCl_aq.logm => -19.641409301928977
-                sys.aq.OH.logm => -12.019017525020086
-            sys.aq.NH4NO3.logm => -36.53137650195007
-           sys.aq.NH4HSO4.logm => -12.03234266996551
-             sys.aq.CaCl2.logm => -6.808167113182904
-             sys.aq.NaNO3.logm => -35.7869844993737
-             sys.aq.CaSO4.logm => -2.5453168480484116
-             sys.aq.MgCl2.logm => -30.330930889870245
-              sys.aq.KNO3.logm => -36.57132425052141
-             sys.aq.NH4Cl.logm => -36.47238092583075
-             sys.aq.MgSO4.logm => -36.267538836309946
-            sys.aq.MgNO32.logm => -5.496768305271875
-            sys.aq.NaHSO4.logm => -36.472380925746904
-              sys.aq.NaCl.logm => -36.02393392502003
-           sys.aq.NH42SO4.logm => -36.30794090455121
-            sys.aq.CaNO32.logm => -3.8899145948962626
-             sys.aq.KHSO4.logm => -36.472380925746904
-                 sys.aq.H.logm => 0.05780058718513642
+    guesses = [sys.aq.HNO3_aq.logm => -8.927865861808955
+               sys.aq.HCl_aq.logm => -19.641409301928977
+               sys.aq.OH.logm => -12.019017525020086
+               sys.aq.NH4NO3.logm => -36.53137650195007
+               sys.aq.NH4HSO4.logm => -12.03234266996551
+               sys.aq.CaCl2.logm => -6.808167113182904
+               sys.aq.NaNO3.logm => -35.7869844993737
+               sys.aq.CaSO4.logm => -2.5453168480484116
+               sys.aq.MgCl2.logm => -30.330930889870245
+               sys.aq.KNO3.logm => -36.57132425052141
+               sys.aq.NH4Cl.logm => -36.47238092583075
+               sys.aq.MgSO4.logm => -36.267538836309946
+               sys.aq.MgNO32.logm => -5.496768305271875
+               sys.aq.NaHSO4.logm => -36.472380925746904
+               sys.aq.NaCl.logm => -36.02393392502003
+               sys.aq.NH42SO4.logm => -36.30794090455121
+               sys.aq.CaNO32.logm => -3.8899145948962626
+               sys.aq.KHSO4.logm => -36.472380925746904
+               sys.aq.H.logm => 0.05780058718513642
                sys.aq.KCl.logm => -36.472380925746904
-         sys.aq.NH43HSO42.logm => -36.47238092574695
-             sys.aq.K2SO4.logγ => -0.8783580045168342
-            sys.aq.Na2SO4.logγ => -0.915054060069958
-             sys.aq.H2SO4.logm => -0.15027297206500642
-              sys.aq.HNO3.logm => -2.8595561525795357
+               sys.aq.NH43HSO42.logm => -36.47238092574695
+               sys.aq.K2SO4.logγ => -0.8783580045168342
+               sys.aq.Na2SO4.logγ => -0.915054060069958
+               sys.aq.H2SO4.logm => -0.15027297206500642
+               sys.aq.HNO3.logm => -2.8595561525795357
                sys.aq.HCl.logm => -6.115019932620687
-  sys.aq.HSO4_dissociated.logm => -1.9694894657406083
- sys.aq.NH3_dissociated.logγₜ₀ => -0.38101943373200303
-   sys.aq.NH3_dissociated.logm => -12.032320692839471
-   sys.aq.H2O_dissociated.logm => -16.343734153037545
-    ],
+               sys.aq.HSO4_dissociated.logm => -1.9694894657406083
+               sys.aq.NH3_dissociated.logγₜ₀ => -0.38101943373200303
+               sys.aq.NH3_dissociated.logm => -12.032320692839471
+               sys.aq.H2O_dissociated.logm => -16.343734153037545],
     initializealg = BrownFullBasicInit(nlsolve = RobustMultiNewton()),
     (0.0, 10.0), use_scc = false)
 
 sol = solve(prob, Rosenbrock23())#, abstol = 1e-12, reltol = 1e-12)
 
-"sys." .* replace.(replace.(string.(unknowns(prob.f.sys)), ("₊" => ".",)), ("(t)" => "",)) .=> sol.u[1]
+"sys." .*
+replace.(replace.(string.(unknowns(prob.f.sys)), ("₊" => ".",)), ("(t)" => "",)) .=> sol.u[1]
 
 sol[[sys.aq.W, sys.aq.W_x, sys.aq.I]][end]
 
@@ -72,7 +73,8 @@ sol[[sys.aq.W, sys.aq.W_x, sys.aq.I]][end]
 sol[[sys.NH.precip, sys.Na.precip, sys.Ca.precip, sys.K.precip, sys.Mg.precip,
     sys.Cl.precip, sys.NO3.precip, sys.SO4.precip]][end]
 
-x = sol[[sys.NH.total, sys.g.NH3.M, sys.aq.NH3.M, sys.aq.NH3_dissociated.M, sys.NH.precip]][end]
+x = sol[[
+    sys.NH.total, sys.g.NH3.M, sys.aq.NH3.M, sys.aq.NH3_dissociated.M, sys.NH.precip]][end]
 @test all(x .>= 0)
 @test x[1] - sum(x[2:end]) ≥ 0.0
 @test x[1] - sum(x[2:end]) ≈ 0.0 atol=1e-22
@@ -93,72 +95,69 @@ x = sol[[sys.SO4.total, sys.aq.HSO4_dissociated.M, sys.aq.H2SO4.M, sys.SO4.preci
 @test x[1] - sum(x[2:end]) ≈ 0.0 atol=1e-22
 
 x = sol[[sys.aq.NH3_dissociated.M;
-ISORROPIA.salt_group(sys.aq, :NH4, :M) .*
-    ISORROPIA.salt_group(sys.aq, :NH4, ISORROPIA.salt_group_ν(:NH4))]][end]
+             ISORROPIA.salt_group(sys.aq, :NH4, :M) .*
+             ISORROPIA.salt_group(sys.aq, :NH4, ISORROPIA.salt_group_ν(:NH4))]][end]
 @test all(x .>= 0)
 @test x[1] - sum(x[2:end]) ≥ 0.0
 @test x[1] - sum(x[2:end]) ≈ 0.0
 
 ISORROPIA.salt_group(sys.aq, :Na, :M)
 x = sol[[sys.Na.total; sys.Na.precip;
-ISORROPIA.salt_group(sys.aq, :Na, :M) .*
-    ISORROPIA.salt_group(sys.aq, :Na, ISORROPIA.salt_group_ν(:Na))]][end]
+             ISORROPIA.salt_group(sys.aq, :Na, :M) .*
+             ISORROPIA.salt_group(sys.aq, :Na, ISORROPIA.salt_group_ν(:Na))]][end]
 @test all(x .>= 0)
 @test x[1] - sum(x[2:end]) ≥ 0.0
 @test x[1] - sum(x[2:end]) ≈ 0.0
 
 x = sol[[sys.Ca.total; sys.Ca.precip;
-ISORROPIA.salt_group(sys.aq, :Ca, :M) .*
-    ISORROPIA.salt_group(sys.aq, :Ca, ISORROPIA.salt_group_ν(:Ca))]][end]
+             ISORROPIA.salt_group(sys.aq, :Ca, :M) .*
+             ISORROPIA.salt_group(sys.aq, :Ca, ISORROPIA.salt_group_ν(:Ca))]][end]
 @test all(x .>= 0)
 @test x[1] - sum(x[2:end]) ≥ 0.0
 @test x[1] - sum(x[2:end]) ≈ 0.0
 
 x = sol[[sys.K.total; sys.K.precip;
-ISORROPIA.salt_group(sys.aq, :K, :M) .*
-    ISORROPIA.salt_group(sys.aq, :K, ISORROPIA.salt_group_ν(:K))]][end]
+             ISORROPIA.salt_group(sys.aq, :K, :M) .*
+             ISORROPIA.salt_group(sys.aq, :K, ISORROPIA.salt_group_ν(:K))]][end]
 @test all(x .>= 0)
 @test x[1] - sum(x[2:end]) ≥ 0.0
 @test x[1] - sum(x[2:end]) ≈ 0.0
 
 x = sol[[sys.Mg.total; sys.Mg.precip;
-ISORROPIA.salt_group(sys.aq, :Mg, :M) .*
-    ISORROPIA.salt_group(sys.aq, :Mg, ISORROPIA.salt_group_ν(:Mg))]][end]
+             ISORROPIA.salt_group(sys.aq, :Mg, :M) .*
+             ISORROPIA.salt_group(sys.aq, :Mg, ISORROPIA.salt_group_ν(:Mg))]][end]
 @test all(x .>= 0)
 @test x[1] - sum(x[2:end]) ≥ 0.0
 @test x[1] - sum(x[2:end]) ≈ 0.0
 
 x = sol[[sys.aq.HCl.M; sys.Cl.precip;
-ISORROPIA.salt_group(sys.aq, :Cl, :M) .*
-    ISORROPIA.salt_group(sys.aq, :Cl, ISORROPIA.salt_group_ν(:Cl))]][end]
+             ISORROPIA.salt_group(sys.aq, :Cl, :M) .*
+             ISORROPIA.salt_group(sys.aq, :Cl, ISORROPIA.salt_group_ν(:Cl))]][end]
 @test all(x .>= 0)
 @test x[1] - sum(x[2:end]) ≥ 0.0
 @test x[1] - sum(x[2:end]) ≈ 0.0
 
 ISORROPIA.salt_group(sys.aq, :NO3, :M)
 x = sol[[sys.aq.HNO3.M; sys.NO3.precip;
-ISORROPIA.salt_group(sys.aq, :NO3, :M) .*
-    ISORROPIA.salt_group(sys.aq, :NO3, ISORROPIA.salt_group_ν(:NO3))]][end]
+             ISORROPIA.salt_group(sys.aq, :NO3, :M) .*
+             ISORROPIA.salt_group(sys.aq, :NO3, ISORROPIA.salt_group_ν(:NO3))]][end]
 @test all(x .>= 0)
 @test x[1] - sum(x[2:end]) ≥ 0.0
 @test x[1] - sum(x[2:end]) ≈ 0.0
 
 x = sol[[sys.aq.H2SO4.M;
-ISORROPIA.salt_group(sys.aq, :SO4, :M) .*
-    ISORROPIA.salt_group(sys.aq, :SO4, ISORROPIA.salt_group_ν(:SO4))]][end]
+             ISORROPIA.salt_group(sys.aq, :SO4, :M) .*
+             ISORROPIA.salt_group(sys.aq, :SO4, ISORROPIA.salt_group_ν(:SO4))]][end]
 @test all(x .>= 0)
 @test x[1] - sum(x[2:end]) ≥ 0.0
 @test x[1] - sum(x[2:end]) ≈ 0.0
 
 x = sol[[sys.aq.HSO4_dissociated.M;
-ISORROPIA.salt_group(sys.aq, :HSO4, :M) .*
-    ISORROPIA.salt_group(sys.aq, :HSO4, ISORROPIA.salt_group_ν(:HSO4))]][end]
+             ISORROPIA.salt_group(sys.aq, :HSO4, :M) .*
+             ISORROPIA.salt_group(sys.aq, :HSO4, ISORROPIA.salt_group_ν(:HSO4))]][end]
 @test all(x .>= 0)
 @test x[1] - sum(x[2:end]) ≥ 0.0
 @test x[1] - sum(x[2:end]) ≈ 0.0
-
-
-
 
 let
     vars = [sys.aq.W, sys.aq.W_x, sys.aq.I]
@@ -168,7 +167,7 @@ end
 salts = [:CaNO32, :CaCl2, :CaSO4, :KHSO4, :K2SO4, :KNO3, :KCl, :MgSO4, :MgNO32, :MgCl2,
     :NaCl, :Na2SO4, :NaNO3,
     :NH42SO4, :NH4NO3, :NH4Cl, :NH4HSO4, :NaHSO4, :NH43HSO42, :HHSO4, :HNO3, :HCl,
-    :H2SO4, :NH3_dissociated,:H2O_dissociated, :HSO4_dissociated]
+    :H2SO4, :NH3_dissociated, :H2O_dissociated, :HSO4_dissociated]
 
 ions = [:Na, :H, :Ca, :K, :Mg, :OH, :NH3, :HNO3_aq, :HCl_aq]
 
@@ -306,42 +305,41 @@ let
     collect(zip(vars, round.(sol[vars][1]; sigdigits = 2)))
 end
 
+function f_cat(s)
+    x = reduce(getproperty, [sys, :aq, s])
+    [x.ν_cation * x.M_aq, x.ν_cation * x.M_precip]
+end
+function f_an(s)
+    x = reduce(getproperty, [sys, :aq, s])
+    [x.ν_anion * x.M_aq, x.ν_anion * x.M_precip]
+end
 
-    function f_cat(s)
-        x = reduce(getproperty, [sys, :aq, s])
-        [x.ν_cation * x.M_aq, x.ν_cation * x.M_precip]
-    end
-    function f_an(s)
-        x = reduce(getproperty, [sys, :aq, s])
-        [x.ν_anion * x.M_aq, x.ν_anion * x.M_precip]
-    end
-
-    specs = [
-        [sys.TotalNH; sys.NH_resid; sys.g.NH3.M; sys.aq.NH3.M;
-        vcat(f_cat.([:NH4NO3, :NH4Cl, :NH4HSO4, :NH42SO4, :NH43HSO42])...)],
-        [sys.TotalNa;
-        vcat(f_cat.([:NaCl, :Na2SO4, :NaNO3, :NaHSO4])...)],
-        [sys.TotalCa;
-        vcat(f_cat.([:CaNO32, :CaCl2, :CaSO4])...)],
-        [sys.TotalK;
-        vcat(f_cat.([:KHSO4, :K2SO4, :KNO3, :KCl])...)],
-        [sys.TotalMg;
-        vcat(f_cat.([:MgSO4, :MgNO32, :MgCl2])...)],
-        [sys.TotalCl; sys.g.HCl.M; sys.aq.HCl_aq.M;
-        vcat(f_an.([ :NaCl, :KCl, :MgCl2, :CaCl2, :NH4Cl])...)],
-        [sys.TotalNO3; sys.g.HNO3.M; sys.aq.HNO3_aq.M;
-vcat(f_an.([:NaNO3, :KNO3, :MgNO32, :CaNO32, :NH4NO3])...)],
-        [sys.TotalSO4; sys.aq.HHSO4.M_aq;
-        vcat(f_an.([:Na2SO4, :K2SO4, :MgSO4, :CaSO4,:NH42SO4, :NH43HSO42,
-        :KHSO4, :NaHSO4, :NH4HSO4, :NH43HSO42])...)],
-    ]
+specs = [
+    [sys.TotalNH; sys.NH_resid; sys.g.NH3.M; sys.aq.NH3.M;
+     vcat(f_cat.([:NH4NO3, :NH4Cl, :NH4HSO4, :NH42SO4, :NH43HSO42])...)],
+    [sys.TotalNa;
+     vcat(f_cat.([:NaCl, :Na2SO4, :NaNO3, :NaHSO4])...)],
+    [sys.TotalCa;
+     vcat(f_cat.([:CaNO32, :CaCl2, :CaSO4])...)],
+    [sys.TotalK;
+     vcat(f_cat.([:KHSO4, :K2SO4, :KNO3, :KCl])...)],
+    [sys.TotalMg;
+     vcat(f_cat.([:MgSO4, :MgNO32, :MgCl2])...)],
+    [sys.TotalCl; sys.g.HCl.M; sys.aq.HCl_aq.M;
+     vcat(f_an.([:NaCl, :KCl, :MgCl2, :CaCl2, :NH4Cl])...)],
+    [sys.TotalNO3; sys.g.HNO3.M; sys.aq.HNO3_aq.M;
+     vcat(f_an.([:NaNO3, :KNO3, :MgNO32, :CaNO32, :NH4NO3])...)],
+    [sys.TotalSO4; sys.aq.HHSO4.M_aq;
+     vcat(f_an.([:Na2SO4, :K2SO4, :MgSO4, :CaSO4, :NH42SO4, :NH43HSO42,
+         :KHSO4, :NaHSO4, :NH4HSO4, :NH43HSO42])...)]
+]
 
 for i in eachindex(specs)
-@info string(specs[i][1])
-x = sol[specs[i]][end]
-@test all(x .>= 0)
-@info string.(specs[i]) .=> x
-@info x[1], x[1] - sum(x[2:end])
+    @info string(specs[i][1])
+    x = sol[specs[i]][end]
+    @test all(x .>= 0)
+    @info string.(specs[i]) .=> x
+    @info x[1], x[1] - sum(x[2:end])
 end
 
 "x"
@@ -563,44 +561,42 @@ end
                     sys.TotalK => max(cases.K[i], minval) / 39.0983 * 1e-6,
                     sys.TotalMg => max(cases.Mg2[i], minval) / 24.305 * 1e-6
                 ],
-                          guesses = [
-        sys.aq.CaNO32.M_salt => 1.906467252413566e-8
-       sys.aq.NH43HSO42.m_eq => 2.707703364331441
-           sys.aq.H2SO4.m_eq => 164.9277556811717
-            sys.aq.HNO3.m_eq => 115.4892998645992
-         sys.aq.HNO3_aq.m_eq => 0.056229907643801855
-             sys.aq.NH3.m_eq => 5.337486733187579
- sys.aq.NH3_dissociated.m_eq => 13.482210465994047
-          sys.aq.HCl_aq.m_eq => 0.0017884728889773864
-                   sys.Cl_eq => 177.40836784903678
-                 sys.g.NH3.M => 4.693197790930763e-8
-                sys.g.HNO3.M => 6.003884948938772e-8
-                 sys.g.HCl.M => 1.6040822694034817e-7
-              sys.aq.Na.m_eq => 159.17639267952734
-                   sys.Ca_eq => 12.006412943311371
-                    sys.K_eq => 5.88374075831311
-                   sys.Mg_eq => 134.65917365719397
-           sys.aq.K2SO4.m_eq => 0.42253642221825605
-             sys.aq.KCl.m_eq => 0.010688599911850184
-          sys.aq.MgNO32.m_eq => 51.84749703931383
-           sys.aq.CaCl2.m_eq => 6.293771203936263
-           sys.aq.KHSO4.m_eq => 4.922215036142449
-            sys.aq.KNO3.m_eq => 0.10576427782229897
-         sys.aq.NH42SO4.m_eq => 2.0880341178608917
-            sys.aq.NaCl.m_eq => 0.022290072782699337
-         sys.aq.NH4HSO4.m_eq => 1.1830321372779395
-          sys.aq.CaNO32.m_eq => 5.648111764614799
-               sys.aq.H.m_eq => 464.848576328821
-           sys.aq.NaNO3.m_eq => 0.39231797891964865
-          sys.aq.NaHSO4.m_eq => 156.1148051434199
-          sys.aq.Na2SO4.m_eq => 1.3234897422025436
-           sys.aq.MgSO4.m_eq => 0.41864747008975783
-           sys.aq.CaSO4.m_eq => 0.06452997476030985
-           sys.aq.MgCl2.m_eq => 82.39302914779036
-              sys.aq.OH.m_eq => 13.482210781433077
-                  sys.SO4_eq => 7.024941091463239
- sys.aq.H2O_dissociated.m_eq => 3.1543902971884954e-7
-                      ],
+                guesses = [sys.aq.CaNO32.M_salt => 1.906467252413566e-8
+                           sys.aq.NH43HSO42.m_eq => 2.707703364331441
+                           sys.aq.H2SO4.m_eq => 164.9277556811717
+                           sys.aq.HNO3.m_eq => 115.4892998645992
+                           sys.aq.HNO3_aq.m_eq => 0.056229907643801855
+                           sys.aq.NH3.m_eq => 5.337486733187579
+                           sys.aq.NH3_dissociated.m_eq => 13.482210465994047
+                           sys.aq.HCl_aq.m_eq => 0.0017884728889773864
+                           sys.Cl_eq => 177.40836784903678
+                           sys.g.NH3.M => 4.693197790930763e-8
+                           sys.g.HNO3.M => 6.003884948938772e-8
+                           sys.g.HCl.M => 1.6040822694034817e-7
+                           sys.aq.Na.m_eq => 159.17639267952734
+                           sys.Ca_eq => 12.006412943311371
+                           sys.K_eq => 5.88374075831311
+                           sys.Mg_eq => 134.65917365719397
+                           sys.aq.K2SO4.m_eq => 0.42253642221825605
+                           sys.aq.KCl.m_eq => 0.010688599911850184
+                           sys.aq.MgNO32.m_eq => 51.84749703931383
+                           sys.aq.CaCl2.m_eq => 6.293771203936263
+                           sys.aq.KHSO4.m_eq => 4.922215036142449
+                           sys.aq.KNO3.m_eq => 0.10576427782229897
+                           sys.aq.NH42SO4.m_eq => 2.0880341178608917
+                           sys.aq.NaCl.m_eq => 0.022290072782699337
+                           sys.aq.NH4HSO4.m_eq => 1.1830321372779395
+                           sys.aq.CaNO32.m_eq => 5.648111764614799
+                           sys.aq.H.m_eq => 464.848576328821
+                           sys.aq.NaNO3.m_eq => 0.39231797891964865
+                           sys.aq.NaHSO4.m_eq => 156.1148051434199
+                           sys.aq.Na2SO4.m_eq => 1.3234897422025436
+                           sys.aq.MgSO4.m_eq => 0.41864747008975783
+                           sys.aq.CaSO4.m_eq => 0.06452997476030985
+                           sys.aq.MgCl2.m_eq => 82.39302914779036
+                           sys.aq.OH.m_eq => 13.482210781433077
+                           sys.SO4_eq => 7.024941091463239
+                           sys.aq.H2O_dissociated.m_eq => 3.1543902971884954e-7],
                 initializealg = BrownFullBasicInit(nlsolve = RobustMultiNewton()),
                 (0.0, 10.0),
                 use_scc = false)

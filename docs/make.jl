@@ -17,12 +17,9 @@ makedocs(;
         "Home" => "index.md",
         "VBS" => "VBS.md",
         "Nucleation" => "nucleation.md",
+        "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
-            "Isorropia" => [
-            "Overview" => "isorropia/overview.md",
-            "Examples" => "isorropia/examples.md",
-            "Implementation details" => "isorropia/implementation.md"
-        ],
+            "ISORROPIA" => "isorropia.md",
         ],
         "API" => "api.md"
     ],
