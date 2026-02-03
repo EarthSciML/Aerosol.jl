@@ -16,6 +16,7 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "Single Particle Dynamics" => "single_particle_dynamics.md",
+        "Size Distribution" => "size_distribution.md",
         "VBS" => "VBS.md",
         "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
