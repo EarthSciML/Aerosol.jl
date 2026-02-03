@@ -117,13 +117,13 @@ for D_p0 in D_p0_values
             compiled_sys.M_i => M_i,
             compiled_sys.Δp => Δp,
             compiled_sys.T => T_val,
-            compiled_sys.ρ_p => ρ_p,
+            compiled_sys.ρ_p => ρ_p
         ]
     )
     sol = solve(prob)
 
     plot!(plt, sol.t ./ 60, sol[compiled_sys.D_p] .* 1e6,
-          label = "D₀ = $(D_p0 * 1e6) μm")
+        label = "D₀ = $(D_p0 * 1e6) μm")
 end
 
 plt
@@ -178,22 +178,22 @@ prob_mono = ODEProblem(
     (0.0, 5 * τ_c),
     [
         compiled_mono.K => K_val,
-        compiled_mono.N_0 => N_0_val,
+        compiled_mono.N_0 => N_0_val
     ]
 )
 sol_mono = solve(prob_mono)
 
 # Plot numerical vs analytical solution
-t_plot = range(0, 5 * τ_c, length=100)
+t_plot = range(0, 5 * τ_c, length = 100)
 N_analytical = N_0_val ./ (1 .+ t_plot ./ τ_c)
 
 plot(sol_mono.t ./ τ_c, sol_mono[compiled_mono.N] ./ N_0_val,
-     label = "Numerical", lw = 2,
-     xlabel = "t / τc",
-     ylabel = "N / N₀",
-     title = "Monodisperse Coagulation (Eq. 13.66)")
+    label = "Numerical", lw = 2,
+    xlabel = "t / τc",
+    ylabel = "N / N₀",
+    title = "Monodisperse Coagulation (Eq. 13.66)")
 plot!(t_plot ./ τ_c, N_analytical ./ N_0_val,
-      label = "Analytical: N₀/(1 + t/τc)", ls = :dash, lw = 2)
+    label = "Analytical: N₀/(1 + t/τc)", ls = :dash, lw = 2)
 ```
 
 ### Characteristic Coagulation Time
@@ -201,11 +201,11 @@ plot!(t_plot ./ τ_c, N_analytical ./ N_0_val,
 The characteristic coagulation time depends on both the coagulation coefficient
 and the initial number concentration. For atmospheric aerosols:
 
-| N₀ (m⁻³) | K (m³/s) | τc | Physical Interpretation |
-|----------|----------|-----|------------------------|
-| 10¹⁰ | 10⁻¹⁵ | ~55 hours | Clean background |
-| 10¹² | 10⁻¹⁵ | ~33 minutes | Polluted urban |
-| 10¹⁴ | 10⁻¹⁵ | ~20 seconds | Fresh emissions |
+| N₀ (m⁻³) | K (m³/s) | τc          | Physical Interpretation |
+|:-------- |:-------- |:----------- |:----------------------- |
+| 10¹⁰     | 10⁻¹⁵    | ~55 hours   | Clean background        |
+| 10¹²     | 10⁻¹⁵    | ~33 minutes | Polluted urban          |
+| 10¹⁴     | 10⁻¹⁵    | ~20 seconds | Fresh emissions         |
 
 ### Discrete Coagulation (Eq. 13.59, 13.71)
 
@@ -234,7 +234,7 @@ prob_discrete = ODEProblem(
     (0.0, 3 * τ_c),
     [
         compiled_discrete.K => K_val,
-        compiled_discrete.N_0 => N_0_val,
+        compiled_discrete.N_0 => N_0_val
     ]
 )
 sol_discrete = solve(prob_discrete)
@@ -249,8 +249,8 @@ plt_kmer = plot(
 
 for k in 1:min(5, n_bins)
     plot!(plt_kmer, sol_discrete.t ./ τ_c,
-          sol_discrete[compiled_discrete.N[k]] ./ N_0_val,
-          label = "N$k", lw = 2)
+        sol_discrete[compiled_discrete.N[k]] ./ N_0_val,
+        label = "N$k", lw = 2)
 end
 
 plt_kmer
@@ -261,9 +261,9 @@ plt_kmer
 Coagulation conserves total aerosol volume (mass) while decreasing total number.
 Condensation conserves number while increasing volume. This is verified numerically:
 
-| Process | Number (N) | Volume/Mass (V) |
-|---------|------------|-----------------|
-| Coagulation | Decreases | Conserved |
-| Condensation | Conserved | Increases |
-| Coag + Cond | Decreases | Increases |
-| Nucleation | Increases | Increases |
+| Process      | Number (N) | Volume/Mass (V) |
+|:------------ |:---------- |:--------------- |
+| Coagulation  | Decreases  | Conserved       |
+| Condensation | Conserved  | Increases       |
+| Coag + Cond  | Decreases  | Increases       |
+| Nucleation   | Increases  | Increases       |

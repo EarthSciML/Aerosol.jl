@@ -1,5 +1,5 @@
 export AerosolDynamics, DiameterGrowthRate, BrownianCoagulationCoefficient,
-    MonodisperseCoagulation, DiscreteCoagulation
+       MonodisperseCoagulation, DiscreteCoagulation
 
 """
     DiameterGrowthRate(; name=:DiameterGrowthRate)
@@ -19,15 +19,17 @@ In the continuum regime with constant supersaturation (A = constant), this simpl
 
 where ``A = \\frac{4 D_i M_i}{R T \\rho_p} (p_i - p_{eq,i})``.
 """
-@component function DiameterGrowthRate(; name=:DiameterGrowthRate)
+@component function DiameterGrowthRate(; name = :DiameterGrowthRate)
     @constants begin
         R_gas = 8.314, [description = "Universal gas constant", unit = u"J/mol/K"]
     end
 
     @parameters begin
         T = 298.0, [description = "Temperature", unit = u"K"]
-        D_diff = 1e-5, [description = "Diffusion coefficient of condensing species", unit = u"m^2/s"]
-        M_i = 0.1, [description = "Molecular weight of condensing species", unit = u"kg/mol"]
+        D_diff = 1e-5,
+        [description = "Diffusion coefficient of condensing species", unit = u"m^2/s"]
+        M_i = 0.1,
+        [description = "Molecular weight of condensing species", unit = u"kg/mol"]
         ρ_p = 1000.0, [description = "Particle density", unit = u"kg/m^3"]
         Δp = 1e-4, [description = "Vapor pressure difference (p_i - p_eq)", unit = u"Pa"]
     end
@@ -44,7 +46,7 @@ where ``A = \\frac{4 D_i M_i}{R T \\rho_p} (p_i - p_{eq,i})``.
         # Eq. 13.13 - Diameter growth rate
         I_D ~ A / D_p,
         # Eq. 13.20 - ODE for particle diameter evolution
-        D(D_p) ~ I_D,
+        D(D_p) ~ I_D
     ]
 
     return System(eqs, t; name)
@@ -64,12 +66,13 @@ The Fuchs form of the coagulation coefficient is:
 ``K_{12} = 2\\pi(D_1 + D_2)(D_{p1} + D_{p2}) \\left( \\frac{D_{p1} + D_{p2}}{D_{p1} + D_{p2} + 2\\sqrt{g_1^2 + g_2^2}} + \\frac{8(D_1 + D_2)}{\\sqrt{\\bar{c}_1^2 + \\bar{c}_2^2}(D_{p1} + D_{p2})} \\right)^{-1}``
 
 where:
-- ``D_i = \\frac{k T C_c}{3\\pi\\mu D_{pi}}`` is the Brownian diffusion coefficient
-- ``\\bar{c}_i = \\sqrt{\\frac{8 k T}{\\pi m_i}}`` is the mean thermal velocity
-- ``\\ell_i = \\frac{8 D_i}{\\pi \\bar{c}_i}`` is the particle mean free path
-- ``g_i = \\frac{1}{3 D_{pi} \\ell_i}\\left[(D_{pi} + \\ell_i)^3 - (D_{pi}^2 + \\ell_i^2)^{3/2}\\right] - D_{pi}``
+
+  - ``D_i = \\frac{k T C_c}{3\\pi\\mu D_{pi}}`` is the Brownian diffusion coefficient
+  - ``\\bar{c}_i = \\sqrt{\\frac{8 k T}{\\pi m_i}}`` is the mean thermal velocity
+  - ``\\ell_i = \\frac{8 D_i}{\\pi \\bar{c}_i}`` is the particle mean free path
+  - ``g_i = \\frac{1}{3 D_{pi} \\ell_i}\\left[(D_{pi} + \\ell_i)^3 - (D_{pi}^2 + \\ell_i^2)^{3/2}\\right] - D_{pi}``
 """
-@component function BrownianCoagulationCoefficient(; name=:BrownianCoagulationCoefficient)
+@component function BrownianCoagulationCoefficient(; name = :BrownianCoagulationCoefficient)
     @constants begin
         k_B = 1.380649e-23, [description = "Boltzmann constant", unit = u"J/K"]
         π_val = 3.14159265358979, [description = "Pi (dimensionless)", unit = u"1"]
@@ -89,10 +92,14 @@ where:
         m_1(t), [description = "Mass of particle 1", unit = u"kg"]
         m_2(t), [description = "Mass of particle 2", unit = u"kg"]
         # Slip correction factors (Cunningham correction)
-        C_c1(t), [description = "Slip correction factor for particle 1 (dimensionless)", unit = u"1"]
-        C_c2(t), [description = "Slip correction factor for particle 2 (dimensionless)", unit = u"1"]
-        Kn_1(t), [description = "Knudsen number for particle 1 (dimensionless)", unit = u"1"]
-        Kn_2(t), [description = "Knudsen number for particle 2 (dimensionless)", unit = u"1"]
+        C_c1(t),
+        [description = "Slip correction factor for particle 1 (dimensionless)", unit = u"1"]
+        C_c2(t),
+        [description = "Slip correction factor for particle 2 (dimensionless)", unit = u"1"]
+        Kn_1(t),
+        [description = "Knudsen number for particle 1 (dimensionless)", unit = u"1"]
+        Kn_2(t),
+        [description = "Knudsen number for particle 2 (dimensionless)", unit = u"1"]
         # Brownian diffusion coefficients (Eq. 13.47)
         D_1(t), [description = "Diffusion coefficient of particle 1", unit = u"m^2/s"]
         D_2(t), [description = "Diffusion coefficient of particle 2", unit = u"m^2/s"]
@@ -139,10 +146,11 @@ where:
         g_2 ~ (1 / (3 * D_p2 * ℓ_2)) * ((D_p2 + ℓ_2)^3 - (D_p2^2 + ℓ_2^2)^1.5) - D_p2,
 
         # Table 13.1 - Fuchs form of coagulation coefficient
-        K_12 ~ 2 * π_val * (D_1 + D_2) * (D_p1 + D_p2) / (
+        K_12 ~
+        2 * π_val * (D_1 + D_2) * (D_p1 + D_p2) / (
             (D_p1 + D_p2) / (D_p1 + D_p2 + 2 * sqrt(g_1^2 + g_2^2)) +
             8 * (D_1 + D_2) / (sqrt(c_bar_1^2 + c_bar_2^2) * (D_p1 + D_p2))
-        ),
+        )
     ]
 
     return System(eqs, t; name)
@@ -167,7 +175,7 @@ with analytical solution:
 
 where ``\\tau_c = \\frac{2}{K N_0}`` is the characteristic coagulation time.
 """
-@component function MonodisperseCoagulation(; name=:MonodisperseCoagulation)
+@component function MonodisperseCoagulation(; name = :MonodisperseCoagulation)
     @parameters begin
         K = 1e-15, [description = "Coagulation coefficient", unit = u"m^3/s"]
         N_0 = 1e12, [description = "Initial number concentration", unit = u"m^-3"]
@@ -182,7 +190,7 @@ where ``\\tau_c = \\frac{2}{K N_0}`` is the characteristic coagulation time.
         # Eq. 13.67 - Characteristic coagulation time
         τ_c ~ 2 / (K * N_0),
         # Eq. 13.65 - Rate of change of total number concentration
-        D(N) ~ -0.5 * K * N^2,
+        D(N) ~ -0.5 * K * N^2
     ]
 
     return System(eqs, t; name)
@@ -207,9 +215,10 @@ For a constant coagulation coefficient K and monodisperse initial condition
 ``N_k(t) = \\frac{N_0 (t/\\tau_c)^{k-1}}{[1 + t/\\tau_c]^{k+1}}``
 
 Arguments:
-- `n_bins::Int`: Number of size bins (k-mer sizes to track)
+
+  - `n_bins::Int`: Number of size bins (k-mer sizes to track)
 """
-@component function DiscreteCoagulation(n_bins::Int; name=:DiscreteCoagulation)
+@component function DiscreteCoagulation(n_bins::Int; name = :DiscreteCoagulation)
     @parameters begin
         K = 1e-15, [description = "Coagulation coefficient", unit = u"m^3/s"]
         N_0 = 1e12, [description = "Initial total number concentration", unit = u"m^-3"]
@@ -228,7 +237,7 @@ Arguments:
     coag_eqs = []
     for k in 1:n_bins
         # Formation term: particles of size j and k-j collide to form size k
-        formation = k > 1 ? sum(N[j] * N[k-j] for j in 1:(k-1)) : 0.0
+        formation = k > 1 ? sum(N[j] * N[k - j] for j in 1:(k - 1)) : 0.0
 
         # Loss term: particle of size k collides with any other particle
         loss = N[k] * N_total
@@ -242,7 +251,7 @@ Arguments:
         # Total number concentration
         N_total ~ sum(N[k] for k in 1:n_bins),
         # Coagulation equations for each bin
-        coag_eqs...,
+        coag_eqs...
     ]
 
     return System(eqs, t; name)
@@ -258,19 +267,20 @@ growth and coagulation processes.
 2nd Edition, Chapter 13.
 
 This system provides:
-- Condensation growth rate calculation
-- Brownian coagulation coefficient (Fuchs form)
-- Monodisperse coagulation dynamics
+
+  - Condensation growth rate calculation
+  - Brownian coagulation coefficient (Fuchs form)
+  - Monodisperse coagulation dynamics
 
 The General Dynamic Equation (Eq. 13.86) combines these processes:
 
 ``\\frac{\\partial n(v,t)}{\\partial t} = \\left(\\frac{\\partial n}{\\partial t}\\right)_{coag} + \\left(\\frac{\\partial n}{\\partial t}\\right)_{cond} + J_0\\delta(v-v_0) + S(v) - R(v)``
 """
-@component function AerosolDynamics(; name=:AerosolDynamics)
+@component function AerosolDynamics(; name = :AerosolDynamics)
     # Create subsystems
-    growth = DiameterGrowthRate(; name=:growth)
-    coag_coeff = BrownianCoagulationCoefficient(; name=:coag_coeff)
-    coag = MonodisperseCoagulation(; name=:coag)
+    growth = DiameterGrowthRate(; name = :growth)
+    coag_coeff = BrownianCoagulationCoefficient(; name = :coag_coeff)
+    coag = MonodisperseCoagulation(; name = :coag)
 
     # Connect subsystems through shared parameters
     @parameters begin
@@ -286,8 +296,8 @@ The General Dynamic Equation (Eq. 13.86) combines these processes:
         growth.ρ_p ~ ρ_p,
         coag_coeff.ρ_p ~ ρ_p,
         # Use computed coagulation coefficient for dynamics
-        coag.K ~ coag_coeff.K_12,
+        coag.K ~ coag_coeff.K_12
     ]
 
-    return System(eqs, t; systems=[growth, coag_coeff, coag], name)
+    return System(eqs, t; systems = [growth, coag_coeff, coag], name)
 end
