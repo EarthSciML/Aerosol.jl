@@ -26,12 +26,10 @@ end
     k_fast = 1.0e6  # s⁻¹ (very fast reaction)
     q_fast = R_p * sqrt(k_fast / D_aq)
 
-    prob_slow = NonlinearProblem(compiled, [],
-        [compiled.R_p => R_p, compiled.D_aq => D_aq, compiled.k_rxn => k_slow])
+    prob_slow = NonlinearProblem(compiled, Dict(compiled.R_p => R_p, compiled.D_aq => D_aq, compiled.k_rxn => k_slow))
     sol_slow = solve(prob_slow)
 
-    prob_fast = NonlinearProblem(compiled, [],
-        [compiled.R_p => R_p, compiled.D_aq => D_aq, compiled.k_rxn => k_fast])
+    prob_fast = NonlinearProblem(compiled, Dict(compiled.R_p => R_p, compiled.D_aq => D_aq, compiled.k_rxn => k_fast))
     sol_fast = solve(prob_fast)
 
     q_calc_slow = sol_slow[compiled.q]
@@ -71,9 +69,8 @@ end
     α = 1.0
     M_A = 0.029
 
-    prob = NonlinearProblem(compiled, [],
-        [compiled.R_p => R_p, compiled.D_g => D_g, compiled.D_aq => D_aq,
-         compiled.T => T, compiled.α => α, compiled.M_A => M_A])
+    prob = NonlinearProblem(compiled, Dict(compiled.R_p => R_p, compiled.D_g => D_g, compiled.D_aq => D_aq,
+         compiled.T => T, compiled.α => α, compiled.M_A => M_A))
     sol = solve(prob)
 
     k1H_gas = sol[compiled.k1H_gas_limit]
@@ -89,9 +86,8 @@ end
     # Test by comparing two droplet sizes
     R_p2 = 2.0e-5
 
-    prob2 = NonlinearProblem(compiled, [],
-        [compiled.R_p => R_p2, compiled.D_g => D_g, compiled.D_aq => D_aq,
-         compiled.T => T, compiled.α => α, compiled.M_A => M_A])
+    prob2 = NonlinearProblem(compiled, Dict(compiled.R_p => R_p2, compiled.D_g => D_g, compiled.D_aq => D_aq,
+         compiled.T => T, compiled.α => α, compiled.M_A => M_A))
     sol2 = solve(prob2)
 
     k1H_gas_2 = sol2[compiled.k1H_gas_limit]
@@ -130,11 +126,11 @@ end
     C_aq0 = 0.0
 
     prob = ODEProblem(compiled,
-        [compiled.p => p0, compiled.C_aq => C_aq0],
-        (0.0, 1.0),
-        [compiled.k_mt => k_mt, compiled.w_L => w_L,
-         compiled.H_star => H_star, compiled.T => T,
-         compiled.Q => 1.0, compiled.R_aq => 0.0])
+        merge(Dict(compiled.p => p0, compiled.C_aq => C_aq0),
+              Dict(compiled.k_mt => k_mt, compiled.w_L => w_L,
+                   compiled.H_star => H_star, compiled.T => T,
+                   compiled.Q => 1.0, compiled.R_aq => 0.0)),
+        (0.0, 1.0))
     sol = solve(prob)
 
     p_final = sol[compiled.p][end]
@@ -172,11 +168,11 @@ end
     C_aq0 = 0.0
 
     prob = ODEProblem(compiled,
-        [compiled.p => p0, compiled.C_aq => C_aq0],
-        (0.0, 100.0),
-        [compiled.k_mt => k_mt, compiled.w_L => w_L,
-         compiled.H_star => H_star, compiled.T => T,
-         compiled.Q => 1.0, compiled.R_aq => 0.0])
+        merge(Dict(compiled.p => p0, compiled.C_aq => C_aq0),
+              Dict(compiled.k_mt => k_mt, compiled.w_L => w_L,
+                   compiled.H_star => H_star, compiled.T => T,
+                   compiled.Q => 1.0, compiled.R_aq => 0.0)),
+        (0.0, 100.0))
     sol = solve(prob)
 
     # Total moles should be conserved

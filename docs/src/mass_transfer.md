@@ -49,14 +49,14 @@ f_FS_α01 = Float64[]
 f_FS_α001 = Float64[]
 
 for Kn in Kn_range
-    prob = NonlinearProblem(compiled, [], [compiled.Kn => Kn, compiled.α => 1.0])
-    push!(f_FS_α1, solve(prob)[compiled.f_FS])
+    prob = NonlinearProblem(compiled, Dict(compiled.Kn => Kn, compiled.α => 1.0))
+    push!(f_FS_α1, solve(prob)[compiled.f_FS))
 
-    prob = NonlinearProblem(compiled, [], [compiled.Kn => Kn, compiled.α => 0.1])
-    push!(f_FS_α01, solve(prob)[compiled.f_FS])
+    prob = NonlinearProblem(compiled, Dict(compiled.Kn => Kn, compiled.α => 0.1))
+    push!(f_FS_α01, solve(prob)[compiled.f_FS))
 
-    prob = NonlinearProblem(compiled, [], [compiled.Kn => Kn, compiled.α => 0.01])
-    push!(f_FS_α001, solve(prob)[compiled.f_FS])
+    prob = NonlinearProblem(compiled, Dict(compiled.Kn => Kn, compiled.α => 0.01))
+    push!(f_FS_α001, solve(prob)[compiled.f_FS))
 end
 
 plot(Kn_range, f_FS_α1, label="α = 1.0", xscale=:log10,
@@ -131,10 +131,10 @@ R_p = 1.0e-5  # 10 μm
 D_g = 2.0e-5  # m²/s (gas-phase diffusivity)
 D_aq = 1.0e-9  # m²/s (aqueous-phase diffusivity)
 
-prob_dg = NonlinearProblem(compiled_dg, [], [compiled_dg.R_p => R_p, compiled_dg.D_g => D_g])
+prob_dg = NonlinearProblem(compiled_dg, Dict(compiled_dg.R_p => R_p, compiled_dg.D_g => D_g))
 τ_dg = solve(prob_dg)[compiled_dg.τ_dg]
 
-prob_da = NonlinearProblem(compiled_da, [], [compiled_da.R_p => R_p, compiled_da.D_aq => D_aq])
+prob_da = NonlinearProblem(compiled_da, Dict(compiled_da.R_p => R_p, compiled_da.D_aq => D_aq))
 τ_da = solve(prob_da)[compiled_da.τ_da]
 
 println("Gas-phase diffusion timescale: $(round(τ_dg * 1e6, digits=2)) μs")
@@ -163,9 +163,9 @@ sys = MassTransportLimitation()
 compiled = mtkcompile(sys)
 
 # Parameters for a 10 μm droplet at 298 K
-prob = NonlinearProblem(compiled, [],
-    [compiled.R_p => 1.0e-5, compiled.D_g => 2.0e-5, compiled.D_aq => 1.0e-9,
-     compiled.T => 298.15, compiled.α => 1.0, compiled.M_A => 0.029])
+prob = NonlinearProblem(compiled, Dict(
+    compiled.R_p => 1.0e-5, compiled.D_g => 2.0e-5, compiled.D_aq => 1.0e-9,
+    compiled.T => 298.15, compiled.α => 1.0, compiled.M_A => 0.029))
 sol = solve(prob)
 
 println("Gas-phase diffusion limit for k₁H*: $(sol[compiled.k1H_gas_limit]) mol/(m³·Pa·s)")
@@ -190,10 +190,10 @@ f_FS = Float64[]
 f_D = Float64[]
 
 for Kn in Kn_range
-    prob_fs = NonlinearProblem(compiled_fs, [], [compiled_fs.Kn => Kn, compiled_fs.α => 1.0])
+    prob_fs = NonlinearProblem(compiled_fs, Dict(compiled_fs.Kn => Kn, compiled_fs.α => 1.0))
     push!(f_FS, solve(prob_fs)[compiled_fs.f_FS])
 
-    prob_d = NonlinearProblem(compiled_d, [], [compiled_d.Kn => Kn, compiled_d.α => 1.0])
+    prob_d = NonlinearProblem(compiled_d, Dict(compiled_d.Kn => Kn, compiled_d.α => 1.0))
     push!(f_D, solve(prob_d)[compiled_d.f_D])
 end
 
@@ -224,9 +224,9 @@ Kn_vals = Float64[]
 f_FS_vals = Float64[]
 
 for R_p in R_p_range
-    prob = NonlinearProblem(compiled, [],
-        [compiled.R_p => R_p, compiled.α => 1.0,
-         compiled.c_inf => 1.0e-6, compiled.c_s => 0.0])
+    prob = NonlinearProblem(compiled, Dict(
+        compiled.R_p => R_p, compiled.α => 1.0,
+        compiled.c_inf => 1.0e-6, compiled.c_s => 0.0))
     sol = solve(prob)
     push!(Kn_vals, sol[compiled.Kn])
     push!(f_FS_vals, sol[compiled.f_FS])

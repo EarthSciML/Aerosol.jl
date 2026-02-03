@@ -21,8 +21,7 @@ end
 
     expected_τ = R_p^2 / (4 * D_g)
 
-    prob = NonlinearProblem(compiled, [],
-        [compiled.R_p => R_p, compiled.D_g => D_g])
+    prob = NonlinearProblem(compiled, Dict(compiled.R_p => R_p, compiled.D_g => D_g))
     sol = solve(prob)
 
     @test sol[compiled.τ_dg] ≈ expected_τ rtol=1e-10
@@ -46,8 +45,7 @@ end
 
     expected_τ = R_p^2 / (π^2 * D_aq)
 
-    prob = NonlinearProblem(compiled, [],
-        [compiled.R_p => R_p, compiled.D_aq => D_aq])
+    prob = NonlinearProblem(compiled, Dict(compiled.R_p => R_p, compiled.D_aq => D_aq))
     sol = solve(prob)
 
     @test sol[compiled.τ_da] ≈ expected_τ rtol=1e-10
@@ -67,10 +65,9 @@ end
     compiled = mtkcompile(sys)
 
     # High Henry's law coefficient (very soluble)
-    prob = NonlinearProblem(compiled, [],
-        [compiled.R_p => 1.0e-5, compiled.α => 1.0,
+    prob = NonlinearProblem(compiled, Dict(compiled.R_p => 1.0e-5, compiled.α => 1.0,
          compiled.M_A => 0.064, compiled.T => 298.15,
-         compiled.H_star => 1.0e5, compiled.D_aq => 1.0e-9])
+         compiled.H_star => 1.0e5, compiled.D_aq => 1.0e-9))
     sol = solve(prob)
 
     # Both timescales should be positive
@@ -97,8 +94,7 @@ end
     expected_τ_ra = 1 / k_rxn
     expected_τ_rg = expected_τ_ra / (H_star * R * T)
 
-    prob = NonlinearProblem(compiled, [],
-        [compiled.k_rxn => k_rxn, compiled.H_star => H_star, compiled.T => T])
+    prob = NonlinearProblem(compiled, Dict(compiled.k_rxn => k_rxn, compiled.H_star => H_star, compiled.T => T))
     sol = solve(prob)
 
     @test sol[compiled.τ_ra] ≈ expected_τ_ra rtol=1e-10
@@ -124,10 +120,9 @@ end
 
     expected_τ = (ρ_p * R_p^2) / (3 * D_A * m_p * f_Kn)
 
-    prob = NonlinearProblem(compiled, [],
-        [compiled.R_p => R_p, compiled.ρ_p => ρ_p,
+    prob = NonlinearProblem(compiled, Dict(compiled.R_p => R_p, compiled.ρ_p => ρ_p,
          compiled.D_A => D_A, compiled.m_p => m_p,
-         compiled.f_Kn => f_Kn, compiled.N => 1.0e9])
+         compiled.f_Kn => f_Kn, compiled.N => 1.0e9))
     sol = solve(prob)
 
     @test sol[compiled.τ_s] ≈ expected_τ rtol=1e-10
@@ -150,8 +145,7 @@ end
 
     expected_τ_a = (m_w / K_A) * τ_s
 
-    prob = NonlinearProblem(compiled, [],
-        [compiled.m_w => m_w, compiled.K_A => K_A, compiled.τ_s => τ_s])
+    prob = NonlinearProblem(compiled, Dict(compiled.m_w => m_w, compiled.K_A => K_A, compiled.τ_s => τ_s))
     sol = solve(prob)
 
     @test sol[compiled.τ_a] ≈ expected_τ_a rtol=1e-10
@@ -173,12 +167,10 @@ end
     D_g = 2.0e-5
     D_aq = 1.0e-9
 
-    prob_dg = NonlinearProblem(compiled_dg, [],
-        [compiled_dg.R_p => R_p, compiled_dg.D_g => D_g])
+    prob_dg = NonlinearProblem(compiled_dg, Dict(compiled_dg.R_p => R_p, compiled_dg.D_g => D_g))
     sol_dg = solve(prob_dg)
 
-    prob_da = NonlinearProblem(compiled_da, [],
-        [compiled_da.R_p => R_p, compiled_da.D_aq => D_aq])
+    prob_da = NonlinearProblem(compiled_da, Dict(compiled_da.R_p => R_p, compiled_da.D_aq => D_aq))
     sol_da = solve(prob_da)
 
     # Gas-phase diffusion should be much faster than aqueous diffusion
