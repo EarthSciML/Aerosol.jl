@@ -1,0 +1,5 @@
+[default.extend-words]
+KNO = "KNO"
+aer = "aer"
+consts = "consts"
+setp = "setp"

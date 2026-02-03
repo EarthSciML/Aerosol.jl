@@ -1,20 +1,14 @@
-using Aerosol
-using EarthSciData, EarthSciMLBase
-using ModelingToolkit
-using Dates
-using Test
-
-@testset "elemental carbon" begin
+@testitem "elemental carbon" begin
+    using EarthSciData, EarthSciMLBase
+    using ModelingToolkit
+    using Dates
     domain = DomainInfo(
         DateTime(2016, 2, 3),
         DateTime(2016, 2, 4);
         latrange = deg2rad(40.0f0):deg2rad(2):deg2rad(44.0f0),
         lonrange = deg2rad(-97.0f0):deg2rad(2.5):deg2rad(-92.0f0),
-        levrange = 1:1,
-        dtype = Float64
+        levrange = 1:1
     )
-
-    structural_simplify(ElementalCarbon())
 
     model = couple(
         NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain),
@@ -22,7 +16,7 @@ using Test
         ElementalCarbon()
     )
 
-    sys = convert(ODESystem, model, prune = false)
+    sys = convert(System, model)
 
     eqs = string(equations(sys))
     @test occursin("ElementalCarbon₊NEI2016MonthlyEmis_PEC(t)", eqs)
