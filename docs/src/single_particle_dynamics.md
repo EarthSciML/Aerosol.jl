@@ -176,7 +176,7 @@ table_data = [
     (0.1, 2.85),
     (1.0, 1.164),
     (10.0, 1.016),
-    (100.0, 1.002)
+    (100.0, 1.0016)
 ]
 
 D_p_table = [d[1] * 1e-6 for d in table_data]  # Convert μm to m

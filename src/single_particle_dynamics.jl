@@ -19,7 +19,7 @@ The mean free path is calculated from:
 where μ is dynamic viscosity, p is pressure, M is molecular weight, R is the gas constant,
 and T is temperature.
 """
-function MeanFreePath(; name = :MeanFreePath)
+@component function MeanFreePath(; name = :MeanFreePath)
     @constants begin
         R = 8.314, [unit = u"J/(mol*K)", description = "Molar gas constant"]
         M_air = 0.02897, [unit = u"kg/mol", description = "Molecular weight of air"]
@@ -61,7 +61,7 @@ C_c = 1 + \\frac{2\\lambda}{D_p}\\left[A_1 + A_2 \\exp\\left(-\\frac{A_3 D_p}{2\
 
 where the constants A₁ = 1.257, A₂ = 0.4, A₃ = 1.1 are from Allen & Raabe (1982).
 """
-function SlipCorrection(; name = :SlipCorrection)
+@component function SlipCorrection(; name = :SlipCorrection)
     @constants begin
         A1 = 1.257,
         [unit = u"1", description = "Slip correction constant A1 (dimensionless)"]
@@ -110,7 +110,7 @@ The relaxation time (time constant for velocity adjustment) is:
 \\tau = \\frac{\\rho_p D_p^2 C_c}{18\\mu}
 ```
 """
-function SettlingVelocity(; name = :SettlingVelocity)
+@component function SettlingVelocity(; name = :SettlingVelocity)
     @constants begin
         g = 9.807, [unit = u"m/s^2", description = "Gravitational acceleration"]
     end
@@ -169,7 +169,7 @@ The particle mean free path is derived from D = ½ c̄_p λ_p (Eq. 9.88):
 \\lambda_p = \\frac{2D}{\\bar{c}_p}
 ```
 """
-function BrownianDiffusion(; name = :BrownianDiffusion)
+@component function BrownianDiffusion(; name = :BrownianDiffusion)
     @constants begin
         k_B = 1.381e-23, [unit = u"J/K", description = "Boltzmann constant"]
         π_val = π, [unit = u"1", description = "Pi (dimensionless)"]
@@ -227,7 +227,7 @@ With the Einstein relation connecting mobility to diffusion:
 D = B k T
 ```
 """
-function ParticleMobility(; name = :ParticleMobility)
+@component function ParticleMobility(; name = :ParticleMobility)
     @constants begin
         π_val = π, [unit = u"1", description = "Pi (dimensionless)"]
     end
@@ -270,7 +270,7 @@ The migration velocity in an electric field E is:
 v_e = B_e E
 ```
 """
-function ElectricalMobility(; name = :ElectricalMobility)
+@component function ElectricalMobility(; name = :ElectricalMobility)
     @constants begin
         π_val = π, [unit = u"1", description = "Pi (dimensionless)"]
         e = 1.602e-19, [unit = u"C", description = "Elementary charge"]
@@ -326,7 +326,7 @@ St = \\frac{\\tau u_0}{L} = \\frac{D_p^2 \\rho_p C_c u_0}{18 \\mu L}
 When St ≫ 1, particles cannot follow fluid streamlines (inertial impaction).
 When St ≪ 1, particles follow fluid motion closely.
 """
-function StokesNumber(; name = :StokesNumber)
+@component function StokesNumber(; name = :StokesNumber)
     @parameters begin
         D_p = 1e-6, [unit = u"m", description = "Particle diameter"]
         ρ_p = 1000.0, [unit = u"kg/m^3", description = "Particle density"]
@@ -387,7 +387,7 @@ The electrical mobility equivalent diameter relates to mobility measurement:
 D_{em} = D_{ve} \\chi \\frac{C_c(D_{em})}{C_c(D_{ve})}
 ```
 """
-function AerodynamicDiameter(; name = :AerodynamicDiameter)
+@component function AerodynamicDiameter(; name = :AerodynamicDiameter)
     @constants begin
         ρ_p0 = 1000.0, [unit = u"kg/m^3", description = "Reference density (1 g/cm³)"]
     end
@@ -437,7 +437,7 @@ This component calculates key aerosol particle properties:
   - Particle mean free path (Eq. 9.89)
   - Aerodynamic diameter (Eq. 9.110)
 """
-function SingleParticleDynamics(; name = :SingleParticleDynamics)
+@component function SingleParticleDynamics(; name = :SingleParticleDynamics)
     @constants begin
         k_B = 1.381e-23, [unit = u"J/K", description = "Boltzmann constant"]
         R = 8.314, [unit = u"J/(mol*K)", description = "Molar gas constant"]

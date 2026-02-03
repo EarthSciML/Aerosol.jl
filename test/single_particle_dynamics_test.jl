@@ -1,6 +1,7 @@
 @testsnippet SPDSetup begin
     using Test
     using ModelingToolkit
+    using NonlinearSolve
     using Aerosol
 end
 
