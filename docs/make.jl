@@ -18,11 +18,7 @@ makedocs(;
         "VBS" => "VBS.md",
         "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
-            "Isorropia" => [
-            "Overview" => "isorropia/overview.md",
-            "Examples" => "isorropia/examples.md",
-            "Implementation details" => "isorropia/implementation.md"
-        ],
+            "ISORROPIA" => "isorropia.md",
         ],
         "API" => "api.md"
     ],
