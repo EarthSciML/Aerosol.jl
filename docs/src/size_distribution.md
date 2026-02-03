@@ -33,8 +33,8 @@ The `AerosolDistribution` component represents a multi-modal lognormal distribut
 with the following key equations:
 
   - **Number distribution** (Eq. 8.54): ``\frac{dN}{d\log D_p} = \sum_i \frac{N_i}{\sqrt{2\pi}\,\log\sigma_{g,i}} \exp\!\left(-\frac{(\log D_p - \log D_{g,i})^2}{2\log^2\sigma_{g,i}}\right)``
-  - **Surface area distribution** (Eq. 8.50): Same form with surface area median diameter ``D_{s,i} = D_{g,i}\exp(2\ln^2\sigma_{g,i})``
-  - **Volume distribution** (Eq. 8.51): Same form with volume median diameter ``D_{v,i} = D_{g,i}\exp(3\ln^2\sigma_{g,i})``
+  - **Surface area distribution** (Eq. 8.49/8.50): Same form with surface area median diameter ``D_{s,i} = D_{g,i}\exp(2\ln^2\sigma_{g,i})``
+  - **Volume distribution** (Eq. 8.52/8.53): Same form with volume median diameter ``D_{v,i} = D_{g,i}\exp(3\ln^2\sigma_{g,i})``
   - **Vertical mass profile** (Eq. 8.55): ``M(z) = M(0)\exp(-z/H_p)``
 
 Seven predefined aerosol distribution types are provided from Table 8.3, each with
@@ -69,6 +69,40 @@ DataFrame(
 
 ```@example size_dist
 eqs = equations(sys)
+```
+
+### Table 8.3: Model Aerosol Distributions
+
+The following table reproduces Table 8.3 from Seinfeld and Pandis (2006), showing
+the parameters for seven model aerosol distributions expressed as the sum of three
+lognormal modes. Units: N in cm⁻³, D_p in μm.
+
+```@example size_dist
+using DataFrames
+
+# Table 8.3 data (in original units from the book)
+table_data = [
+    ("Urban", 9.93e4, 0.013, 0.245, 1.11e3, 0.014, 0.666, 3.64e4, 0.050, 0.337),
+    ("Marine", 133, 0.008, 0.657, 66.6, 0.266, 0.210, 3.1, 0.58, 0.396),
+    ("Rural", 6650, 0.015, 0.225, 147, 0.054, 0.557, 1990, 0.084, 0.266),
+    ("Remote continental", 3200, 0.020, 0.161, 2900, 0.116, 0.217, 0.3, 1.8, 0.380),
+    ("Free troposphere", 129, 0.007, 0.645, 59.7, 0.250, 0.253, 63.5, 0.52, 0.425),
+    ("Polar", 21.7, 0.138, 0.245, 0.186, 0.75, 0.300, 3e-4, 8.6, 0.291),
+    ("Desert", 726, 0.002, 0.247, 114, 0.038, 0.770, 0.178, 21.6, 0.438)
+]
+
+DataFrame(
+    :Type => [d[1] for d in table_data],
+    Symbol("N₁ (cm⁻³)") => [d[2] for d in table_data],
+    Symbol("Dₚ₁ (μm)") => [d[3] for d in table_data],
+    Symbol("log σ₁") => [d[4] for d in table_data],
+    Symbol("N₂ (cm⁻³)") => [d[5] for d in table_data],
+    Symbol("Dₚ₂ (μm)") => [d[6] for d in table_data],
+    Symbol("log σ₂") => [d[7] for d in table_data],
+    Symbol("N₃ (cm⁻³)") => [d[8] for d in table_data],
+    Symbol("Dₚ₃ (μm)") => [d[9] for d in table_data],
+    Symbol("log σ₃") => [d[10] for d in table_data]
+)
 ```
 
 ## Analysis
@@ -217,7 +251,7 @@ p
 The volume distribution emphasizes larger particles and is important for
 understanding aerosol mass loading. For each mode, the volume distribution
 peaks at the volume median diameter ``D_{v,i} = D_{g,i}\exp(3\ln^2\sigma_{g,i})``
-(Eq. 8.52).
+(Eq. 8.53).
 
 ```@example size_dist
 # Urban volume distribution using the system's n_V_o equation

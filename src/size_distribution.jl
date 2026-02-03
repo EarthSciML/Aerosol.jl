@@ -18,8 +18,7 @@ Each mode `i` is characterized by three parameters:
   - `D_g[i]`: geometric median diameter of mode `i`
   - `logσ[i]`: log10 of the geometric standard deviation of mode `i`
 
-The implementation also includes vertical profiles for aerosol mass (Eq. 8.55)
-and number concentration (Eq. 8.56).
+The implementation also includes the vertical mass profile (Eq. 8.55).
 
 Default parameter values correspond to the "Urban" distribution from Table 8.3.
 """
@@ -65,7 +64,7 @@ Default parameter values correspond to the "Urban" distribution from Table 8.3.
         for i in 1:n_modes
         ),
 
-        # Eq. 8.48/8.50 — Surface area distribution dS/d(log D_p)
+        # Eq. 8.49/8.50 — Surface area distribution dS/d(log D_p)
         n_S_o ~ sum(
             π_c * N[i] * (D_g[i] * exp(2 * (logσ[i] * ln10)^2))^2 /
             (sqrt(2 * π_c) * logσ[i]) *
@@ -74,7 +73,7 @@ Default parameter values correspond to the "Urban" distribution from Table 8.3.
         for i in 1:n_modes
         ),
 
-        # Eq. 8.51 — Volume distribution dV/d(log D_p)
+        # Eq. 8.52/8.53 — Volume distribution dV/d(log D_p)
         n_V_o ~ sum(
             (π_c / 6) * N[i] * (D_g[i] * exp(3 * (logσ[i] * ln10)^2))^3 /
             (sqrt(2 * π_c) * logσ[i]) *
@@ -98,13 +97,13 @@ Default parameter values correspond to the "Urban" distribution from Table 8.3.
         for i in 1:n_modes
         ),
 
-        # Eq. 8.49 — Surface area median diameter (first mode)
+        # Eq. 8.50 — Surface area median diameter (first mode)
         D_s ~ D_g[1] * exp(2 * (logσ[1] * ln10)^2),
 
-        # Eq. 8.52 — Volume median diameter (first mode)
+        # Eq. 8.53 — Volume median diameter (first mode)
         D_v ~ D_g[1] * exp(3 * (logσ[1] * ln10)^2),
 
-        # Eq. 8.39 — Mean diameter (first mode)
+        # Eq. 8.44 — Mean diameter (first mode)
         D_bar ~ D_g[1] * exp(0.5 * (logσ[1] * ln10)^2),
 
         # Eq. 8.55 — Vertical mass profile

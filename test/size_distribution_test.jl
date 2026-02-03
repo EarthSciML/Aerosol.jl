@@ -185,7 +185,7 @@ end
 end
 
 @testitem "Hatch-Choate Equations" setup=[SizeDistSetup] tags=[:size_dist] begin
-    # Verify the system's D_s, D_v, D_bar equations implement Table 8.2 correctly
+    # Verify the system's D_s, D_v, D_bar equations implement Hatch-Choate equations correctly
     sys=AerosolDistribution(1)
 
     D_pg=0.1e-6  # 0.1 μm
@@ -196,17 +196,17 @@ end
         sys.D_p=>D_pg
     )
 
-    # Eq. 8.39: Mean diameter = D_pg * exp(0.5 * ln²(σ_g))
+    # Eq. 8.44: Mean diameter = D_pg * exp(0.5 * ln²(σ_g))
     D_bar_result=eval_eq(sys, sys.D_bar, params)
     @test D_bar_result ≈ D_pg * exp(0.5 * lnσ^2) rtol=1e-10
     @test D_bar_result > D_pg  # mean > geometric median for lognormal
 
-    # Eq. 8.49: Surface area median diameter = D_pg * exp(2 * ln²(σ_g))
+    # Eq. 8.50: Surface area median diameter = D_pg * exp(2 * ln²(σ_g))
     D_s_result=eval_eq(sys, sys.D_s, params)
     @test D_s_result ≈ D_pg * exp(2 * lnσ^2) rtol=1e-10
     @test D_s_result > D_pg
 
-    # Eq. 8.52: Volume median diameter = D_pg * exp(3 * ln²(σ_g))
+    # Eq. 8.53: Volume median diameter = D_pg * exp(3 * ln²(σ_g))
     D_v_result=eval_eq(sys, sys.D_v, params)
     @test D_v_result ≈ D_pg * exp(3 * lnσ^2) rtol=1e-10
     @test D_v_result > D_s_result > D_pg
@@ -316,7 +316,7 @@ end
     D_s_result=eval_eq(sys, sys.D_s, params)
     D_v_result=eval_eq(sys, sys.D_v, params)
 
-    # Eq. 8.49 / 8.52: D_pv / D_ps = exp(ln²σ)
+    # Eq. 8.50 / 8.53: D_pv / D_ps = exp(ln²σ)
     @test D_v_result / D_s_result ≈ exp(lnσ^2) rtol=1e-10
 
     # Verify D_ps > D_pg
