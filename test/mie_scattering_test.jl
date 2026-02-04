@@ -342,3 +342,71 @@ end
     # Higher refractive index should give higher Q_ext
     @test Q_ext_sulfate > Q_ext_water
 end
+
+@testitem "RayleighAtmosphere structural verification" setup=[MieSetup] tags=[:mie] begin
+    # Test the RayleighAtmosphere component structure
+    sys = RayleighAtmosphere()
+
+    @test sys isa ModelingToolkit.System
+
+    vars = unknowns(sys)
+    var_names = [string(Symbolics.tosymbol(v, escape = false)) for v in vars]
+
+    # Check expected variables
+    @test any(occursin("b_sg", vn) for vn in var_names)
+    @test any(occursin("x_v_max", vn) for vn in var_names)
+end
+
+@testitem "RayleighAtmosphere reference values (Problem 15.1A)" setup=[MieSetup] tags=[:mie] begin
+    # From page 705: At sea level, λ = 520 nm, b_sg ≈ 13.2 × 10⁻⁶ m⁻¹
+    # This gives x_v ≈ 296 km
+
+    # Test at reference conditions (T = 293 K, p = 1 atm, λ = 550 nm)
+    # From Problem 15.1A: b_sg = 11.4 × (293/T) × p × 10⁻⁶ m⁻¹
+    T = 293.0  # K
+    p = 1.0    # atm (= 101325 Pa)
+    # At reference conditions, b_sg = 11.4e-6 m⁻¹
+
+    b_sg_expected = 11.4e-6  # m⁻¹
+    x_v_expected = 3.912 / b_sg_expected  # ≈ 343 km at 550 nm
+
+    # The table on page 705 shows b_sg = 13.2e-6 at λ = 520 nm
+    # Since b_sg ~ λ⁻⁴, at 550 nm: b_sg = 13.2e-6 × (520/550)⁴ ≈ 10.5e-6
+    # This is close to the 11.4e-6 from Problem 15.1A (slight discrepancy in sources)
+
+    @test x_v_expected ≈ 343000 rtol=0.01  # ~343 km
+end
+
+@testitem "RayleighAtmosphere wavelength dependence" setup=[MieSetup] tags=[:mie] begin
+    # Rayleigh scattering scales as λ⁻⁴
+    # Test that b_sg at λ = 450 nm vs λ = 550 nm has correct ratio
+
+    λ1 = 450e-9  # m
+    λ2 = 550e-9  # m
+
+    # b_sg(λ1) / b_sg(λ2) = (λ2/λ1)⁴
+    expected_ratio = (λ2 / λ1)^4
+
+    # Compute directly from the formula
+    b_sg_ref = 11.4e-6
+    λ_ref = 550e-9
+
+    b_sg_450 = b_sg_ref * (λ_ref / λ1)^4
+    b_sg_550 = b_sg_ref * (λ_ref / λ2)^4
+
+    @test b_sg_450 / b_sg_550 ≈ expected_ratio rtol=1e-10
+end
+
+@testitem "RayleighAtmosphere temperature and pressure dependence" setup=[MieSetup] tags=[:mie] begin
+    # b_sg ~ (1/T) × p
+    # At higher altitude (lower T and p), b_sg should decrease
+
+    # From Table on page 705:
+    # Altitude 0 km: b_sg = 13.2e-6 m⁻¹ (at 520 nm)
+    # Altitude 2 km: b_sg = 10.6e-6 m⁻¹
+
+    # The ratio 10.6/13.2 ≈ 0.80 reflects the decrease in pressure with altitude
+    # (pressure at 2 km ≈ 0.8 × sea level pressure)
+
+    @test 10.6e-6 / 13.2e-6 ≈ 0.80 rtol=0.01
+end

@@ -1,4 +1,4 @@
-export MieScattering, RayleighScattering, AerosolExtinction, Visibility
+export MieScattering, RayleighScattering, AerosolExtinction, Visibility, RayleighAtmosphere
 
 """
     MieScattering(; name=:MieScattering)
@@ -300,6 +300,55 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.31-15.36.
         # Eq. 15.30 - Particle scattering coefficient
         # b_scat = b_sg + b_sp, so b_sp = b_ext - b_sg - b_ag (assuming absorption from particles is small)
         b_sp ~ b_ext - b_sg - b_ag
+    ]
+
+    return System(eqs, t; name)
+end
+
+"""
+    RayleighAtmosphere(; name=:RayleighAtmosphere)
+
+Calculate the Rayleigh scattering coefficient for air molecules.
+
+The Rayleigh scattering coefficient represents the irreducible minimum of light
+scattering along an atmospheric sight path due to air molecules. It varies with
+temperature, pressure, and wavelength according to λ⁻⁴.
+
+At sea level (T = 293 K, p = 1 atm) and λ = 550 nm, b_sg ≈ 13.2 × 10⁻⁶ m⁻¹,
+limiting visibility in a clean atmosphere to approximately 296 km.
+
+# Reference
+
+Seinfeld & Pandis (2006), Chapter 15, page 705 and Problem 15.1A.
+"""
+@component function RayleighAtmosphere(; name = :RayleighAtmosphere)
+    @constants begin
+        # Reference values at sea level, T = 293 K, λ = 550 nm
+        # From Problem 15.1A: b_sg = 11.4 × (293/T) × p × 10⁻⁶ m⁻¹
+        b_sg_ref = 11.4e-6, [unit = u"m^-1", description = "Reference Rayleigh coefficient at 293K, 1atm, 550nm"]
+        T_ref = 293.0, [unit = u"K", description = "Reference temperature"]
+        p_ref = 101325.0, [unit = u"Pa", description = "Reference pressure (1 atm)"]
+        λ_ref = 550e-9, [unit = u"m", description = "Reference wavelength (550 nm)"]
+    end
+
+    @parameters begin
+        T = 293.0, [unit = u"K", description = "Temperature"]
+        p = 101325.0, [unit = u"Pa", description = "Pressure"]
+        λ = 550e-9, [unit = u"m", description = "Wavelength"]
+    end
+
+    @variables begin
+        b_sg(t), [unit = u"m^-1", description = "Rayleigh scattering coefficient"]
+        x_v_max(t), [unit = u"m", description = "Maximum visual range in Rayleigh atmosphere"]
+    end
+
+    eqs = [
+        # Problem 15.1A: b_sg = 11.4 × (293/T) × (p/p_ref) × (λ_ref/λ)⁴ × 10⁻⁶ m⁻¹
+        # Rayleigh scattering scales as λ⁻⁴
+        b_sg ~ b_sg_ref * (T_ref / T) * (p / p_ref) * (λ_ref / λ)^4,
+
+        # Maximum visibility in clean Rayleigh atmosphere (Eq. 15.36)
+        x_v_max ~ 3.912 / b_sg
     ]
 
     return System(eqs, t; name)

@@ -27,6 +27,10 @@ AerosolExtinction
 Visibility
 ```
 
+```@docs
+RayleighAtmosphere
+```
+
 ## Implementation
 
 ### MieScattering Component
@@ -83,6 +87,26 @@ when ``\alpha \ll 1`` (particles much smaller than the wavelength):
 
   - **Rayleigh scattering efficiency** (Eq. 15.19): ``Q_{\text{scat}} = \frac{8}{3}\alpha^4 \left|\frac{m^2-1}{m^2+2}\right|^2``
   - **Rayleigh absorption efficiency** (Eq. 15.21): ``Q_{\text{abs}} = 4\alpha \, \text{Im}\left\{\frac{m^2-1}{m^2+2}\right\}``
+
+### Refractive Index of Liquid Water (Table 15.1)
+
+The refractive index of water varies with wavelength. The imaginary part ``k`` is negligibly
+small in the visible range (400-700 nm), making water essentially non-absorbing.
+
+| λ (μm) | n     | k             |
+|:------ |:----- |:------------- |
+| 0.40   | 1.339 | 1.86 × 10⁻⁹   |
+| 0.45   | 1.337 | 1.02 × 10⁻⁹   |
+| 0.50   | 1.335 | 1.00 × 10⁻⁹   |
+| 0.55   | 1.333 | 1.96 × 10⁻⁹   |
+| 0.60   | 1.332 | 1.09 × 10⁻⁸   |
+| 0.65   | 1.331 | 1.64 × 10⁻⁸   |
+| 0.70   | 1.331 | 3.35 × 10⁻⁸   |
+| 1.0    | 1.327 | 2.89 × 10⁻⁶   |
+| 2.0    | 1.306 | 1.10 × 10⁻³   |
+| 5.0    | 1.325 | 1.24 × 10⁻²   |
+
+*Source: Table 15.1 of Seinfeld & Pandis (2006), based on Hale and Querry (1973)*
 
 ### Refractive Indices of Atmospheric Substances (Table 15.2)
 
@@ -267,6 +291,39 @@ plot!(alpha_range_small, Q_scat_rayleigh,
 xlabel!("Size parameter α")
 ylabel!("Q_scat")
 title!("Rayleigh vs. Mie Scattering (n=1.5, k=0)")
+```
+
+### Rayleigh Scattering Coefficient (Problem 15.1A)
+
+The Rayleigh scattering coefficient for air molecules represents the irreducible minimum
+of light scattering along an atmospheric sight path. At sea level and λ = 550 nm,
+``b_{sg} \approx 13.2 \times 10^{-6} \text{ m}^{-1}``. The coefficient varies with
+temperature and pressure according to (Problem 15.1A):
+
+```math
+b_{sg} = 11.4 \left(\frac{293}{T}\right) p \times 10^{-6} \text{ m}^{-1} \quad (\lambda = 550 \text{ nm})
+```
+
+where ``T`` is temperature in K and ``p`` is pressure in atmospheres.
+
+The Rayleigh scattering coefficient also varies with altitude (page 705):
+
+| Altitude (km) | ``b_{sg}`` (10⁻⁶ m⁻¹) |
+|:------------- |:--------------------- |
+| 0             | 13.2                  |
+| 1.0           | 11.4                  |
+| 2.0           | 10.6                  |
+| 3.0           | 9.7                   |
+| 4.0           | 8.8                   |
+
+```@example mie
+# Rayleigh scattering coefficient at different altitudes
+altitudes = [0.0, 1.0, 2.0, 3.0, 4.0]  # km
+b_sg_values = [13.2, 11.4, 10.6, 9.7, 8.8] .* 1e-6  # m^-1
+
+bar(altitudes, b_sg_values .* 1e6, label = "b_sg",
+    xlabel = "Altitude (km)", ylabel = "b_sg (10⁻⁶ m⁻¹)",
+    title = "Rayleigh Scattering Coefficient vs Altitude (λ=520nm)")
 ```
 
 ### Visibility and Extinction
