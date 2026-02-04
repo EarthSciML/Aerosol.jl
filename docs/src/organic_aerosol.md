@@ -100,6 +100,24 @@ DataFrame(
 equations(sys_tp)
 ```
 
+#### Table 14.12: Two-Product SOA Model Parameters
+
+Parameters for the two-product model from Seinfeld and Pandis (2006), Table 14.12.
+Default values correspond to α-pinene/OH oxidation.
+
+| Parent ROG | Oxidant | α₁ | c₁° (μg/m³) | α₂ | c₂° (μg/m³) |
+|------------|---------|------|--------------|------|--------------|
+| α-pinene | OH | 0.038 | 5.8 | 0.326 | 250 |
+| α-pinene | O₃ | 0.125 | 11 | 0.102 | 116 |
+| β-pinene | OH | 0.035 | 195 | - | - |
+| β-pinene | O₃ | 0.026 | 20.4 | 0.485 | 195 |
+| Δ³-carene | O₃ | 0.054 | 43 | 0.517 | 500 |
+| Sabinene | O₃ | 0.067 | 79 | 0.399 | 680 |
+| Limonene | O₃ | 0.239 | 22 | 0.363 | 170 |
+
+Note: The saturation concentrations c₁° and c₂° in the table are in μg/m³.
+The implementation uses SI units (kg/m³), so multiply by 10⁻⁹ when setting parameters.
+
 ### Adsorption Isotherms (Section 14.5.3)
 
 ```@example organic_aerosol
@@ -184,6 +202,42 @@ plot(m0_vals * 1e9, Xp_vals,
     xlabel="Preexisting OA m₀ (μg/m³)", ylabel="Mass Fraction in Aerosol X_p",
     title="Absorptive Partitioning: X_p vs m₀ (Eq. 14.25)",
     label="X_p", xscale=:log10, lw=2, legend=:bottomright)
+```
+
+### Two-Product Model: Odum Yield Curve
+
+The two-product model (Odum et al., 1996) shows that aerosol yield increases
+with increasing organic aerosol concentration. This nonlinear behavior is
+captured by Equation 14.43.
+
+```@example organic_aerosol
+sys_tp = TwoProductSOA()
+sys_tp_nns = ModelingToolkit.toggle_namespacing(sys_tp, false)
+ssys_tp = mtkcompile(sys_tp; inputs=[sys_tp_nns.ΔROG])
+
+# Default α-pinene/OH parameters
+a_1 = 0.038; a_2 = 0.326
+c_sat_1 = 5.8e-9; c_sat_2 = 250.0e-9  # kg/m³
+
+# Sweep ΔROG and plot Y vs c_aer (Odum plot)
+ΔROG_vals = 10 .^ range(-10, -6, length=100)  # kg/m³
+c_aer_vals = Float64[]
+Y_vals = Float64[]
+
+for drog in ΔROG_vals
+    prob = NonlinearProblem(ssys_tp, Dict(
+        ssys_tp.ΔROG => drog,
+        ssys_tp.c_aer => drog * 0.1,
+        ssys_tp.Y => 0.1, ssys_tp.ΔROG_threshold => 1e-9))
+    sol = solve(prob)
+    push!(c_aer_vals, sol[ssys_tp.c_aer])
+    push!(Y_vals, sol[ssys_tp.Y])
+end
+
+plot(c_aer_vals * 1e9, Y_vals,
+    xlabel="Organic Aerosol m₀ (μg/m³)", ylabel="Aerosol Yield Y",
+    title="Two-Product Model: Yield vs Organic Aerosol (Eq. 14.43)",
+    label="α-pinene/OH", xscale=:log10, lw=2, legend=:bottomright)
 ```
 
 ### Langmuir Adsorption Isotherm
