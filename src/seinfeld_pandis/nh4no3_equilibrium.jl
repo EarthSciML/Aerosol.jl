@@ -69,11 +69,11 @@ using ModelingToolkit, Aerosol
     @constants begin
         T_ref = 298.0, [description = "Reference temperature", unit = u"K"]
         # Temperature coefficients with units for Eq. 10.91 and 10.88
-        c1_Kp = 84.6, [description = "First coefficient in Eq. 10.91 (dimensionless)"]
+        c1_Kp = 84.6, [description = "First coefficient in Eq. 10.91 (dimensionless)", unit = u"1"]
         c2_Kp = 24220.0, [description = "Second coefficient in Eq. 10.91", unit = u"K"]
-        c3_Kp = 6.1, [description = "Third coefficient in Eq. 10.91 (dimensionless)"]
+        c3_Kp = 6.1, [description = "Third coefficient in Eq. 10.91 (dimensionless)", unit = u"1"]
         c1_DRH = 723.7, [description = "DRH coefficient", unit = u"K"]
-        c2_DRH = 1.6954, [description = "DRH constant (dimensionless)"]
+        c2_DRH = 1.6954, [description = "DRH constant (dimensionless)", unit = u"1"]
     end
 
     @parameters begin
