@@ -105,17 +105,23 @@ equations(sys_tp)
 Parameters for the two-product model from Seinfeld and Pandis (2006), Table 14.12.
 Default values correspond to α-pinene/OH oxidation.
 
-| Parent ROG | Oxidant | α₁ | c₁° (μg/m³) | α₂ | c₂° (μg/m³) |
-|------------|---------|------|--------------|------|--------------|
-| α-pinene | OH | 0.038 | 5.8 | 0.326 | 250 |
-| α-pinene | O₃ | 0.125 | 11 | 0.102 | 116 |
-| β-pinene | OH | 0.035 | 195 | - | - |
-| β-pinene | O₃ | 0.026 | 20.4 | 0.485 | 195 |
-| Δ³-carene | O₃ | 0.054 | 43 | 0.517 | 500 |
-| Sabinene | O₃ | 0.067 | 79 | 0.399 | 680 |
-| Limonene | O₃ | 0.239 | 22 | 0.363 | 170 |
+| Parent ROG | Oxidant | α₁ | α₂ | c₁° (μg/m³) | c₂° (μg/m³) |
+|------------|---------|------|------|--------------|--------------|
+| Toluene | OH | 0.071 | 0.138 | 18.9 | 526 |
+| Xylenes | OH | 0.038 | 0.167 | 23.8 | 714 |
+| α-pinene | OH | 0.038 | 0.326 | 5.8 | 250 |
+| α-pinene | O₃ | 0.125 | 0.102 | 11.4 | 12.7 |
+| β-pinene | OH | 0.13 | 0.041 | 22.7 | 204 |
+| β-pinene | O₃ | 0.21 | 0.49 | 5.1 | 333 |
+| Δ³-carene | OH | 0.054 | 0.517 | 23.2 | 238 |
+| Δ³-carene | O₃ | 0.128 | 0.068 | 7.8 | 14.7 |
+| Δ³-carene | NO₃ | 0.743 | 0.257 | 113 | 120 |
+| Caryophyllene | OH | 1.0 | - | 23 | - |
+| Humulene | OH | 1.0 | - | 20 | - |
 
-Note: The saturation concentrations c₁° and c₂° in the table are in μg/m³.
+Note: Molar stoichiometric yields (α) are derived assuming that the precursor and the SOA species have the same molecular weight. Saturation mixing ratios (c°) are based on experiments at around 310 K. Source: Griffin et al. (1999).
+
+The saturation concentrations c₁° and c₂° in the table are in μg/m³.
 The implementation uses SI units (kg/m³), so multiply by 10⁻⁹ when setting parameters.
 
 ### Adsorption Isotherms (Section 14.5.3)
