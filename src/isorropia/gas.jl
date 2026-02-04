@@ -31,9 +31,9 @@ end
         T = 293.15, [unit = u"K", description = "Temperature"]
     end
     @components begin
-        HNO3 = Gas(M_guess=6e-8)
-        HCl = Gas(M_guess=1.6e-7)
-        NH3 = Gas(M_guess=4.7e-8)
+        HNO3 = Gas(M_guess = 6e-8)
+        HCl = Gas(M_guess = 1.6e-7)
+        NH3 = Gas(M_guess = 4.7e-8)
     end
     @equations begin
         HNO3.T ~ T

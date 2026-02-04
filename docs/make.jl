@@ -15,13 +15,17 @@ makedocs(;
     repo = Remotes.GitHub("EarthSciML", "Aerosol.jl"),
     pages = [
         "Home" => "index.md",
+        "Population Dynamics" => "dynamics.md",
+        "Single Particle Dynamics" => "single_particle_dynamics.md",
+        "Size Distribution" => "size_distribution.md",
         "VBS" => "VBS.md",
+        "Organic Aerosol" => "organic_aerosol.md",
+        "Mass Transfer" => "mass_transfer.md",
+        "Nucleation" => "nucleation.md",
+        "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
-            "Isorropia" => [
-            "Overview" => "isorropia/overview.md",
-            "Examples" => "isorropia/examples.md",
-            "Implementation details" => "isorropia/implementation.md"
-        ],
+            "ISORROPIA" => "isorropia.md",
+            "Seinfeld & Pandis Ch. 10" => "seinfeld_pandis_ch10.md"
         ],
         "API" => "api.md"
     ],

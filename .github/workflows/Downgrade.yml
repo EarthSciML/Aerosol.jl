@@ -16,7 +16,7 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     env:
-      GROUP: ${{ matrix.group }}    
+      GROUP: ${{ matrix.group }}
     strategy:
       fail-fast: false
       matrix:
@@ -29,13 +29,13 @@ jobs:
           - macos-latest
           - windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
-      - uses: julia-actions/julia-downgrade-compat@v1
+      - uses: julia-actions/julia-downgrade-compat@a14e4360fde479696aacfa6f2b6b8ff538cd6c0f
         with:
-          skip: Pkg,TOML,Statistics,Random,Dates
+          skip: Pkg,TOML,Statistics,Random,Dates,LinearAlgebra
       - uses: julia-actions/cache@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
