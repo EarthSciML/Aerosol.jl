@@ -464,7 +464,8 @@ Ice nucleation and ice-water equilibrium thermodynamics.
 Includes freezing point depression for solutions, Kelvin equation for ice particles,
 and empirical ice nuclei concentration.
 
-Based on Equations 17.100-17.103 from Seinfeld & Pandis (2006).
+Based on Equations 17.100-17.103 from Seinfeld & Pandis (2006) "Atmospheric Chemistry
+and Physics: From Air Pollution to Climate Change", 2nd Edition, Chapter 17.
 
 # Key Equations
 - Eq. 17.100: T_0 - T_e = (RT_0 T_e/ΔH_m)(-ln a_w) (freezing point from water activity)

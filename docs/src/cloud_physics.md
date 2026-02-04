@@ -290,6 +290,42 @@ hline!([1.0], linestyle = :dot, color = :gray, label = "S = 1")
 plot!()
 ```
 
+### Figure 17.8: Köhler Curves with Insoluble Material
+
+Köhler curves for particles containing (NH₄)₂SO₄ and insoluble material, showing how decreasing soluble mass fraction (ε_m) increases the supersaturation required for activation (Eqs. 17.35-17.40).
+
+```@example cloud_physics
+D_wet_range_17_8 = 10.0 .^ range(log10(1e-7), log10(1e-4), length = 200)
+
+function kohler_curve_eps(kt_sys, d_dry, eps_m)
+    S_vals = Float64[]
+    for D_w in D_wet_range_17_8
+        prob = NonlinearProblem(kt_sys,
+            Dict(
+                kt_sys.D_p => D_w, kt_sys.d_s => d_dry,
+                kt_sys.M_s => 0.13214, kt_sys.ρ_s => 1770.0,
+                kt_sys.ν_s => 3.0, kt_sys.T => 293.15, kt_sys.ε_m => eps_m,
+                kt_sys.ρ_u => 2000.0
+            ))
+        sol = solve(prob)
+        push!(S_vals, (sol[kt_sys.S] - 1) * 100)  # Convert to supersaturation %
+    end
+    return S_vals
+end
+
+plot(title = "Fig. 17.8: Köhler Curves with Insoluble Material",
+    xlabel = "Wet Diameter (µm)", ylabel = "Supersaturation (%)",
+    legend = :topright, xscale = :log10, ylims = (-0.3, 0.4))
+
+d_dry = 0.1e-6  # 0.1 µm dry diameter
+for (eps_m, color) in [(1.0, :black), (0.6, :blue), (0.4, :green), (0.2, :red)]
+    S_vals = kohler_curve_eps(kt_sys, d_dry, eps_m)
+    plot!(D_wet_range_17_8 * 1e6, S_vals, label = "ε_m = $eps_m", linewidth = 2, color = color)
+end
+hline!([0.0], linestyle = :dash, color = :gray, label = "S = 1 (0% SS)")
+plot!()
+```
+
 ### Figure 17.9: Effect of Insoluble Material on Critical Supersaturation
 
 Particles with less soluble material require higher supersaturation to activate (Eqs. 17.35-17.40).
