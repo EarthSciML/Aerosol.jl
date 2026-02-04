@@ -11,6 +11,7 @@ using EarthSciMLBase
 include("VBS.jl")
 include("elemental_carbon.jl")
 include("single_particle_dynamics.jl")
+include("nucleation.jl")
 include("size_distribution.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA

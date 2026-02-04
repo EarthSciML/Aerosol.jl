@@ -18,6 +18,7 @@ makedocs(;
         "Single Particle Dynamics" => "single_particle_dynamics.md",
         "Size Distribution" => "size_distribution.md",
         "VBS" => "VBS.md",
+        "Nucleation" => "nucleation.md",
         "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
             "ISORROPIA" => "isorropia.md",
