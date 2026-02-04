@@ -15,6 +15,7 @@ makedocs(;
     repo = Remotes.GitHub("EarthSciML", "Aerosol.jl"),
     pages = [
         "Home" => "index.md",
+        "Single Particle Dynamics" => "single_particle_dynamics.md",
         "Size Distribution" => "size_distribution.md",
         "VBS" => "VBS.md",
         "Nucleation" => "nucleation.md",
