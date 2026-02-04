@@ -59,7 +59,7 @@ Equations 17.1-17.6, Table 17.2.
         Hv_exp_const = 0.167,
         [description = "Exponent constant for latent heat (dimensionless)", unit = u"1"]
         Hv_exp_coeff = 3.67e-4,
-        [description = "Exponent coefficient for latent heat (dimensionless)", unit = u"1"]
+        [description = "Exponent coefficient for latent heat", unit = u"1/K"]
         # Eq. 17.4 constants - Latent heat of melting
         # ΔH_m(J/g) = 333.5 + 2.03*T_C - 0.0105*T_C^2, T_C in Celsius (=K offset)
         # Converted to J/kg by multiplying by 1000
@@ -103,9 +103,9 @@ Equations 17.1-17.6, Table 17.2.
         cpw_base + cpw_c2 * ((T - T_cpw_ref) / T_unit)^2 +
         cpw_c4 * ((T - T_cpw_ref) / T_unit)^4,
 
-        # Eq. 17.3 - Latent heat of vaporization (J/g)
-        # T is nondimensionalized to keep the exponent dimensionless
-        ΔH_v ~ Hv_ref * (T_ref / T)^(Hv_exp_const + Hv_exp_coeff * (T / T_unit)),
+        # Eq. 17.3 - Latent heat of vaporization (J/kg)
+        # Hv_exp_coeff has units 1/K, so Hv_exp_coeff * T is dimensionless
+        ΔH_v ~ Hv_ref * (T_ref / T)^(Hv_exp_const + Hv_exp_coeff * T),
 
         # Eq. 17.4 - Latent heat of melting (J/g)
         # T_C/T_unit makes the polynomial argument dimensionless
@@ -480,7 +480,8 @@ Based on Equations 17.93-17.103 from Seinfeld & Pandis (2006).
         ΔT_f ~ K_f * molality,
 
         # Eq. 17.100 - Equilibrium freezing temperature from water activity
-        T_e ~ T_freeze - R * T_freeze * T / (ΔH_m_mass * M_w) * (-log(a_w + 1e-30)),
+        # Uses approximation T_0*T_e ≈ T_0^2, where ΔH_m_molar = ΔH_m_mass * M_w
+        T_e ~ T_freeze + R * T_freeze^2 / (ΔH_m_mass * M_w) * log(a_w + 1e-30),
 
         # Eq. 17.102 - Kelvin equation for ice particles
         kelvin_ice ~ exp(4 * M_w * σ_ia / (R * T * ρ_i * D_p)),

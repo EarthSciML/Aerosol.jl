@@ -251,6 +251,45 @@ plot(d_dry_range * 1e6, sc_nacl, label = "NaCl", linewidth = 2, color = :blue,
 plot!(d_dry_range * 1e6, sc_as, label = "(NH₄)₂SO₄", linewidth = 2, color = :red)
 ```
 
+### Figure 17.7: Effect of Dissociation on Köhler Curves
+
+Köhler curves for (NH₄)₂SO₄ particles showing the effect of complete dissociation (ν=3) versus no dissociation (ν=1). Dissociation lowers the critical saturation ratio and decreases the critical diameter.
+
+```@example cloud_physics
+D_wet_range_17_7 = 10.0 .^ range(log10(1e-8), log10(2e-5), length = 200)
+
+function kohler_curve_nu(kt_sys, d_dry, nu_s)
+    S_vals = Float64[]
+    for D_w in D_wet_range_17_7
+        prob = NonlinearProblem(kt_sys,
+            Dict(
+                kt_sys.D_p => D_w, kt_sys.d_s => d_dry,
+                kt_sys.M_s => 0.13214, kt_sys.ρ_s => 1770.0,
+                kt_sys.ν_s => nu_s, kt_sys.T => 293.15, kt_sys.ε_m => 1.0
+            ))
+        sol = solve(prob)
+        push!(S_vals, sol[kt_sys.S])
+    end
+    return S_vals
+end
+
+plot(title = "Fig. 17.7: Köhler Curves - Dissociation Effect",
+    xlabel = "Wet Radius (µm)", ylabel = "Saturation Ratio S",
+    legend = :topright, ylims = (0.998, 1.012))
+
+for d_dry in [0.02e-6, 0.04e-6, 0.1e-6]
+    d_label = round(d_dry * 1e6 * 1000, digits = 0)  # in nm
+    S_complete = kohler_curve_nu(kt_sys, d_dry, 3.0)
+    S_none = kohler_curve_nu(kt_sys, d_dry, 1.0)
+    plot!(D_wet_range_17_7 * 1e6 / 2, S_complete, label = "Complete diss., r=$(d_label/2) nm",
+        linestyle = :dash, linewidth = 2, xscale = :log10)
+    plot!(D_wet_range_17_7 * 1e6 / 2, S_none, label = "No diss., r=$(d_label/2) nm",
+        linestyle = :solid, linewidth = 2, xscale = :log10)
+end
+hline!([1.0], linestyle = :dot, color = :gray, label = "S = 1")
+plot!()
+```
+
 ### Figure 17.9: Effect of Insoluble Material on Critical Supersaturation
 
 Particles with less soluble material require higher supersaturation to activate (Eqs. 17.35-17.40).
