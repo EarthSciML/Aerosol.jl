@@ -4,7 +4,7 @@ Aerosol thermodynamics equations from Seinfeld & Pandis (2006) Chapter 10.
 Reference: Seinfeld, J.H. and Pandis, S.N. (2006) "Atmospheric Chemistry and Physics:
 From Air Pollution to Climate Change", 2nd Edition, John Wiley & Sons, Chapter 10.
 """
-module SeinfeldPandis
+module SeinfeldPandisCh10
 
 using ModelingToolkit
 using ModelingToolkit: t, D

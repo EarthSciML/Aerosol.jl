@@ -34,9 +34,9 @@ p_A = p°_A \exp\left(\frac{2\sigma M}{RT \rho_l R_p}\right)
 
 #### Variables
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 using DataFrames, ModelingToolkit, Symbolics, DynamicQuantities
-using Aerosol, Aerosol.SeinfeldPandis
+using Aerosol, Aerosol.SeinfeldPandisCh10
 
 sys = KelvinEffect()
 vars = unknowns(sys)
@@ -49,7 +49,7 @@ DataFrame(
 
 #### Parameters
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 params = parameters(sys)
 DataFrame(
     :Name => [string(Symbolics.tosymbol(p, escape = false)) for p in params],
@@ -60,7 +60,7 @@ DataFrame(
 
 #### Equations
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 equations(sys)
 ```
 
@@ -76,7 +76,7 @@ where A, B, C are the solubility polynomial coefficients from Table 10.2.
 
 #### Variables and Parameters
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 sys_drh = DRHTemperature(salt = :NH4NO3)
 params_drh = parameters(sys_drh)
 DataFrame(
@@ -88,7 +88,7 @@ DataFrame(
 
 #### Equations
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 equations(sys_drh)
 ```
 
@@ -104,7 +104,7 @@ where ``C_i`` is the concentration of species ``i`` and ``m_{i,0}(a_w)`` is the 
 
 #### Variables and Parameters
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 sys_zsr = ZSRWaterContent(n_species = 2)
 vars_zsr = unknowns(sys_zsr)
 DataFrame(
@@ -124,7 +124,7 @@ Implements NH₄NO₃ gas-aerosol equilibrium including:
 
 #### Equations
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 sys_nh4 = NH4NO3Equilibrium()
 equations(sys_nh4)
 ```
@@ -147,7 +147,7 @@ get_equilibrium_constant
 
 The Kelvin effect becomes significant for particles smaller than ~100 nm. This figure shows the saturation ratio as a function of droplet radius for water at 298 K.
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 using Plots
 
 # Saturation ratio vs droplet radius for water (Fig. 10.12)
@@ -180,7 +180,7 @@ nothing # hide
 
 The deliquescence relative humidity varies with temperature. Salts with positive enthalpy of solution (``\Delta H_s > 0``) show decreasing DRH with increasing temperature, while those with negative ``\Delta H_s`` show the opposite trend.
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 T_range = 250.0:1.0:320.0
 
 salts = [:NH4NO3, :NH42SO4, :NaCl, :Na2SO4, :KCl, :NaNO3]
@@ -205,7 +205,7 @@ nothing # hide
 
 The dissociation constant ``K_p`` of solid NH₄NO₃ increases strongly with temperature, indicating that higher temperatures favor evaporation of NH₄NO₃ to NH₃(g) + HNO₃(g).
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 T_range_kp = 270.0:0.5:320.0
 Kp_vals = [nh4no3_Kp(T) for T in T_range_kp]
 
@@ -225,7 +225,7 @@ nothing # hide
 
 The DRH of NH₄NO₃ decreases with increasing temperature, which determines the phase transition boundary between solid and aqueous NH₄NO₃.
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 T_range_drh = 270.0:0.5:320.0
 drh_nh4no3_emp = [nh4no3_drh(T) * 100 for T in T_range_drh]
 drh_nh4no3_eq72 = [drh_temperature(T, :NH4NO3) * 100 for T in T_range_drh]
@@ -247,7 +247,7 @@ nothing # hide
 
 The ZSR mixing rule predicts aerosol liquid water content as a function of relative humidity for multicomponent aerosols.
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 RH_range = 0.4:0.01:0.95
 
 # Single-component water uptake
@@ -277,7 +277,7 @@ nothing # hide
 
 Selected equilibrium constants from Table 10.7 showing their temperature dependence.
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 T_range_eq = 260.0:1.0:320.0
 
 reactions = [:HSO4_dissoc, :NaCl_dissoc, :NH42SO4_dissoc, :Na2SO4_dissoc]
@@ -309,7 +309,7 @@ The ionic strength fraction ``Y`` determines the activity coefficient correction
 Y = \frac{[\text{NH}_4\text{NO}_3]}{[\text{NH}_4\text{NO}_3] + 3[(\text{NH}_4)_2\text{SO}_4]}
 ```
 
-```@example seinfeld_pandis
+```@example seinfeld_pandis_ch10
 ratios = 0.0:0.01:1.0  # NH4NO3 fraction of total
 Y_vals = [ionic_strength_fraction(r, 1-r) for r in ratios]
 
@@ -334,14 +334,14 @@ zsr_water_content
 nh4no3_Kp
 nh4no3_K_AN
 ionic_strength_fraction
-Aerosol.SeinfeldPandis.equilibrium_constant_temperature
-Aerosol.SeinfeldPandis.binary_molality_nh42so4
-Aerosol.SeinfeldPandis.binary_molality_nh4no3
-Aerosol.SeinfeldPandis.binary_molality_nacl
+Aerosol.SeinfeldPandisCh10.equilibrium_constant_temperature
+Aerosol.SeinfeldPandisCh10.binary_molality_nh42so4
+Aerosol.SeinfeldPandisCh10.binary_molality_nh4no3
+Aerosol.SeinfeldPandisCh10.binary_molality_nacl
 ```
 
 ## Module Reference
 
 ```@docs
-Aerosol.SeinfeldPandis
+Aerosol.SeinfeldPandisCh10
 ```

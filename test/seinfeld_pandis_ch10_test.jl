@@ -1,6 +1,6 @@
-@testitem "KelvinEffect Structure" tags=[:seinfeld_pandis] begin
+@testitem "KelvinEffect Structure" tags=[:seinfeld_pandis_ch10] begin
     using Aerosol
-    using Aerosol.SeinfeldPandis
+    using Aerosol.SeinfeldPandisCh10
     using ModelingToolkit
 
     # Test that the component builds correctly
@@ -22,8 +22,8 @@
     @test length(equations(sys)) == 2
 end
 
-@testitem "Kelvin Effect Calculation" tags=[:seinfeld_pandis] begin
-    using Aerosol.SeinfeldPandis
+@testitem "Kelvin Effect Calculation" tags=[:seinfeld_pandis_ch10] begin
+    using Aerosol.SeinfeldPandisCh10
 
     # Eq. 10.86: S = exp(2σM / (R T ρ_l R_p))
     # For a 50 nm water droplet at 298 K:
@@ -68,9 +68,9 @@ end
     @test S_benzene > 1.0
 end
 
-@testitem "DRH Temperature Dependence" tags=[:seinfeld_pandis] begin
+@testitem "DRH Temperature Dependence" tags=[:seinfeld_pandis_ch10] begin
     using Aerosol
-    using Aerosol.SeinfeldPandis
+    using Aerosol.SeinfeldPandisCh10
     using ModelingToolkit
 
     # Test the DRH component builds
@@ -118,41 +118,41 @@ end
     end
 end
 
-@testitem "DRH Data Tables" tags=[:seinfeld_pandis] begin
-    using Aerosol.SeinfeldPandis
+@testitem "DRH Data Tables" tags=[:seinfeld_pandis_ch10] begin
+    using Aerosol.SeinfeldPandisCh10
 
     # Verify all DRH values at 298 K match Table 10.1
-    @test SeinfeldPandis.DRH_298[:KCl] ≈ 0.842 rtol=0.01
-    @test SeinfeldPandis.DRH_298[:Na2SO4] ≈ 0.842 rtol=0.01
-    @test SeinfeldPandis.DRH_298[:NH4Cl] ≈ 0.800 rtol=0.01
-    @test SeinfeldPandis.DRH_298[:NH42SO4] ≈ 0.799 rtol=0.01
-    @test SeinfeldPandis.DRH_298[:NaCl] ≈ 0.753 rtol=0.01
-    @test SeinfeldPandis.DRH_298[:NaNO3] ≈ 0.743 rtol=0.01
-    @test SeinfeldPandis.DRH_298[:NH43HSO42] ≈ 0.690 rtol=0.01
-    @test SeinfeldPandis.DRH_298[:NH4NO3] ≈ 0.618 rtol=0.01
-    @test SeinfeldPandis.DRH_298[:NaHSO4] ≈ 0.520 rtol=0.01
-    @test SeinfeldPandis.DRH_298[:NH4HSO4] ≈ 0.400 rtol=0.01
+    @test SeinfeldPandisCh10.DRH_298[:KCl] ≈ 0.842 rtol=0.01
+    @test SeinfeldPandisCh10.DRH_298[:Na2SO4] ≈ 0.842 rtol=0.01
+    @test SeinfeldPandisCh10.DRH_298[:NH4Cl] ≈ 0.800 rtol=0.01
+    @test SeinfeldPandisCh10.DRH_298[:NH42SO4] ≈ 0.799 rtol=0.01
+    @test SeinfeldPandisCh10.DRH_298[:NaCl] ≈ 0.753 rtol=0.01
+    @test SeinfeldPandisCh10.DRH_298[:NaNO3] ≈ 0.743 rtol=0.01
+    @test SeinfeldPandisCh10.DRH_298[:NH43HSO42] ≈ 0.690 rtol=0.01
+    @test SeinfeldPandisCh10.DRH_298[:NH4NO3] ≈ 0.618 rtol=0.01
+    @test SeinfeldPandisCh10.DRH_298[:NaHSO4] ≈ 0.520 rtol=0.01
+    @test SeinfeldPandisCh10.DRH_298[:NH4HSO4] ≈ 0.400 rtol=0.01
 
     # Verify enthalpy of solution values match Table 10.3
-    @test SeinfeldPandis.DELTA_HS_298[:NH42SO4] ≈ 6.32 rtol=0.01
-    @test SeinfeldPandis.DELTA_HS_298[:Na2SO4] ≈ -9.76 rtol=0.01
-    @test SeinfeldPandis.DELTA_HS_298[:NaNO3] ≈ 13.24 rtol=0.01
-    @test SeinfeldPandis.DELTA_HS_298[:NH4NO3] ≈ 16.27 rtol=0.01
-    @test SeinfeldPandis.DELTA_HS_298[:KCl] ≈ 15.34 rtol=0.01
-    @test SeinfeldPandis.DELTA_HS_298[:NaCl] ≈ 1.88 rtol=0.01
+    @test SeinfeldPandisCh10.DELTA_HS_298[:NH42SO4] ≈ 6.32 rtol=0.01
+    @test SeinfeldPandisCh10.DELTA_HS_298[:Na2SO4] ≈ -9.76 rtol=0.01
+    @test SeinfeldPandisCh10.DELTA_HS_298[:NaNO3] ≈ 13.24 rtol=0.01
+    @test SeinfeldPandisCh10.DELTA_HS_298[:NH4NO3] ≈ 16.27 rtol=0.01
+    @test SeinfeldPandisCh10.DELTA_HS_298[:KCl] ≈ 15.34 rtol=0.01
+    @test SeinfeldPandisCh10.DELTA_HS_298[:NaCl] ≈ 1.88 rtol=0.01
 
     # Verify solubility parameters at 298 K match Table 10.2
     for (salt, expected_n) in [(:NH42SO4, 0.104), (:Na2SO4, 0.065), (:NaNO3, 0.194),
         (:NH4NO3, 0.475), (:KCl, 0.086), (:NaCl, 0.111)]
-        A, B, C = SeinfeldPandis.SOLUBILITY_PARAMS[salt]
+        A, B, C = SeinfeldPandisCh10.SOLUBILITY_PARAMS[salt]
         n_298 = A + B * 298.0 + C * 298.0^2
         @test n_298 ≈ expected_n rtol=0.05
     end
 end
 
-@testitem "ZSR Water Content" tags=[:seinfeld_pandis] begin
+@testitem "ZSR Water Content" tags=[:seinfeld_pandis_ch10] begin
     using Aerosol
-    using Aerosol.SeinfeldPandis
+    using Aerosol.SeinfeldPandisCh10
     using ModelingToolkit
 
     # Test the ZSR component builds
@@ -182,7 +182,7 @@ end
 
     # Single-component ZSR should equal C/m0(a_w)
     W_single = zsr_water_content(0.8, Dict(:NaCl => 1e-6))
-    m0_nacl = SeinfeldPandis.binary_molality_nacl(0.8)
+    m0_nacl = SeinfeldPandisCh10.binary_molality_nacl(0.8)
     @test W_single ≈ 1e-6 / m0_nacl rtol=1e-10
 
     # Test additivity: W(A+B) = W(A) + W(B) (ZSR mixing rule)
@@ -193,21 +193,21 @@ end
 
     # Binary molality functions should be positive and monotonically decreasing
     for a_w in [0.5, 0.6, 0.7, 0.8, 0.9]
-        @test SeinfeldPandis.binary_molality_nh42so4(a_w) > 0
-        @test SeinfeldPandis.binary_molality_nh4no3(a_w) > 0
-        @test SeinfeldPandis.binary_molality_nacl(a_w) > 0
+        @test SeinfeldPandisCh10.binary_molality_nh42so4(a_w) > 0
+        @test SeinfeldPandisCh10.binary_molality_nh4no3(a_w) > 0
+        @test SeinfeldPandisCh10.binary_molality_nacl(a_w) > 0
     end
     # Higher a_w → lower molality (more dilute solution)
-    for func in [SeinfeldPandis.binary_molality_nh42so4,
-        SeinfeldPandis.binary_molality_nh4no3,
-        SeinfeldPandis.binary_molality_nacl]
+    for func in [SeinfeldPandisCh10.binary_molality_nh42so4,
+        SeinfeldPandisCh10.binary_molality_nh4no3,
+        SeinfeldPandisCh10.binary_molality_nacl]
         @test func(0.6) > func(0.8) > func(0.95)
     end
 end
 
-@testitem "NH4NO3 Equilibrium Constants" tags=[:seinfeld_pandis] begin
+@testitem "NH4NO3 Equilibrium Constants" tags=[:seinfeld_pandis_ch10] begin
     using Aerosol
-    using Aerosol.SeinfeldPandis
+    using Aerosol.SeinfeldPandisCh10
     using ModelingToolkit
 
     # Test the component builds
@@ -268,8 +268,8 @@ end
     @test drh_298 ≈ 0.618 rtol=0.01
 end
 
-@testitem "Table 10.7 Equilibrium Constants" tags=[:seinfeld_pandis] begin
-    using Aerosol.SeinfeldPandis
+@testitem "Table 10.7 Equilibrium Constants" tags=[:seinfeld_pandis_ch10] begin
+    using Aerosol.SeinfeldPandisCh10
 
     # Verify all 13 equilibrium constants at 298 K match Table 10.7
     @test get_equilibrium_constant(:NaCl_HNO3, 298.0) ≈ 3.96 rtol=1e-6
@@ -288,13 +288,13 @@ end
 
     # Verify temperature dependence formula: K(T) = K(298) * exp{a(298/T-1) + b[1+ln(298/T)-298/T]}
     # At T=298, the exponential factor should be exactly 1
-    for rxn in keys(SeinfeldPandis.EQUILIBRIUM_CONSTANTS)
-        K_ref = SeinfeldPandis.EQUILIBRIUM_CONSTANTS[rxn][1]
+    for rxn in keys(SeinfeldPandisCh10.EQUILIBRIUM_CONSTANTS)
+        K_ref = SeinfeldPandisCh10.EQUILIBRIUM_CONSTANTS[rxn][1]
         @test get_equilibrium_constant(rxn, 298.0) ≈ K_ref rtol=1e-10
     end
 
     # Temperature sensitivity: verify K changes with temperature
-    for rxn in keys(SeinfeldPandis.EQUILIBRIUM_CONSTANTS)
+    for rxn in keys(SeinfeldPandisCh10.EQUILIBRIUM_CONSTANTS)
         K_280 = get_equilibrium_constant(rxn, 280.0)
         K_298 = get_equilibrium_constant(rxn, 298.0)
         K_310 = get_equilibrium_constant(rxn, 310.0)
@@ -313,9 +313,9 @@ end
     @test_throws ErrorException get_equilibrium_constant(:nonexistent, 298.0)
 end
 
-@testitem "ModelingToolkit Integration" tags=[:seinfeld_pandis] begin
+@testitem "ModelingToolkit Integration" tags=[:seinfeld_pandis_ch10] begin
     using Aerosol
-    using Aerosol.SeinfeldPandis
+    using Aerosol.SeinfeldPandisCh10
     using ModelingToolkit
     using ModelingToolkit: mtkcompile
     using OrdinaryDiffEq
