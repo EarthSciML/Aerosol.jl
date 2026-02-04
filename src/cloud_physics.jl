@@ -83,7 +83,7 @@ Equations 17.1-17.6, Table 17.2.
     end
 
     @variables begin
-        T_C(t), [description = "Temperature in Celsius", unit = u"K"]
+        T_C(t), [description = "Temperature difference from 273.15 K", unit = u"K"]
         c_pw(t), [description = "Specific heat of liquid water", unit = u"J/(kg*K)"]
         ΔH_v(t), [description = "Latent heat of vaporization", unit = u"J/kg"]
         ΔH_m(t), [description = "Latent heat of melting", unit = u"J/kg"]

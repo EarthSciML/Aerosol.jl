@@ -18,6 +18,76 @@ AerosolScavenging
 CloudPhysics
 ```
 
+## Reference Tables
+
+The following tables from Seinfeld & Pandis (2006) Chapter 17 provide key physical constants used in this implementation.
+
+### Table 17.1: Properties of Water
+
+| Property | Phase/Temperature | Symbol | Value |
+|:---------|:------------------|:-------|:------|
+| Specific heat at constant pressure | Vapor | ĉ\_pv | 1952 J kg⁻¹ K⁻¹ |
+| Specific heat at constant pressure | Liquid (0°C) | ĉ\_pw | 4218 J kg⁻¹ K⁻¹ |
+| Specific heat at constant volume | Vapor | ĉ\_vw | 1463 J kg⁻¹ K⁻¹ |
+| Latent heat of evaporation | 0°C | ΔH\_v | 2.5 kJ g⁻¹ |
+| Latent heat of evaporation | 100°C | ΔH\_v | 2.25 kJ g⁻¹ |
+| Latent heat of fusion | 0°C | ΔH\_m | 0.33 kJ g⁻¹ |
+| Surface tension | Water/air (20°C) | σ\_w0 | 0.073 J m⁻² |
+
+### Table 17.2: Saturation Vapor Pressure Polynomial Coefficients
+
+The saturation vapor pressure over a flat surface is given by:
+
+p°(mbar) = a₀ + a₁T + a₂T² + a₃T³ + a₄T⁴ + a₅T⁵ + a₆T⁶ (T is in °C)
+
+| Coefficient | Water (−50 to +50°C) | Ice (−50 to 0°C) |
+|:------------|:---------------------|:-----------------|
+| a₀ | 6.107799961 | 6.109177956 |
+| a₁ | 4.436518521×10⁻¹ | 5.034698970×10⁻¹ |
+| a₂ | 1.428945805×10⁻² | 1.886013408×10⁻² |
+| a₃ | 2.650648471×10⁻⁴ | 4.176223716×10⁻⁴ |
+| a₄ | 3.031240396×10⁻⁶ | 5.824720280×10⁻⁶ |
+| a₅ | 2.034080948×10⁻⁸ | 4.838803174×10⁻⁸ |
+| a₆ | 6.136820929×10⁻¹¹ | 1.838826904×10⁻¹⁰ |
+
+*Source: Lowe and Ficke (1974)*
+
+### Table 17.3: Updraft Velocities and Maximum Supersaturations for Clouds and Fogs
+
+| Cloud Type | Updraft Velocity (m s⁻¹) | Maximum Supersaturation (%) | Reference |
+|:-----------|:-------------------------|:----------------------------|:----------|
+| Continental cumulus | ~1–17 | 0.25–0.7 | Pruppacher and Klett (1997) |
+| Maritime cumulus | ~1–2.5 | 0.3–0.8 | Pruppacher and Klett (1997); Mason (1971) |
+| Stratiform | ~0–1 | ~0.05 | Pruppacher and Klett (1997) |
+| Fog | — | ~0.1 | Pandis and Seinfeld (1989) |
+
+### Table 17.4: Empirical Parameters for CCN Concentration
+
+The CCN concentration can be approximated by: CCN(s) = c·sᵏ
+
+where CCN(s) is in particles cm⁻³ and s is supersaturation in percent.
+
+| c (cm⁻³) | k | Location |
+|:---------|:--|:---------|
+| 125 | 0.3 | Maritime (Australia) |
+| 53–105 | 0.5–0.6 | Maui (Hawaii) |
+| 100 | 0.5 | Atlantic, Pacific Oceans |
+| 190 | 0.8 | Pacific |
+| 250 | 1.3–1.4 | North Atlantic |
+| 145–370 | 0.4–0.9 | North Atlantic |
+| 100–1000 | — | Arctic |
+| 140 | 0.4 | Cape Grim (Australia) |
+| 250 | 0.5 | North Atlantic |
+| 25–128 | 0.4–0.6 | North Pacific |
+| 27–111 | 1.0 | North Pacific |
+| 400 | 0.3 | Polluted North Pacific |
+| 100 | 0.4 | Equatorial Pacific |
+| 600 | 0.5 | Continental |
+| 2000 | 0.4 | Continental (Australia) |
+| 3500 | 0.9 | Continental (Buffalo, NY) |
+
+*Source: Hegg and Hobbs (1992)*
+
 ## Implementation
 
 The cloud physics system is composed of eight subsystems, each implemented as a ModelingToolkit `@component` function. They can be used individually or composed together via the `CloudPhysics` parent system.
