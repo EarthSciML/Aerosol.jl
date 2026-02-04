@@ -11,7 +11,7 @@ due to fast reactions near the surface depleting reactants.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.110
 """
-@component function AqueousDiffusionReaction(; name=:AqueousDiffusionReaction)
+@component function AqueousDiffusionReaction(; name = :AqueousDiffusionReaction)
     @parameters begin
         R_p = 1.0e-5, [description = "Droplet radius", unit = u"m"]
         k_rxn = 1.0, [description = "First-order reaction rate constant", unit = u"s^-1"]
@@ -19,8 +19,11 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.110
     end
 
     @variables begin
-        q(t), [description = "Dimensionless reaction-diffusion parameter (dimensionless)", unit = u"1"]
-        Q(t), [description = "Aqueous diffusion correction factor (dimensionless)", unit = u"1"]
+        q(t),
+        [
+            description = "Dimensionless reaction-diffusion parameter (dimensionless)", unit = u"1"]
+        Q(t),
+        [description = "Aqueous diffusion correction factor (dimensionless)", unit = u"1"]
     end
 
     eqs = [
@@ -30,7 +33,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.110
         # Eq. 12.110: Q = 3(coth(q)/q - 1/q²)
         # Note: For numerical stability, this formula approaches 1 as q → 0
         # coth(q) = (exp(q) + exp(-q))/(exp(q) - exp(-q))
-        Q ~ 3 * ((exp(q) + exp(-q)) / (exp(q) - exp(-q)) / q - 1 / q^2),
+        Q ~ 3 * ((exp(q) + exp(-q)) / (exp(q) - exp(-q)) / q - 1 / q^2)
     ]
 
     return System(eqs, t; name)
@@ -46,7 +49,7 @@ limit the aqueous-phase reaction rate (within 10%).
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.85, 12.86, 12.93
 """
-@component function MassTransportLimitation(; name=:MassTransportLimitation)
+@component function MassTransportLimitation(; name = :MassTransportLimitation)
     @constants begin
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
         ε = 0.1, [description = "Limitation threshold (10%) (dimensionless)", unit = u"1"]
@@ -62,9 +65,15 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.85, 12.86, 12.93
     end
 
     @variables begin
-        k1H_gas_limit(t), [description = "Gas-phase diffusion limitation threshold for k₁H*", unit = u"mol/(m^3*Pa*s)"]
-        k1_aq_limit(t), [description = "Aqueous-phase diffusion limitation threshold for k₁", unit = u"s^-1"]
-        k1H_interface_limit(t), [description = "Interfacial limitation threshold for k₁H*", unit = u"mol/(m^3*Pa*s)"]
+        k1H_gas_limit(t),
+        [description = "Gas-phase diffusion limitation threshold for k₁H*",
+            unit = u"mol/(m^3*Pa*s)"]
+        k1_aq_limit(t),
+        [
+            description = "Aqueous-phase diffusion limitation threshold for k₁", unit = u"s^-1"]
+        k1H_interface_limit(t),
+        [
+            description = "Interfacial limitation threshold for k₁H*", unit = u"mol/(m^3*Pa*s)"]
     end
 
     eqs = [
@@ -75,7 +84,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.85, 12.86, 12.93
         k1_aq_limit ~ ε * (π^2 * D_aq) / R_p^2,
 
         # Eq. 12.93: k_1 H*_A ≤ ε (3α)/(R_p √(2πM_A RT))
-        k1H_interface_limit ~ ε * (3 * α) / (R_p * sqrt(2 * π * M_A * R * T)),
+        k1H_interface_limit ~ ε * (3 * α) / (R_p * sqrt(2 * π * M_A * R * T))
     ]
 
     return System(eqs, t; name)
@@ -87,24 +96,28 @@ end
 Coupled gas-phase and aqueous-phase mass balance for cloud droplet chemistry.
 
 This model couples:
-- Gas-phase partial pressure evolution
-- Aqueous-phase concentration evolution
-- Mass transfer between phases
-- Aqueous-phase chemical reaction
+
+  - Gas-phase partial pressure evolution
+  - Aqueous-phase concentration evolution
+  - Mass transfer between phases
+  - Aqueous-phase chemical reaction
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.122-12.123
 """
-@component function DropletMassBalance(; name=:DropletMassBalance)
+@component function DropletMassBalance(; name = :DropletMassBalance)
     @constants begin
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
     end
 
     @parameters begin
         k_mt = 1.0, [description = "Mass transfer coefficient", unit = u"s^-1"]
-        w_L = 1.0e-6, [description = "Liquid water volume fraction (dimensionless)", unit = u"1"]
-        H_star = 1.0e5, [description = "Effective Henry's law coefficient", unit = u"mol/(m^3*Pa)"]
+        w_L = 1.0e-6,
+        [description = "Liquid water volume fraction (dimensionless)", unit = u"1"]
+        H_star = 1.0e5,
+        [description = "Effective Henry's law coefficient", unit = u"mol/(m^3*Pa)"]
         T = 298.15, [description = "Temperature", unit = u"K"]
-        Q = 1.0, [description = "Aqueous diffusion correction factor (dimensionless)", unit = u"1"]
+        Q = 1.0,
+        [description = "Aqueous diffusion correction factor (dimensionless)", unit = u"1"]
         R_aq = 0.0, [description = "Aqueous-phase reaction rate", unit = u"mol/(m^3*s)"]
     end
 
@@ -118,7 +131,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.122-12.123
         D(p) ~ -k_mt * w_L * p + (1 / H_star) * k_mt * C_aq * w_L,
 
         # Eq. 12.123: dC_aq/dt = (k_mt/RT)p - (k_mt)/(H* RT) C_aq - Q R_aq
-        D(C_aq) ~ (k_mt / (R * T)) * p - (k_mt / (H_star * R * T)) * C_aq - Q * R_aq,
+        D(C_aq) ~ (k_mt / (R * T)) * p - (k_mt / (H_star * R * T)) * C_aq - Q * R_aq
     ]
 
     return System(eqs, t; name)

@@ -11,7 +11,7 @@ to diffuse to the particle surface.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.49
 """
-@component function GasDiffusionTimescale(; name=:GasDiffusionTimescale)
+@component function GasDiffusionTimescale(; name = :GasDiffusionTimescale)
     @parameters begin
         R_p = 1.0e-5, [description = "Particle radius", unit = u"m"]
         D_g = 2.0e-5, [description = "Gas-phase diffusivity", unit = u"m^2/s"]
@@ -22,7 +22,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.49
     end
 
     eqs = [
-        # Eq. 12.49: τ_dg = R_p²/(4D_g)
+    # Eq. 12.49: τ_dg = R_p²/(4D_g)
         τ_dg ~ R_p^2 / (4 * D_g),
     ]
 
@@ -39,7 +39,7 @@ interior.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.75
 """
-@component function AqueousDiffusionTimescale(; name=:AqueousDiffusionTimescale)
+@component function AqueousDiffusionTimescale(; name = :AqueousDiffusionTimescale)
     @parameters begin
         R_p = 1.0e-5, [description = "Droplet radius", unit = u"m"]
         D_aq = 1.0e-9, [description = "Aqueous-phase diffusivity", unit = u"m^2/s"]
@@ -50,7 +50,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.75
     end
 
     eqs = [
-        # Eq. 12.75: τ_da = R_p²/(π²D_aq)
+    # Eq. 12.75: τ_da = R_p²/(π²D_aq)
         τ_da ~ R_p^2 / (π^2 * D_aq),
     ]
 
@@ -67,7 +67,7 @@ For low solubility gases, the timescale is controlled by aqueous diffusion.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.61-12.62
 """
-@component function InterfacialTimescale(; name=:InterfacialTimescale)
+@component function InterfacialTimescale(; name = :InterfacialTimescale)
     @constants begin
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
     end
@@ -77,13 +77,16 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.61-12.62
         α = 1.0, [description = "Accommodation coefficient (dimensionless)", unit = u"1"]
         M_A = 0.029, [description = "Molecular weight of species A", unit = u"kg/mol"]
         T = 298.15, [description = "Temperature", unit = u"K"]
-        H_star = 1.0e5, [description = "Effective Henry's law coefficient", unit = u"mol/(m^3*Pa)"]
+        H_star = 1.0e5,
+        [description = "Effective Henry's law coefficient", unit = u"mol/(m^3*Pa)"]
         D_aq = 1.0e-9, [description = "Aqueous-phase diffusivity", unit = u"m^2/s"]
     end
 
     @variables begin
-        τ_p_soluble(t), [description = "Interfacial timescale for very soluble gases", unit = u"s"]
-        τ_p_insoluble(t), [description = "Interfacial timescale for low solubility gases", unit = u"s"]
+        τ_p_soluble(t),
+        [description = "Interfacial timescale for very soluble gases", unit = u"s"]
+        τ_p_insoluble(t),
+        [description = "Interfacial timescale for low solubility gases", unit = u"s"]
     end
 
     eqs = [
@@ -91,7 +94,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.61-12.62
         τ_p_soluble ~ (R_p * H_star * sqrt(2 * π * M_A * R * T)) / (3 * α),
 
         # Eq. 12.62: τ_p ≈ R_p²/(π²D_aq) for low solubility gases
-        τ_p_insoluble ~ R_p^2 / (π^2 * D_aq),
+        τ_p_insoluble ~ R_p^2 / (π^2 * D_aq)
     ]
 
     return System(eqs, t; name)
@@ -104,14 +107,15 @@ Characteristic timescale for aqueous-phase chemical reactions.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.76-12.78
 """
-@component function ReactionTimescale(; name=:ReactionTimescale)
+@component function ReactionTimescale(; name = :ReactionTimescale)
     @constants begin
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
     end
 
     @parameters begin
         k_rxn = 1.0, [description = "First-order reaction rate constant", unit = u"s^-1"]
-        H_star = 1.0e5, [description = "Effective Henry's law coefficient", unit = u"mol/(m^3*Pa)"]
+        H_star = 1.0e5,
+        [description = "Effective Henry's law coefficient", unit = u"mol/(m^3*Pa)"]
         T = 298.15, [description = "Temperature", unit = u"K"]
     end
 
@@ -125,7 +129,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.76-12.78
         τ_ra ~ 1 / k_rxn,
 
         # Eq. 12.78: τ_rg = τ_ra/(H*RT)
-        τ_rg ~ τ_ra / (H_star * R * T),
+        τ_rg ~ τ_ra / (H_star * R * T)
     ]
 
     return System(eqs, t; name)
@@ -138,13 +142,15 @@ Characteristic timescale for a gas to equilibrate with solid aerosol particles.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.135, 12.139
 """
-@component function SolidEquilibrationTimescale(; name=:SolidEquilibrationTimescale)
+@component function SolidEquilibrationTimescale(; name = :SolidEquilibrationTimescale)
     @parameters begin
         R_p = 1.0e-7, [description = "Particle radius", unit = u"m"]
         ρ_p = 1000.0, [description = "Particle density", unit = u"kg/m^3"]
         D_A = 2.0e-5, [description = "Gas-phase diffusivity", unit = u"m^2/s"]
         m_p = 1.0e-8, [description = "Aerosol mass concentration", unit = u"kg/m^3"]
-        f_Kn = 1.0, [description = "Transition regime correction factor f(Kn,α) (dimensionless)", unit = u"1"]
+        f_Kn = 1.0,
+        [
+            description = "Transition regime correction factor f(Kn,α) (dimensionless)", unit = u"1"]
         N = 1.0e9, [description = "Particle number concentration", unit = u"m^-3"]
     end
 
@@ -158,7 +164,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.135, 12.139
         τ_s ~ (ρ_p * R_p^2) / (3 * D_A * m_p * f_Kn),
 
         # Eq. 12.139: τ_s ≈ 1/(4πN R̄_p D_A f̄)
-        τ_s_alt ~ 1 / (4 * π * N * R_p * D_A * f_Kn),
+        τ_s_alt ~ 1 / (4 * π * N * R_p * D_A * f_Kn)
     ]
 
     return System(eqs, t; name)
@@ -173,7 +179,7 @@ This accounts for the additional buffering effect of Henry's law dissolution.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.147
 """
-@component function AqueousEquilibrationTimescale(; name=:AqueousEquilibrationTimescale)
+@component function AqueousEquilibrationTimescale(; name = :AqueousEquilibrationTimescale)
     @parameters begin
         m_w = 1.0e-8, [description = "Aerosol water mass concentration", unit = u"kg/m^3"]
         K_A = 1.0e-3, [description = "Equilibrium constant", unit = u"kg/m^3"]
@@ -185,7 +191,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.147
     end
 
     eqs = [
-        # Eq. 12.147: τ_a = (m_w/K_A) τ_s
+    # Eq. 12.147: τ_a = (m_w/K_A) τ_s
         τ_a ~ (m_w / K_A) * τ_s,
     ]
 
