@@ -1,7 +1,6 @@
 [deps]
 Aerosol = "8510b696-cc45-4a64-84d0-47f429ca1505"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DynamicQuantities = "06fc5a27-2a28-4c7c-a15d-362465fb6821"
 EarthSciMLBase = "e53f1632-a13c-4728-9402-0c66d48804b0"
