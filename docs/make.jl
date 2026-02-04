@@ -20,7 +20,7 @@ makedocs(;
         "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
             "ISORROPIA" => "isorropia.md",
-            "Seinfeld & Pandis" => "seinfeld_pandis.md",
+            "Seinfeld & Pandis" => "seinfeld_pandis.md"
         ],
         "API" => "api.md"
     ],

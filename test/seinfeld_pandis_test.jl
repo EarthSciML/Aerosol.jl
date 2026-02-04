@@ -74,7 +74,7 @@ end
     using ModelingToolkit
 
     # Test the DRH component builds
-    sys = DRHTemperature(salt=:NH4NO3)
+    sys = DRHTemperature(salt = :NH4NO3)
     @test sys isa ModelingToolkit.AbstractSystem
 
     # Test structural: 1 equation for DRH
@@ -113,7 +113,7 @@ end
 
     # Test all salts with data build correctly
     for salt in [:NH42SO4, :NaCl, :NaNO3, :KCl, :Na2SO4, :NH4NO3]
-        sys_salt = DRHTemperature(salt=salt)
+        sys_salt = DRHTemperature(salt = salt)
         @test sys_salt isa ModelingToolkit.AbstractSystem
     end
 end
@@ -143,7 +143,7 @@ end
 
     # Verify solubility parameters at 298 K match Table 10.2
     for (salt, expected_n) in [(:NH42SO4, 0.104), (:Na2SO4, 0.065), (:NaNO3, 0.194),
-                                (:NH4NO3, 0.475), (:KCl, 0.086), (:NaCl, 0.111)]
+        (:NH4NO3, 0.475), (:KCl, 0.086), (:NaCl, 0.111)]
         A, B, C = SeinfeldPandis.SOLUBILITY_PARAMS[salt]
         n_298 = A + B * 298.0 + C * 298.0^2
         @test n_298 ≈ expected_n rtol=0.05
@@ -156,7 +156,7 @@ end
     using ModelingToolkit
 
     # Test the ZSR component builds
-    sys = ZSRWaterContent(n_species=2)
+    sys = ZSRWaterContent(n_species = 2)
     @test sys isa ModelingToolkit.AbstractSystem
 
     # Verify equation count: 2 equations (α_w and W)
@@ -199,8 +199,8 @@ end
     end
     # Higher a_w → lower molality (more dilute solution)
     for func in [SeinfeldPandis.binary_molality_nh42so4,
-                 SeinfeldPandis.binary_molality_nh4no3,
-                 SeinfeldPandis.binary_molality_nacl]
+        SeinfeldPandis.binary_molality_nh4no3,
+        SeinfeldPandis.binary_molality_nacl]
         @test func(0.6) > func(0.8) > func(0.95)
     end
 end
@@ -336,7 +336,7 @@ end
     @test S_final < 2.0  # But not by a huge amount for default parameters
 
     # Test DRH component compilation
-    sys_drh = DRHTemperature(salt=:NH4NO3)
+    sys_drh = DRHTemperature(salt = :NH4NO3)
     compiled_drh = mtkcompile(sys_drh)
     prob_drh = ODEProblem(compiled_drh, [], (0.0, 1.0))
     sol_drh = solve(prob_drh, Tsit5())
@@ -347,11 +347,11 @@ end
     @test 0.0 < DRH_val < 1.0
 
     # Test ZSR component compilation
-    sys_zsr = ZSRWaterContent(n_species=2)
+    sys_zsr = ZSRWaterContent(n_species = 2)
     compiled_zsr = mtkcompile(sys_zsr)
     prob_zsr = ODEProblem(compiled_zsr,
         Dict(compiled_zsr.C[1] => 1e-6, compiled_zsr.C[2] => 1e-6,
-             compiled_zsr.m0[1] => 5.0, compiled_zsr.m0[2] => 5.0),
+            compiled_zsr.m0[1] => 5.0, compiled_zsr.m0[2] => 5.0),
         (0.0, 1.0))
     sol_zsr = solve(prob_zsr, Tsit5())
     @test sol_zsr.retcode == ReturnCode.Success
