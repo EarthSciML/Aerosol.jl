@@ -2,7 +2,7 @@
     using Test
     using Statistics: mean
     using ModelingToolkit
-    using OrdinaryDiffEqDefault
+    using OrdinaryDiffEq
     using Aerosol
 end
 
