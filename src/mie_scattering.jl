@@ -34,8 +34,7 @@ Chapter 15, Equations 15.1-15.23, 15.37-15.43.
 """
 @component function MieScattering(; name = :MieScattering)
     @constants begin
-        π_const = Float64(π),
-        [unit = u"1", description = "Mathematical constant pi (dimensionless)"]
+        π_val = Float64(π), [unit = u"1", description = "Pi (dimensionless)"]
     end
 
     @parameters begin
@@ -65,7 +64,7 @@ Chapter 15, Equations 15.1-15.23, 15.37-15.43.
 
     eqs = [
         # Eq. 15.6 - Size parameter (dimensionless ratio)
-        α ~ π_const * D_p / λ,
+        α ~ π_val * D_p / λ,
 
         # Mie efficiencies computed via registered functions (see below)
         Q_ext ~ mie_Q_ext(α, n_refr, k_refr),  # Eq. 15.14
@@ -78,9 +77,9 @@ Chapter 15, Equations 15.1-15.23, 15.37-15.43.
         ω ~ Q_scat / Q_ext,
 
         # Cross sections from efficiencies (C = Q × A, where A = πD_p²/4)
-        C_scat ~ Q_scat * π_const * D_p^2 / 4,
-        C_abs ~ Q_abs * π_const * D_p^2 / 4,
-        C_ext ~ Q_ext * π_const * D_p^2 / 4,  # Eq. 15.3 implied
+        C_scat ~ Q_scat * π_val * D_p^2 / 4,
+        C_abs ~ Q_abs * π_val * D_p^2 / 4,
+        C_ext ~ Q_ext * π_val * D_p^2 / 4,  # Eq. 15.3 implied
 
         # Eq. 15.41, 15.42, 15.43 - Mass efficiencies
         E_ext ~ 3 * Q_ext / (2 * ρ_p * D_p),
@@ -109,8 +108,7 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.17-15.21.
 """
 @component function RayleighScattering(; name = :RayleighScattering)
     @constants begin
-        π_const = Float64(π),
-        [unit = u"1", description = "Mathematical constant pi (dimensionless)"]
+        π_val = Float64(π), [unit = u"1", description = "Pi (dimensionless)"]
         eight_thirds = 8.0 / 3.0,
         [unit = u"1", description = "Constant 8/3 for Rayleigh scattering (dimensionless)"]
         four = 4.0,
@@ -155,7 +153,7 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.17-15.21.
 
     eqs = [
         # Size parameter (Eq. 15.6) - dimensionless ratio
-        α ~ π_const * D_p / λ,
+        α ~ π_val * D_p / λ,
 
         # Compute the (m²-1)/(m²+2) factor for complex m = n + ik
         # m² = n² - k² + 2nik
@@ -203,8 +201,7 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.24-15.30, 15.37-15.40.
 """
 @component function AerosolExtinction(; name = :AerosolExtinction)
     @constants begin
-        π_const = Float64(π),
-        [unit = u"1", description = "Mathematical constant pi (dimensionless)"]
+        π_val = Float64(π), [unit = u"1", description = "Pi (dimensionless)"]
         four = 4.0,
         [unit = u"1", description = "Constant 4 for cross section (dimensionless)"]
     end
@@ -234,7 +231,7 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.24-15.30, 15.37-15.40.
 
     eqs = [
         # Eq. 15.6 - Size parameter (dimensionless ratio)
-        α ~ π_const * D_p / λ,
+        α ~ π_val * D_p / λ,
 
         # Mie efficiencies
         Q_ext ~ mie_Q_ext(α, n_refr, k_refr),
@@ -242,11 +239,11 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.24-15.30, 15.37-15.40.
         Q_abs ~ Q_ext - Q_scat,
 
         # Eq. 15.27 - Extinction coefficient (monodisperse)
-        b_ext ~ (π_const / four) * D_p^2 * N * Q_ext,
+        b_ext ~ (π_val / four) * D_p^2 * N * Q_ext,
 
         # Eq. 15.28 - Scattering and absorption coefficients
-        b_scat ~ (π_const / four) * D_p^2 * N * Q_scat,
-        b_abs ~ (π_const / four) * D_p^2 * N * Q_abs,
+        b_scat ~ (π_val / four) * D_p^2 * N * Q_scat,
+        b_abs ~ (π_val / four) * D_p^2 * N * Q_abs,
 
         # Eq. 15.5 - Single-scattering albedo
         ω ~ b_scat / b_ext
@@ -287,7 +284,8 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.31-15.36.
 
     @variables begin
         x_v(t), [unit = u"m", description = "Visual range"]
-        τ_per_km(t), [unit = u"1", description = "Optical depth per kilometer (dimensionless)"]
+        τ_per_km(t),
+        [unit = u"1", description = "Optical depth per kilometer (dimensionless)"]
         b_sp(t), [unit = u"m^-1", description = "Scattering coefficient due to particles"]
     end
 
@@ -560,10 +558,18 @@ end
 # These strip units for the numerical computation (inputs are dimensionless)
 using DynamicQuantities: Quantity, ustrip
 
-mie_Q_ext(α::Quantity, n::Quantity, k::Quantity) = mie_Q_ext(ustrip(α), ustrip(n), ustrip(k))
-mie_Q_scat(α::Quantity, n::Quantity, k::Quantity) = mie_Q_scat(ustrip(α), ustrip(n), ustrip(k))
-rayleigh_m2_factor_real(n::Quantity, k::Quantity) = rayleigh_m2_factor_real(ustrip(n), ustrip(k))
-rayleigh_m2_factor_imag(n::Quantity, k::Quantity) = rayleigh_m2_factor_imag(ustrip(n), ustrip(k))
+function mie_Q_ext(α::Quantity, n::Quantity, k::Quantity)
+    mie_Q_ext(ustrip(α), ustrip(n), ustrip(k))
+end
+function mie_Q_scat(α::Quantity, n::Quantity, k::Quantity)
+    mie_Q_scat(ustrip(α), ustrip(n), ustrip(k))
+end
+function rayleigh_m2_factor_real(n::Quantity, k::Quantity)
+    rayleigh_m2_factor_real(ustrip(n), ustrip(k))
+end
+function rayleigh_m2_factor_imag(n::Quantity, k::Quantity)
+    rayleigh_m2_factor_imag(ustrip(n), ustrip(k))
+end
 
 # Register the Mie functions for symbolic use in ModelingToolkit
 @register_symbolic mie_Q_ext(α::Real, n::Real, k::Real)

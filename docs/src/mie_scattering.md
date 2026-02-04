@@ -54,6 +54,7 @@ sys = MieScattering()
 vars = unknowns(sys)
 DataFrame(
     :Name => [string(Symbolics.tosymbol(v, escape = false)) for v in vars],
+    :Units => [dimension(ModelingToolkit.get_unit(v)) for v in vars],
     :Description => [ModelingToolkit.getdescription(v) for v in vars]
 )
 ```
@@ -64,6 +65,7 @@ DataFrame(
 ps = parameters(sys)
 DataFrame(
     :Name => [string(Symbolics.tosymbol(p, escape = false)) for p in ps],
+    :Units => [dimension(ModelingToolkit.get_unit(p)) for p in ps],
     :Description => [ModelingToolkit.getdescription(p) for p in ps]
 )
 ```
@@ -81,6 +83,29 @@ when ``\alpha \ll 1`` (particles much smaller than the wavelength):
 
   - **Rayleigh scattering efficiency** (Eq. 15.19): ``Q_{\text{scat}} = \frac{8}{3}\alpha^4 \left|\frac{m^2-1}{m^2+2}\right|^2``
   - **Rayleigh absorption efficiency** (Eq. 15.21): ``Q_{\text{abs}} = 4\alpha \, \text{Im}\left\{\frac{m^2-1}{m^2+2}\right\}``
+
+### Refractive Indices of Atmospheric Substances (Table 15.2)
+
+The complex refractive index ``m = n + ik`` determines how a material interacts with light.
+The real part ``n`` controls refraction (bending of light), while the imaginary part ``k``
+controls absorption. Values at ``\lambda = 589`` nm unless otherwise indicated:
+
+| Substance        | n      | k       | Notes                                      |
+|:-----------------|:-------|:--------|:-------------------------------------------|
+| Water            | 1.333  | ≈0      | Non-absorbing in visible                   |
+| Water (ice)      | 1.309  | ≈0      |                                            |
+| NaCl             | 1.544  | 0       |                                            |
+| H₂SO₄            | 1.426  | 0       | 97% pure mixture with H₂O                  |
+| NH₄HSO₄          | 1.473  | 0       |                                            |
+| (NH₄)₂SO₄        | 1.521  | 0       |                                            |
+| SiO₂             | 1.55   | 0       | At λ = 550 nm                              |
+| Elemental Carbon | 1.95   | 0.79    | At λ = 550 nm; strongly absorbing          |
+| Mineral dust     | 1.56   | 0.006   | At λ = 550 nm                              |
+
+*Source: Table 15.2 of Seinfeld & Pandis (2006)*
+
+Elemental carbon (soot) has the largest imaginary component, making it the most
+significant absorbing component in atmospheric aerosols.
 
 ### AerosolExtinction Component
 

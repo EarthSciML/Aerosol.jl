@@ -9,7 +9,7 @@ Calculate the mean molecular speed of gas molecules using kinetic theory.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.24
 """
-@component function MeanMolecularSpeed(; name=:MeanMolecularSpeed)
+@component function MeanMolecularSpeed(; name = :MeanMolecularSpeed)
     @constants begin
         k_B = 1.380649e-23, [description = "Boltzmann constant", unit = u"J/K"]
     end
@@ -28,13 +28,12 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.24
     end
 
     eqs = [
-        # Eq. 12.24: c̄_A = √(8kT/(πm_A)) where m_A = M_A/N_Av
+    # Eq. 12.24: c̄_A = √(8kT/(πm_A)) where m_A = M_A/N_Av
         c_bar ~ sqrt(8 * k_B * T * N_Av / (π * M_A)),
     ]
 
     return System(eqs, t; name)
 end
-
 
 """
     KnudsenNumber(; name=:KnudsenNumber)
@@ -42,13 +41,14 @@ end
 Calculate the Knudsen number, the ratio of mean free path to particle radius.
 
 The Knudsen number determines the transport regime:
-- Kn ≪ 1: Continuum regime (Fick's law applies)
-- Kn ≫ 1: Kinetic regime (molecular kinetics applies)
-- Kn ~ 1: Transition regime (interpolation formulas needed)
+
+  - Kn ≪ 1: Continuum regime (Fick's law applies)
+  - Kn ≫ 1: Kinetic regime (molecular kinetics applies)
+  - Kn ~ 1: Transition regime (interpolation formulas needed)
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.31
 """
-@component function KnudsenNumber(; name=:KnudsenNumber)
+@component function KnudsenNumber(; name = :KnudsenNumber)
     @parameters begin
         λ = 6.5e-8, [description = "Mean free path", unit = u"m"]
         R_p = 1.0e-7, [description = "Particle radius", unit = u"m"]
@@ -59,7 +59,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.31
     end
 
     eqs = [
-        # Eq. 12.31: Kn = λ/R_p
+    # Eq. 12.31: Kn = λ/R_p
         Kn ~ λ / R_p,
     ]
 
@@ -78,18 +78,19 @@ Returns the ratio J/J_c where J_c is the continuum regime flux.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.43 (with accommodation coefficient)
 """
-@component function FuchsSutugin(; name=:FuchsSutugin)
+@component function FuchsSutugin(; name = :FuchsSutugin)
     @parameters begin
         Kn = 1.0, [description = "Knudsen number (dimensionless)", unit = u"1"]
         α = 1.0, [description = "Accommodation coefficient (dimensionless)", unit = u"1"]
     end
 
     @variables begin
-        f_FS(t), [description = "Fuchs-Sutugin correction factor J/J_c (dimensionless)", unit = u"1"]
+        f_FS(t),
+        [description = "Fuchs-Sutugin correction factor J/J_c (dimensionless)", unit = u"1"]
     end
 
     eqs = [
-        # Eq. 12.43: J/J_c = 0.75α(1 + Kn) / (Kn² + Kn + 0.283Kn*α + 0.75α)
+    # Eq. 12.43: J/J_c = 0.75α(1 + Kn) / (Kn² + Kn + 0.283Kn*α + 0.75α)
         f_FS ~ 0.75 * α * (1 + Kn) / (Kn^2 + Kn + 0.283 * Kn * α + 0.75 * α),
     ]
 
@@ -105,18 +106,19 @@ An alternative interpolation formula for the transition regime.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.42
 """
-@component function Dahneke(; name=:Dahneke)
+@component function Dahneke(; name = :Dahneke)
     @parameters begin
         Kn = 1.0, [description = "Knudsen number (dimensionless)", unit = u"1"]
         α = 1.0, [description = "Accommodation coefficient (dimensionless)", unit = u"1"]
     end
 
     @variables begin
-        f_D(t), [description = "Dahneke correction factor J/J_c (dimensionless)", unit = u"1"]
+        f_D(t),
+        [description = "Dahneke correction factor J/J_c (dimensionless)", unit = u"1"]
     end
 
     eqs = [
-        # Eq. 12.42: J/J_c = (1 + Kn) / (1 + 2Kn(1 + Kn)/α)
+    # Eq. 12.42: J/J_c = (1 + Kn) / (1 + 2Kn(1 + Kn)/α)
         f_D ~ (1 + Kn) / (1 + 2 * Kn * (1 + Kn) / α),
     ]
 
@@ -132,7 +134,7 @@ This is the steady-state diffusive flux in the continuum regime (Kn ≪ 1).
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.12
 """
-@component function MaxwellianFlux(; name=:MaxwellianFlux)
+@component function MaxwellianFlux(; name = :MaxwellianFlux)
     @parameters begin
         R_p = 1.0e-7, [description = "Particle radius", unit = u"m"]
         D_g = 2.0e-5, [description = "Gas-phase diffusivity", unit = u"m^2/s"]
@@ -145,7 +147,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.12
     end
 
     eqs = [
-        # Eq. 12.12: J_c = 4πR_p D_g (c_∞ - c_s)
+    # Eq. 12.12: J_c = 4πR_p D_g (c_∞ - c_s)
         J_c ~ 4 * π * R_p * D_g * (c_inf - c_s),
     ]
 
@@ -159,7 +161,7 @@ Calculate the rate of particle radius change due to condensation/evaporation.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.14
 """
-@component function ParticleGrowthRate(; name=:ParticleGrowthRate)
+@component function ParticleGrowthRate(; name = :ParticleGrowthRate)
     @parameters begin
         D_g = 2.0e-5, [description = "Gas-phase diffusivity", unit = u"m^2/s"]
         M_A = 0.029, [description = "Molecular weight of species A", unit = u"kg/mol"]
@@ -173,7 +175,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.14
     end
 
     eqs = [
-        # Eq. 12.14: dR_p/dt = (D_g M_A)/(ρ_p R_p)(c_∞ - c_s)
+    # Eq. 12.14: dR_p/dt = (D_g M_A)/(ρ_p R_p)(c_∞ - c_s)
         D(R_p) ~ (D_g * M_A / (ρ_p * R_p)) * (c_inf - c_s),
     ]
 
@@ -190,7 +192,7 @@ resistance to mass transfer.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.116
 """
-@component function MassTransferCoefficient(; name=:MassTransferCoefficient)
+@component function MassTransferCoefficient(; name = :MassTransferCoefficient)
     @constants begin
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
     end
@@ -215,7 +217,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.116
         # Interfacial resistance (second term in Eq. 12.116)
         τ_i ~ (R_p / (3 * α)) * sqrt(2 * π * M_A / (R * T)),
         # Eq. 12.116: k_mt = [R_p²/(3D_g) + (R_p/3α)√(2πM_A/(RT))]⁻¹
-        k_mt ~ 1 / (τ_g + τ_i),
+        k_mt ~ 1 / (τ_g + τ_i)
     ]
 
     return System(eqs, t; name)
@@ -231,7 +233,7 @@ particle surface is taken up by the particle.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.121
 """
-@component function UptakeCoefficient(; name=:UptakeCoefficient)
+@component function UptakeCoefficient(; name = :UptakeCoefficient)
     @constants begin
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
     end
@@ -242,14 +244,16 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.121
         α = 1.0, [description = "Accommodation coefficient (dimensionless)", unit = u"1"]
         c_bar = 300.0, [description = "Mean molecular speed", unit = u"m/s"]
         T = 298.15, [description = "Temperature", unit = u"K"]
-        H_star = 1.0e5, [description = "Effective Henry's law coefficient", unit = u"mol/(m^3*Pa)"]
+        H_star = 1.0e5,
+        [description = "Effective Henry's law coefficient", unit = u"mol/(m^3*Pa)"]
         k_rxn = 1.0, [description = "First-order reaction rate constant", unit = u"s^-1"]
         D_aq = 1.0e-9, [description = "Aqueous-phase diffusivity", unit = u"m^2/s"]
     end
 
     @variables begin
         γ(t), [description = "Uptake coefficient (dimensionless)", unit = u"1"]
-        term_diff(t), [description = "Gas-phase diffusion term (dimensionless)", unit = u"1"]
+        term_diff(t),
+        [description = "Gas-phase diffusion term (dimensionless)", unit = u"1"]
         term_acc(t), [description = "Accommodation term (dimensionless)", unit = u"1"]
         term_rxn(t), [description = "Reaction term (dimensionless)", unit = u"1"]
     end
@@ -259,7 +263,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.121
         term_diff ~ (R_p * c_bar) / (4 * D_g),
         term_acc ~ 1 / α,
         term_rxn ~ c_bar / (4 * R * T * H_star * sqrt(k_rxn * D_aq)),
-        γ ~ 1 / (term_diff + term_acc + term_rxn),
+        γ ~ 1 / (term_diff + term_acc + term_rxn)
     ]
 
     return System(eqs, t; name)
@@ -276,7 +280,7 @@ for particle growth/evaporation, applicable across all Knudsen numbers.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Sections 12.1.1-12.1.4
 """
-@component function MassTransfer(; name=:MassTransfer)
+@component function MassTransfer(; name = :MassTransfer)
     @constants begin
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
         k_B = 1.380649e-23, [description = "Boltzmann constant", unit = u"J/K"]
@@ -301,7 +305,8 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Sections 12.1.1-12.1.4
         λ(t), [description = "Mean free path", unit = u"m"]
         ρ_air(t), [description = "Air density", unit = u"kg/m^3"]
         Kn(t), [description = "Knudsen number (dimensionless)", unit = u"1"]
-        f_FS(t), [description = "Fuchs-Sutugin correction factor (dimensionless)", unit = u"1"]
+        f_FS(t),
+        [description = "Fuchs-Sutugin correction factor (dimensionless)", unit = u"1"]
         J_c(t), [description = "Continuum regime molar flow rate", unit = u"mol/s"]
         J(t), [description = "Transition regime corrected molar flow rate", unit = u"mol/s"]
     end
@@ -326,7 +331,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Sections 12.1.1-12.1.4
         J_c ~ 4 * π * R_p * D_g * (c_inf - c_s),
 
         # Transition regime corrected flux
-        J ~ f_FS * J_c,
+        J ~ f_FS * J_c
     ]
 
     return System(eqs, t; name)
