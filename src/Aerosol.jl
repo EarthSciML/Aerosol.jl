@@ -19,6 +19,8 @@ include("nucleation.jl")
 include("size_distribution.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA
+include("seinfeld_pandis_ch10/seinfeld_pandis_ch10.jl")
+@reexport using .SeinfeldPandisCh10
 
 # Aqueous chemistry module (Seinfeld & Pandis Chapter 7)
 include("henrys_law.jl")
