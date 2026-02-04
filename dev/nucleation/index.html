@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Nucleation · Aerosol.jl</title><meta name="title" content="Nucleation · Aerosol.jl"/><meta property="og:title" content="Nucleation · Aerosol.jl"/><meta property="twitter:title" content="Nucleation · Aerosol.jl"/><meta name="description" content="Documentation for Aerosol.jl."/><meta property="og:description" content="Documentation for Aerosol.jl."/><meta property="twitter:description" content="Documentation for Aerosol.jl."/><meta property="og:url" content="https://aerosol.earthsci.dev/nucleation/"/><meta property="twitter:url" content="https://aerosol.earthsci.dev/nucleation/"/><link rel="canonical" href="https://aerosol.earthsci.dev/nucleation/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Aerosol.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../dynamics/">Population Dynamics</a></li><li><a class="tocitem" href="../single_particle_dynamics/">Single Particle Dynamics</a></li><li><a class="tocitem" href="../size_distribution/">Size Distribution</a></li><li><a class="tocitem" href="../VBS/">VBS</a></li><li><a class="tocitem" href="../mass_transfer/">Mass Transfer</a></li><li class="is-active"><a class="tocitem" href>Nucleation</a><ul class="internal"><li><a class="tocitem" href="#Overview"><span>Overview</span></a></li><li><a class="tocitem" href="#Implementation"><span>Implementation</span></a></li><li><a class="tocitem" href="#Analysis"><span>Analysis</span></a></li><li><a class="tocitem" href="#Key-Behaviors"><span>Key Behaviors</span></a></li><li><a class="tocitem" href="#Limitations"><span>Limitations</span></a></li></ul></li><li><a class="tocitem" href="../aqueous_chemistry/">Aqueous Chemistry</a></li><li><span class="tocitem">Thermodynamics</span><ul><li><a class="tocitem" href="../isorropia/">ISORROPIA</a></li></ul></li><li><a class="tocitem" href="../api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Nucleation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Nucleation</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/EarthSciML/Aerosol.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/EarthSciML/Aerosol.jl/blob/main/docs/src/nucleation.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Nucleation"><a class="docs-heading-anchor" href="#Nucleation">Nucleation</a><a id="Nucleation-1"></a><a class="docs-heading-anchor-permalink" href="#Nucleation" title="Permalink"></a></h1><h2 id="Overview"><a class="docs-heading-anchor" href="#Overview">Overview</a><a id="Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Overview" title="Permalink"></a></h2><p>Nucleation is the process by which gas-phase molecules spontaneously form small clusters (nuclei) that can grow into aerosol particles. This module implements classical nucleation theory for single-component (homogeneous) nucleation following the treatment in Seinfeld &amp; Pandis (2006), Chapter 11.</p><p>The key outputs of the nucleation model are:</p><ul><li><strong>Critical cluster size</strong> (i*): The minimum number of molecules required for a stable cluster</li><li><strong>Critical radius</strong> (r*): The radius of the critical cluster</li><li><strong>Nucleation rate</strong> (J): The rate at which new particles form per unit volume per unit time</li><li><strong>Free energy barrier</strong> (ΔG*): The energy barrier that must be overcome for nucleation to occur</li></ul><p><strong>Reference</strong>: Seinfeld, J.H. and Pandis, S.N. (2006). <em>Atmospheric Chemistry and Physics: From Air Pollution to Climate Change</em>, 2nd Edition, Chapter 11, pp. 489-536.</p><article><details class="docstring" open="true"><summary id="Aerosol.Nucleation"><a class="docstring-binding" href="#Aerosol.Nucleation"><code>Aerosol.Nucleation</code></a> — <span class="docstring-category">Function</span></summary><section><div><pre><code class="language-julia hljs">Nucleation(; name=:Nucleation)</code></pre><p>A component representing homogeneous nucleation of a single-component vapor following classical nucleation theory from Seinfeld &amp; Pandis (2006), Chapter 11.</p><p>This component calculates the nucleation rate, critical cluster size, and critical radius based on the saturation ratio, temperature, and species properties.</p><p><strong>Variables</strong></p><ul><li><code>S</code>: Saturation ratio (dimensionless), ratio of partial pressure to saturation vapor pressure</li><li><code>J</code>: Nucleation rate (molecules/(m³·s))</li><li><code>i_star</code>: Critical cluster size (molecules)</li><li><code>r_star</code>: Critical cluster radius (m)</li><li><code>ΔG_star</code>: Free energy barrier (J)</li><li><code>θ</code>: Dimensionless surface tension parameter</li></ul><p><strong>Parameters</strong></p><ul><li><code>T</code>: Temperature (K)</li><li><code>p_A</code>: Partial pressure of condensing species (Pa)</li><li><code>p_A_s</code>: Saturation vapor pressure (Pa)</li><li><code>σ</code>: Surface tension (N/m)</li><li><code>v_1</code>: Molecular volume (m³/molecule)</li><li><code>m_1</code>: Molecular mass (kg/molecule)</li></ul><p><strong>References</strong></p><p>Seinfeld, J.H. and Pandis, S.N. (2006). <em>Atmospheric Chemistry and Physics: From Air Pollution to Climate Change</em>, 2nd Edition, Chapter 11, pp. 489-536.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/EarthSciML/Aerosol.jl/blob/2ee93d91d07bfbd6b714b2ca67235ddd7161d63c/src/nucleation.jl#L3-L34">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Aerosol.CriticalCluster"><a class="docstring-binding" href="#Aerosol.CriticalCluster"><code>Aerosol.CriticalCluster</code></a> — <span class="docstring-category">Function</span></summary><section><div><pre><code class="language-julia hljs">CriticalCluster(; name=:CriticalCluster)</code></pre><p>A standalone component for computing critical cluster properties without the full nucleation rate calculation. Useful for parameter sensitivity studies.</p><p>This implements equations 11.35, 11.52, and 11.53 from Seinfeld &amp; Pandis (2006).</p><p><strong>Variables</strong></p><ul><li><code>i_star</code>: Critical cluster size (molecules)</li><li><code>r_star</code>: Critical cluster radius (m)</li><li><code>ΔG_star</code>: Free energy barrier (J)</li><li><code>θ</code>: Dimensionless surface tension parameter</li></ul><p><strong>Parameters</strong></p><ul><li><code>T</code>: Temperature (K)</li><li><code>S</code>: Saturation ratio</li><li><code>σ</code>: Surface tension (N/m)</li><li><code>v_1</code>: Molecular volume (m³/molecule)</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/EarthSciML/Aerosol.jl/blob/2ee93d91d07bfbd6b714b2ca67235ddd7161d63c/src/nucleation.jl#L178-L199">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Aerosol.ClassicalNucleationRate"><a class="docstring-binding" href="#Aerosol.ClassicalNucleationRate"><code>Aerosol.ClassicalNucleationRate</code></a> — <span class="docstring-category">Function</span></summary><section><div><pre><code class="language-julia hljs">ClassicalNucleationRate(; name=:ClassicalNucleationRate)</code></pre><p>A simplified component that computes only the classical nucleation rate (Eq. 11.47) from Seinfeld &amp; Pandis (2006). This is a minimal component for use when critical cluster properties are not needed.</p><p><strong>Variables</strong></p><ul><li><code>J</code>: Nucleation rate (molecules/(m³·s))</li></ul><p><strong>Parameters</strong></p><ul><li><code>T</code>: Temperature (K)</li><li><code>S</code>: Saturation ratio</li><li><code>N_1</code>: Monomer number concentration (molecules/m³)</li><li><code>σ</code>: Surface tension (N/m)</li><li><code>v_1</code>: Molecular volume (m³/molecule)</li><li><code>m_1</code>: Molecular mass (kg/molecule)</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/EarthSciML/Aerosol.jl/blob/2ee93d91d07bfbd6b714b2ca67235ddd7161d63c/src/nucleation.jl#L237-L256">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Aerosol.WaterProperties"><a class="docstring-binding" href="#Aerosol.WaterProperties"><code>Aerosol.WaterProperties</code></a> — <span class="docstring-category">Function</span></summary><section><div><pre><code class="language-julia hljs">WaterProperties(; name=:WaterProperties)</code></pre><p>A component providing temperature-dependent physical properties of water for nucleation calculations following the data from Seinfeld &amp; Pandis (2006), Table 11.1 and 11.4.</p><p><strong>Variables</strong></p><ul><li><code>σ</code>: Surface tension (N/m)</li><li><code>v_1</code>: Molecular volume (m³/molecule)</li><li><code>m_1</code>: Molecular mass (kg/molecule)</li><li><code>p_sat</code>: Saturation vapor pressure (Pa)</li></ul><p><strong>Parameters</strong></p><ul><li><code>T</code>: Temperature (K)</li></ul><p><strong>References</strong></p><p>Seinfeld, J.H. and Pandis, S.N. (2006). <em>Atmospheric Chemistry and Physics</em>, Chapter 11.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/EarthSciML/Aerosol.jl/blob/2ee93d91d07bfbd6b714b2ca67235ddd7161d63c/src/nucleation.jl#L96-L116">source</a></section></details></article><h2 id="Implementation"><a class="docs-heading-anchor" href="#Implementation">Implementation</a><a id="Implementation-1"></a><a class="docs-heading-anchor-permalink" href="#Implementation" title="Permalink"></a></h2><p>The implementation follows classical nucleation theory, which treats the formation of molecular clusters using thermodynamic arguments. The key assumption is the <strong>capillarity approximation</strong>: clusters of all sizes are assumed to have the same surface tension as bulk liquid.</p><h3 id="State-Variables"><a class="docs-heading-anchor" href="#State-Variables">State Variables</a><a id="State-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#State-Variables" title="Permalink"></a></h3><pre><code class="language-julia hljs">using DataFrames, ModelingToolkit, Symbolics, DynamicQuantities
+using Aerosol
+using OrdinaryDiffEq
+using Plots
+
+sys = Nucleation()
+vars = unknowns(sys)
+DataFrame(
+    :Name =&gt; [string(Symbolics.tosymbol(v, escape = false)) for v in vars],
+    :Units =&gt; [ModelingToolkit.get_unit(v) for v in vars],
+    :Description =&gt; [ModelingToolkit.getdescription(v) for v in vars]
+)</code></pre><div><div style = "float: left;"><span>8×3 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">Name</th><th style = "text-align: left;">Units</th><th style = "text-align: left;">Description</th></tr><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;"></th><th title = "String" style = "text-align: left;">String</th><th title = "DynamicQuantities.Quantity{Float64, DynamicQuantities.Dimensions{DynamicQuantities.FRInt32}}" style = "text-align: left;">Quantity…</th><th title = "String" style = "text-align: left;">String</th></tr></thead><tbody><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: left;">S</td><td style = "text-align: right;">1.0 </td><td style = "text-align: left;">Saturation ratio (dimensionless)</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: left;">N_1</td><td style = "text-align: right;">1.0 m⁻³</td><td style = "text-align: left;">Monomer number concentration</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: left;">a_1</td><td style = "text-align: right;">1.0 m²</td><td style = "text-align: left;">Monomer surface area</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">4</td><td style = "text-align: left;">θ</td><td style = "text-align: right;">1.0 </td><td style = "text-align: left;">Dimensionless surface tension (dimensionless)</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">5</td><td style = "text-align: left;">i_star</td><td style = "text-align: right;">1.0 </td><td style = "text-align: left;">Critical cluster size (dimensionless)</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">6</td><td style = "text-align: left;">r_star</td><td style = "text-align: right;">1.0 m</td><td style = "text-align: left;">Critical cluster radius</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">7</td><td style = "text-align: left;">ΔG_star</td><td style = "text-align: right;">1.0 m² kg s⁻²</td><td style = "text-align: left;">Free energy barrier</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">8</td><td style = "text-align: left;">J</td><td style = "text-align: right;">1.0 m⁻³ s⁻¹</td><td style = "text-align: left;">Nucleation rate</td></tr></tbody></table></div><h3 id="Parameters"><a class="docs-heading-anchor" href="#Parameters">Parameters</a><a id="Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Parameters" title="Permalink"></a></h3><pre><code class="language-julia hljs">pars = parameters(sys)
+DataFrame(
+    :Name =&gt; [string(Symbolics.tosymbol(p, escape = false)) for p in pars],
+    :Units =&gt; [ModelingToolkit.get_unit(p) for p in pars],
+    :Description =&gt; [ModelingToolkit.getdescription(p) for p in pars]
+)</code></pre><div><div style = "float: left;"><span>8×3 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">Name</th><th style = "text-align: left;">Units</th><th style = "text-align: left;">Description</th></tr><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;"></th><th title = "String" style = "text-align: left;">String</th><th title = "DynamicQuantities.Quantity{Float64, DynamicQuantities.Dimensions{DynamicQuantities.FRInt32}}" style = "text-align: left;">Quantity…</th><th title = "String" style = "text-align: left;">String</th></tr></thead><tbody><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: left;">σ</td><td style = "text-align: right;">1.0 kg s⁻²</td><td style = "text-align: left;">Surface tension</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: left;">π_val</td><td style = "text-align: right;">1.0 </td><td style = "text-align: left;">Pi (dimensionless)</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: left;">p_A_s</td><td style = "text-align: right;">1.0 m⁻¹ kg s⁻²</td><td style = "text-align: left;">Saturation vapor pressure</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">4</td><td style = "text-align: left;">k_B</td><td style = "text-align: right;">1.0 m² kg s⁻² K⁻¹</td><td style = "text-align: left;">Boltzmann constant</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">5</td><td style = "text-align: left;">v_1</td><td style = "text-align: right;">1.0 m³</td><td style = "text-align: left;">Molecular volume</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">6</td><td style = "text-align: left;">m_1</td><td style = "text-align: right;">1.0 kg</td><td style = "text-align: left;">Molecular mass</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">7</td><td style = "text-align: left;">T</td><td style = "text-align: right;">1.0 K</td><td style = "text-align: left;">Temperature</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">8</td><td style = "text-align: left;">p_A</td><td style = "text-align: right;">1.0 m⁻¹ kg s⁻²</td><td style = "text-align: left;">Partial pressure of condensing species</td></tr></tbody></table></div><h3 id="Equations"><a class="docs-heading-anchor" href="#Equations">Equations</a><a id="Equations-1"></a><a class="docs-heading-anchor-permalink" href="#Equations" title="Permalink"></a></h3><p>The system implements the following equations from Seinfeld &amp; Pandis (2006):</p><pre><code class="language-julia hljs">eqs = equations(sys)</code></pre><p class="math-container">\[ \begin{align}
+S\left( t \right) &amp;= \frac{\mathtt{p\_A}}{\mathtt{p\_A\_s}} \\
+\mathtt{N\_1}\left( t \right) &amp;= \frac{\mathtt{p\_A}}{T \mathtt{k\_B}} \\
+\mathtt{a\_1}\left( t \right) &amp;= 4 \left( \frac{3 \mathtt{v\_1}}{4 \mathtt{\pi\_val}} \right)^{\frac{2}{3}} \mathtt{\pi\_val} \\
+\theta\left( t \right) &amp;= \frac{3.3019 \mathtt{\pi\_val}^{\frac{1}{3}} \mathtt{v\_1}^{\frac{2}{3}} \sigma}{T \mathtt{k\_B}} \\
+\mathtt{i\_star}\left( t \right) &amp;= \left( \frac{2 \theta\left( t \right)}{3 \log\left( S\left( t \right) \right)} \right)^{3} \\
+\mathtt{r\_star}\left( t \right) &amp;= \frac{2 \mathtt{v\_1} \sigma}{T \mathtt{k\_B} \log\left( S\left( t \right) \right)} \\
+\mathtt{{\Delta}G\_star}\left( t \right) &amp;= \frac{16 \sigma^{3} \mathtt{v\_1}^{2} \mathtt{\pi\_val}}{3 \left( \log\left( S\left( t \right) \right) \right)^{2} \mathtt{k\_B}^{2} T^{2}} \\
+J\left( t \right) &amp;= \frac{\left( \mathtt{N\_1}\left( t \right) \right)^{2} \mathtt{v\_1} e^{\frac{ - 16 \sigma^{3} \mathtt{v\_1}^{2} \mathtt{\pi\_val}}{3 \left( \log\left( S\left( t \right) \right) \right)^{2} \mathtt{k\_B}^{3} T^{3}}} \sqrt{\frac{2 \sigma}{\mathtt{m\_1} \mathtt{\pi\_val}}}}{S\left( t \right)}
+\end{align}
+ \]</p><h3 id="Core-Equations"><a class="docs-heading-anchor" href="#Core-Equations">Core Equations</a><a id="Core-Equations-1"></a><a class="docs-heading-anchor-permalink" href="#Core-Equations" title="Permalink"></a></h3><p>The <strong>saturation ratio</strong> (Eq. 11.1) is the ratio of partial pressure to saturation vapor pressure:</p><p class="math-container">\[S = \frac{p_A}{p_A^s(T)}\]</p><p>The <strong>critical cluster size</strong> (Eq. 11.35) is determined by the competition between bulk and surface terms:</p><p class="math-container">\[i^* = \left(\frac{2\theta}{3\ln S}\right)^3\]</p><p>where θ is the dimensionless surface tension parameter (Eq. 11.27):</p><p class="math-container">\[\theta = \frac{(36\pi)^{1/3} v_1^{2/3} \sigma}{k_B T}\]</p><p>The <strong>critical radius</strong> (Eq. 11.52) follows from the Kelvin equation:</p><p class="math-container">\[r^* = \frac{2\sigma v_1}{k_B T \ln S}\]</p><p>The <strong>free energy barrier</strong> (Eq. 11.53) is:</p><p class="math-container">\[\Delta G^* = \frac{16\pi}{3} \frac{v_1^2 \sigma^3}{(k_B T \ln S)^2}\]</p><p>The <strong>classical nucleation rate</strong> (Eq. 11.47) gives the rate of new particle formation:</p><p class="math-container">\[J = \sqrt{\frac{2\sigma}{\pi m_1}} \frac{v_1 N_1^2}{S} \exp\left(-\frac{16\pi}{3} \frac{v_1^2 \sigma^3}{(k_B T)^3 (\ln S)^2}\right)\]</p><h2 id="Analysis"><a class="docs-heading-anchor" href="#Analysis">Analysis</a><a id="Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Analysis" title="Permalink"></a></h2><h3 id="Validation-Against-Table-11.1:-Critical-Cluster-Properties-for-Water"><a class="docs-heading-anchor" href="#Validation-Against-Table-11.1:-Critical-Cluster-Properties-for-Water">Validation Against Table 11.1: Critical Cluster Properties for Water</a><a id="Validation-Against-Table-11.1:-Critical-Cluster-Properties-for-Water-1"></a><a class="docs-heading-anchor-permalink" href="#Validation-Against-Table-11.1:-Critical-Cluster-Properties-for-Water" title="Permalink"></a></h3><p>The following analysis reproduces Table 11.1 from Seinfeld &amp; Pandis (2006), showing critical cluster properties for water at 273 K and 298 K.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq
+
+# Water properties from Table 11.1
+σ_273 = 75.6e-3  # N/m at 273 K
+σ_298 = 72.0e-3  # N/m at 298 K
+v_1 = 2.99e-29   # m³/molecule
+
+sys = CriticalCluster()
+compiled = mtkcompile(sys)
+
+# Calculate for 273 K
+results_273 = []
+for S in [2, 3, 4, 5]
+    prob = ODEProblem(compiled,
+        Dict(
+            compiled.T =&gt; 273.0,
+            compiled.S =&gt; Float64(S),
+            compiled.σ =&gt; σ_273,
+            compiled.v_1 =&gt; v_1
+        ),
+        (0.0, 1.0))
+    sol = solve(prob, Tsit5())
+    r_star_angstrom = sol[compiled.r_star][1] * 1e10  # Convert to Å
+    i_star = sol[compiled.i_star][1]
+    push!(results_273, (
+        S = S, r_star = round(r_star_angstrom, digits = 1), i_star = round(Int, i_star)))
+end
+
+# Calculate for 298 K
+results_298 = []
+for S in [2, 3, 4, 5]
+    prob = ODEProblem(compiled,
+        Dict(
+            compiled.T =&gt; 298.0,
+            compiled.S =&gt; Float64(S),
+            compiled.σ =&gt; σ_298,
+            compiled.v_1 =&gt; v_1
+        ),
+        (0.0, 1.0))
+    sol = solve(prob, Tsit5())
+    r_star_angstrom = sol[compiled.r_star][1] * 1e10
+    i_star = sol[compiled.i_star][1]
+    push!(results_298, (
+        S = S, r_star = round(r_star_angstrom, digits = 1), i_star = round(Int, i_star)))
+end
+
+# Display results as a table
+println(&quot;Table 11.1: Critical Number and Radius for Water Droplets&quot;)
+println(&quot;=&quot;^70)
+println(&quot;        T = 273 K                    T = 298 K&quot;)
+println(&quot;S    r* (Å)    i*                r* (Å)    i*&quot;)
+println(&quot;-&quot;^70)
+for (r273, r298) in zip(results_273, results_298)
+    println(&quot;$(r273.S)    $(r273.r_star)       $(r273.i_star)                 $(r298.r_star)       $(r298.i_star)&quot;)
+end
+
+# Expected values from Table 11.1
+println(&quot;\nExpected values from Seinfeld &amp; Pandis Table 11.1:&quot;)
+println(&quot;T=273K: S=2: r*=17.3Å, i*=726; S=3: r*=10.9Å, i*=182; S=4: r*=8.7Å, i*=87; S=5: r*=7.5Å, i*=58&quot;)
+println(&quot;T=298K: S=2: r*=15.1Å, i*=482; S=3: r*=9.5Å, i*=121; S=4: r*=7.6Å, i*=60; S=5: r*=6.5Å, i*=39&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Table 11.1: Critical Number and Radius for Water Droplets
+======================================================================
+        T = 273 K                    T = 298 K
+S    r* (Å)    i*                r* (Å)    i*
+----------------------------------------------------------------------
+2    17.3       726                 15.1       482
+3    10.9       182                 9.5       121
+4    8.7       91                 7.5       60
+5    7.5       58                 6.5       39
+
+Expected values from Seinfeld &amp; Pandis Table 11.1:
+T=273K: S=2: r*=17.3Å, i*=726; S=3: r*=10.9Å, i*=182; S=4: r*=8.7Å, i*=87; S=5: r*=7.5Å, i*=58
+T=298K: S=2: r*=15.1Å, i*=482; S=3: r*=9.5Å, i*=121; S=4: r*=7.6Å, i*=60; S=5: r*=6.5Å, i*=39</code></pre><h3 id="Validation-Against-Table-11.4:-Nucleation-Rates-for-Water"><a class="docs-heading-anchor" href="#Validation-Against-Table-11.4:-Nucleation-Rates-for-Water">Validation Against Table 11.4: Nucleation Rates for Water</a><a id="Validation-Against-Table-11.4:-Nucleation-Rates-for-Water-1"></a><a class="docs-heading-anchor-permalink" href="#Validation-Against-Table-11.4:-Nucleation-Rates-for-Water" title="Permalink"></a></h3><p>This reproduces Table 11.4 from Seinfeld &amp; Pandis (2006), showing nucleation rates for water at 293 K.</p><pre><code class="language-julia hljs"># Water properties at 293 K from Table 11.4
+σ_293 = 72.75e-3      # N/m
+v_1 = 2.99e-29        # m³/molecule
+m_1 = 2.99e-26        # kg/molecule
+p_sat_293 = 2336.5    # Pa
+
+sys = Nucleation()
+compiled = mtkcompile(sys)
+
+println(&quot;Table 11.4: Homogeneous Nucleation Rate and Critical Cluster Size for Water at T = 293 K&quot;)
+println(&quot;=&quot;^80)
+println(&quot;S      i*      J (cm⁻³s⁻¹)           Expected J&quot;)
+println(&quot;-&quot;^80)
+
+expected_J = Dict(2 =&gt; 5.02e-54, 3 =&gt; 1.76e-6, 4 =&gt; 1.05e6, 5 =&gt; 1.57e11,
+    6 =&gt; 1.24e14, 7 =&gt; 8.99e15, 8 =&gt; 1.79e17, 9 =&gt; 1.65e18, 10 =&gt; 9.17e18)
+
+for S in [2, 3, 4, 5, 6, 7, 8, 9, 10]
+    prob = ODEProblem(compiled,
+        Dict(
+            compiled.T =&gt; 293.0,
+            compiled.p_A =&gt; Float64(S) * p_sat_293,
+            compiled.p_A_s =&gt; p_sat_293,
+            compiled.σ =&gt; σ_293,
+            compiled.v_1 =&gt; v_1,
+            compiled.m_1 =&gt; m_1
+        ),
+        (0.0, 1.0))
+    sol = solve(prob, Tsit5())
+    J = sol[compiled.J][1] * 1e-6  # Convert from m⁻³s⁻¹ to cm⁻³s⁻¹
+    i_star = sol[compiled.i_star][1]
+    println(&quot;$(S)      $(round(Int, i_star))      $(round(J, sigdigits=3))           $(expected_J[S])&quot;)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Table 11.4: Homogeneous Nucleation Rate and Critical Cluster Size for Water at T = 293 K
+================================================================================
+S      i*      J (cm⁻³s⁻¹)           Expected J
+--------------------------------------------------------------------------------
+2      523      4.38e-54           5.02e-54
+3      131      1.66e-6           1.76e-6
+4      65      1.02e6           1.05e6
+5      42      1.53e11           1.57e11
+6      30      1.22e14           1.24e14
+7      24      8.84e15           8.99e15
+8      19      1.76e17           1.79e17
+9      16      1.62e18           1.65e18
+10      14      9.06e18           9.17e18</code></pre><h3 id="Figure:-Critical-Cluster-Size-vs.-Saturation-Ratio"><a class="docs-heading-anchor" href="#Figure:-Critical-Cluster-Size-vs.-Saturation-Ratio">Figure: Critical Cluster Size vs. Saturation Ratio</a><a id="Figure:-Critical-Cluster-Size-vs.-Saturation-Ratio-1"></a><a class="docs-heading-anchor-permalink" href="#Figure:-Critical-Cluster-Size-vs.-Saturation-Ratio" title="Permalink"></a></h3><p>This figure shows how the critical cluster size decreases with increasing saturation ratio, demonstrating why nucleation &quot;switches on&quot; sharply at a threshold supersaturation.</p><pre><code class="language-julia hljs">using Plots
+
+S_range = 1.5:0.1:10.0
+i_stars = Float64[]
+r_stars = Float64[]
+
+sys = CriticalCluster()
+compiled = mtkcompile(sys)
+
+for S in S_range
+    prob = ODEProblem(compiled,
+        Dict(
+            compiled.T =&gt; 293.0,
+            compiled.S =&gt; S,
+            compiled.σ =&gt; 72.75e-3,
+            compiled.v_1 =&gt; 2.99e-29
+        ),
+        (0.0, 1.0))
+    sol = solve(prob, Tsit5())
+    push!(i_stars, sol[compiled.i_star][1])
+    push!(r_stars, sol[compiled.r_star][1] * 1e10)  # Convert to Å
+end
+
+p1 = plot(
+    S_range, i_stars, xlabel = &quot;Saturation Ratio S&quot;, ylabel = &quot;Critical Cluster Size i*&quot;,
+    label = &quot;i*&quot;, lw = 2, legend = :topright, yscale = :log10,
+    title = &quot;Critical Cluster Size vs. Saturation Ratio (T=293K)&quot;)
+
+p2 = plot(
+    S_range, r_stars, xlabel = &quot;Saturation Ratio S&quot;, ylabel = &quot;Critical Radius r* (Å)&quot;,
+    label = &quot;r*&quot;, lw = 2, legend = :topright,
+    title = &quot;Critical Radius vs. Saturation Ratio (T=293K)&quot;)
+
+plot(p1, p2, layout = (1, 2), size = (900, 400))</code></pre><img src="36e4fa38.svg" alt="Example block output"/><h3 id="Figure:-Nucleation-Rate-vs.-Saturation-Ratio-(analogous-to-Table-11.4)"><a class="docs-heading-anchor" href="#Figure:-Nucleation-Rate-vs.-Saturation-Ratio-(analogous-to-Table-11.4)">Figure: Nucleation Rate vs. Saturation Ratio (analogous to Table 11.4)</a><a id="Figure:-Nucleation-Rate-vs.-Saturation-Ratio-(analogous-to-Table-11.4)-1"></a><a class="docs-heading-anchor-permalink" href="#Figure:-Nucleation-Rate-vs.-Saturation-Ratio-(analogous-to-Table-11.4)" title="Permalink"></a></h3><p>This figure illustrates the extreme sensitivity of nucleation rate to saturation ratio.</p><pre><code class="language-julia hljs">S_range = 2.0:0.5:10.0
+J_rates = Float64[]
+
+sys = Nucleation()
+compiled = mtkcompile(sys)
+
+for S in S_range
+    prob = ODEProblem(compiled,
+        Dict(
+            compiled.T =&gt; 293.0,
+            compiled.p_A =&gt; S * 2336.5,
+            compiled.p_A_s =&gt; 2336.5,
+            compiled.σ =&gt; 72.75e-3,
+            compiled.v_1 =&gt; 2.99e-29,
+            compiled.m_1 =&gt; 2.99e-26
+        ),
+        (0.0, 1.0))
+    sol = solve(prob, Tsit5())
+    J = sol[compiled.J][1] * 1e-6  # Convert to cm⁻³s⁻¹
+    push!(J_rates, max(J, 1e-60))  # Floor at 1e-60 for log scale
+end
+
+plot(
+    S_range, J_rates, xlabel = &quot;Saturation Ratio S&quot;, ylabel = &quot;Nucleation Rate J (cm⁻³s⁻¹)&quot;,
+    label = &quot;J&quot;, lw = 2, yscale = :log10,
+    title = &quot;Classical Nucleation Rate vs. Saturation Ratio (Water at 293K)&quot;,
+    ylims = (1e-60, 1e25), legend = :bottomright)</code></pre><img src="13ce57b3.svg" alt="Example block output"/><h3 id="Temperature-Dependence-of-Critical-Properties"><a class="docs-heading-anchor" href="#Temperature-Dependence-of-Critical-Properties">Temperature Dependence of Critical Properties</a><a id="Temperature-Dependence-of-Critical-Properties-1"></a><a class="docs-heading-anchor-permalink" href="#Temperature-Dependence-of-Critical-Properties" title="Permalink"></a></h3><p>This analysis shows how temperature affects critical cluster properties at a fixed saturation ratio.</p><pre><code class="language-julia hljs">T_range = 250.0:5.0:320.0
+S = 4.0
+
+i_stars_T = Float64[]
+r_stars_T = Float64[]
+
+# Approximate temperature-dependent surface tension: σ ≈ 75.6 - 0.1454*(T-273) mN/m
+σ_func(T) = (75.6 - 0.1454 * (T - 273)) * 1e-3
+
+sys = CriticalCluster()
+compiled = mtkcompile(sys)
+
+for T in T_range
+    prob = ODEProblem(compiled,
+        Dict(
+            compiled.T =&gt; T,
+            compiled.S =&gt; S,
+            compiled.σ =&gt; σ_func(T),
+            compiled.v_1 =&gt; 2.99e-29
+        ),
+        (0.0, 1.0))
+    sol = solve(prob, Tsit5())
+    push!(i_stars_T, sol[compiled.i_star][1])
+    push!(r_stars_T, sol[compiled.r_star][1] * 1e10)
+end
+
+p1 = plot(
+    T_range, i_stars_T, xlabel = &quot;Temperature (K)&quot;, ylabel = &quot;Critical Cluster Size i*&quot;,
+    label = &quot;i*&quot;, lw = 2, title = &quot;Critical Cluster Size vs. Temperature (S=4)&quot;)
+
+p2 = plot(
+    T_range, r_stars_T, xlabel = &quot;Temperature (K)&quot;, ylabel = &quot;Critical Radius r* (Å)&quot;,
+    label = &quot;r*&quot;, lw = 2, title = &quot;Critical Radius vs. Temperature (S=4)&quot;)
+
+plot(p1, p2, layout = (1, 2), size = (900, 400))</code></pre><img src="f9ddc95d.svg" alt="Example block output"/><h2 id="Key-Behaviors"><a class="docs-heading-anchor" href="#Key-Behaviors">Key Behaviors</a><a id="Key-Behaviors-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Behaviors" title="Permalink"></a></h2><h3 id="Saturation-Ratio-Dependence"><a class="docs-heading-anchor" href="#Saturation-Ratio-Dependence">Saturation Ratio Dependence</a><a id="Saturation-Ratio-Dependence-1"></a><a class="docs-heading-anchor-permalink" href="#Saturation-Ratio-Dependence" title="Permalink"></a></h3><p>The nucleation rate is extremely sensitive to the saturation ratio S:</p><ul><li>At S &lt; 2, nucleation is essentially zero for atmospheric conditions</li><li>The transition from negligible to significant nucleation occurs over a narrow range of S</li><li>At high S (&gt; 5), the rate increases by many orders of magnitude per unit increase in S</li></ul><h3 id="Temperature-Dependence"><a class="docs-heading-anchor" href="#Temperature-Dependence">Temperature Dependence</a><a id="Temperature-Dependence-1"></a><a class="docs-heading-anchor-permalink" href="#Temperature-Dependence" title="Permalink"></a></h3><p>Temperature affects nucleation through multiple pathways:</p><ul><li>Higher T reduces the free energy barrier, increasing J</li><li>Higher T increases vapor pressure, affecting S</li><li>Surface tension typically decreases with T</li></ul><h3 id="Critical-Cluster-Size"><a class="docs-heading-anchor" href="#Critical-Cluster-Size">Critical Cluster Size</a><a id="Critical-Cluster-Size-1"></a><a class="docs-heading-anchor-permalink" href="#Critical-Cluster-Size" title="Permalink"></a></h3><p>The critical cluster size i* decreases with increasing S:</p><ul><li>At low S, very large clusters are needed before they become stable</li><li>At high S, even small clusters can grow spontaneously</li><li>This explains why nucleation &quot;switches on&quot; sharply at a threshold S</li></ul><h2 id="Limitations"><a class="docs-heading-anchor" href="#Limitations">Limitations</a><a id="Limitations-1"></a><a class="docs-heading-anchor-permalink" href="#Limitations" title="Permalink"></a></h2><ol><li><p><strong>Capillarity approximation</strong>: The model assumes clusters of all sizes have bulk liquid surface tension, which becomes inaccurate for small clusters (i* &lt; 20-30).</p></li><li><p><strong>Single-component only</strong>: This implementation covers homogeneous single-component nucleation. Binary nucleation (e.g., H₂SO₄-H₂O) requires additional equations not yet implemented.</p></li><li><p><strong>Steady-state assumption</strong>: The classical nucleation rate assumes the cluster distribution has reached steady state.</p></li><li><p><strong>No kinetic effects</strong>: The model does not account for non-equilibrium effects or condensation/evaporation kinetics beyond the equilibrium rate constants.</p></li></ol></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../mass_transfer/">« Mass Transfer</a><a class="docs-footer-nextpage" href="../aqueous_chemistry/">Aqueous Chemistry »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Wednesday 4 February 2026 15:33">Wednesday 4 February 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
