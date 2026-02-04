@@ -11,6 +11,12 @@ using EarthSciMLBase
 include("VBS.jl")
 include("elemental_carbon.jl")
 include("mie_scattering.jl")
+include("dynamics.jl")
+include("mass_transfer.jl")
+include("timescales.jl")
+include("aqueous_transport.jl")
+include("single_particle_dynamics.jl")
+include("nucleation.jl")
 include("size_distribution.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA

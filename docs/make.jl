@@ -15,9 +15,13 @@ makedocs(;
     repo = Remotes.GitHub("EarthSciML", "Aerosol.jl"),
     pages = [
         "Home" => "index.md",
+        "Population Dynamics" => "dynamics.md",
+        "Single Particle Dynamics" => "single_particle_dynamics.md",
         "Size Distribution" => "size_distribution.md",
         "VBS" => "VBS.md",
         "Optical Properties" => "mie_scattering.md",
+        "Mass Transfer" => "mass_transfer.md",
+        "Nucleation" => "nucleation.md",
         "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
             "ISORROPIA" => "isorropia.md",
