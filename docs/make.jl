@@ -16,13 +16,14 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "Population Dynamics" => "dynamics.md",
+        "Single Particle Dynamics" => "single_particle_dynamics.md",
+        "Size Distribution" => "size_distribution.md",
         "VBS" => "VBS.md",
+        "Mass Transfer" => "mass_transfer.md",
+        "Nucleation" => "nucleation.md",
+        "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
-            "Isorropia" => [
-            "Overview" => "isorropia/overview.md",
-            "Examples" => "isorropia/examples.md",
-            "Implementation details" => "isorropia/implementation.md"
-        ],
+            "ISORROPIA" => "isorropia.md",
         ],
         "API" => "api.md"
     ],

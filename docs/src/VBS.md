@@ -20,11 +20,9 @@ nothing # hide
 We could solve and visualize the results with the following codes, Let's try reproducing Figure 1.(a):
 
 ```@example 2
-simplens = structural_simplify(ns)
-@unpack C_OA, ξ = simplens
+simplens = mtkcompile(ns)
 guess = [29] # initial guess of the C_OA, the total organic compound in aerosol phase
-params = []
-prob = NonlinearProblem(simplens, guess, params)
+prob = NonlinearProblem(simplens, guess, [])
 sol = solve(prob, TrustRegion())
 nothing # hide
 ```
@@ -36,7 +34,7 @@ using Plots
 p1 = begin
     x = log10.([0.01, 0.1, 1, 10, 100, 1000, 10000, 100000])
     p = bar(x, Ci, label = "total", color = :white)
-    bar!(x, sol[ξ] .* Ci, label = "condensed-phase", color = :green)
+    bar!(x, sol[simplens.ξ] .* Ci, label = "condensed-phase", color = :green)
     ylabel!("Organic Mass, μg/m³")
     xlabel!("log10(C*)")
     title!("Typical Ambient Partitioning")
@@ -48,13 +46,13 @@ Let's try reproducing Figure 1.(b): Semi-volatile emissions as they might appear
 ```@example 2
 Ci_2 = [0.4, 0.8, 1.25, 1.7, 2.1, 2.5, 3, 3.4] .* 1000 # The unit of Ci is μg/m³, and the values read from the original Figure 1(b) are in units of mg/m³
 ns2 = VBS(Ci_2)
-@unpack C_OA, ξ = structural_simplify(ns2)
-prob2 = NonlinearProblem(structural_simplify(ns2), [10000], [])
+simplens2 = mtkcompile(ns2)
+prob2 = NonlinearProblem(simplens2, [10000], [])
 sol2 = solve(prob2, TrustRegion())
 p2 = begin
     x = log10.([0.01, 0.1, 1, 10, 100, 1000, 10000, 100000])
     p = bar(x, Ci_2, label = "total", color = :white)
-    bar!(x, sol2[ξ] .* Ci_2, label = "condensed-phase", color = :red)
+    bar!(x, sol2[simplens2.ξ] .* Ci_2, label = "condensed-phase", color = :red)
     ylabel!("Organic Mass, mg/m³")
     xlabel!("log10(C*)")
     title!("Cooled Fresh Emissions")
@@ -65,12 +63,12 @@ Let's try reproducing Figure 1.(c): The effect of dilution by pure air on the em
 
 ```@example 2
 Ci_3 = [0.4, 0.8, 1.25, 1.7, 2.1, 2.5, 3, 3.4]
-@unpack C_OA, ξ = structural_simplify(VBS(Ci_3))
-sol3 = solve(NonlinearProblem(structural_simplify(VBS(Ci_3)), [10], []), TrustRegion())
+simplens3 = mtkcompile(VBS(Ci_3))
+sol3 = solve(NonlinearProblem(simplens3, [10], []), TrustRegion())
 p3 = begin
     x = log10.([0.01, 0.1, 1, 10, 100, 1000, 10000, 100000])
     p = bar(x, Ci_3, label = "total", color = :white)
-    bar!(x, sol3[ξ] .* Ci_3, label = "condensed-phase", color = :red)
+    bar!(x, sol3[simplens3.ξ] .* Ci_3, label = "condensed-phase", color = :red)
     ylabel!("Organic Mass, μg/m³")
     xlabel!("log10(C*)")
     title!("Diluted Emissions (dilution factor = 1000)")
@@ -84,9 +82,9 @@ p4 = begin
     x = log10.([0.4, 0.8, 1.25, 1.7, 2.1, 2.5, 3, 3.4])
     Ci_sum = Ci .+ Ci_3
     p = bar(x, Ci_sum, label = "total", color = :white)
-    both = sol[ξ] .* Ci .+ sol3[ξ] .* Ci_3
+    both = sol[simplens.ξ] .* Ci .+ sol3[simplens3.ξ] .* Ci_3
     bar!(x, both, label = "diluted emission", color = :red)
-    bar!(x, sol[ξ] .* Ci, label = "background", color = :green)
+    bar!(x, sol[simplens.ξ] .* Ci, label = "background", color = :green)
     ylabel!("Organic Mass, μg/m³")
     xlabel!("log10(C*)")
     title!("Emission & Background Mixed")
@@ -100,22 +98,20 @@ Temperature dependence was taken into consideration. A  basis  set  of  saturati
 ```@example 2
 Ci_t = [0.4, 0.55, 0.7, 1.1, 1.25, 1.45, 1.7, 1.8, 2] # values were read from the original Figure
 ns_t = VBS(Ci_t, [0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000]) # The second input of the VBS function is different basic set at standard temperatures, ranging from 1 ng to 100 mg at 300 K
-@unpack C_OA, ξ, T = structural_simplify(ns_t)
-params1 = [T=>310] # Temperature is an adjustable parameter in the model.
-params2 = [T=>285]
-prob_310 = NonlinearProblem(structural_simplify(ns_t), [29], params1)
-prob_285 = NonlinearProblem(structural_simplify(ns_t), [29], params2)
+simplens_t = mtkcompile(ns_t)
+prob_310 = NonlinearProblem(simplens_t, [29], [simplens_t.T=>310]) # Temperature is an adjustable parameter in the model.
+prob_285 = NonlinearProblem(simplens_t, [29], [simplens_t.T=>285])
 sol_310 = solve(prob_310, TrustRegion())
 sol_285 = solve(prob_285, TrustRegion())
 
 # Helpful visualize function
-function pl_t(sol, string::String)
+function pl_t(sol, simplens_t, string::String)
     x = log10.([0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000])
     p = bar(x, Ci_t, label = "total", color = :white)
-    bar!(x, sol[ξ] .* Ci_t, label = "condensed-phase", color = :green)
+    bar!(x, sol[simplens_t.ξ] .* Ci_t, label = "condensed-phase", color = :green)
     ylabel!("Organic Mass, μg/m³")
     xlabel!("log10(C*)")
     title!(string)
 end
-plot(pl_t(sol_310, "310K"), pl_t(sol_285, "285K"), layout = (1, 2))
+plot(pl_t(sol_310, simplens_t, "310K"), pl_t(sol_285, simplens_t, "285K"), layout = (1, 2))
 ```

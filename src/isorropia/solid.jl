@@ -43,6 +43,6 @@ end
     end
     @equations begin
         #0 ~ min(NH4, Na, Ca, K, Mg, Cl, NO3, SO4)#, HSO4) # Non-negativity constraints
-#        SO4 ~ HSO4
+        #        SO4 ~ HSO4
     end
 end
