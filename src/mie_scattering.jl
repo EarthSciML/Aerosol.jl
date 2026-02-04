@@ -17,7 +17,8 @@ as functions of the size parameter α = πDₚ/λ and the complex refractive ind
   - `Q_abs`: Absorption efficiency (dimensionless)
   - `Q_ext`: Extinction efficiency (dimensionless)
   - `ω`: Single-scattering albedo (dimensionless)
-  - `g`: Asymmetry parameter (dimensionless)
+  - `C_scat`, `C_abs`, `C_ext`: Cross sections (m²)
+  - `E_scat`, `E_abs`, `E_ext`: Mass efficiencies (m²/kg)
 
 # Key Parameters
 
