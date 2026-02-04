@@ -90,17 +90,17 @@ The complex refractive index ``m = n + ik`` determines how a material interacts 
 The real part ``n`` controls refraction (bending of light), while the imaginary part ``k``
 controls absorption. Values at ``\lambda = 589`` nm unless otherwise indicated:
 
-| Substance        | n      | k       | Notes                                      |
-|:-----------------|:-------|:--------|:-------------------------------------------|
-| Water            | 1.333  | ≈0      | Non-absorbing in visible                   |
-| Water (ice)      | 1.309  | ≈0      |                                            |
-| NaCl             | 1.544  | 0       |                                            |
-| H₂SO₄            | 1.426  | 0       | 97% pure mixture with H₂O                  |
-| NH₄HSO₄          | 1.473  | 0       |                                            |
-| (NH₄)₂SO₄        | 1.521  | 0       |                                            |
-| SiO₂             | 1.55   | 0       | At λ = 550 nm                              |
-| Elemental Carbon | 1.95   | 0.79    | At λ = 550 nm; strongly absorbing          |
-| Mineral dust     | 1.56   | 0.006   | At λ = 550 nm                              |
+| Substance        | n     | k     | Notes                             |
+|:---------------- |:----- |:----- |:--------------------------------- |
+| Water            | 1.333 | ≈0    | Non-absorbing in visible          |
+| Water (ice)      | 1.309 | ≈0    |                                   |
+| NaCl             | 1.544 | 0     |                                   |
+| H₂SO₄            | 1.426 | 0     | 97% pure mixture with H₂O         |
+| NH₄HSO₄          | 1.473 | 0     |                                   |
+| (NH₄)₂SO₄        | 1.521 | 0     |                                   |
+| SiO₂             | 1.55  | 0     | At λ = 550 nm                     |
+| Elemental Carbon | 1.95  | 0.79  | At λ = 550 nm; strongly absorbing |
+| Mineral dust     | 1.56  | 0.006 | At λ = 550 nm                     |
 
 *Source: Table 15.2 of Seinfeld & Pandis (2006)*
 

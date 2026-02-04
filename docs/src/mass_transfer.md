@@ -35,6 +35,7 @@ The Fuchs-Sutugin formula is the most widely used expression for mass transfer a
 ```@example mass_transfer
 using Aerosol
 using ModelingToolkit
+using ModelingToolkit: mtkcompile
 using NonlinearSolve
 using Plots
 
@@ -50,13 +51,13 @@ f_FS_α001 = Float64[]
 
 for Kn in Kn_range
     prob = NonlinearProblem(compiled, Dict(compiled.Kn => Kn, compiled.α => 1.0))
-    push!(f_FS_α1, solve(prob)[compiled.f_FS))
+    push!(f_FS_α1, solve(prob)[compiled.f_FS])
 
     prob = NonlinearProblem(compiled, Dict(compiled.Kn => Kn, compiled.α => 0.1))
-    push!(f_FS_α01, solve(prob)[compiled.f_FS))
+    push!(f_FS_α01, solve(prob)[compiled.f_FS])
 
     prob = NonlinearProblem(compiled, Dict(compiled.Kn => Kn, compiled.α => 0.01))
-    push!(f_FS_α001, solve(prob)[compiled.f_FS))
+    push!(f_FS_α001, solve(prob)[compiled.f_FS])
 end
 
 plot(Kn_range, f_FS_α1, label="α = 1.0", xscale=:log10,
