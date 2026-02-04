@@ -19,17 +19,17 @@ function salt_group(sys, group, var)
         :Ca => [:CaNO32, :CaCl2, :CaSO4],
         :K => [:KHSO4, :K2SO4, :KNO3, :KCl],
         :Mg => [:MgSO4, :MgNO32, :MgCl2],
-        :Cl => [ :NaCl, :KCl, :MgCl2, :CaCl2, :NH4Cl],
+        :Cl => [:NaCl, :KCl, :MgCl2, :CaCl2, :NH4Cl],
         :NO3 => [:NaNO3, :KNO3, :MgNO32, :CaNO32, :NH4NO3],
-        :SO4 => [:Na2SO4, :K2SO4, :MgSO4, :CaSO4,:NH42SO4],
-        :HSO4 => [:NH43HSO42, :KHSO4, :NaHSO4, :NH4HSO4, :NH43HSO42],
+        :SO4 => [:Na2SO4, :K2SO4, :MgSO4, :CaSO4, :NH42SO4],
+        :HSO4 => [:NH43HSO42, :KHSO4, :NaHSO4, :NH4HSO4, :NH43HSO42]
     )[group]
     [reduce(getproperty, [sys, s, var]) for s in salts]
 end
 
 function salt_group_ν(group)
-ν = Dict(
-          :NH4 => :ν_cation,
+    ν = Dict(
+        :NH4 => :ν_cation,
         :Na => :ν_cation,
         :Ca => :ν_cation,
         :K => :ν_cation,
@@ -38,7 +38,7 @@ function salt_group_ν(group)
         :NO3 => :ν_anion,
         :SO4 => :ν_anion,
         :HSO4 => :ν_anion,
-        :HSO42 => :ν_anion,
+        :HSO42 => :ν_anion
     )[group]
 end
 
@@ -48,7 +48,7 @@ function resid_moles(sys, val, group, var, prior_vars, quantity, q_zero)
     priors = [reduce(getproperty, [sys, v, quantity]) for v in prior_vars]
     prior_νs = [reduce(getproperty, [sys, v, salt_group_ν(group)]) for v in prior_vars]
 
-    max(val / ν - sum(priors .* prior_νs, init=0), q_zero)
+    max(val / ν - sum(priors .* prior_νs, init = 0), q_zero)
 end
 
 function min_resid(sys, var, cat, an, cat_val, an_val, cat_priors, an_priors, q_zero)
@@ -73,12 +73,14 @@ function min_resid(sys, var, cat, an, cat_val, an_val, cat_priors, an_priors, q_
         (:NH4, :SO4) => :NH42SO4,
         (:NH4, :HSO4) => :NH4HSO4,
         (:NH4, :HSO42) => :NH43HSO42,
-        (:Na, :HSO4) => :NaHSO4,
-    )[(cat, an)]
+        (:Na, :HSO4) => :NaHSO4
+    )[(
+        cat, an)]
     min(resid_moles(sys, cat_val, cat, salt, cat_priors, var, q_zero),
-             resid_moles(sys, an_val, an, salt, an_priors, var, q_zero))
+        resid_moles(sys, an_val, an, salt, an_priors, var, q_zero))
 end
-function min_resid(sys, var, cat, an, cat_val, an_val, cat_priors, an_priors, W, m_one, q_zero)
+function min_resid(
+        sys, var, cat, an, cat_val, an_val, cat_priors, an_priors, W, m_one, q_zero)
     M = min_resid(sys, var, cat, an, cat_val, an_val, cat_priors, an_priors, q_zero)
     log(max(M / W / m_one, 1e-20))
 end
@@ -124,14 +126,14 @@ end
         g = Gases()
         eq = EquilibriumConstants(T = T)
 
-        NH = Species(M_total=2e-7)
-        Na = Species(M_total=4e-10)
-        Ca = Species(M_total=1e-8)
-        K = Species(M_total=8.4e-9)
-        Mg = Species(M_total=4.1e-10)
-        Cl = Species(M_total=2.7e-10)
-        NO3 = Species(M_total=3.2e-8)
-        SO4 = Species(M_total=1e-7)
+        NH = Species(M_total = 2e-7)
+        Na = Species(M_total = 4e-10)
+        Ca = Species(M_total = 1e-8)
+        K = Species(M_total = 8.4e-9)
+        Mg = Species(M_total = 4.1e-10)
+        Cl = Species(M_total = 2.7e-10)
+        NO3 = Species(M_total = 3.2e-8)
+        SO4 = Species(M_total = 1e-7)
     end
     @variables begin
         # NH_eq(t), [unit = u"mol/kg", description = "Equilibrium NH3 + NH4", guess = 19]
@@ -308,7 +310,8 @@ end
             [:Na2SO4, :NaHSO4, :NaNO3], [:CaCl2, :MgCl2], M_zero)
         aq.NH4Cl.M ~ min_resid(aq, :M, :NH4, :Cl, aq.NH3_dissociated.M, aq.HCl.M,
             [:NH4HSO4, :NH4NO3, :NH43HSO42], [:CaCl2, :MgCl2, :NaCl], M_zero)
-        aq.NH42SO4.M ~ min_resid(aq, :M, :NH4, :SO4, aq.NH3_dissociated.M, aq.HSO4_dissociated.M,
+        aq.NH42SO4.M ~
+        min_resid(aq, :M, :NH4, :SO4, aq.NH3_dissociated.M, aq.HSO4_dissociated.M,
             [:NH4HSO4, :NH4NO3, :NH43HSO42, :NH4Cl], [:Na2SO4, :K2SO4], M_zero)
         aq.KCl.M ~ min_resid(aq, :M, :K, :Cl, K.total, aq.HCl.M,
             [:K2SO4], [:CaCl2, :MgCl2, :NaCl, :NH4Cl], M_zero)
@@ -321,24 +324,32 @@ end
         aq.CaSO4.M ~ min_resid(aq, :M, :Ca, :SO4, Ca.total, aq.HSO4_dissociated.M,
             [:CaCl2, :CaNO32], [:Na2SO4, :K2SO4, :NH42SO4], M_zero)
 
-        NH.precip ~ aq.NH3_dissociated.M - sum(salt_group(aq, :NH4, :M) .*
+        NH.precip ~
+        aq.NH3_dissociated.M - sum(salt_group(aq, :NH4, :M) .*
             salt_group(aq, :NH4, salt_group_ν(:NH4)))
-        Na.precip ~ Na.total - sum(salt_group(aq, :Na, :M) .*
-            salt_group(aq, :Na, salt_group_ν(:Na)))
-        Ca.precip ~ Ca.total - sum(salt_group(aq, :Ca, :M) .*
-            salt_group(aq, :Ca, salt_group_ν(:Ca)))
-        K.precip ~ K.total - sum(salt_group(aq, :K, :M) .*
-            salt_group(aq, :K, salt_group_ν(:K)))
-        Mg.precip ~ Mg.total - sum(salt_group(aq, :Mg, :M) .*
-            salt_group(aq, :Mg, salt_group_ν(:Mg)))
-        Cl.precip ~ Cl.total - sum(salt_group(aq, :Cl, :M) .*
-            salt_group(aq, :Cl, salt_group_ν(:Cl)))
-        NO3.precip ~ aq.HNO3.M - sum(salt_group(aq, :NO3, :M) .*
+        Na.precip ~
+        Na.total - sum(salt_group(aq, :Na, :M) .*
+                       salt_group(aq, :Na, salt_group_ν(:Na)))
+        Ca.precip ~
+        Ca.total - sum(salt_group(aq, :Ca, :M) .*
+                       salt_group(aq, :Ca, salt_group_ν(:Ca)))
+        K.precip ~
+        K.total - sum(salt_group(aq, :K, :M) .*
+                      salt_group(aq, :K, salt_group_ν(:K)))
+        Mg.precip ~
+        Mg.total - sum(salt_group(aq, :Mg, :M) .*
+                       salt_group(aq, :Mg, salt_group_ν(:Mg)))
+        Cl.precip ~
+        Cl.total - sum(salt_group(aq, :Cl, :M) .*
+                       salt_group(aq, :Cl, salt_group_ν(:Cl)))
+        NO3.precip ~
+        aq.HNO3.M - sum(salt_group(aq, :NO3, :M) .*
             salt_group(aq, :NO3, salt_group_ν(:NO3)))
-        SO4.precip ~ aq.HSO4_dissociated.M - sum(salt_group(aq, :SO4, :M) .*
-                salt_group(aq, :SO4, salt_group_ν(:SO4))) +
-            aq.H2SO4.M - sum(salt_group(aq, :HSO4, :M) .*
-                salt_group(aq, :HSO4, salt_group_ν(:HSO4)))
+        SO4.precip ~
+        aq.HSO4_dissociated.M - sum(salt_group(aq, :SO4, :M) .*
+            salt_group(aq, :SO4, salt_group_ν(:SO4))) +
+        aq.H2SO4.M - sum(salt_group(aq, :HSO4, :M) .*
+            salt_group(aq, :HSO4, salt_group_ν(:HSO4)))
     end
 end
 
