@@ -63,6 +63,29 @@ equations(sys)
 
 ## Analysis
 
+### Table 24.2: Global Mean Parameters for Sulfate Aerosol Forcing
+
+The following table presents global mean values of the parameters in Equation 24.29 for estimating direct radiative forcing by anthropogenic sulfate aerosol, along with estimated uncertainty factors (from Penner et al. 1994).
+
+| Parameter | Value | Units | Uncertainty Factor |
+|-----------|-------|-------|-------------------|
+| F₀ | 1370 | W m⁻² | — |
+| 1 - Aᶜ | 0.4 | — | 1.1 |
+| Tₐ | 0.76 | — | 1.15 |
+| 1 - Rₛ | 0.85 | — | 1.1 |
+| β̄ | 0.29 | — | 1.3 |
+| α_{SO₄}^{RH} | 5ᵇ | m²(g SO₄²⁻)⁻¹ | 1.5 |
+| f(RH) | 1.7 | — | 1.2 |
+| Q_{SO₂} | 80 | Tg yr⁻¹ | 1.15 |
+| γ_{SO₂} | 0.4 | — | 1.5 |
+| τ_{SO₄} | 0.02 | yr | 1.5 |
+| A | 5 × 10¹⁴ | m² | — |
+
+ᵃThe central value, divided/multiplied by the uncertainty factor, gives the estimated range of values of the parameter.
+ᵇIncludes associated cations.
+
+*Source*: Penner et al. (1994).
+
 ### Figure 24.2: Critical Single-Scattering Albedo
 
 The critical single-scattering albedo ω_crit defines the boundary between aerosol-induced cooling (ω > ω_crit) and heating (ω < ω_crit). This depends on surface albedo R_s and the upscatter fraction β.
@@ -149,6 +172,41 @@ annotate!(p, 0.55, 0.085, text("Maximum at Rc = 0.5", 8, :left))
 
 p
 ```
+
+### Figure 24.17: Cloud Albedo vs Cloud Droplet Number Concentration
+
+Figure 24.17 shows cloud albedo as a function of cloud droplet number concentration at constant liquid water content (L = 0.3 g m⁻³). At constant liquid water content and cloud thickness, cloud albedo increases with increasing CDNC.
+
+```@example aerosol_forcing
+# Reproduce Figure 24.17: Cloud albedo vs CDNC
+# Parameters from Figure 24.17 caption
+L = 0.3e-3  # kg/m³ (0.3 g/m³)
+ρ_w = 1000.0  # kg/m³
+g = 0.85
+γ = 2 / (sqrt(3) * (1 - g))
+
+# Cloud thicknesses
+h_vals = [50, 100, 500, 1500]  # meters
+
+# CDNC range (cm⁻³)
+N_cm3_range = 10.0:10.0:1000.0
+N_range = N_cm3_range .* 1e6  # Convert to m⁻³
+
+p = plot(xlabel="Cloud Droplet Number Concentration (cm⁻³)",
+         ylabel="Cloud Albedo (Rᶜ)",
+         title="Figure 24.17: Cloud Albedo vs CDNC (L = 0.3 g m⁻³)",
+         xscale=:log10, legend=:bottomright, ylim=(0, 1))
+
+for h in h_vals
+    τ_c_vals = [h * (9 * π * L^2 * N / (2 * ρ_w^2))^(1/3) for N in N_range]
+    R_c_vals = [τ / (τ + γ) for τ in τ_c_vals]
+    plot!(p, N_cm3_range, R_c_vals, label="h = $h m", linewidth=2)
+end
+
+p
+```
+
+This figure demonstrates the potential of aerosols to affect climate indirectly. For a cloud 50 m thick, increasing CDNC from 100 to 1000 cm⁻³ nearly doubles cloud albedo (from ~0.2 to ~0.4).
 
 ### Cloud Optical Depth Sensitivity
 
