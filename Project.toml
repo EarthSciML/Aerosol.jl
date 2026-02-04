@@ -31,11 +31,7 @@ Dates = "1"
 DynamicQuantities = "1.4.0"
 EarthSciData = "0.14"
 EarthSciMLBase = "0.24"
-<<<<<<< add-cloud-physics
 LinearAlgebra = "1"
-=======
-LinearAlgebra = "1.10"
->>>>>>> main
 ModelingToolkit = "10.10"
 NonlinearSolve = "4.12"
 OrdinaryDiffEq = "6.102.1"
