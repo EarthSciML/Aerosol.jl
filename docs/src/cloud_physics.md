@@ -31,7 +31,7 @@ using Aerosol
 sys = CloudPhysics()
 vars = unknowns(sys)
 DataFrame(
-    :Name => [string(Symbolics.tosymbol(v, escape=false)) for v in vars],
+    :Name => [string(Symbolics.tosymbol(v, escape = false)) for v in vars],
     :Units => [string(dimension(ModelingToolkit.get_unit(v))) for v in vars],
     :Description => [ModelingToolkit.getdescription(v) for v in vars]
 )
@@ -42,7 +42,7 @@ DataFrame(
 ```@example cloud_physics
 params = parameters(sys)
 DataFrame(
-    :Name => [string(Symbolics.tosymbol(p, escape=false)) for p in params],
+    :Name => [string(Symbolics.tosymbol(p, escape = false)) for p in params],
     :Units => [string(dimension(ModelingToolkit.get_unit(p))) for p in params],
     :Description => [ModelingToolkit.getdescription(p) for p in params]
 )
@@ -76,10 +76,10 @@ for T_val in T_range
 end
 
 plot(T_range .- 273.15, p_sat_vals ./ 100,
-    xlabel="Temperature (°C)", ylabel="Saturation Vapor Pressure (hPa)",
-    label="Water (Table 17.2 polynomial)",
-    linewidth=2, legend=:topleft,
-    title="Fig. 17.1: Saturation Vapor Pressure")
+    xlabel = "Temperature (°C)", ylabel = "Saturation Vapor Pressure (hPa)",
+    label = "Water (Table 17.2 polynomial)",
+    linewidth = 2, legend = :topleft,
+    title = "Fig. 17.1: Saturation Vapor Pressure")
 ```
 
 ### Figure 17.2: Kelvin Effect
@@ -90,7 +90,7 @@ The vapor pressure over a curved droplet surface is enhanced relative to a flat 
 ke = KelvinEffect()
 ke_sys = mtkcompile(ke)
 
-D_p_range = 10.0 .^ range(log10(1e-8), log10(1e-5), length=100)  # 10 nm to 10 µm
+D_p_range = 10.0 .^ range(log10(1e-8), log10(1e-5), length = 100)  # 10 nm to 10 µm
 kelvin_vals = Float64[]
 
 for D_val in D_p_range
@@ -100,11 +100,11 @@ for D_val in D_p_range
 end
 
 plot(D_p_range * 1e6, kelvin_vals,
-    xlabel="Droplet Diameter (µm)", ylabel="p_w(D_p) / p°",
-    xscale=:log10, label="T = 293.15 K",
-    linewidth=2, title="Fig. 17.2: Kelvin Effect",
-    legend=:topright)
-hline!([1.0], linestyle=:dash, color=:gray, label="Flat surface")
+    xlabel = "Droplet Diameter (µm)", ylabel = "p_w(D_p) / p°",
+    xscale = :log10, label = "T = 293.15 K",
+    linewidth = 2, title = "Fig. 17.2: Kelvin Effect",
+    legend = :topright)
+hline!([1.0], linestyle = :dash, color = :gray, label = "Flat surface")
 ```
 
 ### Figure 17.5: Köhler Curves
@@ -115,16 +115,17 @@ Köhler curves show the equilibrium saturation ratio as a function of wet drople
 kt = KohlerTheory()
 kt_sys = mtkcompile(kt)
 
-D_wet_range = 10.0 .^ range(log10(1e-8), log10(5e-5), length=200)
+D_wet_range = 10.0 .^ range(log10(1e-8), log10(5e-5), length = 200)
 
 function kohler_curve(kt_sys, d_dry, M_s, rho_s, nu_s)
     S_vals = Float64[]
     for D_w in D_wet_range
-        prob = NonlinearProblem(kt_sys, Dict(
-            kt_sys.D_p => D_w, kt_sys.d_s => d_dry,
-            kt_sys.M_s => M_s, kt_sys.ρ_s => rho_s,
-            kt_sys.ν_s => nu_s, kt_sys.T => 293.15, kt_sys.ε_m => 1.0
-        ))
+        prob = NonlinearProblem(kt_sys,
+            Dict(
+                kt_sys.D_p => D_w, kt_sys.d_s => d_dry,
+                kt_sys.M_s => M_s, kt_sys.ρ_s => rho_s,
+                kt_sys.ν_s => nu_s, kt_sys.T => 293.15, kt_sys.ε_m => 1.0
+            ))
         sol = solve(prob)
         push!(S_vals, sol[kt_sys.S])
     end
@@ -133,19 +134,19 @@ end
 
 # NaCl: M_s = 0.05844, rho = 2165, nu = 2
 # (NH4)2SO4: M_s = 0.13214, rho = 1770, nu = 3
-plot(title="Fig. 17.5: Köhler Curves", xlabel="Wet Diameter (µm)",
-    ylabel="Saturation Ratio S", legend=:topright, ylims=(0.990, 1.015))
+plot(title = "Fig. 17.5: Köhler Curves", xlabel = "Wet Diameter (µm)",
+    ylabel = "Saturation Ratio S", legend = :topright, ylims = (0.990, 1.015))
 
 for (d_dry, style) in [(0.05e-6, :solid), (0.1e-6, :dash), (0.5e-6, :dot)]
-    d_label = round(d_dry * 1e6, digits=2)
+    d_label = round(d_dry * 1e6, digits = 2)
     S_nacl = kohler_curve(kt_sys, d_dry, 0.05844, 2165.0, 2.0)
-    plot!(D_wet_range * 1e6, S_nacl, label="NaCl d_s=$(d_label) µm",
-        linestyle=style, linewidth=2, color=:blue, xscale=:log10)
+    plot!(D_wet_range * 1e6, S_nacl, label = "NaCl d_s=$(d_label) µm",
+        linestyle = style, linewidth = 2, color = :blue, xscale = :log10)
     S_as = kohler_curve(kt_sys, d_dry, 0.13214, 1770.0, 3.0)
-    plot!(D_wet_range * 1e6, S_as, label="(NH₄)₂SO₄ d_s=$(d_label) µm",
-        linestyle=style, linewidth=2, color=:red, xscale=:log10)
+    plot!(D_wet_range * 1e6, S_as, label = "(NH₄)₂SO₄ d_s=$(d_label) µm",
+        linestyle = style, linewidth = 2, color = :red, xscale = :log10)
 end
-hline!([1.0], linestyle=:dash, color=:gray, label="S = 1")
+hline!([1.0], linestyle = :dash, color = :gray, label = "S = 1")
 plot!()
 ```
 
@@ -154,15 +155,16 @@ plot!()
 Critical supersaturation decreases with increasing dry particle diameter, following a power-law relationship (Eq. 17.34).
 
 ```@example cloud_physics
-d_dry_range = 10.0 .^ range(log10(1e-8), log10(1e-6), length=50)
+d_dry_range = 10.0 .^ range(log10(1e-8), log10(1e-6), length = 50)
 
 function critical_ss(kt_sys, d_dry_range, M_s, rho_s, nu_s)
     sc_vals = Float64[]
     for d_d in d_dry_range
-        prob = NonlinearProblem(kt_sys, Dict(
-            kt_sys.d_s => d_d, kt_sys.M_s => M_s, kt_sys.ρ_s => rho_s,
-            kt_sys.ν_s => nu_s, kt_sys.T => 293.15, kt_sys.ε_m => 1.0
-        ))
+        prob = NonlinearProblem(kt_sys,
+            Dict(
+                kt_sys.d_s => d_d, kt_sys.M_s => M_s, kt_sys.ρ_s => rho_s,
+                kt_sys.ν_s => nu_s, kt_sys.T => 293.15, kt_sys.ε_m => 1.0
+            ))
         sol = solve(prob)
         push!(sc_vals, (sol[kt_sys.S_c] - 1) * 100)  # Convert to percent
     end
@@ -172,11 +174,11 @@ end
 sc_nacl = critical_ss(kt_sys, d_dry_range, 0.05844, 2165.0, 2.0)
 sc_as = critical_ss(kt_sys, d_dry_range, 0.13214, 1770.0, 3.0)
 
-plot(d_dry_range * 1e6, sc_nacl, label="NaCl", linewidth=2, color=:blue,
-    xlabel="Dry Diameter (µm)", ylabel="Critical Supersaturation (%)",
-    xscale=:log10, yscale=:log10, title="Fig. 17.6: Critical Supersaturation",
-    legend=:topright)
-plot!(d_dry_range * 1e6, sc_as, label="(NH₄)₂SO₄", linewidth=2, color=:red)
+plot(d_dry_range * 1e6, sc_nacl, label = "NaCl", linewidth = 2, color = :blue,
+    xlabel = "Dry Diameter (µm)", ylabel = "Critical Supersaturation (%)",
+    xscale = :log10, yscale = :log10, title = "Fig. 17.6: Critical Supersaturation",
+    legend = :topright)
+plot!(d_dry_range * 1e6, sc_as, label = "(NH₄)₂SO₄", linewidth = 2, color = :red)
 ```
 
 ### Figure 17.9: Effect of Insoluble Material on Critical Supersaturation
@@ -186,22 +188,23 @@ Particles with less soluble material require higher supersaturation to activate 
 ```@example cloud_physics
 epsilon_vals = [1.0, 0.5, 0.1, 0.01]
 
-plot(title="Fig. 17.9: Insoluble Material Effect",
-    xlabel="Dry Diameter (µm)", ylabel="Critical Supersaturation (%)",
-    xscale=:log10, yscale=:log10, legend=:topright)
+plot(title = "Fig. 17.9: Insoluble Material Effect",
+    xlabel = "Dry Diameter (µm)", ylabel = "Critical Supersaturation (%)",
+    xscale = :log10, yscale = :log10, legend = :topright)
 
 for eps_m in epsilon_vals
     sc_vals = Float64[]
     for d_d in d_dry_range
-        prob = NonlinearProblem(kt_sys, Dict(
-            kt_sys.d_s => d_d, kt_sys.M_s => 0.13214, kt_sys.ρ_s => 1770.0,
-            kt_sys.ν_s => 3.0, kt_sys.T => 293.15, kt_sys.ε_m => eps_m,
-            kt_sys.ρ_u => 2000.0
-        ))
+        prob = NonlinearProblem(kt_sys,
+            Dict(
+                kt_sys.d_s => d_d, kt_sys.M_s => 0.13214, kt_sys.ρ_s => 1770.0,
+                kt_sys.ν_s => 3.0, kt_sys.T => 293.15, kt_sys.ε_m => eps_m,
+                kt_sys.ρ_u => 2000.0
+            ))
         sol = solve(prob)
         push!(sc_vals, (sol[kt_sys.S_c] - 1) * 100)
     end
-    plot!(d_dry_range * 1e6, sc_vals, label="ε_m = $eps_m", linewidth=2)
+    plot!(d_dry_range * 1e6, sc_vals, label = "ε_m = $eps_m", linewidth = 2)
 end
 plot!()
 ```
@@ -217,9 +220,9 @@ cd_sys = mtkcompile(cd)
 T0_range = 273.15:2.0:313.15  # 0°C to 40°C
 RH_vals = [0.2, 0.4, 0.6, 0.8, 1.0]
 
-plot(title="Fig. 17.10: Dew Point Temperature",
-    xlabel="Temperature (°C)", ylabel="Dew Point Temperature (°C)",
-    legend=:bottomright)
+plot(title = "Fig. 17.10: Dew Point Temperature",
+    xlabel = "Temperature (°C)", ylabel = "Dew Point Temperature (°C)",
+    legend = :bottomright)
 
 for rh in RH_vals
     Td_vals = Float64[]
@@ -228,7 +231,7 @@ for rh in RH_vals
         sol = solve(prob)
         push!(Td_vals, sol[cd_sys.T_d] - 273.15)
     end
-    plot!(T0_range .- 273.15, Td_vals, label="RH = $rh", linewidth=2)
+    plot!(T0_range .- 273.15, Td_vals, label = "RH = $rh", linewidth = 2)
 end
 plot!()
 ```
@@ -238,9 +241,9 @@ plot!()
 Height of the lifting condensation level (LCL) as a function of surface temperature and relative humidity (Eq. 17.49).
 
 ```@example cloud_physics
-plot(title="Fig. 17.11: Lifting Condensation Level",
-    xlabel="Surface Temperature (°C)", ylabel="LCL Height (m)",
-    legend=:topleft)
+plot(title = "Fig. 17.11: Lifting Condensation Level",
+    xlabel = "Surface Temperature (°C)", ylabel = "LCL Height (m)",
+    legend = :topleft)
 
 for rh in [0.2, 0.4, 0.6, 0.8]
     h_vals = Float64[]
@@ -249,7 +252,7 @@ for rh in [0.2, 0.4, 0.6, 0.8]
         sol = solve(prob)
         push!(h_vals, sol[cd_sys.h_LCL])
     end
-    plot!(T0_range .- 273.15, h_vals, label="RH = $rh", linewidth=2)
+    plot!(T0_range .- 273.15, h_vals, label = "RH = $rh", linewidth = 2)
 end
 plot!()
 ```
@@ -262,23 +265,24 @@ Growth rate of cloud droplets as a function of diameter at 1% supersaturation (E
 dg = DropletGrowth()
 dg_sys = mtkcompile(dg)
 
-D_range = 10.0 .^ range(log10(1e-6), log10(50e-6), length=50)
+D_range = 10.0 .^ range(log10(1e-6), log10(50e-6), length = 50)
 growth_vals = Float64[]
 
 for D_val in D_range
-    prob = NonlinearProblem(dg_sys, Dict(
-        dg_sys.D_p => D_val, dg_sys.S_v => 1.01, dg_sys.T => 293.15,
-        dg_sys.n_s => 0.0, dg_sys.d_u => 0.0
-    ))
+    prob = NonlinearProblem(dg_sys,
+        Dict(
+            dg_sys.D_p => D_val, dg_sys.S_v => 1.01, dg_sys.T => 293.15,
+            dg_sys.n_s => 0.0, dg_sys.d_u => 0.0
+        ))
     sol = solve(prob)
     push!(growth_vals, sol[dg_sys.dDp_dt])
 end
 
 plot(D_range * 1e6, growth_vals * 1e6,
-    xlabel="Droplet Diameter (µm)", ylabel="Growth Rate dD_p/dt (µm/s)",
-    linewidth=2, label="S = 1.01, T = 293 K",
-    title="Droplet Growth Rate (Eq. 17.70)",
-    legend=:topright)
+    xlabel = "Droplet Diameter (µm)", ylabel = "Growth Rate dD_p/dt (µm/s)",
+    linewidth = 2, label = "S = 1.01, T = 293 K",
+    title = "Droplet Growth Rate (Eq. 17.70)",
+    legend = :topright)
 ```
 
 ### Ice Nuclei Concentration
@@ -299,8 +303,8 @@ for T_val in T_ice_range
 end
 
 plot(T_ice_range .- 273.15, IN_vals,
-    xlabel="Temperature (°C)", ylabel="Ice Nuclei (L⁻¹)",
-    yscale=:log10, linewidth=2, label="Eq. 17.103",
-    title="Ice Nuclei Concentration",
-    legend=:topright)
+    xlabel = "Temperature (°C)", ylabel = "Ice Nuclei (L⁻¹)",
+    yscale = :log10, linewidth = 2, label = "Eq. 17.103",
+    title = "Ice Nuclei Concentration",
+    legend = :topright)
 ```

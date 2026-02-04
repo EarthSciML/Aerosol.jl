@@ -1,5 +1,5 @@
 export WaterProperties, KelvinEffect, KohlerTheory, DropletGrowth, CloudDynamics,
-    IcePhysics, RainFormation, AerosolScavenging, CloudPhysics
+       IcePhysics, RainFormation, AerosolScavenging, CloudPhysics
 
 """
     WaterProperties(; name=:WaterProperties)
@@ -15,26 +15,36 @@ Equations 17.1-17.6, Table 17.2.
 @component function WaterProperties(; name = :WaterProperties)
     @constants begin
         T_ref = 273.15, [description = "Reference temperature (0 C)", unit = u"K"]
-        T_unit = 1.0, [description = "Unit temperature for nondimensionalization", unit = u"K"]
-        P_unit = 1.0, [description = "Unit pressure for nondimensionalization", unit = u"Pa"]
+        T_unit = 1.0,
+        [description = "Unit temperature for nondimensionalization", unit = u"K"]
+        P_unit = 1.0,
+        [description = "Unit pressure for nondimensionalization", unit = u"Pa"]
         # Saturation vapor pressure polynomial coefficients (Table 17.2)
         # Polynomial is evaluated in Celsius; output in mbar, converted to Pa.
         # All coefficients carry units of Pa (after mbar-to-Pa conversion is folded in).
         a0_w = 610.7799961, [description = "Water sat. vap. press. coeff. a0", unit = u"Pa"]
         a1_w = 44.36518521, [description = "Water sat. vap. press. coeff. a1", unit = u"Pa"]
         a2_w = 1.428945805, [description = "Water sat. vap. press. coeff. a2", unit = u"Pa"]
-        a3_w = 2.650648471e-2, [description = "Water sat. vap. press. coeff. a3", unit = u"Pa"]
-        a4_w = 3.031240396e-4, [description = "Water sat. vap. press. coeff. a4", unit = u"Pa"]
-        a5_w = 2.034080948e-6, [description = "Water sat. vap. press. coeff. a5", unit = u"Pa"]
-        a6_w = 6.136820929e-9, [description = "Water sat. vap. press. coeff. a6", unit = u"Pa"]
+        a3_w = 2.650648471e-2,
+        [description = "Water sat. vap. press. coeff. a3", unit = u"Pa"]
+        a4_w = 3.031240396e-4,
+        [description = "Water sat. vap. press. coeff. a4", unit = u"Pa"]
+        a5_w = 2.034080948e-6,
+        [description = "Water sat. vap. press. coeff. a5", unit = u"Pa"]
+        a6_w = 6.136820929e-9,
+        [description = "Water sat. vap. press. coeff. a6", unit = u"Pa"]
         # Ice coefficients (also with 100x for mbar->Pa)
         a0_i = 610.9177956, [description = "Ice sat. vap. press. coeff. a0", unit = u"Pa"]
         a1_i = 50.34698970, [description = "Ice sat. vap. press. coeff. a1", unit = u"Pa"]
         a2_i = 1.886013408, [description = "Ice sat. vap. press. coeff. a2", unit = u"Pa"]
-        a3_i = 4.176223716e-2, [description = "Ice sat. vap. press. coeff. a3", unit = u"Pa"]
-        a4_i = 5.824720280e-4, [description = "Ice sat. vap. press. coeff. a4", unit = u"Pa"]
-        a5_i = 4.838803174e-6, [description = "Ice sat. vap. press. coeff. a5", unit = u"Pa"]
-        a6_i = 1.838826904e-8, [description = "Ice sat. vap. press. coeff. a6", unit = u"Pa"]
+        a3_i = 4.176223716e-2,
+        [description = "Ice sat. vap. press. coeff. a3", unit = u"Pa"]
+        a4_i = 5.824720280e-4,
+        [description = "Ice sat. vap. press. coeff. a4", unit = u"Pa"]
+        a5_i = 4.838803174e-6,
+        [description = "Ice sat. vap. press. coeff. a5", unit = u"Pa"]
+        a6_i = 1.838826904e-8,
+        [description = "Ice sat. vap. press. coeff. a6", unit = u"Pa"]
         # Empirical correlation constants for Eq. 17.2
         cpw_base = 4175.0, [description = "Base specific heat of water", unit = u"J/(kg*K)"]
         cpw_c2 = 0.013, [description = "Quadratic coefficient for c_pw", unit = u"J/(kg*K)"]
@@ -43,18 +53,29 @@ Equations 17.1-17.6, Table 17.2.
         # Eq. 17.3 constants - Latent heat of vaporization
         # ΔH_v(kJ/kg) = 2500*(273.15/T)^(0.167 + 3.67e-4*T)
         # (Original Eq. uses J/g; converted to J/kg = 1000*J/g)
-        Hv_ref = 2.5e6, [description = "Latent heat reference value (2.5 kJ/g = 2.5e6 J/kg)", unit = u"J/kg"]
-        Hv_exp_const = 0.167, [description = "Exponent constant for latent heat (dimensionless)", unit = u"1"]
-        Hv_exp_coeff = 3.67e-4, [description = "Exponent coefficient for latent heat (dimensionless)", unit = u"1"]
+        Hv_ref = 2.5e6,
+        [
+            description = "Latent heat reference value (2.5 kJ/g = 2.5e6 J/kg)", unit = u"J/kg"]
+        Hv_exp_const = 0.167,
+        [description = "Exponent constant for latent heat (dimensionless)", unit = u"1"]
+        Hv_exp_coeff = 3.67e-4,
+        [description = "Exponent coefficient for latent heat (dimensionless)", unit = u"1"]
         # Eq. 17.4 constants - Latent heat of melting
         # ΔH_m(J/g) = 333.5 + 2.03*T_C - 0.0105*T_C^2, T_C in Celsius (=K offset)
         # Converted to J/kg by multiplying by 1000
-        Hm_base = 333500.0, [description = "Base latent heat of melting (333.5 J/g -> J/kg)", unit = u"J/kg"]
-        Hm_c1 = 2030.0, [description = "Linear coefficient for latent heat of melting (2.03 J/g -> J/kg)", unit = u"J/kg"]
-        Hm_c2 = -10.5, [description = "Quadratic coefficient for latent heat of melting (-0.0105 J/g -> J/kg)", unit = u"J/kg"]
+        Hm_base = 333500.0,
+        [description = "Base latent heat of melting (333.5 J/g -> J/kg)", unit = u"J/kg"]
+        Hm_c1 = 2030.0,
+        [description = "Linear coefficient for latent heat of melting (2.03 J/g -> J/kg)",
+            unit = u"J/kg"]
+        Hm_c2 = -10.5,
+        [
+            description = "Quadratic coefficient for latent heat of melting (-0.0105 J/g -> J/kg)",
+            unit = u"J/kg"]
         # Eq. 17.5 constants
         sigma_base = 0.0761, [description = "Base surface tension", unit = u"N/m"]
-        sigma_coeff = 1.55e-4, [description = "Surface tension temperature coefficient", unit = u"N/(m*K)"]
+        sigma_coeff = 1.55e-4,
+        [description = "Surface tension temperature coefficient", unit = u"N/(m*K)"]
     end
 
     @parameters begin
@@ -78,7 +99,9 @@ Equations 17.1-17.6, Table 17.2.
         T_C ~ T - T_ref,
 
         # Eq. 17.2 - Specific heat of liquid water (273 < T <= 308 K)
-        c_pw ~ cpw_base + cpw_c2 * ((T - T_cpw_ref) / T_unit)^2 + cpw_c4 * ((T - T_cpw_ref) / T_unit)^4,
+        c_pw ~
+        cpw_base + cpw_c2 * ((T - T_cpw_ref) / T_unit)^2 +
+        cpw_c4 * ((T - T_cpw_ref) / T_unit)^4,
 
         # Eq. 17.3 - Latent heat of vaporization (J/g)
         # T is nondimensionalized to keep the exponent dimensionless
@@ -93,14 +116,16 @@ Equations 17.1-17.6, Table 17.2.
 
         # Table 17.2 - Saturation vapor pressure over water (Pa)
         # Polynomial in dimensionless T_C/T_unit
-        p_sat_water ~ a0_w + a1_w * (T_C / T_unit) + a2_w * (T_C / T_unit)^2 +
-                       a3_w * (T_C / T_unit)^3 + a4_w * (T_C / T_unit)^4 +
-                       a5_w * (T_C / T_unit)^5 + a6_w * (T_C / T_unit)^6,
+        p_sat_water ~
+        a0_w + a1_w * (T_C / T_unit) + a2_w * (T_C / T_unit)^2 +
+        a3_w * (T_C / T_unit)^3 + a4_w * (T_C / T_unit)^4 +
+        a5_w * (T_C / T_unit)^5 + a6_w * (T_C / T_unit)^6,
 
         # Table 17.2 - Saturation vapor pressure over ice (Pa)
-        p_sat_ice ~ a0_i + a1_i * (T_C / T_unit) + a2_i * (T_C / T_unit)^2 +
-                     a3_i * (T_C / T_unit)^3 + a4_i * (T_C / T_unit)^4 +
-                     a5_i * (T_C / T_unit)^5 + a6_i * (T_C / T_unit)^6,
+        p_sat_ice ~
+        a0_i + a1_i * (T_C / T_unit) + a2_i * (T_C / T_unit)^2 +
+        a3_i * (T_C / T_unit)^3 + a4_i * (T_C / T_unit)^4 +
+        a5_i * (T_C / T_unit)^5 + a6_i * (T_C / T_unit)^6
     ]
 
     return System(eqs, t; name)
@@ -129,7 +154,8 @@ Based on Equation 17.9 from Seinfeld & Pandis (2006).
     end
 
     @variables begin
-        kelvin_ratio(t), [description = "Kelvin ratio p_w/p_sat (dimensionless)", unit = u"1"]
+        kelvin_ratio(t),
+        [description = "Kelvin ratio p_w/p_sat (dimensionless)", unit = u"1"]
         A_kelvin(t), [description = "Kelvin parameter", unit = u"m"]
     end
 
@@ -138,7 +164,7 @@ Based on Equation 17.9 from Seinfeld & Pandis (2006).
         A_kelvin ~ 4 * M_w * σ_w / (R * T * ρ_w),
 
         # Eq. 17.9 - Kelvin equation: p_w(D_p)/p_sat = exp(A/D_p)
-        kelvin_ratio ~ exp(A_kelvin / D_p),
+        kelvin_ratio ~ exp(A_kelvin / D_p)
     ]
 
     return System(eqs, t; name)
@@ -161,7 +187,8 @@ Based on Equations 17.18-17.40 from Seinfeld & Pandis (2006).
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
         ρ_w = 997.0, [description = "Density of liquid water", unit = u"kg/m^3"]
         π_val = 3.141592653589793, [description = "Pi (dimensionless)", unit = u"1"]
-        vol_eps = 1e-60, [description = "Small volume for numerical stability", unit = u"m^3"]
+        vol_eps = 1e-60,
+        [description = "Small volume for numerical stability", unit = u"m^3"]
     end
 
     @parameters begin
@@ -169,10 +196,12 @@ Based on Equations 17.18-17.40 from Seinfeld & Pandis (2006).
         σ_w = 0.0728, [description = "Surface tension of water", unit = u"N/m"]
         D_p = 1.0e-7, [description = "Wet droplet diameter", unit = u"m"]
         d_s = 5.0e-8, [description = "Dry particle diameter", unit = u"m"]
-        ν_s = 2.0, [description = "Van't Hoff factor (number of ions) (dimensionless)", unit = u"1"]
+        ν_s = 2.0,
+        [description = "Van't Hoff factor (number of ions) (dimensionless)", unit = u"1"]
         M_s = 0.05844, [description = "Molecular weight of solute", unit = u"kg/mol"]
         ρ_s = 2165.0, [description = "Density of solute", unit = u"kg/m^3"]
-        ε_m = 1.0, [description = "Mass fraction of soluble material (dimensionless)", unit = u"1"]
+        ε_m = 1.0,
+        [description = "Mass fraction of soluble material (dimensionless)", unit = u"1"]
         ρ_u = 2000.0, [description = "Density of insoluble material", unit = u"kg/m^3"]
     end
 
@@ -214,7 +243,7 @@ Based on Equations 17.18-17.40 from Seinfeld & Pandis (2006).
         ln_S_c ~ sqrt(4 * A^3 / (27 * B)),
 
         # Critical saturation ratio
-        S_c ~ exp(ln_S_c),
+        S_c ~ exp(ln_S_c)
     ]
 
     return System(eqs, t; name)
@@ -237,39 +266,51 @@ Based on Equations 17.60-17.72 from Seinfeld & Pandis (2006).
         ρ_w = 997.0, [description = "Density of liquid water", unit = u"kg/m^3"]
         π_val = 3.141592653589793, [description = "Pi (dimensionless)", unit = u"1"]
         # Eq. 17.61 constants (D_v in m^2/s)
-        Dv_ref = 0.211e-4, [description = "Reference diffusivity at 273 K, 1 atm", unit = u"m^2/s"]
+        Dv_ref = 0.211e-4,
+        [description = "Reference diffusivity at 273 K, 1 atm", unit = u"m^2/s"]
         p_ref = 101325.0, [description = "Reference pressure (1 atm)", unit = u"Pa"]
         T_Dv_ref = 273.0, [description = "Reference temperature for D_v", unit = u"K"]
         # Eq. 17.71 constants (k_a in W/(m*K))
-        ka_c0 = 4.39e-3, [description = "Thermal conductivity constant", unit = u"J/(m*s*K)"]
-        ka_c1 = 0.071e-3, [description = "Thermal conductivity slope", unit = u"J/(m*s*K^2)"]
+        ka_c0 = 4.39e-3,
+        [description = "Thermal conductivity constant", unit = u"J/(m*s*K)"]
+        ka_c1 = 0.071e-3,
+        [description = "Thermal conductivity slope", unit = u"J/(m*s*K^2)"]
         # Eq. 17.72 constant (air density at STP)
         ρ_air_stp = 1.293, [description = "Air density at STP", unit = u"kg/m^3"]
         # Saturation vapor pressure (Magnus formula)
         p_sat_ref = 610.94, [description = "Reference saturation pressure", unit = u"Pa"]
-        magnus_a = 17.625, [description = "Magnus coefficient a (dimensionless)", unit = u"1"]
+        magnus_a = 17.625,
+        [description = "Magnus coefficient a (dimensionless)", unit = u"1"]
         T_magnus_offset = 273.15, [description = "Magnus temperature offset", unit = u"K"]
         magnus_b = 243.04, [description = "Magnus coefficient b", unit = u"K"]
-        T_unit = 1.0, [description = "Unit temperature for nondimensionalization", unit = u"K"]
+        T_unit = 1.0,
+        [description = "Unit temperature for nondimensionalization", unit = u"K"]
         # Latent heat constants (Eq. 17.3, converted to J/kg)
-        Hv_ref_kg = 2.5e6, [description = "Reference latent heat of vaporization", unit = u"J/kg"]
-        T_Hv_ref = 273.15, [description = "Reference temperature for latent heat", unit = u"K"]
-        Hv_exp_const = 0.167, [description = "Exponent constant (dimensionless)", unit = u"1"]
+        Hv_ref_kg = 2.5e6,
+        [description = "Reference latent heat of vaporization", unit = u"J/kg"]
+        T_Hv_ref = 273.15,
+        [description = "Reference temperature for latent heat", unit = u"K"]
+        Hv_exp_const = 0.167,
+        [description = "Exponent constant (dimensionless)", unit = u"1"]
         Hv_exp_coeff = 3.67e-4, [description = "Exponent coefficient", unit = u"1/K"]
         one = 1.0, [description = "Unit value (dimensionless)", unit = u"1"]
-        vol_eps = 1e-60, [description = "Small volume for numerical stability", unit = u"m^3"]
+        vol_eps = 1e-60,
+        [description = "Small volume for numerical stability", unit = u"m^3"]
     end
 
     @parameters begin
         T = 293.15, [description = "Temperature", unit = u"K"]
         p_a = 101325.0, [description = "Atmospheric pressure", unit = u"Pa"]
-        S_v = 1.01, [description = "Environmental saturation ratio (dimensionless)", unit = u"1"]
+        S_v = 1.01,
+        [description = "Environmental saturation ratio (dimensionless)", unit = u"1"]
         σ_w = 0.0728, [description = "Surface tension of water", unit = u"N/m"]
         D_p = 1.0e-6, [description = "Droplet diameter", unit = u"m"]
         n_s = 0.0, [description = "Moles of solute in droplet", unit = u"mol"]
         d_u = 0.0, [description = "Insoluble core diameter", unit = u"m"]
-        α_c = 1.0, [description = "Mass accommodation coefficient (dimensionless)", unit = u"1"]
-        α_T = 1.0, [description = "Thermal accommodation coefficient (dimensionless)", unit = u"1"]
+        α_c = 1.0,
+        [description = "Mass accommodation coefficient (dimensionless)", unit = u"1"]
+        α_T = 1.0,
+        [description = "Thermal accommodation coefficient (dimensionless)", unit = u"1"]
         c_p_air = 1005.0, [description = "Specific heat of air", unit = u"J/(kg*K)"]
     end
 
@@ -277,10 +318,13 @@ Based on Equations 17.60-17.72 from Seinfeld & Pandis (2006).
         D_v(t), [description = "Diffusivity of water vapor in air", unit = u"m^2/s"]
         D_v_prime(t), [description = "Modified diffusivity of water vapor", unit = u"m^2/s"]
         k_a(t), [description = "Thermal conductivity of air", unit = u"J/(m*s*K)"]
-        k_a_prime(t), [description = "Modified thermal conductivity of air", unit = u"J/(m*s*K)"]
+        k_a_prime(t),
+        [description = "Modified thermal conductivity of air", unit = u"J/(m*s*K)"]
         p_sat(t), [description = "Saturation vapor pressure", unit = u"Pa"]
         ΔH_v(t), [description = "Latent heat of vaporization", unit = u"J/kg"]
-        S_eq(t), [description = "Equilibrium saturation ratio over droplet (dimensionless)", unit = u"1"]
+        S_eq(t),
+        [
+            description = "Equilibrium saturation ratio over droplet (dimensionless)", unit = u"1"]
         dDp_dt(t), [description = "Droplet diameter growth rate", unit = u"m/s"]
     end
 
@@ -295,22 +339,27 @@ Based on Equations 17.60-17.72 from Seinfeld & Pandis (2006).
         k_a ~ ka_c0 + ka_c1 * T,
 
         # Eq. 17.72 - Modified thermal conductivity (kinetic correction)
-        k_a_prime ~ k_a / (one + (2 * k_a / (α_T * D_p * ρ_air_stp * c_p_air)) * sqrt(2 * π_val * M_a / (R * T))),
+        k_a_prime ~
+        k_a / (one +
+         (2 * k_a / (α_T * D_p * ρ_air_stp * c_p_air)) * sqrt(2 * π_val * M_a / (R * T))),
 
         # Saturation vapor pressure (Magnus formula)
-        p_sat ~ p_sat_ref * exp(magnus_a * (T - T_magnus_offset) / ((T - T_magnus_offset) + magnus_b)),
+        p_sat ~
+        p_sat_ref *
+        exp(magnus_a * (T - T_magnus_offset) / ((T - T_magnus_offset) + magnus_b)),
 
         # Eq. 17.3 - Latent heat of vaporization (J/kg)
         ΔH_v ~ Hv_ref_kg * (T_Hv_ref / T)^(Hv_exp_const + Hv_exp_coeff * T),
 
         # Equilibrium saturation ratio over the droplet (Köhler, Eq. 17.27)
         S_eq ~ exp(4 * M_w * σ_w / (R * T * ρ_w * D_p) -
-                   6 * n_s * M_w / (π_val * ρ_w * (D_p^3 - d_u^3 + vol_eps))),
+            6 * n_s * M_w / (π_val * ρ_w * (D_p^3 - d_u^3 + vol_eps))),
 
         # Eq. 17.70 - Simplified droplet growth equation
-        dDp_dt ~ (one / D_p) * (S_v - S_eq) /
-                 (ρ_w * R * T / (4 * p_sat * D_v_prime * M_w) +
-                  ΔH_v * ρ_w / (4 * k_a_prime * T) * (ΔH_v * M_w / (T * R) - one)),
+        dDp_dt ~
+        (one / D_p) * (S_v - S_eq) /
+        (ρ_w * R * T / (4 * p_sat * D_v_prime * M_w) +
+         ΔH_v * ρ_w / (4 * k_a_prime * T) * (ΔH_v * M_w / (T * R) - one))
     ]
 
     return System(eqs, t; name)
@@ -331,10 +380,12 @@ Based on Equations 17.41-17.59, 17.73-17.80 from Seinfeld & Pandis (2006).
         M_a = 0.02897, [description = "Molecular weight of air", unit = u"kg/mol"]
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
         g = 9.81, [description = "Gravitational acceleration", unit = u"m/s^2"]
-        c_p_air = 1005.0, [description = "Specific heat of air at constant pressure", unit = u"J/(kg*K)"]
+        c_p_air = 1005.0,
+        [description = "Specific heat of air at constant pressure", unit = u"J/(kg*K)"]
         # Magnus formula constants
         p_sat_ref = 610.94, [description = "Reference saturation pressure", unit = u"Pa"]
-        magnus_a = 17.625, [description = "Magnus coefficient a (dimensionless)", unit = u"1"]
+        magnus_a = 17.625,
+        [description = "Magnus coefficient a (dimensionless)", unit = u"1"]
         T_magnus_offset = 273.15, [description = "Magnus temperature offset", unit = u"K"]
         magnus_b = 243.04, [description = "Magnus coefficient b", unit = u"K"]
     end
@@ -359,7 +410,9 @@ Based on Equations 17.41-17.59, 17.73-17.80 from Seinfeld & Pandis (2006).
         Γ_d ~ g / c_p_air,
 
         # Saturation vapor pressure at T_0 (Magnus formula)
-        p_sat ~ p_sat_ref * exp(magnus_a * (T_0 - T_magnus_offset) / ((T_0 - T_magnus_offset) + magnus_b)),
+        p_sat ~
+        p_sat_ref *
+        exp(magnus_a * (T_0 - T_magnus_offset) / ((T_0 - T_magnus_offset) + magnus_b)),
 
         # Saturation mixing ratio
         w_vs ~ M_w * p_sat / (M_a * p_a),
@@ -368,7 +421,7 @@ Based on Equations 17.41-17.59, 17.73-17.80 from Seinfeld & Pandis (2006).
         T_d ~ T_0 + (R * T_0^2 / (ΔH_v * M_w)) * log(RH),
 
         # Eq. 17.49 - Lifting condensation level height
-        h_LCL ~ (T_0 - T_d) / Γ_d,
+        h_LCL ~ (T_0 - T_d) / Γ_d
     ]
 
     return System(eqs, t; name)
@@ -389,7 +442,8 @@ Based on Equations 17.93-17.103 from Seinfeld & Pandis (2006).
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
         ρ_i = 917.0, [description = "Density of ice", unit = u"kg/m^3"]
         T_freeze = 273.15, [description = "Freezing point of pure water", unit = u"K"]
-        ΔH_m_mass = 333500.0, [description = "Latent heat of fusion of water", unit = u"J/kg"]
+        ΔH_m_mass = 333500.0,
+        [description = "Latent heat of fusion of water", unit = u"J/kg"]
         ΔH_s = 2.83e6, [description = "Latent heat of sublimation", unit = u"J/kg"]
         # Eq. 17.101: ΔT_f = R*T_0^2*M_w / (1000*ΔH_m) * m
         # 1000 g/kg factor: convert ΔH_m from J/kg to J/g effectively
@@ -398,9 +452,12 @@ Based on Equations 17.93-17.103 from Seinfeld & Pandis (2006).
         # For simplicity, use the cryoscopic constant for water = 1.86 K·kg/mol
         K_f = 1.86, [description = "Cryoscopic constant of water", unit = u"K*kg/mol"]
         # Eq. 17.103 constants
-        IN_ref = 1000.0, [description = "Ice nuclei concentration reference (per L -> per m^3)", unit = u"1/m^3"]
+        IN_ref = 1000.0,
+        [
+            description = "Ice nuclei concentration reference (per L -> per m^3)", unit = u"1/m^3"]
         IN_coeff = 0.6, [description = "Ice nuclei exponential coefficient", unit = u"1/K"]
-        T_IN_ref = 253.0, [description = "Reference temperature for IN parameterization", unit = u"K"]
+        T_IN_ref = 253.0,
+        [description = "Reference temperature for IN parameterization", unit = u"K"]
     end
 
     @parameters begin
@@ -429,7 +486,7 @@ Based on Equations 17.93-17.103 from Seinfeld & Pandis (2006).
         kelvin_ice ~ exp(4 * M_w * σ_ia / (R * T * ρ_i * D_p)),
 
         # Eq. 17.103 - Ice nuclei concentration (per liter, converted to per m^3)
-        IN ~ IN_ref * exp(IN_coeff * (T_IN_ref - T)),
+        IN ~ IN_ref * exp(IN_coeff * (T_IN_ref - T))
     ]
 
     return System(eqs, t; name)
@@ -448,7 +505,8 @@ Based on Equations 17.104-17.108 from Seinfeld & Pandis (2006).
         π_val = 3.141592653589793, [description = "Pi (dimensionless)", unit = u"1"]
         # Eq. 17.107 constants
         F_diam_ref = 1.3e-3, [description = "Best distribution diameter scale", unit = u"m"]
-        F_exp = 2.25, [description = "Best distribution exponent (dimensionless)", unit = u"1"]
+        F_exp = 2.25,
+        [description = "Best distribution exponent (dimensionless)", unit = u"1"]
         one = 1.0, [description = "Unity (dimensionless)", unit = u"1"]
     end
 
@@ -484,7 +542,7 @@ Based on Equations 17.104-17.108 from Seinfeld & Pandis (2006).
         F_dist ~ one - exp(-(D_p / (F_diam_ref * p_0^0.232))^F_exp),
 
         # Eq. 17.108 - Marshall-Palmer raindrop size distribution
-        n_MP ~ n_0 * exp(-ψ * D_p),
+        n_MP ~ n_0 * exp(-ψ * D_p)
     ]
 
     return System(eqs, t; name)
@@ -501,9 +559,11 @@ Based on Equations 17.84-17.92 from Seinfeld & Pandis (2006).
 @component function AerosolScavenging(; name = :AerosolScavenging)
     @parameters begin
         C_0 = 1.0e9, [description = "Initial aerosol mass concentration", unit = u"1/m^3"]
-        C_int = 5.0e8, [description = "Interstitial aerosol mass concentration", unit = u"1/m^3"]
+        C_int = 5.0e8,
+        [description = "Interstitial aerosol mass concentration", unit = u"1/m^3"]
         N_0 = 1.0e9, [description = "Initial aerosol number concentration", unit = u"1/m^3"]
-        N_int = 3.0e8, [description = "Interstitial aerosol number concentration", unit = u"1/m^3"]
+        N_int = 3.0e8,
+        [description = "Interstitial aerosol number concentration", unit = u"1/m^3"]
         K_coll = 1.0e-12, [description = "Collision coefficient", unit = u"m^3/s"]
         N_d = 1.0e8, [description = "Cloud droplet number concentration", unit = u"1/m^3"]
     end
@@ -522,7 +582,7 @@ Based on Equations 17.84-17.92 from Seinfeld & Pandis (2006).
         F_number ~ (N_0 - N_int) / N_0,
 
         # Eq. 17.92 - Scavenging coefficient for monodisperse cloud droplets
-        Λ ~ N_d * K_coll,
+        Λ ~ N_d * K_coll
     ]
 
     return System(eqs, t; name)
@@ -548,5 +608,7 @@ From Air Pollution to Climate Change", 2nd Edition, John Wiley & Sons.
     rain = RainFormation(; name = :rain)
     scav = AerosolScavenging(; name = :scav)
 
-    return System(Equation[], t; systems = [water, kelvin, kohler, growth, cloud, ice, rain, scav], name)
+    return System(
+        Equation[], t; systems = [
+            water, kelvin, kohler, growth, cloud, ice, rain, scav], name)
 end

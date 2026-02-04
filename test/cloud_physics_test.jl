@@ -140,14 +140,15 @@ end
 
     # NaCl: M_s = 0.05844 kg/mol, ρ_s = 2165 kg/m³, ν = 2
     # For d_s = 0.1 µm, critical supersaturation should be ~0.1-0.3%
-    prob = NonlinearProblem(ssys, Dict(
-        ssys.d_s => 1e-7,    # 0.1 µm dry diameter
-        ssys.M_s => 0.05844, # NaCl
-        ssys.ρ_s => 2165.0,  # NaCl density
-        ssys.ν_s => 2.0,     # NaCl dissociation
-        ssys.T => 293.15,
-        ssys.ε_m => 1.0,     # Fully soluble
-    ))
+    prob = NonlinearProblem(ssys,
+        Dict(
+            ssys.d_s => 1e-7,    # 0.1 µm dry diameter
+            ssys.M_s => 0.05844, # NaCl
+            ssys.ρ_s => 2165.0,  # NaCl density
+            ssys.ν_s => 2.0,     # NaCl dissociation
+            ssys.T => 293.15,
+            ssys.ε_m => 1.0     # Fully soluble
+        ))
     sol = solve(prob)
 
     # Critical supersaturation for 0.1 µm NaCl should be ~0.13%
@@ -162,14 +163,15 @@ end
     @test sol[ssys.B] > 0
 
     # Smaller dry particles should have higher critical supersaturation
-    prob_small = NonlinearProblem(ssys, Dict(
-        ssys.d_s => 5e-8,    # 0.05 µm dry diameter
-        ssys.M_s => 0.05844,
-        ssys.ρ_s => 2165.0,
-        ssys.ν_s => 2.0,
-        ssys.T => 293.15,
-        ssys.ε_m => 1.0,
-    ))
+    prob_small = NonlinearProblem(ssys,
+        Dict(
+            ssys.d_s => 5e-8,    # 0.05 µm dry diameter
+            ssys.M_s => 0.05844,
+            ssys.ρ_s => 2165.0,
+            ssys.ν_s => 2.0,
+            ssys.T => 293.15,
+            ssys.ε_m => 1.0
+        ))
     sol_small = solve(prob_small)
     @test sol_small[ssys.S_c] > sol[ssys.S_c]  # Higher critical S for smaller particles
 end
@@ -182,14 +184,15 @@ end
     ssys = mtkcompile(sys)
 
     # (NH4)2SO4: M_s = 0.13214 kg/mol, ρ_s = 1770 kg/m³, ν = 3
-    prob = NonlinearProblem(ssys, Dict(
-        ssys.d_s => 1e-7,     # 0.1 µm dry diameter
-        ssys.M_s => 0.13214,  # (NH4)2SO4
-        ssys.ρ_s => 1770.0,   # (NH4)2SO4 density
-        ssys.ν_s => 3.0,      # (NH4)2SO4 dissociation
-        ssys.T => 293.15,
-        ssys.ε_m => 1.0,
-    ))
+    prob = NonlinearProblem(ssys,
+        Dict(
+            ssys.d_s => 1e-7,     # 0.1 µm dry diameter
+            ssys.M_s => 0.13214,  # (NH4)2SO4
+            ssys.ρ_s => 1770.0,   # (NH4)2SO4 density
+            ssys.ν_s => 3.0,      # (NH4)2SO4 dissociation
+            ssys.T => 293.15,
+            ssys.ε_m => 1.0
+        ))
     sol = solve(prob)
 
     # Critical supersaturation should be comparable to NaCl (slightly different)
@@ -206,17 +209,19 @@ end
     ssys = mtkcompile(sys)
 
     # Fully soluble NaCl particle
-    prob_full = NonlinearProblem(ssys, Dict(
-        ssys.d_s => 1e-7, ssys.M_s => 0.05844, ssys.ρ_s => 2165.0,
-        ssys.ν_s => 2.0, ssys.T => 293.15, ssys.ε_m => 1.0,
-    ))
+    prob_full = NonlinearProblem(ssys,
+        Dict(
+            ssys.d_s => 1e-7, ssys.M_s => 0.05844, ssys.ρ_s => 2165.0,
+            ssys.ν_s => 2.0, ssys.T => 293.15, ssys.ε_m => 1.0
+        ))
     sol_full = solve(prob_full)
 
     # Half soluble particle (ε_m = 0.5)
-    prob_half = NonlinearProblem(ssys, Dict(
-        ssys.d_s => 1e-7, ssys.M_s => 0.05844, ssys.ρ_s => 2165.0,
-        ssys.ν_s => 2.0, ssys.T => 293.15, ssys.ε_m => 0.5,
-    ))
+    prob_half = NonlinearProblem(ssys,
+        Dict(
+            ssys.d_s => 1e-7, ssys.M_s => 0.05844, ssys.ρ_s => 2165.0,
+            ssys.ν_s => 2.0, ssys.T => 293.15, ssys.ε_m => 0.5
+        ))
     sol_half = solve(prob_half)
 
     # More insoluble material should increase critical supersaturation
@@ -240,18 +245,20 @@ end
     ssys = mtkcompile(sys)
 
     # In supersaturated environment (S_v > 1), droplet should grow
-    prob = NonlinearProblem(ssys, Dict(
-        ssys.S_v => 1.01, ssys.D_p => 1e-6, ssys.T => 293.15,
-        ssys.n_s => 0.0, ssys.d_u => 0.0,
-    ))
+    prob = NonlinearProblem(ssys,
+        Dict(
+            ssys.S_v => 1.01, ssys.D_p => 1e-6, ssys.T => 293.15,
+            ssys.n_s => 0.0, ssys.d_u => 0.0
+        ))
     sol = solve(prob)
     @test sol[ssys.dDp_dt] > 0  # Growing
 
     # In subsaturated environment (S_v < 1), droplet should shrink
-    prob_sub = NonlinearProblem(ssys, Dict(
-        ssys.S_v => 0.99, ssys.D_p => 1e-6, ssys.T => 293.15,
-        ssys.n_s => 0.0, ssys.d_u => 0.0,
-    ))
+    prob_sub = NonlinearProblem(ssys,
+        Dict(
+            ssys.S_v => 0.99, ssys.D_p => 1e-6, ssys.T => 293.15,
+            ssys.n_s => 0.0, ssys.d_u => 0.0
+        ))
     sol_sub = solve(prob_sub)
     @test sol_sub[ssys.dDp_dt] < 0  # Shrinking
 
@@ -262,10 +269,11 @@ end
     @test sol[ssys.k_a] ≈ 0.025 atol = 0.003
 
     # Growth rate proportional to 1/D_p: smaller droplet should grow faster
-    prob_small = NonlinearProblem(ssys, Dict(
-        ssys.S_v => 1.01, ssys.D_p => 5e-7, ssys.T => 293.15,
-        ssys.n_s => 0.0, ssys.d_u => 0.0,
-    ))
+    prob_small = NonlinearProblem(ssys,
+        Dict(
+            ssys.S_v => 1.01, ssys.D_p => 5e-7, ssys.T => 293.15,
+            ssys.n_s => 0.0, ssys.d_u => 0.0
+        ))
     sol_small = solve(prob_small)
     @test sol_small[ssys.dDp_dt] > sol[ssys.dDp_dt]
 end
