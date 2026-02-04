@@ -5,9 +5,9 @@
 This module implements key equations from Chapter 14 of Seinfeld and Pandis (2006) for
 organic atmospheric aerosol modeling, including:
 
-- The EC tracer method for estimating secondary organic carbon
-- Gas-particle partitioning models for SOA formation (noninteracting, absorptive, two-product)
-- Adsorption isotherms (Langmuir, BET, FHH)
+  - The EC tracer method for estimating secondary organic carbon
+  - Gas-particle partitioning models for SOA formation (noninteracting, absorptive, two-product)
+  - Adsorption isotherms (Langmuir, BET, FHH)
 
 **Reference**: Seinfeld, J. H. and Pandis, S. N. (2006). *Atmospheric Chemistry and Physics:
 From Air Pollution to Climate Change*, 2nd Edition, Chapter 14. John Wiley & Sons, Inc.
@@ -36,7 +36,7 @@ using DataFrames, Symbolics, DynamicQuantities
 sys = ECTracerMethod()
 vars = unknowns(sys)
 DataFrame(
-    :Name => [string(Symbolics.tosymbol(v, escape=false)) for v in vars],
+    :Name => [string(Symbolics.tosymbol(v, escape = false)) for v in vars],
     :Units => [string(dimension(ModelingToolkit.get_unit(v))) for v in vars],
     :Description => [ModelingToolkit.getdescription(v) for v in vars]
 )
@@ -54,7 +54,7 @@ Gas-particle partitioning for a compound that condenses as a pure phase.
 sys_ni = NoninteractingSOA()
 vars = unknowns(sys_ni)
 DataFrame(
-    :Name => [string(Symbolics.tosymbol(v, escape=false)) for v in vars],
+    :Name => [string(Symbolics.tosymbol(v, escape = false)) for v in vars],
     :Units => [string(dimension(ModelingToolkit.get_unit(v))) for v in vars],
     :Description => [ModelingToolkit.getdescription(v) for v in vars]
 )
@@ -72,7 +72,7 @@ SOA formation by absorption into a preexisting organic aerosol phase.
 sys_ap = AbsorptivePartitioning()
 vars = unknowns(sys_ap)
 DataFrame(
-    :Name => [string(Symbolics.tosymbol(v, escape=false)) for v in vars],
+    :Name => [string(Symbolics.tosymbol(v, escape = false)) for v in vars],
     :Units => [string(dimension(ModelingToolkit.get_unit(v))) for v in vars],
     :Description => [ModelingToolkit.getdescription(v) for v in vars]
 )
@@ -90,7 +90,7 @@ The Odum et al. (1996) two-product model for SOA formation.
 sys_tp = TwoProductSOA()
 vars = unknowns(sys_tp)
 DataFrame(
-    :Name => [string(Symbolics.tosymbol(v, escape=false)) for v in vars],
+    :Name => [string(Symbolics.tosymbol(v, escape = false)) for v in vars],
     :Units => [string(dimension(ModelingToolkit.get_unit(v))) for v in vars],
     :Description => [ModelingToolkit.getdescription(v) for v in vars]
 )
@@ -105,19 +105,19 @@ equations(sys_tp)
 Parameters for the two-product model from Seinfeld and Pandis (2006), Table 14.12.
 Default values correspond to α-pinene/OH oxidation.
 
-| Parent ROG | Oxidant | α₁ | α₂ | c₁° (μg/m³) | c₂° (μg/m³) |
-|------------|---------|------|------|--------------|--------------|
-| Toluene | OH | 0.071 | 0.138 | 18.9 | 526 |
-| Xylenes | OH | 0.038 | 0.167 | 23.8 | 714 |
-| α-pinene | OH | 0.038 | 0.326 | 5.8 | 250 |
-| α-pinene | O₃ | 0.125 | 0.102 | 11.4 | 12.7 |
-| β-pinene | OH | 0.13 | 0.041 | 22.7 | 204 |
-| β-pinene | O₃ | 0.21 | 0.49 | 5.1 | 333 |
-| Δ³-carene | OH | 0.054 | 0.517 | 23.2 | 238 |
-| Δ³-carene | O₃ | 0.128 | 0.068 | 7.8 | 14.7 |
-| Δ³-carene | NO₃ | 0.743 | 0.257 | 113 | 120 |
-| Caryophyllene | OH | 1.0 | - | 23 | - |
-| Humulene | OH | 1.0 | - | 20 | - |
+| Parent ROG    | Oxidant | α₁    | α₂    | c₁° (μg/m³) | c₂° (μg/m³) |
+|:------------- |:------- |:----- |:----- |:----------- |:----------- |
+| Toluene       | OH      | 0.071 | 0.138 | 18.9        | 526         |
+| Xylenes       | OH      | 0.038 | 0.167 | 23.8        | 714         |
+| α-pinene      | OH      | 0.038 | 0.326 | 5.8         | 250         |
+| α-pinene      | O₃      | 0.125 | 0.102 | 11.4        | 12.7        |
+| β-pinene      | OH      | 0.13  | 0.041 | 22.7        | 204         |
+| β-pinene      | O₃      | 0.21  | 0.49  | 5.1         | 333         |
+| Δ³-carene     | OH      | 0.054 | 0.517 | 23.2        | 238         |
+| Δ³-carene     | O₃      | 0.128 | 0.068 | 7.8         | 14.7        |
+| Δ³-carene     | NO₃     | 0.743 | 0.257 | 113         | 120         |
+| Caryophyllene | OH      | 1.0   | -     | 23          | -           |
+| Humulene      | OH      | 1.0   | -     | 20          | -           |
 
 Note: Molar stoichiometric yields (α) are derived assuming that the precursor and the SOA species have the same molecular weight. Saturation mixing ratios (c°) are based on experiments at around 310 K. Source: Griffin et al. (1999).
 
@@ -154,31 +154,37 @@ using NonlinearSolve, Plots
 
 sys_ni = NoninteractingSOA()
 sys_ni_nns = ModelingToolkit.toggle_namespacing(sys_ni, false)
-ssys_ni = mtkcompile(sys_ni; inputs=[sys_ni_nns.ΔROG])
+ssys_ni = mtkcompile(sys_ni; inputs = [sys_ni_nns.ΔROG])
 
 # Compute threshold from default parameters
-R = 8.314; T = 298.0; p_i = 1.01325e-5; M_i = 0.180; M_ROG = 0.150; a_i = 0.05
+R = 8.314;
+T = 298.0;
+p_i = 1.01325e-5;
+M_i = 0.180;
+M_ROG = 0.150;
+a_i = 0.05
 threshold = p_i * M_ROG / (a_i * R * T)
 
 # Sweep ΔROG from 0 to 20× threshold
-ΔROG_vals = range(0, 20 * threshold, length=200)
+ΔROG_vals = range(0, 20 * threshold, length = 200)
 Y_vals = Float64[]
 for drog in ΔROG_vals
-    prob = NonlinearProblem(ssys_ni, Dict(
-        ssys_ni.ΔROG => drog,
-        ssys_ni.c_eq => 1e-10, ssys_ni.c_total => 1e-10,
-        ssys_ni.c_aer => 1e-10, ssys_ni.c_gas => 1e-10,
-        ssys_ni.ΔROG_threshold => 1e-10,
-        ssys_ni.X_p => 0.5, ssys_ni.Y => 0.01))
+    prob = NonlinearProblem(ssys_ni,
+        Dict(
+            ssys_ni.ΔROG => drog,
+            ssys_ni.c_eq => 1e-10, ssys_ni.c_total => 1e-10,
+            ssys_ni.c_aer => 1e-10, ssys_ni.c_gas => 1e-10,
+            ssys_ni.ΔROG_threshold => 1e-10,
+            ssys_ni.X_p => 0.5, ssys_ni.Y => 0.01))
     sol = solve(prob)
     push!(Y_vals, sol[ssys_ni.Y])
 end
 
 plot(ΔROG_vals ./ threshold, Y_vals,
-    xlabel="ΔROG / ΔROG*", ylabel="Aerosol Mass Yield Y",
-    title="Noninteracting SOA: Yield vs Reacted ROG",
-    label="Y (Eq. 14.16)", legend=:bottomright, lw=2)
-vline!([1.0], label="Threshold ΔROG*", ls=:dash, color=:red)
+    xlabel = "ΔROG / ΔROG*", ylabel = "Aerosol Mass Yield Y",
+    title = "Noninteracting SOA: Yield vs Reacted ROG",
+    label = "Y (Eq. 14.16)", legend = :bottomright, lw = 2)
+vline!([1.0], label = "Threshold ΔROG*", ls = :dash, color = :red)
 ```
 
 ### Absorptive Partitioning: Effect of Preexisting OA
@@ -190,24 +196,25 @@ to vapor pressure.
 ```@example organic_aerosol
 sys_ap = AbsorptivePartitioning()
 sys_ap_nns = ModelingToolkit.toggle_namespacing(sys_ap, false)
-ssys_ap = mtkcompile(sys_ap; inputs=[sys_ap_nns.ΔROG])
+ssys_ap = mtkcompile(sys_ap; inputs = [sys_ap_nns.ΔROG])
 
 # Sweep m_0 (preexisting OA) from 0.1 to 100 μg/m³
-m0_vals = 10 .^ range(-10, -7, length=100)  # kg/m³
+m0_vals = 10 .^ range(-10, -7, length = 100)  # kg/m³
 Xp_vals = Float64[]
 for m0 in m0_vals
-    prob = NonlinearProblem(ssys_ap, Dict(
-        ssys_ap.ΔROG => 50e-9,
-        ssys_ap.c_aer => 1e-10, ssys_ap.X_p => 0.5, ssys_ap.Y => 0.01,
-        ssys_ap.m_0 => m0))
+    prob = NonlinearProblem(ssys_ap,
+        Dict(
+            ssys_ap.ΔROG => 50e-9,
+            ssys_ap.c_aer => 1e-10, ssys_ap.X_p => 0.5, ssys_ap.Y => 0.01,
+            ssys_ap.m_0 => m0))
     sol = solve(prob)
     push!(Xp_vals, sol[ssys_ap.X_p])
 end
 
 plot(m0_vals * 1e9, Xp_vals,
-    xlabel="Preexisting OA m₀ (μg/m³)", ylabel="Mass Fraction in Aerosol X_p",
-    title="Absorptive Partitioning: X_p vs m₀ (Eq. 14.25)",
-    label="X_p", xscale=:log10, lw=2, legend=:bottomright)
+    xlabel = "Preexisting OA m₀ (μg/m³)", ylabel = "Mass Fraction in Aerosol X_p",
+    title = "Absorptive Partitioning: X_p vs m₀ (Eq. 14.25)",
+    label = "X_p", xscale = :log10, lw = 2, legend = :bottomright)
 ```
 
 ### Two-Product Model: Odum Yield Curve
@@ -219,31 +226,34 @@ captured by Equation 14.43.
 ```@example organic_aerosol
 sys_tp = TwoProductSOA()
 sys_tp_nns = ModelingToolkit.toggle_namespacing(sys_tp, false)
-ssys_tp = mtkcompile(sys_tp; inputs=[sys_tp_nns.ΔROG])
+ssys_tp = mtkcompile(sys_tp; inputs = [sys_tp_nns.ΔROG])
 
 # Default α-pinene/OH parameters
-a_1 = 0.038; a_2 = 0.326
-c_sat_1 = 5.8e-9; c_sat_2 = 250.0e-9  # kg/m³
+a_1 = 0.038;
+a_2 = 0.326
+c_sat_1 = 5.8e-9;
+c_sat_2 = 250.0e-9  # kg/m³
 
 # Sweep ΔROG and plot Y vs c_aer (Odum plot)
-ΔROG_vals = 10 .^ range(-10, -6, length=100)  # kg/m³
+ΔROG_vals = 10 .^ range(-10, -6, length = 100)  # kg/m³
 c_aer_vals = Float64[]
 Y_vals = Float64[]
 
 for drog in ΔROG_vals
-    prob = NonlinearProblem(ssys_tp, Dict(
-        ssys_tp.ΔROG => drog,
-        ssys_tp.c_aer => drog * 0.1,
-        ssys_tp.Y => 0.1, ssys_tp.ΔROG_threshold => 1e-9))
+    prob = NonlinearProblem(ssys_tp,
+        Dict(
+            ssys_tp.ΔROG => drog,
+            ssys_tp.c_aer => drog * 0.1,
+            ssys_tp.Y => 0.1, ssys_tp.ΔROG_threshold => 1e-9))
     sol = solve(prob)
     push!(c_aer_vals, sol[ssys_tp.c_aer])
     push!(Y_vals, sol[ssys_tp.Y])
 end
 
 plot(c_aer_vals * 1e9, Y_vals,
-    xlabel="Organic Aerosol m₀ (μg/m³)", ylabel="Aerosol Yield Y",
-    title="Two-Product Model: Yield vs Organic Aerosol (Eq. 14.43)",
-    label="α-pinene/OH", xscale=:log10, lw=2, legend=:bottomright)
+    xlabel = "Organic Aerosol m₀ (μg/m³)", ylabel = "Aerosol Yield Y",
+    title = "Two-Product Model: Yield vs Organic Aerosol (Eq. 14.43)",
+    label = "α-pinene/OH", xscale = :log10, lw = 2, legend = :bottomright)
 ```
 
 ### Langmuir Adsorption Isotherm
@@ -253,9 +263,9 @@ The Langmuir isotherm shows saturation behavior at high pressures.
 ```@example organic_aerosol
 sys_lang = LangmuirAdsorption()
 sys_lang_nns = ModelingToolkit.toggle_namespacing(sys_lang, false)
-ssys_lang = mtkcompile(sys_lang; inputs=[sys_lang_nns.p])
+ssys_lang = mtkcompile(sys_lang; inputs = [sys_lang_nns.p])
 
-p_vals = 10 .^ range(-3, 3, length=200)
+p_vals = 10 .^ range(-3, 3, length = 200)
 V_vals = Float64[]
 for pv in p_vals
     prob = NonlinearProblem(ssys_lang, Dict(ssys_lang.p => pv, ssys_lang.V => 0.5))
@@ -264,10 +274,10 @@ for pv in p_vals
 end
 
 plot(p_vals, V_vals,
-    xlabel="Pressure p (Pa)", ylabel="Adsorbed Volume V (m³)",
-    title="Langmuir Adsorption Isotherm (Eq. 14.44)",
-    label="V/V_m", xscale=:log10, lw=2, legend=:bottomright)
-hline!([1.0], label="V_m (monolayer)", ls=:dash, color=:red)
+    xlabel = "Pressure p (Pa)", ylabel = "Adsorbed Volume V (m³)",
+    title = "Langmuir Adsorption Isotherm (Eq. 14.44)",
+    label = "V/V_m", xscale = :log10, lw = 2, legend = :bottomright)
+hline!([1.0], label = "V_m (monolayer)", ls = :dash, color = :red)
 ```
 
 ### Comparison of BET and Langmuir Isotherms
@@ -279,9 +289,9 @@ BET predicts additional adsorption layers.
 ```@example organic_aerosol
 sys_bet = BETAdsorption()
 sys_bet_nns = ModelingToolkit.toggle_namespacing(sys_bet, false)
-ssys_bet = mtkcompile(sys_bet; inputs=[sys_bet_nns.S])
+ssys_bet = mtkcompile(sys_bet; inputs = [sys_bet_nns.S])
 
-S_vals = range(0.01, 0.95, length=200)
+S_vals = range(0.01, 0.95, length = 200)
 V_bet = Float64[]
 V_lang = Float64[]
 c_BET = 10.0
@@ -298,9 +308,9 @@ for sv in S_vals
     push!(V_lang, sol_lang[ssys_lang.V])
 end
 
-plot(S_vals, V_bet, label="BET (c=10)", lw=2,
-    xlabel="Saturation Ratio S", ylabel="V / V_m",
-    title="BET vs Langmuir Isotherms")
-plot!(S_vals, V_lang, label="Langmuir (b·p = c·S)", lw=2, ls=:dash)
-hline!([1.0], label="Monolayer", ls=:dot, color=:gray)
+plot(S_vals, V_bet, label = "BET (c=10)", lw = 2,
+    xlabel = "Saturation Ratio S", ylabel = "V / V_m",
+    title = "BET vs Langmuir Isotherms")
+plot!(S_vals, V_lang, label = "Langmuir (b·p = c·S)", lw = 2, ls = :dash)
+hline!([1.0], label = "Monolayer", ls = :dot, color = :gray)
 ```
