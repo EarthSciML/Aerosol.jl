@@ -126,9 +126,9 @@ eqs = equations(sys)
 
 ## Analysis
 
-### Figure 17.1: Saturation Vapor Pressure vs Temperature
+### Figure 17.1: Saturation Concentration of Water Vapor vs Temperature
 
-The saturation vapor pressure of water increases approximately exponentially with temperature (Table 17.2 polynomial).
+The saturation concentration of water vapor over a flat water surface increases approximately exponentially with temperature. This figure shows the concentration calculated from the saturation vapor pressure (Table 17.2 polynomial) using the ideal gas law: c = p·M_w / (R·T).
 
 ```@example cloud_physics
 using Plots, NonlinearSolve
@@ -136,20 +136,26 @@ using Plots, NonlinearSolve
 wp = CloudWaterProperties()
 wp_sys = mtkcompile(wp)
 
-T_range = 263.15:1.0:313.15  # -10°C to 40°C
-p_sat_vals = Float64[]
+M_w = 0.018015  # kg/mol, molecular weight of water
+R = 8.314       # J/(mol·K), universal gas constant
+
+T_range = 263.15:1.0:303.15  # -10°C to 30°C (matching Fig. 17.1 range)
+c_sat_vals = Float64[]
 
 for T_val in T_range
     prob = NonlinearProblem(wp_sys, Dict(wp_sys.T => T_val))
     sol = solve(prob)
-    push!(p_sat_vals, sol[wp_sys.p_sat_water])
+    p_sat = sol[wp_sys.p_sat_water]  # Pa
+    # Convert pressure to concentration: c = p·M_w / (R·T) in kg/m³, then to g/m³
+    c_sat = p_sat * M_w / (R * T_val) * 1000  # g/m³
+    push!(c_sat_vals, c_sat)
 end
 
-plot(T_range .- 273.15, p_sat_vals ./ 100,
-    xlabel = "Temperature (°C)", ylabel = "Saturation Vapor Pressure (hPa)",
+plot(T_range .- 273.15, c_sat_vals,
+    xlabel = "Temperature (°C)", ylabel = "Water Vapor Concentration (g m⁻³)",
     label = "Water (Table 17.2 polynomial)",
     linewidth = 2, legend = :topleft,
-    title = "Fig. 17.1: Saturation Vapor Pressure")
+    title = "Fig. 17.1: Saturation Concentration of Water Vapor")
 ```
 
 ### Figure 17.2: Kelvin Effect
