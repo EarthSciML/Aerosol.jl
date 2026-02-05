@@ -1,7 +1,7 @@
 module EarthSciDataExt
 using Aerosol, EarthSciData, ModelingToolkit, EarthSciMLBase, DynamicQuantities
 
-@register_unit ppb 1
+# Note: ppb unit is already registered in the main Aerosol module
 
 function EarthSciMLBase.couple2(
         c::Aerosol.ElementalCarbonCoupler,

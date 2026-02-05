@@ -11,6 +11,7 @@ using EarthSciMLBase
 include("VBS.jl")
 include("elemental_carbon.jl")
 include("cloud_physics.jl")
+include("mie_scattering.jl")
 include("organic_aerosol.jl")
 include("dynamics.jl")
 include("mass_transfer.jl")

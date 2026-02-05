@@ -36,7 +36,7 @@ The Fuchs-Sutugin formula is the most widely used expression for mass transfer a
 ```@example mass_transfer
 using Aerosol
 using ModelingToolkit
-import ModelingToolkit: mtkcompile
+using ModelingToolkit: mtkcompile
 using NonlinearSolve
 using Plots
 

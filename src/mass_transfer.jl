@@ -1,4 +1,4 @@
-export MassTransfer, MeanMolecularSpeed, KnudsenNumber, MeanFreePath
+export MassTransfer, MeanMolecularSpeed, KnudsenNumber
 export FuchsSutugin, Dahneke, MaxwellianFlux, ParticleGrowthRate
 export MassTransferCoefficient, UptakeCoefficient
 

@@ -14,22 +14,24 @@ end
 
     sys = ECTracerMethod()
     sys_nns = ModelingToolkit.toggle_namespacing(sys, false)
-    ssys = mtkcompile(sys; inputs=[sys_nns.OC, sys_nns.EC])
+    ssys = mtkcompile(sys; inputs = [sys_nns.OC, sys_nns.EC])
 
     # Test with typical values: OC = 10 μg/m³ = 10e-9 kg/m³, EC = 3 μg/m³ = 3e-9 kg/m³
     # Primary OC = 1.7 * 3e-9 + 0.9e-9 = 6.0e-9 kg/m³
     # Secondary OC = 10e-9 - 6.0e-9 = 4.0e-9 kg/m³
-    prob = NonlinearProblem(ssys, Dict(
-        ssys.OC => 10.0e-9, ssys.EC => 3.0e-9,
-        ssys.OC_primary => 1.0e-9, ssys.OC_secondary => 1.0e-9))
+    prob = NonlinearProblem(ssys,
+        Dict(
+            ssys.OC => 10.0e-9, ssys.EC => 3.0e-9,
+            ssys.OC_primary => 1.0e-9, ssys.OC_secondary => 1.0e-9))
     sol = solve(prob)
     @test sol[ssys.OC_primary] ≈ 6.0e-9 rtol=1e-6
     @test sol[ssys.OC_secondary] ≈ 4.0e-9 rtol=1e-6
 
     # Test with low OC: secondary should be clamped to zero
-    prob2 = NonlinearProblem(ssys, Dict(
-        ssys.OC => 5.0e-9, ssys.EC => 5.0e-9,
-        ssys.OC_primary => 1.0e-9, ssys.OC_secondary => 1.0e-9))
+    prob2 = NonlinearProblem(ssys,
+        Dict(
+            ssys.OC => 5.0e-9, ssys.EC => 5.0e-9,
+            ssys.OC_primary => 1.0e-9, ssys.OC_secondary => 1.0e-9))
     sol2 = solve(prob2)
     @test sol2[ssys.OC_secondary] ≈ 0.0 atol=1e-18
 end
@@ -50,7 +52,7 @@ end
 
     sys = NoninteractingSOA()
     sys_nns = ModelingToolkit.toggle_namespacing(sys, false)
-    ssys = mtkcompile(sys; inputs=[sys_nns.ΔROG])
+    ssys = mtkcompile(sys; inputs = [sys_nns.ΔROG])
 
     # Default parameters in SI
     R = 8.314
@@ -68,12 +70,13 @@ end
     c_total_expected = a_i * (M_i / M_ROG) * ΔROG_val
     c_aer_expected = c_total_expected - c_eq_expected
 
-    prob = NonlinearProblem(ssys, Dict(
-        ssys.ΔROG => ΔROG_val,
-        ssys.c_eq => 1e-10, ssys.c_total => 1e-10,
-        ssys.c_aer => 1e-10, ssys.c_gas => 1e-10,
-        ssys.ΔROG_threshold => 1e-10,
-        ssys.X_p => 0.5, ssys.Y => 0.01))
+    prob = NonlinearProblem(ssys,
+        Dict(
+            ssys.ΔROG => ΔROG_val,
+            ssys.c_eq => 1e-10, ssys.c_total => 1e-10,
+            ssys.c_aer => 1e-10, ssys.c_gas => 1e-10,
+            ssys.ΔROG_threshold => 1e-10,
+            ssys.X_p => 0.5, ssys.Y => 0.01))
     sol = solve(prob)
     @test sol[ssys.c_eq] ≈ c_eq_expected rtol=1e-6
     @test sol[ssys.c_total] ≈ c_total_expected rtol=1e-6
@@ -85,12 +88,13 @@ end
     # Test below threshold: all product in gas phase
     ΔROG_below = 0.1 * threshold_expected
     c_total_below = a_i * (M_i / M_ROG) * ΔROG_below
-    prob2 = NonlinearProblem(ssys, Dict(
-        ssys.ΔROG => ΔROG_below,
-        ssys.c_eq => 1e-10, ssys.c_total => 1e-10,
-        ssys.c_aer => 1e-10, ssys.c_gas => 1e-10,
-        ssys.ΔROG_threshold => 1e-10,
-        ssys.X_p => 0.5, ssys.Y => 0.01))
+    prob2 = NonlinearProblem(ssys,
+        Dict(
+            ssys.ΔROG => ΔROG_below,
+            ssys.c_eq => 1e-10, ssys.c_total => 1e-10,
+            ssys.c_aer => 1e-10, ssys.c_gas => 1e-10,
+            ssys.ΔROG_threshold => 1e-10,
+            ssys.X_p => 0.5, ssys.Y => 0.01))
     sol2 = solve(prob2)
     @test sol2[ssys.c_aer] ≈ 0.0 atol=1e-20
     @test sol2[ssys.c_gas] ≈ c_total_below rtol=1e-6
@@ -113,7 +117,7 @@ end
 
     sys = AbsorptivePartitioning()
     sys_nns = ModelingToolkit.toggle_namespacing(sys, false)
-    ssys = mtkcompile(sys; inputs=[sys_nns.ΔROG])
+    ssys = mtkcompile(sys; inputs = [sys_nns.ΔROG])
 
     # Default parameters in SI
     R = 8.314
@@ -128,20 +132,23 @@ end
     X_p_expected = m_0 * R * T / (m_0 * R * T + p_i * M_0)
 
     ΔROG_val = 50.0e-9
-    c_aer_expected = (a_i * R * T / M_ROG) * (M_i * m_0 / (m_0 * R * T + M_0 * p_i)) * ΔROG_val
+    c_aer_expected = (a_i * R * T / M_ROG) * (M_i * m_0 / (m_0 * R * T + M_0 * p_i)) *
+                     ΔROG_val
 
-    prob = NonlinearProblem(ssys, Dict(
-        ssys.ΔROG => ΔROG_val,
-        ssys.c_aer => 1e-10, ssys.X_p => 0.5, ssys.Y => 0.01))
+    prob = NonlinearProblem(ssys,
+        Dict(
+            ssys.ΔROG => ΔROG_val,
+            ssys.c_aer => 1e-10, ssys.X_p => 0.5, ssys.Y => 0.01))
     sol = solve(prob)
     @test sol[ssys.X_p] ≈ X_p_expected rtol=1e-6
     @test sol[ssys.c_aer] ≈ c_aer_expected rtol=1e-6
     @test sol[ssys.Y] ≈ c_aer_expected / ΔROG_val rtol=1e-6
 
     # Test linearity: doubling ΔROG should double c_aer
-    prob2 = NonlinearProblem(ssys, Dict(
-        ssys.ΔROG => 2 * ΔROG_val,
-        ssys.c_aer => 1e-10, ssys.X_p => 0.5, ssys.Y => 0.01))
+    prob2 = NonlinearProblem(ssys,
+        Dict(
+            ssys.ΔROG => 2 * ΔROG_val,
+            ssys.c_aer => 1e-10, ssys.X_p => 0.5, ssys.Y => 0.01))
     sol2 = solve(prob2)
     @test sol2[ssys.c_aer] ≈ 2 * c_aer_expected rtol=1e-6
 end
@@ -152,21 +159,23 @@ end
 
     sys = AbsorptivePartitioning()
     sys_nns = ModelingToolkit.toggle_namespacing(sys, false)
-    ssys = mtkcompile(sys; inputs=[sys_nns.ΔROG])
+    ssys = mtkcompile(sys; inputs = [sys_nns.ΔROG])
 
     # When p_i → 0 (very involatile compound), X_p → 1 (everything in aerosol)
-    prob_low_p = NonlinearProblem(ssys, Dict(
-        ssys.ΔROG => 50.0e-9,
-        ssys.c_aer => 1e-10, ssys.X_p => 0.5, ssys.Y => 0.01,
-        ssys.p_i => 1e-20))
+    prob_low_p = NonlinearProblem(ssys,
+        Dict(
+            ssys.ΔROG => 50.0e-9,
+            ssys.c_aer => 1e-10, ssys.X_p => 0.5, ssys.Y => 0.01,
+            ssys.p_i => 1e-20))
     sol_low_p = solve(prob_low_p)
     @test sol_low_p[ssys.X_p] ≈ 1.0 atol=1e-6
 
     # When m_0 → 0, X_p → 0 (no absorbing medium)
-    prob_no_oa = NonlinearProblem(ssys, Dict(
-        ssys.ΔROG => 50.0e-9,
-        ssys.c_aer => 1e-10, ssys.X_p => 0.5, ssys.Y => 0.01,
-        ssys.m_0 => 1e-20))
+    prob_no_oa = NonlinearProblem(ssys,
+        Dict(
+            ssys.ΔROG => 50.0e-9,
+            ssys.c_aer => 1e-10, ssys.X_p => 0.5, ssys.Y => 0.01,
+            ssys.m_0 => 1e-20))
     sol_no_oa = solve(prob_no_oa)
     @test sol_no_oa[ssys.X_p] ≈ 0.0 atol=1e-6
 end
@@ -187,7 +196,7 @@ end
 
     sys = TwoProductSOA()
     sys_nns = ModelingToolkit.toggle_namespacing(sys, false)
-    ssys = mtkcompile(sys; inputs=[sys_nns.ΔROG])
+    ssys = mtkcompile(sys; inputs = [sys_nns.ΔROG])
 
     # Default: α-pinene/OH parameters from Table 14.12
     a_1 = 0.038
@@ -198,10 +207,11 @@ end
     # Eq. 14.39: threshold = 1 / (a_1/c_sat_1 + a_2/c_sat_2)
     threshold_expected = 1.0 / (a_1 / c_sat_1 + a_2 / c_sat_2)
 
-    prob = NonlinearProblem(ssys, Dict(
-        ssys.ΔROG => 100.0e-9,
-        ssys.c_aer => 10.0e-9,
-        ssys.Y => 0.1, ssys.ΔROG_threshold => 1e-9))
+    prob = NonlinearProblem(ssys,
+        Dict(
+            ssys.ΔROG => 100.0e-9,
+            ssys.c_aer => 10.0e-9,
+            ssys.Y => 0.1, ssys.ΔROG_threshold => 1e-9))
     sol = solve(prob)
     @test sol[ssys.ΔROG_threshold] ≈ threshold_expected rtol=1e-6
 
@@ -227,7 +237,7 @@ end
 
     sys = LangmuirAdsorption()
     sys_nns = ModelingToolkit.toggle_namespacing(sys, false)
-    ssys = mtkcompile(sys; inputs=[sys_nns.p])
+    ssys = mtkcompile(sys; inputs = [sys_nns.p])
 
     V_m = 1.0
     b = 1.0
@@ -265,7 +275,7 @@ end
 
     sys = BETAdsorption()
     sys_nns = ModelingToolkit.toggle_namespacing(sys, false)
-    ssys = mtkcompile(sys; inputs=[sys_nns.S])
+    ssys = mtkcompile(sys; inputs = [sys_nns.S])
 
     V_m = 1.0
     c_BET = 10.0
@@ -303,7 +313,7 @@ end
 
     sys = FHHAdsorption()
     sys_nns = ModelingToolkit.toggle_namespacing(sys, false)
-    ssys = mtkcompile(sys; inputs=[sys_nns.S])
+    ssys = mtkcompile(sys; inputs = [sys_nns.S])
 
     V_m = 1.0
     A_FHH = 1.0
@@ -339,11 +349,11 @@ end
 
     bet = BETAdsorption()
     bet_nns = ModelingToolkit.toggle_namespacing(bet, false)
-    sbet = mtkcompile(bet; inputs=[bet_nns.S])
+    sbet = mtkcompile(bet; inputs = [bet_nns.S])
 
     lang = LangmuirAdsorption()
     lang_nns = ModelingToolkit.toggle_namespacing(lang, false)
-    slang = mtkcompile(lang; inputs=[lang_nns.p])
+    slang = mtkcompile(lang; inputs = [lang_nns.p])
 
     S_low = 0.001
     c_BET = 10.0
