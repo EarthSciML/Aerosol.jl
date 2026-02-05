@@ -225,6 +225,9 @@ Based on Equations 17.26-17.40 from Seinfeld & Pandis (2006).
         π_val = 3.141592653589793, [description = "Pi (dimensionless)", unit = u"1"]
         vol_eps = 1e-60,
         [description = "Small volume for numerical stability", unit = u"m^3"]
+        dim_eps = 1e-30,
+        [description = "Small dimensionless value for numerical stability (dimensionless)",
+            unit = u"1"]
     end
 
     @parameters begin
@@ -264,21 +267,21 @@ Based on Equations 17.26-17.40 from Seinfeld & Pandis (2006).
         B ~ 6 * n_s * M_w / (π_val * ρ_w),
 
         # Eq. 17.39 - Insoluble core diameter (m)
-        d_u ~ d_s * (1 / ((ρ_u / ρ_s) * (ε_m / (1 - ε_m + 1e-30)) + 1))^(1 / 3),
+        d_u ~ d_s * (1 / ((ρ_u / ρ_s) * (ε_m / (1 - ε_m + dim_eps)) + 1))^(1 / 3),
 
         # Eq. 17.38 - Köhler equation with insoluble core (log saturation)
         ln_S ~ A / D_p - B / (D_p^3 - d_u^3 + vol_eps),
 
-        # Saturation ratio S
+        # Saturation ratio S = p_w(D_p)/p° (definition, from Eq. 17.27)
         S ~ exp(ln_S),
 
         # Eq. 17.30 - Critical droplet diameter
         D_pc ~ sqrt(3 * B / A),
 
-        # Eq. 17.32 - Critical saturation
+        # Eq. 17.32 - Critical saturation (log form)
         ln_S_c ~ sqrt(4 * A^3 / (27 * B)),
 
-        # Critical saturation ratio
+        # Critical saturation ratio S_c = exp(ln S_c) (definition, from Eq. 17.32)
         S_c ~ exp(ln_S_c)
     ]
 
@@ -517,6 +520,9 @@ and Physics: From Air Pollution to Climate Change", 2nd Edition, Chapter 17.
         IN_coeff = 0.6, [description = "Ice nuclei exponential coefficient", unit = u"1/K"]
         T_IN_ref = 253.0,
         [description = "Reference temperature for IN parameterization", unit = u"K"]
+        dim_eps = 1e-30,
+        [description = "Small dimensionless value for numerical stability (dimensionless)",
+            unit = u"1"]
     end
 
     @parameters begin
@@ -540,7 +546,7 @@ and Physics: From Air Pollution to Climate Change", 2nd Edition, Chapter 17.
 
         # Eq. 17.100 - Equilibrium freezing temperature from water activity
         # Uses approximation T_0*T_e ≈ T_0^2, where ΔH_m_molar = ΔH_m_mass * M_w
-        T_e ~ T_freeze + R * T_freeze^2 / (ΔH_m_mass * M_w) * log(a_w + 1e-30),
+        T_e ~ T_freeze + R * T_freeze^2 / (ΔH_m_mass * M_w) * log(a_w + dim_eps),
 
         # Eq. 17.102 - Kelvin equation for ice particles
         kelvin_ice ~ exp(4 * M_w * σ_ia / (R * T * ρ_i * D_p)),
