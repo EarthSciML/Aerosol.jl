@@ -345,12 +345,12 @@ end
 
 @testitem "RayleighAtmosphere structural verification" setup=[MieSetup] tags=[:mie] begin
     # Test the RayleighAtmosphere component structure
-    sys = RayleighAtmosphere()
+    sys=RayleighAtmosphere()
 
     @test sys isa ModelingToolkit.System
 
-    vars = unknowns(sys)
-    var_names = [string(Symbolics.tosymbol(v, escape = false)) for v in vars]
+    vars=unknowns(sys)
+    var_names=[string(Symbolics.tosymbol(v, escape = false)) for v in vars]
 
     # Check expected variables
     @test any(occursin("b_sg", vn) for vn in var_names)
@@ -363,12 +363,12 @@ end
 
     # Test at reference conditions (T = 293 K, p = 1 atm, λ = 550 nm)
     # From Problem 15.1A: b_sg = 11.4 × (293/T) × p × 10⁻⁶ m⁻¹
-    T = 293.0  # K
-    p = 1.0    # atm (= 101325 Pa)
+    T=293.0  # K
+    p=1.0    # atm (= 101325 Pa)
     # At reference conditions, b_sg = 11.4e-6 m⁻¹
 
-    b_sg_expected = 11.4e-6  # m⁻¹
-    x_v_expected = 3.912 / b_sg_expected  # ≈ 343 km at 550 nm
+    b_sg_expected=11.4e-6  # m⁻¹
+    x_v_expected=3.912/b_sg_expected  # ≈ 343 km at 550 nm
 
     # The table on page 705 shows b_sg = 13.2e-6 at λ = 520 nm
     # Since b_sg ~ λ⁻⁴, at 550 nm: b_sg = 13.2e-6 × (520/550)⁴ ≈ 10.5e-6
@@ -381,18 +381,18 @@ end
     # Rayleigh scattering scales as λ⁻⁴
     # Test that b_sg at λ = 450 nm vs λ = 550 nm has correct ratio
 
-    λ1 = 450e-9  # m
-    λ2 = 550e-9  # m
+    λ1=450e-9  # m
+    λ2=550e-9  # m
 
     # b_sg(λ1) / b_sg(λ2) = (λ2/λ1)⁴
-    expected_ratio = (λ2 / λ1)^4
+    expected_ratio=(λ2/λ1)^4
 
     # Compute directly from the formula
-    b_sg_ref = 11.4e-6
-    λ_ref = 550e-9
+    b_sg_ref=11.4e-6
+    λ_ref=550e-9
 
-    b_sg_450 = b_sg_ref * (λ_ref / λ1)^4
-    b_sg_550 = b_sg_ref * (λ_ref / λ2)^4
+    b_sg_450=b_sg_ref*(λ_ref/λ1)^4
+    b_sg_550=b_sg_ref*(λ_ref/λ2)^4
 
     @test b_sg_450 / b_sg_550 ≈ expected_ratio rtol=1e-10
 end

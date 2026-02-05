@@ -326,7 +326,9 @@ Seinfeld & Pandis (2006), Chapter 15, page 705 and Problem 15.1A.
     @constants begin
         # Reference values at sea level, T = 293 K, λ = 550 nm
         # From Problem 15.1A: b_sg = 11.4 × (293/T) × p × 10⁻⁶ m⁻¹
-        b_sg_ref = 11.4e-6, [unit = u"m^-1", description = "Reference Rayleigh coefficient at 293K, 1atm, 550nm"]
+        b_sg_ref = 11.4e-6,
+        [
+            unit = u"m^-1", description = "Reference Rayleigh coefficient at 293K, 1atm, 550nm"]
         T_ref = 293.0, [unit = u"K", description = "Reference temperature"]
         p_ref = 101325.0, [unit = u"Pa", description = "Reference pressure (1 atm)"]
         λ_ref = 550e-9, [unit = u"m", description = "Reference wavelength (550 nm)"]
@@ -340,7 +342,8 @@ Seinfeld & Pandis (2006), Chapter 15, page 705 and Problem 15.1A.
 
     @variables begin
         b_sg(t), [unit = u"m^-1", description = "Rayleigh scattering coefficient"]
-        x_v_max(t), [unit = u"m", description = "Maximum visual range in Rayleigh atmosphere"]
+        x_v_max(t),
+        [unit = u"m", description = "Maximum visual range in Rayleigh atmosphere"]
     end
 
     eqs = [
