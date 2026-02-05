@@ -233,8 +233,8 @@ end
     using Aerosol
 
     sys = DropletGrowth()
-    @test length(equations(sys)) == 8
-    @test length(unknowns(sys)) == 8
+    @test length(equations(sys)) == 9
+    @test length(unknowns(sys)) == 9
 end
 
 @testitem "DropletGrowth physical behavior" tags=[:cloud_physics] begin
@@ -424,7 +424,7 @@ end
     using Aerosol
 
     sys = CloudPhysics()
-    @test length(equations(sys)) == 42  # 7+2+9+8+5+4+4+3
+    @test length(equations(sys)) == 43  # 7+2+9+9+5+4+4+3
 
     # Verify all subsystems are present
     subsys_names = Symbol.(nameof.(ModelingToolkit.get_systems(sys)))

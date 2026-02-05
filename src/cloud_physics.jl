@@ -322,8 +322,6 @@ Based on Equations 17.60-17.72 from Seinfeld & Pandis (2006).
         [description = "Thermal conductivity constant", unit = u"J/(m*s*K)"]
         ka_c1 = 0.071e-3,
         [description = "Thermal conductivity slope", unit = u"J/(m*s*K^2)"]
-        # Eq. 17.72 constant (air density at STP)
-        ρ_air_stp = 1.293, [description = "Air density at STP", unit = u"kg/m^3"]
         # Saturation vapor pressure (Magnus formula)
         p_sat_ref = 610.94, [description = "Reference saturation pressure", unit = u"Pa"]
         magnus_a = 17.625,
@@ -367,6 +365,7 @@ Based on Equations 17.60-17.72 from Seinfeld & Pandis (2006).
         k_a(t), [description = "Thermal conductivity of air", unit = u"J/(m*s*K)"]
         k_a_prime(t),
         [description = "Modified thermal conductivity of air", unit = u"J/(m*s*K)"]
+        ρ_air(t), [description = "Air density from ideal gas law (Eq. 17.72)", unit = u"kg/m^3"]
         p_sat(t), [description = "Saturation vapor pressure", unit = u"Pa"]
         ΔH_v(t), [description = "Latent heat of vaporization", unit = u"J/kg"]
         S_eq(t),
@@ -385,10 +384,13 @@ Based on Equations 17.60-17.72 from Seinfeld & Pandis (2006).
         # Eq. 17.71 - Thermal conductivity of air (J/(m*s*K))
         k_a ~ ka_c0 + ka_c1 * T,
 
+        # Air density from ideal gas law: ρ = p*M_a / (R*T)
+        ρ_air ~ p_a * M_a / (R * T),
+
         # Eq. 17.72 - Modified thermal conductivity (kinetic correction)
         k_a_prime ~
         k_a / (one +
-         (2 * k_a / (α_T * D_p * ρ_air_stp * c_p_air)) * sqrt(2 * π_val * M_a / (R * T))),
+         (2 * k_a / (α_T * D_p * ρ_air * c_p_air)) * sqrt(2 * π_val * M_a / (R * T))),
 
         # Saturation vapor pressure (Magnus formula)
         p_sat ~
