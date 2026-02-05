@@ -1,18 +1,18 @@
-export WaterProperties, KelvinEffect, KohlerTheory, DropletGrowth, CloudDynamics,
+export CloudWaterProperties, KelvinEffect, KohlerTheory, DropletGrowth, CloudDynamics,
        IcePhysics, RainFormation, AerosolScavenging, CloudPhysics
 
 """
-    WaterProperties(; name=:WaterProperties)
+    CloudWaterProperties(; name=:CloudWaterProperties)
 
-Thermodynamic properties of water and water solutions, including specific heat,
-latent heats, surface tension, and saturation vapor pressure.
+Thermodynamic properties of water and water solutions for cloud physics calculations,
+including specific heat, latent heats, surface tension, and saturation vapor pressure.
 
 Based on Chapter 17 of Seinfeld & Pandis (2006) "Atmospheric Chemistry and Physics:
 From Air Pollution to Climate Change", 2nd Edition, John Wiley & Sons.
 
 Equations 17.1-17.6, Table 17.2.
 """
-@component function WaterProperties(; name = :WaterProperties)
+@component function CloudWaterProperties(; name = :CloudWaterProperties)
     @constants begin
         T_ref = 273.15, [description = "Reference temperature (0°C)", unit = u"K"]
         T_unit = 1.0,
@@ -23,9 +23,12 @@ Equations 17.1-17.6, Table 17.2.
         # where T_C is temperature difference in K (numerically same as °C difference).
         # Coefficients multiplied by 100 (mbar->Pa conversion factor).
         # After nondimensionalization by T_unit, the effective units are Pa.
-        a0_w = 610.7799961, [description = "Water sat. vap. press. coeff. a0 (Table 17.2)", unit = u"Pa"]
-        a1_w = 44.36518521, [description = "Water sat. vap. press. coeff. a1 (Table 17.2)", unit = u"Pa"]
-        a2_w = 1.428945805, [description = "Water sat. vap. press. coeff. a2 (Table 17.2)", unit = u"Pa"]
+        a0_w = 610.7799961,
+        [description = "Water sat. vap. press. coeff. a0 (Table 17.2)", unit = u"Pa"]
+        a1_w = 44.36518521,
+        [description = "Water sat. vap. press. coeff. a1 (Table 17.2)", unit = u"Pa"]
+        a2_w = 1.428945805,
+        [description = "Water sat. vap. press. coeff. a2 (Table 17.2)", unit = u"Pa"]
         a3_w = 2.650648471e-2,
         [description = "Water sat. vap. press. coeff. a3 (Table 17.2)", unit = u"Pa"]
         a4_w = 3.031240396e-4,
@@ -35,9 +38,12 @@ Equations 17.1-17.6, Table 17.2.
         a6_w = 6.136820929e-9,
         [description = "Water sat. vap. press. coeff. a6 (Table 17.2)", unit = u"Pa"]
         # Ice coefficients (also with 100x for mbar->Pa)
-        a0_i = 610.9177956, [description = "Ice sat. vap. press. coeff. a0 (Table 17.2)", unit = u"Pa"]
-        a1_i = 50.34698970, [description = "Ice sat. vap. press. coeff. a1 (Table 17.2)", unit = u"Pa"]
-        a2_i = 1.886013408, [description = "Ice sat. vap. press. coeff. a2 (Table 17.2)", unit = u"Pa"]
+        a0_i = 610.9177956,
+        [description = "Ice sat. vap. press. coeff. a0 (Table 17.2)", unit = u"Pa"]
+        a1_i = 50.34698970,
+        [description = "Ice sat. vap. press. coeff. a1 (Table 17.2)", unit = u"Pa"]
+        a2_i = 1.886013408,
+        [description = "Ice sat. vap. press. coeff. a2 (Table 17.2)", unit = u"Pa"]
         a3_i = 4.176223716e-2,
         [description = "Ice sat. vap. press. coeff. a3 (Table 17.2)", unit = u"Pa"]
         a4_i = 5.824720280e-4,
@@ -49,37 +55,48 @@ Equations 17.1-17.6, Table 17.2.
         # Eq. 17.2 constants - Specific heat of liquid water
         # c_pw = 4.175 + 1.3e-5*(T-308)^2 + 1.6e-8*(T-308)^4 in J/(g*K)
         # Converted to J/(kg*K) by multiplying by 1000
-        cpw_base = 4175.0, [description = "Base specific heat of water (Eq. 17.2)", unit = u"J/(kg*K)"]
+        cpw_base = 4175.0,
+        [description = "Base specific heat of water (Eq. 17.2)", unit = u"J/(kg*K)"]
         cpw_c2 = 0.013,
-        [description = "Quadratic coefficient for c_pw (Eq. 17.2: 1.3e-5 J/(g*K) * 1000)", unit = u"J/(kg*K)"]
+        [description = "Quadratic coefficient for c_pw (Eq. 17.2: 1.3e-5 J/(g*K) * 1000)",
+            unit = u"J/(kg*K)"]
         cpw_c4 = 1.6e-5,
-        [description = "Quartic coefficient for c_pw (Eq. 17.2: 1.6e-8 J/(g*K) * 1000)", unit = u"J/(kg*K)"]
-        T_cpw_ref = 308.0, [description = "Reference T for c_pw correlation (Eq. 17.2)", unit = u"K"]
+        [description = "Quartic coefficient for c_pw (Eq. 17.2: 1.6e-8 J/(g*K) * 1000)",
+            unit = u"J/(kg*K)"]
+        T_cpw_ref = 308.0,
+        [description = "Reference T for c_pw correlation (Eq. 17.2)", unit = u"K"]
         # Eq. 17.3 constants - Latent heat of vaporization
         # ΔH_v(kJ/g) = 2.5*(273.15/T)^(0.167 + 3.67e-4*T)
         # Converted to J/kg: multiply by 1e6
         Hv_ref = 2.5e6,
-        [description = "Latent heat reference value (Eq. 17.3: 2.5 kJ/g = 2.5e6 J/kg)", unit = u"J/kg"]
+        [description = "Latent heat reference value (Eq. 17.3: 2.5 kJ/g = 2.5e6 J/kg)",
+            unit = u"J/kg"]
         Hv_exp_const = 0.167,
-        [description = "Exponent constant for latent heat (Eq. 17.3, dimensionless)", unit = u"1"]
+        [
+            description = "Exponent constant for latent heat (Eq. 17.3, dimensionless)", unit = u"1"]
         Hv_exp_coeff = 3.67e-4,
         [description = "Exponent coefficient for latent heat (Eq. 17.3)", unit = u"1/K"]
         # Eq. 17.4 constants - Latent heat of melting
         # ΔH_m(J/g) = 333.5 + 2.03*T_C - 0.0105*T_C^2, T_C in Celsius
         # Converted to J/kg by multiplying by 1000
         Hm_base = 333500.0,
-        [description = "Base latent heat of melting (Eq. 17.4: 333.5 J/g = 333500 J/kg)", unit = u"J/kg"]
+        [description = "Base latent heat of melting (Eq. 17.4: 333.5 J/g = 333500 J/kg)",
+            unit = u"J/kg"]
         Hm_c1 = 2030.0,
-        [description = "Linear coeff. for latent heat of melting (Eq. 17.4: 2.03 J/g = 2030 J/kg)",
+        [
+            description = "Linear coeff. for latent heat of melting (Eq. 17.4: 2.03 J/g = 2030 J/kg)",
             unit = u"J/kg"]
         Hm_c2 = -10.5,
-        [description = "Quadratic coeff. for latent heat of melting (Eq. 17.4: -0.0105 J/g = -10.5 J/kg)",
+        [
+            description = "Quadratic coeff. for latent heat of melting (Eq. 17.4: -0.0105 J/g = -10.5 J/kg)",
             unit = u"J/kg"]
         # Eq. 17.5 constants - Surface tension of pure water
         # σ_w0 = 0.0761 - 1.55e-4*(T-273) in J/m^2 = N/m
-        sigma_base = 0.0761, [description = "Base surface tension (Eq. 17.5)", unit = u"N/m"]
+        sigma_base = 0.0761,
+        [description = "Base surface tension (Eq. 17.5)", unit = u"N/m"]
         sigma_coeff = 1.55e-4,
-        [description = "Surface tension temperature coefficient (Eq. 17.5)", unit = u"N/(m*K)"]
+        [
+            description = "Surface tension temperature coefficient (Eq. 17.5)", unit = u"N/(m*K)"]
     end
 
     @parameters begin
@@ -145,8 +162,9 @@ due to surface energy effects.
 Based on Equations 17.9 and 17.28 from Seinfeld & Pandis (2006).
 
 # Equations
-- Eq. 17.9: p_w(D_p)/p° = exp(4M_w σ_w / (R T ρ_w D_p))
-- Eq. 17.28: A = 4M_w σ_w / (R T ρ_w) ≈ 0.66/T µm (for T in K)
+
+  - Eq. 17.9: p_w(D_p)/p° = exp(4M_w σ_w / (R T ρ_w D_p))
+  - Eq. 17.28: A = 4M_w σ_w / (R T ρ_w) ≈ 0.66/T µm (for T in K)
 """
 @component function KelvinEffect(; name = :KelvinEffect)
     @constants begin
@@ -190,13 +208,14 @@ and extension for partially insoluble particles.
 Based on Equations 17.26-17.40 from Seinfeld & Pandis (2006).
 
 # Key Equations
-- Eq. 17.27: ln(p_w(D_p)/p°) = A/D_p - B/D_p³
-- Eq. 17.28: A = 4M_w σ_w / (R T ρ_w)
-- Eq. 17.29: B = 6n_s M_w / (π ρ_w)
-- Eq. 17.30: D_pc = √(3B/A) (critical diameter)
-- Eq. 17.32: ln(S_c) = √(4A³/27B) (critical saturation)
-- Eq. 17.33: n_s = νπd_s³ρ_s / (6M_s) (moles of solute)
-- Eq. 17.38-17.40: Extensions for insoluble material
+
+  - Eq. 17.27: ln(p_w(D_p)/p°) = A/D_p - B/D_p³
+  - Eq. 17.28: A = 4M_w σ_w / (R T ρ_w)
+  - Eq. 17.29: B = 6n_s M_w / (π ρ_w)
+  - Eq. 17.30: D_pc = √(3B/A) (critical diameter)
+  - Eq. 17.32: ln(S_c) = √(4A³/27B) (critical saturation)
+  - Eq. 17.33: n_s = νπd_s³ρ_s / (6M_s) (moles of solute)
+  - Eq. 17.38-17.40: Extensions for insoluble material
 """
 @component function KohlerTheory(; name = :KohlerTheory)
     @constants begin
@@ -276,11 +295,12 @@ gas-phase diffusion, and modified diffusivity for kinetic effects.
 Based on Equations 17.60-17.72 from Seinfeld & Pandis (2006).
 
 # Key Equations
-- Eq. 17.61: D_v = 0.211(p_ref/p)(T/273)^1.94 cm²/s (water vapor diffusivity)
-- Eq. 17.62: D'_v = D_v / [1 + 2D_v/(α_c D_p)√(2πM_w/RT)] (kinetic correction)
-- Eq. 17.70: D_p dD_p/dt = [S_v,∞ - S_eq] / [ρ_w RT/(4p° D'_v M_w) + ΔH_v ρ_w/(4k'_a T)(ΔH_v M_w/(TR) - 1)]
-- Eq. 17.71: k_a = 10⁻³(4.39 + 0.071T) J/(m·s·K) (thermal conductivity)
-- Eq. 17.72: k'_a correction for kinetic effects
+
+  - Eq. 17.61: D_v = 0.211(p_ref/p)(T/273)^1.94 cm²/s (water vapor diffusivity)
+  - Eq. 17.62: D'_v = D_v / [1 + 2D_v/(α_c D_p)√(2πM_w/RT)] (kinetic correction)
+  - Eq. 17.70: D_p dD_p/dt = [S_v,∞ - S_eq] / [ρ_w RT/(4p° D'_v M_w) + ΔH_v ρ_w/(4k'_a T)(ΔH_v M_w/(TR) - 1)]
+  - Eq. 17.71: k_a = 10⁻³(4.39 + 0.071T) J/(m·s·K) (thermal conductivity)
+  - Eq. 17.72: k'_a correction for kinetic effects
 """
 @component function DropletGrowth(; name = :DropletGrowth)
     @constants begin
@@ -399,10 +419,11 @@ dew point temperature, and saturation mixing ratio.
 Based on Equations 17.43-17.49 from Seinfeld & Pandis (2006).
 
 # Key Equations
-- Eq. 17.43: T_d ≈ T_0 + (RT_0²/ΔH_v M_w)ln(RH) (dew point temperature)
-- Eq. 17.44: Γ_d = g/c_p ≈ 9.76 K/km (dry adiabatic lapse rate)
-- Eq. 17.46: w_v = M_w p_w / (M_a p_a) (water vapor mixing ratio)
-- Eq. 17.49: h_LCL = (T_0 - T_L)/Γ (lifting condensation level)
+
+  - Eq. 17.43: T_d ≈ T_0 + (RT_0²/ΔH_v M_w)ln(RH) (dew point temperature)
+  - Eq. 17.44: Γ_d = g/c_p ≈ 9.76 K/km (dry adiabatic lapse rate)
+  - Eq. 17.46: w_v = M_w p_w / (M_a p_a) (water vapor mixing ratio)
+  - Eq. 17.49: h_LCL = (T_0 - T_L)/Γ (lifting condensation level)
 """
 @component function CloudDynamics(; name = :CloudDynamics)
     @constants begin
@@ -468,10 +489,11 @@ Based on Equations 17.100-17.103 from Seinfeld & Pandis (2006) "Atmospheric Chem
 and Physics: From Air Pollution to Climate Change", 2nd Edition, Chapter 17.
 
 # Key Equations
-- Eq. 17.100: T_0 - T_e = (RT_0 T_e/ΔH_m)(-ln a_w) (freezing point from water activity)
-- Eq. 17.101: ΔT_f = (RT_0² M_w)/(1000 ΔH_m) m ≈ 1.86 K·kg/mol × m (freezing point depression)
-- Eq. 17.102: p_i = p_sat,i exp(4M_w σ_ia / (R T ρ_i D_p)) (Kelvin effect for ice)
-- Eq. 17.103: IN(L⁻¹) = exp[0.6(253-T)] (ice nuclei concentration)
+
+  - Eq. 17.100: T_0 - T_e = (RT_0 T_e/ΔH_m)(-ln a_w) (freezing point from water activity)
+  - Eq. 17.101: ΔT_f = (RT_0² M_w)/(1000 ΔH_m) m ≈ 1.86 K·kg/mol × m (freezing point depression)
+  - Eq. 17.102: p_i = p_sat,i exp(4M_w σ_ia / (R T ρ_i D_p)) (Kelvin effect for ice)
+  - Eq. 17.103: IN(L⁻¹) = exp[0.6(253-T)] (ice nuclei concentration)
 """
 @component function IcePhysics(; name = :IcePhysics)
     @constants begin
@@ -539,11 +561,12 @@ size distributions.
 Based on Equations 17.104-17.108 from Seinfeld & Pandis (2006).
 
 # Key Equations
-- Eq. 17.104: E = y²/(D_p + d_p)² (collision efficiency)
-- Eq. 17.105: E_c = (D_p/(D_p + d_p))² (coalescence efficiency, for D_p > 400 µm)
-- Eq. 17.106: dm/dt = (π/4)E_t(D_p + d_p)²w_L(v_D - v_d) (continuous accretion)
-- Eq. 17.107: F(D_p) = 1 - exp[-(D_p/(1.3p_0^0.232 mm))^2.25] (Best CDF)
-- Eq. 17.108: n(D_p) = n_0 exp(-ψD_p) (Marshall-Palmer distribution)
+
+  - Eq. 17.104: E = y²/(D_p + d_p)² (collision efficiency)
+  - Eq. 17.105: E_c = (D_p/(D_p + d_p))² (coalescence efficiency, for D_p > 400 µm)
+  - Eq. 17.106: dm/dt = (π/4)E_t(D_p + d_p)²w_L(v_D - v_d) (continuous accretion)
+  - Eq. 17.107: F(D_p) = 1 - exp[-(D_p/(1.3p_0^0.232 mm))^2.25] (Best CDF)
+  - Eq. 17.108: n(D_p) = n_0 exp(-ψD_p) (Marshall-Palmer distribution)
 """
 @component function RainFormation(; name = :RainFormation)
     @constants begin
@@ -554,7 +577,8 @@ Based on Equations 17.104-17.108 from Seinfeld & Pandis (2006).
         F_diam_ref = 1.3e-3,
         [description = "Best distribution diameter scale (Eq. 17.107: 1.3 mm)", unit = u"m"]
         F_exp = 2.25,
-        [description = "Best distribution exponent (Eq. 17.107, dimensionless)", unit = u"1"]
+        [
+            description = "Best distribution exponent (Eq. 17.107, dimensionless)", unit = u"1"]
         one = 1.0, [description = "Unity (dimensionless)", unit = u"1"]
         # For p_0 exponent nondimensionalization
         p0_unit = 1.0,
@@ -564,24 +588,32 @@ Based on Equations 17.104-17.108 from Seinfeld & Pandis (2006).
     @parameters begin
         D_p = 1.0e-3, [description = "Collector drop diameter", unit = u"m"]
         d_p = 1.0e-5, [description = "Collected droplet diameter", unit = u"m"]
-        E_coll = 0.5, [description = "Collision efficiency (Eq. 17.104, dimensionless)", unit = u"1"]
-        E_coal = 1.0, [description = "Coalescence efficiency (Eq. 17.105, dimensionless)", unit = u"1"]
+        E_coll = 0.5,
+        [description = "Collision efficiency (Eq. 17.104, dimensionless)", unit = u"1"]
+        E_coal = 1.0,
+        [description = "Coalescence efficiency (Eq. 17.105, dimensionless)", unit = u"1"]
         w_L = 1.0e-3,
-        [description = "Liquid water content (mass mixing ratio, dimensionless)", unit = u"1"]
+        [
+            description = "Liquid water content (mass mixing ratio, dimensionless)", unit = u"1"]
         v_D = 5.0, [description = "Fall velocity of collector drop", unit = u"m/s"]
         v_d = 0.01, [description = "Fall velocity of collected droplet", unit = u"m/s"]
         ρ_a = 1.225, [description = "Air density", unit = u"kg/m^3"]
         p_0 = 1.0, [description = "Rainfall intensity (Eq. 17.107)", unit = u"mm/hr"]
         n_0 = 8.0e6,
-        [description = "Marshall-Palmer intercept parameter (Eq. 17.108: 8000 m^-3 mm^-1)", unit = u"1/m^4"]
-        ψ = 4100.0, [description = "Marshall-Palmer slope parameter (Eq. 17.108)", unit = u"1/m"]
+        [description = "Marshall-Palmer intercept parameter (Eq. 17.108: 8000 m^-3 mm^-1)",
+            unit = u"1/m^4"]
+        ψ = 4100.0,
+        [description = "Marshall-Palmer slope parameter (Eq. 17.108)", unit = u"1/m"]
     end
 
     @variables begin
-        E_t(t), [description = "Collection efficiency (Eq. 17.106, dimensionless)", unit = u"1"]
+        E_t(t),
+        [description = "Collection efficiency (Eq. 17.106, dimensionless)", unit = u"1"]
         dm_dt(t), [description = "Mass accretion rate (Eq. 17.106)", unit = u"kg/s"]
-        F_dist(t), [description = "Best raindrop CDF (Eq. 17.107, dimensionless)", unit = u"1"]
-        n_MP(t), [description = "Marshall-Palmer number density (Eq. 17.108)", unit = u"1/m^4"]
+        F_dist(t),
+        [description = "Best raindrop CDF (Eq. 17.107, dimensionless)", unit = u"1"]
+        n_MP(t),
+        [description = "Marshall-Palmer number density (Eq. 17.108)", unit = u"1/m^4"]
     end
 
     eqs = [
@@ -614,10 +646,11 @@ scavenging ratios and scavenging coefficients.
 Based on Equations 17.84-17.92 from Seinfeld & Pandis (2006).
 
 # Key Equations
-- Eq. 17.84: F_i = (C_{i,0} - C_{i,int})/C_{i,0} (mass scavenging ratio)
-- Eq. 17.85: F_N = (N_0 - N_int)/N_0 (number scavenging ratio)
-- Eq. 17.91: Λ(D_p,t) = ∫K(D_p,x)n_d(x,t)dx (scavenging coefficient)
-- Eq. 17.92: Λ(D_p) = N_d K(D_p, 10µm) (monodisperse approximation)
+
+  - Eq. 17.84: F_i = (C_{i,0} - C_{i,int})/C_{i,0} (mass scavenging ratio)
+  - Eq. 17.85: F_N = (N_0 - N_int)/N_0 (number scavenging ratio)
+  - Eq. 17.91: Λ(D_p,t) = ∫K(D_p,x)n_d(x,t)dx (scavenging coefficient)
+  - Eq. 17.92: Λ(D_p) = N_d K(D_p, 10µm) (monodisperse approximation)
 """
 @component function AerosolScavenging(; name = :AerosolScavenging)
     @parameters begin
@@ -662,7 +695,7 @@ Based on Chapter 17 of Seinfeld & Pandis (2006) "Atmospheric Chemistry and Physi
 From Air Pollution to Climate Change", 2nd Edition, John Wiley & Sons.
 """
 @component function CloudPhysics(; name = :CloudPhysics)
-    water = WaterProperties(; name = :water)
+    water = CloudWaterProperties(; name = :water)
     kelvin = KelvinEffect(; name = :kelvin)
     kohler = KohlerTheory(; name = :kohler)
     growth = DropletGrowth(; name = :growth)

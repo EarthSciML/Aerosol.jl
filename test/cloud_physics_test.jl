@@ -1,8 +1,8 @@
-@testitem "WaterProperties structural" tags=[:cloud_physics] begin
+@testitem "CloudWaterProperties structural" tags=[:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
-    sys = WaterProperties()
+    sys = CloudWaterProperties()
     @test length(equations(sys)) == 7
     @test length(unknowns(sys)) == 7
 
@@ -17,11 +17,11 @@
     @test any(contains("p_sat_ice"), var_names)
 end
 
-@testitem "WaterProperties saturation vapor pressure" tags=[:cloud_physics] begin
+@testitem "CloudWaterProperties saturation vapor pressure" tags=[:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
-    sys = WaterProperties()
+    sys = CloudWaterProperties()
     ssys = mtkcompile(sys)
 
     # Test at 0°C: p_sat should be ~611 Pa (Table 17.2)
@@ -50,11 +50,11 @@ end
     @test sol30[ssys.p_sat_water] > sol20[ssys.p_sat_water]
 end
 
-@testitem "WaterProperties surface tension" tags=[:cloud_physics] begin
+@testitem "CloudWaterProperties surface tension" tags=[:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
-    sys = WaterProperties()
+    sys = CloudWaterProperties()
     ssys = mtkcompile(sys)
 
     # Surface tension at 20°C: ~0.0728 N/m (Table 17.1)
@@ -68,11 +68,11 @@ end
     @test sol0[ssys.σ_w0] > sol[ssys.σ_w0]
 end
 
-@testitem "WaterProperties latent heat" tags=[:cloud_physics] begin
+@testitem "CloudWaterProperties latent heat" tags=[:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
-    sys = WaterProperties()
+    sys = CloudWaterProperties()
     ssys = mtkcompile(sys)
 
     # Latent heat of vaporization at 20°C: ~2.45e6 J/kg (Table 17.1 value ~2.45 kJ/g)
