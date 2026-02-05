@@ -20,12 +20,15 @@ makedocs(;
         "Size Distribution" => "size_distribution.md",
         "VBS" => "VBS.md",
         "Optical Properties" => "mie_scattering.md",
+        "Organic Aerosol" => "organic_aerosol.md",
         "Mass Transfer" => "mass_transfer.md",
         "Nucleation" => "nucleation.md",
         "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
             "ISORROPIA" => "isorropia.md",
+            "Seinfeld & Pandis Ch. 10" => "seinfeld_pandis_ch10.md"
         ],
+        "Radiative Forcing" => "aerosol_radiative_forcing.md",
         "API" => "api.md"
     ],
     warnonly = [:missing_docs]

@@ -36,6 +36,42 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.24
 end
 
 """
+    MeanFreePath(; name=:MeanFreePath)
+
+Calculate the mean free path of gas molecules in air.
+
+Reference: Seinfeld & Pandis (2006) Chapter 12, Section 12.1.3
+"""
+@component function MeanFreePath(; name = :MeanFreePath)
+    @parameters begin
+        T = 298.15, [description = "Temperature", unit = u"K"]
+        P = 101325.0, [description = "Pressure", unit = u"Pa"]
+        M_A = 0.029, [description = "Molecular weight of species A", unit = u"kg/mol"]
+        M_air = 0.029, [description = "Molecular weight of air", unit = u"kg/mol"]
+        μ = 1.81e-5, [description = "Dynamic viscosity of air", unit = u"Pa*s"]
+    end
+
+    @constants begin
+        R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
+    end
+
+    @variables begin
+        λ(t), [description = "Mean free path", unit = u"m"]
+        ρ_air(t), [description = "Air density", unit = u"kg/m^3"]
+    end
+
+    eqs = [
+        # Air density from ideal gas law
+        ρ_air ~ P * M_air / (R * T),
+        # Mean free path: λ = 2μ/(ρ_air * c̄) where c̄ = √(8RT/(πM))
+        # Simplified form commonly used
+        λ ~ 2 * μ / (ρ_air * sqrt(8 * R * T / (π * M_air)))
+    ]
+
+    return System(eqs, t; name)
+end
+
+"""
     KnudsenNumber(; name=:KnudsenNumber)
 
 Calculate the Knudsen number, the ratio of mean free path to particle radius.

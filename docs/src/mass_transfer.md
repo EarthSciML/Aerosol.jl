@@ -4,16 +4,17 @@
 
 This module implements the fundamental equations describing mass transfer between gas and particle phases in the atmosphere. The treatment covers three transport regimes based on the Knudsen number (Kn = λ/Rp, ratio of mean free path to particle radius):
 
-- **Continuum regime** (Kn ≪ 1): Applicable to large particles where Fick's law of diffusion governs transport
-- **Kinetic regime** (Kn ≫ 1): Applicable to small particles where molecular kinetic theory governs transport
-- **Transition regime** (Kn ~ 1): Requires interpolation formulas bridging the two limiting cases
+  - **Continuum regime** (Kn ≪ 1): Applicable to large particles where Fick's law of diffusion governs transport
+  - **Kinetic regime** (Kn ≫ 1): Applicable to small particles where molecular kinetic theory governs transport
+  - **Transition regime** (Kn ~ 1): Requires interpolation formulas bridging the two limiting cases
 
 The implementation includes:
-- Transition regime correction factors (Fuchs-Sutugin, Dahneke)
-- Maxwellian flux for particle growth/evaporation
-- Mass transfer coefficients for gas-particle exchange
-- Characteristic timescales for various mass transport processes
-- Aqueous-phase chemistry and mass transport coupling
+
+  - Transition regime correction factors (Fuchs-Sutugin, Dahneke)
+  - Maxwellian flux for particle growth/evaporation
+  - Mass transfer coefficients for gas-particle exchange
+  - Characteristic timescales for various mass transport processes
+  - Aqueous-phase chemistry and mass transport coupling
 
 **Reference**: Seinfeld, J.H. and Pandis, S.N. (2006) "Atmospheric Chemistry and Physics: From Air Pollution to Climate Change", 2nd Edition, John Wiley & Sons, Chapter 12, pp. 537-587.
 
@@ -44,7 +45,7 @@ sys = FuchsSutugin()
 compiled = mtkcompile(sys)
 
 # Calculate correction factor across Knudsen number range
-Kn_range = 10 .^ range(-2, 2, length=100)
+Kn_range = 10 .^ range(-2, 2, length = 100)
 f_FS_α1 = Float64[]
 f_FS_α01 = Float64[]
 f_FS_α001 = Float64[]
@@ -60,12 +61,13 @@ for Kn in Kn_range
     push!(f_FS_α001, solve(prob)[compiled.f_FS])
 end
 
-plot(Kn_range, f_FS_α1, label="α = 1.0", xscale=:log10,
-     xlabel="Knudsen Number (Kn)", ylabel="J/Jc (Correction Factor)",
-     title="Fuchs-Sutugin Transition Regime Correction")
-plot!(Kn_range, f_FS_α01, label="α = 0.1")
-plot!(Kn_range, f_FS_α001, label="α = 0.01")
-savefig("fuchs_sutugin.svg"); nothing # hide
+plot(Kn_range, f_FS_α1, label = "α = 1.0", xscale = :log10,
+    xlabel = "Knudsen Number (Kn)", ylabel = "J/Jc (Correction Factor)",
+    title = "Fuchs-Sutugin Transition Regime Correction")
+plot!(Kn_range, f_FS_α01, label = "α = 0.1")
+plot!(Kn_range, f_FS_α001, label = "α = 0.01")
+savefig("fuchs_sutugin.svg");
+nothing # hide
 ```
 
 ![Fuchs-Sutugin correction factor](fuchs_sutugin.svg)
@@ -81,7 +83,8 @@ sys = MassTransfer()
 vars = ModelingToolkit.unknowns(sys)
 DataFrame(
     :Name => [string(Symbolics.tosymbol(v, escape = false)) for v in vars],
-    :Units => [string(DynamicQuantities.dimension(ModelingToolkit.get_unit(v))) for v in vars],
+    :Units => [string(DynamicQuantities.dimension(ModelingToolkit.get_unit(v)))
+               for v in vars],
     :Description => [ModelingToolkit.getdescription(v) for v in vars]
 )
 ```
@@ -92,7 +95,8 @@ DataFrame(
 params = ModelingToolkit.parameters(sys)
 DataFrame(
     :Name => [string(Symbolics.tosymbol(p, escape = false)) for p in params],
-    :Units => [string(DynamicQuantities.dimension(ModelingToolkit.get_unit(p))) for p in params],
+    :Units => [string(DynamicQuantities.dimension(ModelingToolkit.get_unit(p)))
+               for p in params],
     :Description => [ModelingToolkit.getdescription(p) for p in params]
 )
 ```
@@ -164,9 +168,10 @@ sys = MassTransportLimitation()
 compiled = mtkcompile(sys)
 
 # Parameters for a 10 μm droplet at 298 K
-prob = NonlinearProblem(compiled, Dict(
-    compiled.R_p => 1.0e-5, compiled.D_g => 2.0e-5, compiled.D_aq => 1.0e-9,
-    compiled.T => 298.15, compiled.α => 1.0, compiled.M_A => 0.029))
+prob = NonlinearProblem(compiled,
+    Dict(
+        compiled.R_p => 1.0e-5, compiled.D_g => 2.0e-5, compiled.D_aq => 1.0e-9,
+        compiled.T => 298.15, compiled.α => 1.0, compiled.M_A => 0.029))
 sol = solve(prob)
 
 println("Gas-phase diffusion limit for k₁H*: $(sol[compiled.k1H_gas_limit]) mol/(m³·Pa·s)")
@@ -186,7 +191,7 @@ sys_d = Dahneke()
 compiled_fs = mtkcompile(sys_fs)
 compiled_d = mtkcompile(sys_d)
 
-Kn_range = 10 .^ range(-2, 2, length=100)
+Kn_range = 10 .^ range(-2, 2, length = 100)
 f_FS = Float64[]
 f_D = Float64[]
 
@@ -198,11 +203,12 @@ for Kn in Kn_range
     push!(f_D, solve(prob_d)[compiled_d.f_D])
 end
 
-plot(Kn_range, f_FS, label="Fuchs-Sutugin", xscale=:log10,
-     xlabel="Knudsen Number (Kn)", ylabel="J/Jc",
-     title="Comparison of Transition Regime Formulas (α = 1)")
-plot!(Kn_range, f_D, label="Dahneke", linestyle=:dash)
-savefig("transition_comparison.svg"); nothing # hide
+plot(Kn_range, f_FS, label = "Fuchs-Sutugin", xscale = :log10,
+    xlabel = "Knudsen Number (Kn)", ylabel = "J/Jc",
+    title = "Comparison of Transition Regime Formulas (α = 1)")
+plot!(Kn_range, f_D, label = "Dahneke", linestyle = :dash)
+savefig("transition_comparison.svg");
+nothing # hide
 ```
 
 ![Transition regime formula comparison](transition_comparison.svg)
@@ -218,27 +224,29 @@ sys = MassTransfer()
 compiled = mtkcompile(sys)
 
 # Calculate for particle diameters from 10 nm to 10 μm
-D_p_range = 10 .^ range(-8, -5, length=50)  # meters
+D_p_range = 10 .^ range(-8, -5, length = 50)  # meters
 R_p_range = D_p_range ./ 2
 
 Kn_vals = Float64[]
 f_FS_vals = Float64[]
 
 for R_p in R_p_range
-    prob = NonlinearProblem(compiled, Dict(
-        compiled.R_p => R_p, compiled.α => 1.0,
-        compiled.c_inf => 1.0e-6, compiled.c_s => 0.0))
+    prob = NonlinearProblem(compiled,
+        Dict(
+            compiled.R_p => R_p, compiled.α => 1.0,
+            compiled.c_inf => 1.0e-6, compiled.c_s => 0.0))
     sol = solve(prob)
     push!(Kn_vals, sol[compiled.Kn])
     push!(f_FS_vals, sol[compiled.f_FS])
 end
 
-plot(D_p_range .* 1e6, Kn_vals, label="Knudsen Number", xscale=:log10, yscale=:log10,
-     xlabel="Particle Diameter (μm)", ylabel="Kn or J/Jc",
-     title="Particle Size Dependence")
-plot!(D_p_range .* 1e6, f_FS_vals, label="J/Jc (Fuchs-Sutugin)")
-hline!([1.0], label="Kn = 1 (transition)", linestyle=:dash, color=:gray)
-savefig("size_dependence.svg"); nothing # hide
+plot(D_p_range .* 1e6, Kn_vals, label = "Knudsen Number", xscale = :log10, yscale = :log10,
+    xlabel = "Particle Diameter (μm)", ylabel = "Kn or J/Jc",
+    title = "Particle Size Dependence")
+plot!(D_p_range .* 1e6, f_FS_vals, label = "J/Jc (Fuchs-Sutugin)")
+hline!([1.0], label = "Kn = 1 (transition)", linestyle = :dash, color = :gray)
+savefig("size_dependence.svg");
+nothing # hide
 ```
 
 ![Particle size dependence](size_dependence.svg)
