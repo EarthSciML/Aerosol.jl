@@ -1,4 +1,4 @@
-export CloudWaterProperties, KelvinEffect, KohlerTheory, DropletGrowth, CloudDynamics,
+export CloudWaterProperties, CloudKelvinEffect, KohlerTheory, DropletGrowth, CloudDynamics,
        IcePhysics, RainFormation, AerosolScavenging, CloudPhysics
 
 """
@@ -153,20 +153,20 @@ Equations 17.1-17.6, Table 17.2.
 end
 
 """
-    KelvinEffect(; name=:KelvinEffect)
+    CloudKelvinEffect(; name=:CloudKelvinEffect)
 
-Kelvin (curvature) effect on vapor pressure over curved droplet surfaces.
+Kelvin (curvature) effect on vapor pressure over curved cloud droplet surfaces.
 The vapor pressure over a curved surface is enhanced relative to a flat surface
 due to surface energy effects.
 
-Based on Equations 17.9 and 17.28 from Seinfeld & Pandis (2006).
+Based on Equations 17.9 and 17.28 from Seinfeld & Pandis (2006) Chapter 17.
 
 # Equations
 
   - Eq. 17.9: p_w(D_p)/p° = exp(4M_w σ_w / (R T ρ_w D_p))
   - Eq. 17.28: A = 4M_w σ_w / (R T ρ_w) ≈ 0.66/T µm (for T in K)
 """
-@component function KelvinEffect(; name = :KelvinEffect)
+@component function CloudKelvinEffect(; name = :CloudKelvinEffect)
     @constants begin
         M_w = 0.018015, [description = "Molecular weight of water", unit = u"kg/mol"]
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
@@ -602,7 +602,8 @@ Based on Equations 17.104-17.108 from Seinfeld & Pandis (2006).
         [description = "Coalescence efficiency (Eq. 17.105, dimensionless)", unit = u"1"]
         w_L = 1.0e-3,
         [
-            description = "Liquid water content (mass mixing ratio, dimensionless)", unit = u"1"]
+            description = "Liquid water mass mixing ratio (kg water / kg air) (dimensionless)",
+            unit = u"1"]
         v_D = 5.0, [description = "Fall velocity of collector drop", unit = u"m/s"]
         v_d = 0.01, [description = "Fall velocity of collected droplet", unit = u"m/s"]
         ρ_a = 1.225, [description = "Air density", unit = u"kg/m^3"]
@@ -704,7 +705,7 @@ From Air Pollution to Climate Change", 2nd Edition, John Wiley & Sons.
 """
 @component function CloudPhysics(; name = :CloudPhysics)
     water = CloudWaterProperties(; name = :water)
-    kelvin = KelvinEffect(; name = :kelvin)
+    kelvin = CloudKelvinEffect(; name = :kelvin)
     kohler = KohlerTheory(; name = :kohler)
     growth = DropletGrowth(; name = :growth)
     cloud = CloudDynamics(; name = :cloud)

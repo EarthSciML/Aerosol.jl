@@ -8,7 +8,7 @@ This module implements the cloud microphysics equations from Chapter 17 of Seinf
 
 ```@docs
 CloudWaterProperties
-KelvinEffect
+CloudKelvinEffect
 KohlerTheory
 DropletGrowth
 CloudDynamics
@@ -163,7 +163,7 @@ plot(T_range .- 273.15, c_sat_vals,
 The vapor pressure over a curved droplet surface is enhanced relative to a flat surface, with the enhancement increasing as droplet diameter decreases (Eq. 17.9).
 
 ```@example cloud_physics
-ke = KelvinEffect()
+ke = CloudKelvinEffect()
 ke_sys = mtkcompile(ke)
 
 D_p_range = 10.0 .^ range(log10(1e-8), log10(1e-5), length = 100)  # 10 nm to 10 µm

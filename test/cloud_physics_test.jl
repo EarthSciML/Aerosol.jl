@@ -86,20 +86,20 @@ end
     @test sol0[ssys.ΔH_m] ≈ 333500.0 atol = 1000.0
 end
 
-@testitem "KelvinEffect structural" tags=[:cloud_physics] begin
+@testitem "CloudKelvinEffect structural" tags=[:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
-    sys = KelvinEffect()
+    sys = CloudKelvinEffect()
     @test length(equations(sys)) == 2
     @test length(unknowns(sys)) == 2
 end
 
-@testitem "KelvinEffect physical behavior" tags=[:cloud_physics] begin
+@testitem "CloudKelvinEffect physical behavior" tags=[:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
-    sys = KelvinEffect()
+    sys = CloudKelvinEffect()
     ssys = mtkcompile(sys)
 
     # For D_p = 0.1 µm, Kelvin ratio should be > 1 (enhanced vapor pressure)
