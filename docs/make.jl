@@ -32,7 +32,7 @@ makedocs(;
         "Radiative Forcing" => "aerosol_radiative_forcing.md",
         "API" => "api.md"
     ],
-    warnonly = [:missing_docs, :example_block]
+    warnonly = [:missing_docs]
 )
 
 deploydocs(; repo = "github.com/EarthSciML/Aerosol.jl")
