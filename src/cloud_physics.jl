@@ -365,7 +365,8 @@ Based on Equations 17.60-17.72 from Seinfeld & Pandis (2006).
         k_a(t), [description = "Thermal conductivity of air", unit = u"J/(m*s*K)"]
         k_a_prime(t),
         [description = "Modified thermal conductivity of air", unit = u"J/(m*s*K)"]
-        ρ_air(t), [description = "Air density from ideal gas law (Eq. 17.72)", unit = u"kg/m^3"]
+        ρ_air(t),
+        [description = "Air density from ideal gas law (Eq. 17.72)", unit = u"kg/m^3"]
         p_sat(t), [description = "Saturation vapor pressure", unit = u"Pa"]
         ΔH_v(t), [description = "Latent heat of vaporization", unit = u"J/kg"]
         S_eq(t),
