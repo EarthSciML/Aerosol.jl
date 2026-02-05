@@ -19,6 +19,7 @@ makedocs(;
         "Single Particle Dynamics" => "single_particle_dynamics.md",
         "Size Distribution" => "size_distribution.md",
         "VBS" => "VBS.md",
+        "Optical Properties" => "mie_scattering.md",
         "Organic Aerosol" => "organic_aerosol.md",
         "Mass Transfer" => "mass_transfer.md",
         "Nucleation" => "nucleation.md",
