@@ -23,6 +23,7 @@ makedocs(;
         "Optical Properties" => "mie_scattering.md",
         "Organic Aerosol" => "organic_aerosol.md",
         "Mass Transfer" => "mass_transfer.md",
+        "Brownian Diffusion (Dahneke 1983)" => "dahneke_brownian_diffusion.md",
         "Nucleation" => "nucleation.md",
         "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
