@@ -141,6 +141,56 @@ nothing # hide
 
 For δ = 1 (perfect sticking), β decreases from 1 to 0 as Kn_D increases. For δ < 1, the correction is even stronger because only a fraction of collisions lead to actual transfer.
 
+### Particle Mean-Free-Path Ratio ℓ/a (Fig. 1)
+
+Figure 1 of Dahneke (1983) shows the calculated ratio ℓ/a = 2kT/(c̄fa) versus particle radius `a` for unit density spheres in air and water media at NTP. This ratio indicates when non-continuum effects become significant for particle diffusion (ℓ/a > 1 means free-molecular regime).
+
+```@example dahneke
+# Fig. 1: ℓ/a = 2kT/(c̄fa) vs particle radius a
+# for unit density spheres in air and water at NTP (20°C, 1 atm)
+k_B_val = 1.380649e-23  # J/K
+T_ntp = 293.15  # 20°C in K
+ρ_p = 1000.0  # unit density, kg/m³
+η_air = 1.81e-5  # Pa·s
+η_water = 1.002e-3  # Pa·s
+λ_air = 6.6e-8  # mean free path of air at NTP, m
+
+# Cunningham slip correction factor for air
+# C_s = 1 + (λ/a)(1.257 + 0.4 exp(-1.1 a/λ))
+C_s(a, λ) = 1 + (λ / a) * (1.257 + 0.4 * exp(-1.1 * a / λ))
+
+# Particle mean thermal speed
+c_bar_p(a) = sqrt(8 * k_B_val * T_ntp / (π * ρ_p * (4 / 3) * π * a^3))
+
+# ℓ/a ratio
+function ell_over_a(a, η, λ)
+    Cs = λ > 0 ? C_s(a, λ) : 1.0
+    f = 6 * π * η * a / Cs
+    c = c_bar_p(a)
+    return 2 * k_B_val * T_ntp / (c * f * a)
+end
+
+a_range = 10 .^ range(-9, -4, length = 200)  # m
+a_cm = a_range .* 100  # convert to cm for x-axis
+
+ell_air = [ell_over_a(a, η_air, λ_air) for a in a_range]
+ell_water = [ell_over_a(a, η_water, 0.0) for a in a_range]
+
+p = plot(a_cm, ell_air, label = "Air medium", linewidth = 2,
+    xscale = :log10, yscale = :log10,
+    xlabel = "a, cm", ylabel = "ℓ/a",
+    title = "Particle Mean-Free-Path Ratio (Fig. 1)",
+    ylim = (1e-4, 1e2), xlim = (1e-7, 1e-2),
+    legend = :topright)
+plot!(p, a_cm, ell_water, label = "Water medium", linewidth = 2)
+savefig("dahneke_fig1.svg")
+nothing # hide
+```
+
+![Particle mean-free-path ratio (Fig. 1)](dahneke_fig1.svg)
+
+The plot shows that ℓ/a is much larger for air-borne particles than for liquid-borne particles, due to the high friction coefficient in liquid media. For small particles in air, ℓ/a ≫ 1 indicating the free-molecular regime where non-continuum effects dominate.
+
 ### Coagulation Rate — Table 2 Validation
 
 Table 2 of Dahneke (1983), p. 120, compares the correction factor β = K/K₀ for Brownian coagulation of equal-size spheres (r₁ = r₂ = 0.22 μm, T = 25°C, δ = 1, ρ = 917 kg/m³) between the present theory and Fuchs' theory. Here we reproduce the complete table and validate our implementation:

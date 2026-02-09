@@ -215,7 +215,6 @@ be decomposed as β = β₁β₂ where:
 @component function DahnekeCoagulationRate(; name = :DahnekeCoagulationRate)
     @constants begin
         k_B = 1.380649e-23, [description = "Boltzmann constant", unit = u"J/K"]
-        π_val = 3.14159265358979, [description = "Pi (dimensionless)", unit = u"1"]
     end
 
     @parameters begin
@@ -255,19 +254,19 @@ be decomposed as β = β₁β₂ where:
 
     eqs = [
         # Particle masses
-        m_1 ~ ρ_1 * 4 * π_val / 3 * r_1^3,
-        m_2 ~ ρ_2 * 4 * π_val / 3 * r_2^3,
+        m_1 ~ ρ_1 * 4 * π / 3 * r_1^3,
+        m_2 ~ ρ_2 * 4 * π / 3 * r_2^3,
         # Friction coefficients: f = 6πηr/C_s
-        f_1 ~ 6 * π_val * μ * r_1 / C_s1,
-        f_2 ~ 6 * π_val * μ * r_2 / C_s2,
+        f_1 ~ 6 * π * μ * r_1 / C_s1,
+        f_2 ~ 6 * π * μ * r_2 / C_s2,
         # Einstein diffusion coefficients: D = kT/f (Eq. 6.5)
         D_1 ~ k_B * T / f_1,
         D_2 ~ k_B * T / f_2,
         # Mutual diffusion coefficient: D = D_1 + D_2 (p. 115)
         D_mutual ~ D_1 + D_2,
         # Mean thermal velocities (Eq. 6.2)
-        c_bar_1 ~ sqrt(8 * k_B * T / (π_val * m_1)),
-        c_bar_2 ~ sqrt(8 * k_B * T / (π_val * m_2)),
+        c_bar_1 ~ sqrt(8 * k_B * T / (π * m_1)),
+        c_bar_2 ~ sqrt(8 * k_B * T / (π * m_2)),
         # Combined mean thermal velocity: c̄ = √(c̄₁² + c̄₂²) (p. 115)
         c_bar ~ sqrt(c_bar_1^2 + c_bar_2^2),
         # Mutual friction coefficient: f = f₁f₂/(f₁+f₂) (p. 115)
@@ -277,7 +276,7 @@ be decomposed as β = β₁β₂ where:
         # Diffusion Knudsen number: Kn_D = 2kT/(c̄fR) (p. 115)
         Kn_D ~ 2 * k_B * T / (c_bar * f_mutual * R_coll),
         # Eq. 8.8 - Continuum coagulation constant (uses actual D with C_s)
-        K_o ~ 4 * π_val * R_coll * D_mutual,
+        K_o ~ 4 * π * R_coll * D_mutual,
         # Eq. 8.15 β₂ correction for non-negligible Kn_D
         β₂ ~ (Kn_D + 1) / (1 + 2 * Kn_D * (Kn_D + 1) / δ_p),
         # Eq. 8.13 - Coagulation rate constant: K = K_o * β₂
