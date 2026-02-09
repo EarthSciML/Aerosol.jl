@@ -21,6 +21,7 @@ include("aqueous_transport.jl")
 include("single_particle_dynamics.jl")
 include("nucleation.jl")
 include("size_distribution.jl")
+include("stochastic_collection.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA
 include("seinfeld_pandis_ch10/seinfeld_pandis_ch10.jl")
