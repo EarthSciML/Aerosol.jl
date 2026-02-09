@@ -48,11 +48,14 @@ Limiting cases:
     end
 
     @variables begin
-        c_bar(t), [description = "Mean thermal velocity of vapor molecules", unit = u"m/s"]
-        ℓ_D(t), [description = "Diffusional mean-free-path of vapor", unit = u"m"]
-        Kn_D(t), [description = "Diffusion Knudsen number (dimensionless)", unit = u"1"]
+        c_bar(t),
+        [description = "Mean thermal velocity of vapor molecules (Eq. 6.2)", unit = u"m/s"]
+        ℓ_D(t), [description = "Diffusional mean-free-path of vapor (Eq. 3.6)", unit = u"m"]
+        Kn_D(t),
+        [description = "Diffusion Knudsen number, ℓ_D/r (dimensionless)", unit = u"1"]
         β(t),
-        [description = "Mass transport correction factor (dimensionless)", unit = u"1"]
+        [
+            description = "Mass transport correction factor, Eq. 5.5 (dimensionless)", unit = u"1"]
     end
 
     eqs = [
@@ -101,9 +104,13 @@ thermal accommodation coefficient.
     end
 
     @variables begin
-        Kn_K(t), [description = "Heat transfer Knudsen number (dimensionless)", unit = u"1"]
+        Kn_K(t),
+        [
+            description = "Heat transfer Knudsen number, 2κ/(c̄'n'm_gas c_v r) (dimensionless)",
+            unit = u"1"]
         β_q(t),
-        [description = "Heat transport correction factor (dimensionless)", unit = u"1"]
+        [
+            description = "Heat transport correction factor, Eq. 5.7 (dimensionless)", unit = u"1"]
     end
 
     eqs = [
@@ -227,29 +234,48 @@ be decomposed as β = β₁β₂ where:
         δ_p = 1.0,
         [description = "Particle sticking probability (dimensionless)", unit = u"1"]
         C_s1 = 1.0,
-        [description = "Slip correction factor for particle 1 (dimensionless)", unit = u"1"]
+        [description = "Cunningham slip correction factor for particle 1 (dimensionless)",
+            unit = u"1"]
         C_s2 = 1.0,
-        [description = "Slip correction factor for particle 2 (dimensionless)", unit = u"1"]
+        [description = "Cunningham slip correction factor for particle 2 (dimensionless)",
+            unit = u"1"]
     end
 
     @variables begin
-        m_1(t), [description = "Mass of particle 1", unit = u"kg"]
-        m_2(t), [description = "Mass of particle 2", unit = u"kg"]
-        f_1(t), [description = "Friction coefficient of particle 1", unit = u"kg/s"]
-        f_2(t), [description = "Friction coefficient of particle 2", unit = u"kg/s"]
-        D_1(t), [description = "Diffusion coefficient of particle 1", unit = u"m^2/s"]
-        D_2(t), [description = "Diffusion coefficient of particle 2", unit = u"m^2/s"]
-        D_mutual(t), [description = "Mutual diffusion coefficient", unit = u"m^2/s"]
-        c_bar_1(t), [description = "Mean thermal velocity of particle 1", unit = u"m/s"]
-        c_bar_2(t), [description = "Mean thermal velocity of particle 2", unit = u"m/s"]
-        c_bar(t), [description = "Combined mean thermal velocity", unit = u"m/s"]
-        f_mutual(t), [description = "Mutual friction coefficient", unit = u"kg/s"]
-        R_coll(t), [description = "Collision radius r₁+r₂", unit = u"m"]
-        Kn_D(t), [description = "Diffusion Knudsen number (dimensionless)", unit = u"1"]
-        K_o(t), [description = "Continuum coagulation constant", unit = u"m^3/s"]
+        m_1(t), [description = "Mass of particle 1 (Eq. 6.2)", unit = u"kg"]
+        m_2(t), [description = "Mass of particle 2 (Eq. 6.2)", unit = u"kg"]
+        f_1(t),
+        [
+            description = "Stokes friction coefficient of particle 1, 6πμr/C_s", unit = u"kg/s"]
+        f_2(t),
+        [
+            description = "Stokes friction coefficient of particle 2, 6πμr/C_s", unit = u"kg/s"]
+        D_1(t),
+        [
+            description = "Diffusion coefficient of particle 1, kT/f (Eq. 6.5)", unit = u"m^2/s"]
+        D_2(t),
+        [
+            description = "Diffusion coefficient of particle 2, kT/f (Eq. 6.5)", unit = u"m^2/s"]
+        D_mutual(t),
+        [description = "Mutual diffusion coefficient, D₁+D₂ (p. 115)", unit = u"m^2/s"]
+        c_bar_1(t),
+        [description = "Mean thermal velocity of particle 1 (Eq. 6.2)", unit = u"m/s"]
+        c_bar_2(t),
+        [description = "Mean thermal velocity of particle 2 (Eq. 6.2)", unit = u"m/s"]
+        c_bar(t),
+        [
+            description = "Combined mean thermal velocity, √(c̄₁²+c̄₂²) (p. 115)", unit = u"m/s"]
+        f_mutual(t),
+        [description = "Mutual friction coefficient, f₁f₂/(f₁+f₂) (p. 115)", unit = u"kg/s"]
+        R_coll(t), [description = "Collision radius r₁+r₂ (p. 114)", unit = u"m"]
+        Kn_D(t),
+        [description = "Diffusion Knudsen number, 2kT/(c̄fR) (dimensionless)", unit = u"1"]
+        K_o(t),
+        [description = "Continuum coagulation constant, 4πRD (Eq. 8.8)", unit = u"m^3/s"]
         β₂(t),
-        [description = "Non-continuum correction factor β₂ (dimensionless)", unit = u"1"]
-        K(t), [description = "Coagulation rate constant", unit = u"m^3/s"]
+        [description = "Non-continuum correction factor β₂, Eq. 8.15 (dimensionless)",
+            unit = u"1"]
+        K(t), [description = "Coagulation rate constant, Eq. 8.13", unit = u"m^3/s"]
     end
 
     eqs = [
@@ -333,9 +359,11 @@ from these tables.
 
     @variables begin
         σ_flow(t),
-        [description = "Velocity profile normalization factor (dimensionless)", unit = u"1"]
+        [
+            description = "Velocity profile normalization factor, 2/(2-γ), Eq. 9.4-9.5 (dimensionless)",
+            unit = u"1"]
         z_dim(t),
-        [description = "Dimensionless capillary length z=DL/(σv̄R²) (dimensionless)",
+        [description = "Dimensionless capillary length, DL/(σv̄R²) (dimensionless)",
             unit = u"1"]
     end
 
