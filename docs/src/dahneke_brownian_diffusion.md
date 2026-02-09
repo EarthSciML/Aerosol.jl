@@ -176,7 +176,9 @@ table2 = [
     (70.0, 116.0, 21.90, 21.93, -0.14),
     (100.0, 165.4, 22.46, 22.49, -0.13),
     (200.0, 330.2, 22.95, 22.95, 0),
-    (500.0, 824.6, 23.11, 23.10, 0.04)
+    (500.0, 824.6, 23.11, 23.10, 0.04),
+    (1000.0, 1649.0, 23.14, 23.12, 0.09),
+    (10000.0, 1.648e4, 23.15, 23.12, 0.13)
 ]
 
 k_B = 1.380649e-23
@@ -225,7 +227,7 @@ nothing # hide
 
 ![Table 2 validation](dahneke_table2.svg)
 
-The implementation matches Dahneke's Table 2 values within 2% across the full range of Knudsen numbers from 0.1 to 500.
+The implementation matches Dahneke's Table 2 values within 2% across the full range of Knudsen numbers from 0.1 to 10⁴.
 
 ### Effect of Sticking Probability on Coagulation
 
