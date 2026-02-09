@@ -1,6 +1,7 @@
 export DahnekeMassTransportCorrection, DahnekeHeatTransportCorrection
 export DahnekeCondensationEvaporation, DahnekeCoagulationRate
-export DahnekeCapillaryPenetration
+export DahnekeCapillaryPenetration, dahneke_capillary_penetration
+export DAHNEKE_TABLE3, DAHNEKE_TABLE4, DAHNEKE_TABLE5
 
 """
     DahnekeMassTransportCorrection(; name=:DahnekeMassTransportCorrection)
@@ -25,8 +26,9 @@ Here Kn_D = ℓ_D / r is the diffusion Knudsen number, ℓ_D = 2D/c̄ is the dif
 mean-free-path, and δ is the condensation-evaporation (sticking) coefficient.
 
 Limiting cases:
-- Kn_D → 0: β → 1 (continuum limit, Maxwell's result)
-- Kn_D → ∞: β → δc̄r/(4D) (free-molecular limit)
+
+  - Kn_D → 0: β → 1 (continuum limit, Maxwell's result)
+  - Kn_D → ∞: β → δc̄r/(4D) (free-molecular limit)
 """
 @component function DahnekeMassTransportCorrection(; name = :DahnekeMassTransportCorrection)
     @constants begin
@@ -35,7 +37,8 @@ Limiting cases:
 
     @parameters begin
         T = 298.15, [description = "Temperature", unit = u"K"]
-        D_v = 2.0e-5, [description = "Diffusion coefficient of vapor molecules", unit = u"m^2/s"]
+        D_v = 2.0e-5,
+        [description = "Diffusion coefficient of vapor molecules", unit = u"m^2/s"]
         m_v = 4.81e-26,
         [description = "Mass of diffusing vapor molecule", unit = u"kg"]
         r = 1.0e-7, [description = "Sphere (droplet/particle) radius", unit = u"m"]
@@ -48,7 +51,8 @@ Limiting cases:
         c_bar(t), [description = "Mean thermal velocity of vapor molecules", unit = u"m/s"]
         ℓ_D(t), [description = "Diffusional mean-free-path of vapor", unit = u"m"]
         Kn_D(t), [description = "Diffusion Knudsen number (dimensionless)", unit = u"1"]
-        β(t), [description = "Mass transport correction factor (dimensionless)", unit = u"1"]
+        β(t),
+        [description = "Mass transport correction factor (dimensionless)", unit = u"1"]
     end
 
     eqs = [
@@ -59,7 +63,7 @@ Limiting cases:
         # Kn_D = ℓ_D / r (diffusion Knudsen number based on sphere radius)
         Kn_D ~ ℓ_D / r,
         # Eq. 5.5 - Correction factor for mass transport
-        β ~ (Kn_D + 1) / (2 * Kn_D * (Kn_D + 1) / δ_m + 1),
+        β ~ (Kn_D + 1) / (2 * Kn_D * (Kn_D + 1) / δ_m + 1)
     ]
 
     return System(eqs, t; name)
@@ -108,7 +112,7 @@ thermal accommodation coefficient.
         # to get volumetric heat capacity: n' * m_gas * c_v [J/(m^3*K)]
         Kn_K ~ 2 * κ / (c_bar_gas * n_gas * m_gas * c_v * r),
         # Eq. 5.7 - Correction factor for heat transport
-        β_q ~ (Kn_K + 1) / (2 * Kn_K * (Kn_K + 1) / α + 1),
+        β_q ~ (Kn_K + 1) / (2 * Kn_K * (Kn_K + 1) / α + 1)
     ]
 
     return System(eqs, t; name)
@@ -177,7 +181,7 @@ These are related through the conservation equation:
         # Eq. 2.2 - Maxwell's heat conduction rate
         Q_M ~ 4 * π * r * κ * (T_inf - T_o),
         # Eq. 5.6 - Corrected heat conduction rate
-        Q ~ heat_corr.β_q * Q_M,
+        Q ~ heat_corr.β_q * Q_M
     ]
 
     return System(eqs, t; systems = [mass_corr, heat_corr], name)
@@ -204,8 +208,9 @@ c̄ = √(c̄₁² + c̄₂²).
 
 The correction factor β = K/K_o (where K_o = 4πRD is the continuum value) can
 be decomposed as β = β₁β₂ where:
-- β₁ = C_{s1}C_{s2}(r₁/C_{s1} + r₂/C_{s2})/(r₁+r₂) corrects for non-negligible Kn
-- β₂ = (Kn_D+1)/[1+2Kn_D(Kn_D+1)/δ] corrects for non-negligible Kn_D
+
+  - β₁ = C_{s1}C_{s2}(r₁/C_{s1} + r₂/C_{s2})/(r₁+r₂) corrects for non-negligible Kn
+  - β₂ = (Kn_D+1)/[1+2Kn_D(Kn_D+1)/δ] corrects for non-negligible Kn_D
 """
 @component function DahnekeCoagulationRate(; name = :DahnekeCoagulationRate)
     @constants begin
@@ -279,18 +284,16 @@ be decomposed as β = β₁β₂ where:
         # K_o already includes C_s via diffusion coefficients D_1, D_2.
         # The total correction β = K/K_o(C_s=1) decomposes as β₁β₂ (Eq. 8.14)
         # where β₁ = D_actual/D_base captures the C_s effect.
-        K ~ K_o * β₂,
+        K ~ K_o * β₂
     ]
 
     return System(eqs, t; name)
 end
 
 """
-    DahnekeCapillaryPenetration(n_modes::Int=6; name=:DahnekeCapillaryPenetration)
+    DahnekeCapillaryPenetration(; name=:DahnekeCapillaryPenetration)
 
-Compute the penetration fraction of aerosol particles through a fine capillary
-using the eigenfunction expansion method. The penetration φ(z) is the fraction
-of particles that pass through the capillary without depositing on the wall.
+Compute parameters for aerosol penetration through a fine capillary tube.
 
 **Reference**: Dahneke, B. (1983). Simple Kinetic Theory of Brownian Diffusion in
 Vapors and Aerosols. In *Theory of Dispersed Multiphase Flow* (pp. 97–133).
@@ -306,29 +309,26 @@ B_i are coefficients that depend on the velocity profile parameter γ and the
 diffusion Knudsen number Kn_D.
 
 The velocity profile is v(r) = σv̄[1 - γ(r/R)²] where:
-- γ = 0: free-molecule flow (plug flow)
-- γ = 0.5: transition flow
-- γ = 1.0: continuum flow (Poiseuille flow)
-- σ = 2/(2-γ) from the flow rate constraint
 
-Arguments:
-- `n_modes::Int`: Number of eigenmodes to include (default 6, matching Tables 3–5)
+  - γ = 0: free-molecule flow (plug flow)
+  - γ = 0.5: transition flow
+  - γ = 1.0: continuum flow (Poiseuille flow)
+  - σ = 2/(2-γ) from the flow rate constraint (Eqs. 9.4–9.5)
 
-The eigenvalues and coefficients are precomputed from Dahneke's Tables 3, 4, and 5
-for δ = 1 (perfect sticking) and γ = 0, 0.5, 1.0.
+The eigenvalues ω_i² and coefficients B_i are tabulated in Tables 3 (γ=0),
+4 (γ=0.5), and 5 (γ=1.0) of the paper for δ=1 and various Kn_D values.
+Use [`dahneke_capillary_penetration`](@ref) to compute the penetration fraction
+from these tables.
 """
-@component function DahnekeCapillaryPenetration(n_modes::Int = 6;
-        name = :DahnekeCapillaryPenetration)
+@component function DahnekeCapillaryPenetration(; name = :DahnekeCapillaryPenetration)
     @parameters begin
         Dcoeff = 1.0e-10, [description = "Particle diffusion coefficient", unit = u"m^2/s"]
         R_cap = 1.0e-4, [description = "Capillary radius", unit = u"m"]
         v_mean = 0.01, [description = "Mean flow velocity", unit = u"m/s"]
         L_cap = 0.1, [description = "Capillary length", unit = u"m"]
         γ_flow = 1.0,
-        [description = "Velocity profile parameter: 0=plug, 0.5=transition, 1=Poiseuille (dimensionless)",
-            unit = u"1"]
-        Kn_D_cap = 0.0,
-        [description = "Diffusion Knudsen number Kn_D = 2kT/(c̄fR) (dimensionless)",
+        [
+            description = "Velocity profile parameter: 0=plug, 0.5=transition, 1=Poiseuille (dimensionless)",
             unit = u"1"]
     end
 
@@ -344,8 +344,134 @@ for δ = 1 (perfect sticking) and γ = 0, 0.5, 1.0.
         # Eq. 9.4, 9.5 - σ = 2/(2-γ) from flow rate constraint
         σ_flow ~ 2 / (2 - γ_flow),
         # Dimensionless tube length z' = Dz/(σv̄R²)
-        z_dim ~ Dcoeff * L_cap / (σ_flow * v_mean * R_cap^2),
+        z_dim ~ Dcoeff * L_cap / (σ_flow * v_mean * R_cap^2)
     ]
 
     return System(eqs, t; name)
+end
+
+# Eigenvalue tables from Dahneke (1983) Tables 3, 4, and 5.
+# Each table maps Kn_D => (ω_i², B_i) for i=1..6 eigenmodes with δ=1.
+
+"""
+Eigenvalues ω_i² and coefficients B_i from Table 3 of Dahneke (1983)
+for γ = 0 (free-molecule / plug flow) with δ = 1.
+Keys are Kn_D values; values are vectors of (ω_i², B_i) tuples for i = 1..6.
+"""
+const DAHNEKE_TABLE3 = Dict(
+    0.0 => [
+        (5.78319, 0.69166), (30.4713, 0.13127), (74.8870, 0.05341),
+        (139.040, 0.02877), (222.932, 0.01794), (326.563, 0.01125)],
+    0.1 => [
+        (4.75021, 0.80388), (25.3332, 0.12598), (63.3120, 0.03869),
+        (119.603, 0.01523), (194.827, 0.00696), (289.336, 0.00353)],
+    0.2 => [
+        (3.95936, 0.87214), (22.2137, 0.09535), (58.0295, 0.02075),
+        (112.833, 0.00642), (187.103, 0.00252), (280.998, 0.00116)],
+    0.3 => [
+        (3.36390, 0.91276), (20.3669, 0.06932), (55.4762, 0.01203),
+        (109.951, 0.00334), (184.057, 0.00124), (277.861, 0.00055)],
+    0.4 => [
+        (2.91051, 0.93767), (19.2003, 0.05116), (54.0341, 0.00767),
+        (108.406, 0.00201), (182.464, 0.00073), (276.244, 0.00032)],
+    0.5 => [
+        (2.55824, 0.95366), (18.4123, 0.03877), (53.1206, 0.00527),
+        (107.450, 0.00134), (181.492, 0.00048), (275.262, 0.00021)]
+)
+
+"""
+Eigenvalues ω_i² and coefficients B_i from Table 4 of Dahneke (1983)
+for γ = 0.5 (transition / slip flow) with δ = 1.
+Keys are Kn_D values; values are vectors of (ω_i², B_i) tuples for i = 1..6.
+"""
+const DAHNEKE_TABLE4 = Dict(
+    0.0 => [
+        (6.47641, 0.72680), (36.1924, 0.11940), (89.8982, 0.04708),
+        (167.527, 0.02505), (269.062, 0.01536), (394.496, 0.00020)],
+    0.1 => [
+        (5.45150, 0.81527), (31.1557, 0.11352), (78.3677, 0.03671),
+        (147.702, 0.01558), (239.731, 0.00758), (354.873, 0.00098)],
+    0.2 => [
+        (4.64778, 0.87221), (27.8208, 0.09105), (72.2133, 0.02230),
+        (139.209, 0.00757), (229.500, 0.00314), (343.394, 0.00039)],
+    0.3 => [
+        (4.02261, 0.90850), (25.6742, 0.07000), (68.9119, 0.01392),
+        (135.226, 0.00418), (225.124, 0.00161), (338.782, 0.00020)],
+    0.4 => [
+        (3.53186, 0.93215), (24.2373, 0.05397), (66.9437, 0.00927),
+        (133.002, 0.00260), (222.769, 0.00097), (336.354, 0.00013)],
+    0.5 => [
+        (3.14060, 0.94809), (23.2277, 0.04230), (65.6588, 0.00655),
+        (131.600, 0.00176), (221.310, 0.00064), (334.864, 0.00008)]
+)
+
+"""
+Eigenvalues ω_i² and coefficients B_i from Table 5 of Dahneke (1983)
+for γ = 1.0 (continuum / Poiseuille flow) with δ = 1.
+Keys are Kn_D values; values are vectors of (ω_i², B_i) tuples for i = 1..6.
+"""
+const DAHNEKE_TABLE5 = Dict(
+    0.0 => [
+        (7.31359, 0.81905), (44.6095, 0.09753), (113.921, 0.03250),
+        (215.241, 0.01543), (348.564, 0.00168), (513.890, 0.00000)],
+    0.1 => [
+        (6.33404, 0.86923), (40.5081, 0.08320), (105.487, 0.02358),
+        (201.646, 0.00977), (329.192, 0.00379), (488.261, 0.00000)],
+    0.2 => [
+        (5.55381, 0.90293), (37.6387, 0.06760), (100.270, 0.01633),
+        (194.094, 0.00602), (319.401, 0.00217), (476.348, 0.00000)],
+    0.3 => [
+        (4.92768, 0.92594), (35.6031, 0.05441), (96.9237, 0.01156),
+        (189.606, 0.00393), (313.917, 0.00135), (469.977, 0.00000)],
+    0.4 => [
+        (4.41898, 0.94205), (34.1151, 0.04405), (94.6517, 0.00847),
+        (186.705, 0.00273), (310.492, 0.00091), (466.107, 0.00000)],
+    0.5 => [
+        (4.00000, 0.95362), (32.9926, 0.03608), (93.0272, 0.00642),
+        (184.697, 0.00199), (308.171, 0.00066), (463.521, 0.00000)]
+)
+
+"""
+    dahneke_capillary_penetration(z, γ, Kn_D)
+
+Compute the aerosol penetration fraction ϕ through a capillary tube at
+dimensionless length z, for velocity profile parameter γ and diffusion
+Knudsen number Kn_D, using the eigenfunction expansion from Dahneke (1983)
+Section 9.
+
+The penetration is computed as:
+
+``ϕ(z) = \\sum_{i=1}^{6} B_i \\exp(-ω_i^2 z)``
+
+where the eigenvalues ω_i² and coefficients B_i are taken from Tables 3–5
+of the paper for δ = 1 (perfect sticking).
+
+# Arguments
+
+  - `z`: Dimensionless tube length z = DL/(σv̄R²)
+  - `γ`: Velocity profile parameter (0=plug, 0.5=transition, 1.0=Poiseuille)
+  - `Kn_D`: Diffusion Knudsen number (must be one of 0.0, 0.1, 0.2, 0.3, 0.4, 0.5)
+
+# Returns
+
+  - Penetration fraction ϕ (between 0 and 1)
+"""
+function dahneke_capillary_penetration(z, γ, Kn_D)
+    if γ ≈ 0.0
+        table = DAHNEKE_TABLE3
+    elseif γ ≈ 0.5
+        table = DAHNEKE_TABLE4
+    elseif γ ≈ 1.0
+        table = DAHNEKE_TABLE5
+    else
+        error("γ must be 0.0, 0.5, or 1.0; got γ = $γ")
+    end
+
+    if !haskey(table, Kn_D)
+        error("Kn_D must be one of $(sort(collect(keys(table)))); got Kn_D = $Kn_D")
+    end
+
+    modes = table[Kn_D]
+    ϕ = sum(B * exp(-ω² * z) for (ω², B) in modes)
+    return ϕ
 end
