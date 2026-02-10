@@ -83,11 +83,10 @@ expressions compact and avoid memory blowup for large numbers of categories.
     result = _sce_rhs(state, xb, kernel_flag, kernel_coeff)
 
     # Build equations with proper units
-    eqs = Equation[]
-    for k in 1:I
-        push!(eqs, D(Nk[k]) ~ result[k] / (one_m3 * one_s))                    # m⁻³ s⁻¹
-        push!(eqs, D(Mk[k]) ~ result[I + k] * one_kg / (one_m3 * one_s))       # kg m⁻³ s⁻¹
-    end
+    eqs = vcat(
+        map(k -> D(Nk[k]) ~ result[k] / (one_m3 * one_s), 1:I),               # m⁻³ s⁻¹
+        map(k -> D(Mk[k]) ~ result[I + k] * one_kg / (one_m3 * one_s), 1:I),  # kg m⁻³ s⁻¹
+    )
 
     # Use CheckComponents to skip unit checking for registered array functions.
     # The unit checker cannot trace through opaque registered functions, but the
@@ -181,44 +180,31 @@ end
 # ============================================================================
 function _sce_constant_rhs!(dN, dM, N, M, I, xb, K0)
     T = eltype(N)
+    x = xb[1:I]  # category lower boundaries
 
-    # Precompute per-category closure relations (Eq. 8a,b) and linear params (Eq. 13/15)
-    Z = zeros(T, I)
-    Q = zeros(T, I)
-    f = zeros(T, I)
-    ψ = zeros(T, I)
-    @inbounds for k in 1:I
-        Z[k] = _sce_Z(M[k], N[k])
-        Q[k] = _sce_Q(M[k], N[k])
-        f[k], ψ[k] = _sce_linear_params(N[k], M[k], xb[k])
-    end
+    # Precompute closure relations (Eq. 8a,b)
+    @einsum Z[k] := _sce_Z(M[k], N[k])
+    @einsum Q[k] := _sce_Q(M[k], N[k])
+
+    # Linear params (Eq. 13/15) - broadcasting for tuple return
+    fψ = _sce_linear_params.(N, M, x)
+    f = getindex.(fψ, 1)
+    ψ = getindex.(fψ, 2)
 
     # S0 coefficients: S0(f,ψ,x,Mi,Zi) = ψ*Mi + α*Zi where α = (f-ψ)/(2x)
-    α = zeros(T, I)
-    @inbounds for k in 1:I
-        α[k] = (f[k] - ψ[k]) / (2 * xb[k])
-    end
+    @einsum α[k] := (f[k] - ψ[k]) / (2 * x[k])
 
-    # S1+yS0 coefficients: S1+yS0 = a*Mi + b*Zi + c*Qi
-    # where a = 2x*ψ, b = f/2, c = α
-    a_coeff = zeros(T, I)
-    b_coeff = zeros(T, I)
-    @inbounds for k in 1:I
-        a_coeff[k] = 2 * xb[k] * ψ[k]
-        b_coeff[k] = f[k] / 2
-    end
+    # S1+yS0 coefficients: a*Mi + b*Zi + c*Qi where a=2xψ, b=f/2, c=α
+    @einsum a_coeff[k] := 2 * x[k] * ψ[k]
+    @einsum b_coeff[k] := f[k] / 2
 
     # Shifted (k-1) quantities for Term 2, which uses params from category k-1
-    ψ_prev = zeros(T, I)
-    α_prev = zeros(T, I)
-    a_prev = zeros(T, I)
-    b_prev = zeros(T, I)
-    @inbounds for k in 2:I
-        ψ_prev[k] = ψ[k-1]
-        α_prev[k] = α[k-1]
-        a_prev[k] = a_coeff[k-1]
-        b_prev[k] = b_coeff[k-1]
-    end
+    N_prev = vcat([zero(T)], N[1:I-1])
+    M_prev = vcat([zero(T)], M[1:I-1])
+    ψ_prev = vcat([zero(T)], ψ[1:I-1])
+    α_prev = vcat([zero(T)], α[1:I-1])
+    a_prev = vcat([zero(T)], a_coeff[1:I-1])
+    b_prev = vcat([zero(T)], b_coeff[1:I-1])
 
     # Triangular mask matrices for index-bounded sums
     mask_lt2 = [i <= k - 2 ? one(T) : zero(T) for k in 1:I, i in 1:I]  # i=1..k-2
@@ -236,15 +222,8 @@ function _sce_constant_rhs!(dN, dM, N, M, I, xb, K0)
     # Term 6: Upper tail sum, Σ_{i=k+1}^{I} N[i]
     @einsum N_upper[k] := mask_gt[k, i] * N[i]
 
-    # Assemble dN
-    @inbounds for k in 1:I
-        dN[k] = (k >= 2 ? (K0 / 2) * N[k-1]^2 : zero(T)) +  # Term 1: autoconv gain
-                K0 * term2_N[k] -                               # Term 2: cross-coag gain
-                (K0 / 2) * N[k]^2 -                            # Term 3: autoconv loss
-                K0 * term4_N[k] -                               # Term 4: cross-coag loss
-                (K0 / 2) * N[k]^2 -                            # Term 5: self-coag loss
-                K0 * N[k] * N_upper[k]                          # Term 6: loss to higher
-    end
+    # Assemble dN: Terms 3+5 combined as -K0*N[k]^2
+    @einsum dN[k] = (K0 / 2) * N_prev[k]^2 + K0 * term2_N[k] - K0 * N[k]^2 - K0 * term4_N[k] - K0 * N[k] * N_upper[k]
 
     # ---- dM_k/dt (Eq. 9b) ----
 
@@ -258,125 +237,86 @@ function _sce_constant_rhs!(dN, dM, N, M, I, xb, K0)
     @einsum M_lower[k] := mask_lt1[k, i] * M[i]
 
     # Assemble dM
-    @inbounds for k in 1:I
-        dM[k] = (k >= 2 ? K0 * N[k-1] * M[k-1] : zero(T)) +  # Term 1: autoconv mass gain
-                K0 * term2_M[k] -                                # Term 2: cross-coag mass gain
-                K0 * N[k] * M[k] -                              # Term 3: autoconv mass loss
-                K0 * term4_M[k] +                                # Term 4: cross-coag mass loss
-                K0 * N[k] * M_lower[k] -                         # Term 5: mass gain from lower
-                K0 * M[k] * N_upper[k]                           # Term 6: mass loss to higher
-    end
+    @einsum dM[k] = K0 * N_prev[k] * M_prev[k] + K0 * term2_M[k] - K0 * N[k] * M[k] - K0 * term4_M[k] + K0 * N[k] * M_lower[k] - K0 * M[k] * N_upper[k]
 
     return nothing
 end
 
 # ============================================================================
 # Numerical RHS for Golovin kernel K(x,y) = C*(x+y)
-# Implements Eq. (9a,b) with K = C(x+y).
+# Implements Eq. (9a,b) with K = C(x+y), using einsum array operations.
 # ============================================================================
 function _sce_golovin_rhs!(dN, dM, N, M, I, xb, C)
-    @inbounds for k in 1:I
-        xk = xb[k]
-        dNk = 0.0
-        dMk = 0.0
+    T = eltype(N)
+    x = xb[1:I]  # category lower boundaries
 
-        # ---- dN_k/dt (Eq. 9a with K=C(x+y)) ----
+    # Precompute closure relations (Eq. 8a,b)
+    @einsum Z[k] := _sce_Z(M[k], N[k])
+    @einsum Q[k] := _sce_Q(M[k], N[k])
+    @einsum R[k] := _sce_R(M[k], N[k])
 
-        # Term 1: autoconversion gain from k-1
-        if k >= 2
-            dNk += C * N[k-1] * M[k-1]
-        end
+    # Linear params (Eq. 13/15) - broadcasting for tuple return
+    fψ = _sce_linear_params.(N, M, x)
+    f = getindex.(fψ, 1)
+    ψ = getindex.(fψ, 2)
 
-        # Term 2: cross-coag gain (incomplete integrals over k-1)
-        if k >= 3
-            xkm1 = xb[k-1]
-            fkm1, ψkm1 = _sce_linear_params(N[k-1], M[k-1], xkm1)
-            for i in 1:(k-2)
-                Zi = _sce_Z(M[i], N[i])
-                Qi = _sce_Q(M[i], N[i])
-                dNk += C * (_sce_S1(fkm1, ψkm1, xkm1, M[i], Zi) +
-                            _sce_yS0(fkm1, ψkm1, xkm1, Zi, Qi))
-            end
-        end
+    # S0 coefficient: α = (f-ψ)/(2x)
+    @einsum α[k] := (f[k] - ψ[k]) / (2 * x[k])
 
-        # Term 3: autoconversion loss
-        dNk -= C * N[k] * M[k]
+    # S1+yS0 coefficients (for dN): a=2xψ, b=f/2, c=α
+    @einsum a_coeff[k] := 2 * x[k] * ψ[k]
+    @einsum b_coeff[k] := f[k] / 2
 
-        # Term 4: cross-coag loss (incomplete integrals over k)
-        if k >= 2
-            fk, ψk = _sce_linear_params(N[k], M[k], xk)
-            for i in 1:(k-1)
-                Zi = _sce_Z(M[i], N[i])
-                Qi = _sce_Q(M[i], N[i])
-                dNk -= C * (_sce_S1(fk, ψk, xk, M[i], Zi) +
-                            _sce_yS0(fk, ψk, xk, Zi, Qi))
-            end
-        end
+    # S2+yS1+y2S0 coefficients (for dM): d=4x²ψ, e=xf/2+2xψ, g=f-ψ, h=α
+    @einsum d_coeff[k] := 4 * x[k]^2 * ψ[k]
+    @einsum e_coeff[k] := x[k] * f[k] / 2 + 2 * x[k] * ψ[k]
+    @einsum g_coeff[k] := f[k] - ψ[k]
 
-        # Term 5: self-coag number loss (factor 1/2 for pair double-counting)
-        # (1/2) C ∫∫ n_k(x) n_k(y) (x+y) dx dy = (1/2) C * 2 N_k M_k = C N_k M_k
-        dNk -= C * N[k] * M[k]
+    # Shifted (k-1) quantities for Term 2
+    N_prev = vcat([zero(T)], N[1:I-1])
+    M_prev = vcat([zero(T)], M[1:I-1])
+    Z_prev = vcat([zero(T)], Z[1:I-1])
+    a_prev = vcat([zero(T)], a_coeff[1:I-1])
+    b_prev = vcat([zero(T)], b_coeff[1:I-1])
+    α_prev = vcat([zero(T)], α[1:I-1])
+    d_prev = vcat([zero(T)], d_coeff[1:I-1])
+    e_prev = vcat([zero(T)], e_coeff[1:I-1])
+    g_prev = vcat([zero(T)], g_coeff[1:I-1])
 
-        # Term 6: number loss from coag with higher categories
-        for i in (k+1):I
-            dNk -= C * (N[i] * M[k] + M[i] * N[k])
-        end
+    # Triangular mask matrices for index-bounded sums
+    mask_lt2 = [i <= k - 2 ? one(T) : zero(T) for k in 1:I, i in 1:I]  # i=1..k-2
+    mask_lt1 = [i <= k - 1 ? one(T) : zero(T) for k in 1:I, i in 1:I]  # i=1..k-1
+    mask_gt  = [i >= k + 1 ? one(T) : zero(T) for k in 1:I, i in 1:I]  # i=k+1..I
 
-        dN[k] = dNk
+    # ---- dN_k/dt (Eq. 9a with K=C(x+y)) ----
 
-        # ---- dM_k/dt (Eq. 9b with K=C(x+y)) ----
+    # Term 2: cross-coag gain, Σ_{i=1}^{k-2} (S1+yS0) using k-1 params
+    @einsum term2_gN[k] := mask_lt2[k, i] * (a_prev[k] * M[i] + b_prev[k] * Z[i] + α_prev[k] * Q[i])
 
-        Zk = _sce_Z(M[k], N[k])
+    # Term 4: cross-coag loss, Σ_{i=1}^{k-1} (S1+yS0) using k params
+    @einsum term4_gN[k] := mask_lt1[k, i] * (a_coeff[k] * M[i] + b_coeff[k] * Z[i] + α[k] * Q[i])
 
-        # Term 1: autoconversion mass gain
-        if k >= 2
-            Zkm1 = _sce_Z(M[k-1], N[k-1])
-            dMk += C * (N[k-1] * Zkm1 + M[k-1]^2)
-        end
+    # Upper tail sums for Term 6
+    @einsum N_upper[k] := mask_gt[k, i] * N[i]
+    @einsum M_upper[k] := mask_gt[k, i] * M[i]
 
-        # Term 2: cross-coag mass gain (incomplete integrals over k-1)
-        if k >= 3
-            xkm1 = xb[k-1]
-            fkm1, ψkm1 = _sce_linear_params(N[k-1], M[k-1], xkm1)
-            for i in 1:(k-2)
-                Zi = _sce_Z(M[i], N[i])
-                Qi = _sce_Q(M[i], N[i])
-                Ri = _sce_R(M[i], N[i])
-                S2 = 4 * xkm1^2 * ψkm1 * M[i] + (xkm1 * fkm1 - 4 * xkm1 * ψkm1) / 2 * Zi
-                yS1 = 2 * (2 * xkm1 * ψkm1 * Zi + (fkm1 - 2 * ψkm1) / 2 * Qi)
-                y2S0 = ψkm1 * Qi + (fkm1 - ψkm1) / (2 * xkm1) * Ri
-                dMk += C * (S2 + yS1 + y2S0)
-            end
-        end
+    # Assemble dN: Terms 3+5 combined as -2C*N[k]*M[k]
+    @einsum dN[k] = C * N_prev[k] * M_prev[k] + C * term2_gN[k] - 2 * C * N[k] * M[k] - C * term4_gN[k] - C * M[k] * N_upper[k] - C * N[k] * M_upper[k]
 
-        # Term 3: autoconversion mass loss
-        dMk -= C * (N[k] * Zk + M[k]^2)
+    # ---- dM_k/dt (Eq. 9b with K=C(x+y)) ----
 
-        # Term 4: cross-coag mass loss (incomplete integrals over k)
-        if k >= 2
-            fk, ψk = _sce_linear_params(N[k], M[k], xk)
-            for i in 1:(k-1)
-                Zi = _sce_Z(M[i], N[i])
-                Qi = _sce_Q(M[i], N[i])
-                Ri = _sce_R(M[i], N[i])
-                S2 = 4 * xk^2 * ψk * M[i] + (xk * fk - 4 * xk * ψk) / 2 * Zi
-                yS1 = 2 * (2 * xk * ψk * Zi + (fk - 2 * ψk) / 2 * Qi)
-                y2S0 = ψk * Qi + (fk - ψk) / (2 * xk) * Ri
-                dMk -= C * (S2 + yS1 + y2S0)
-            end
-        end
+    # Term 2: cross-coag mass gain, Σ_{i=1}^{k-2} (S2+yS1+y2S0) using k-1 params
+    @einsum term2_gM[k] := mask_lt2[k, i] * (d_prev[k] * M[i] + e_prev[k] * Z[i] + g_prev[k] * Q[i] + α_prev[k] * R[i])
 
-        # Term 5: mass gain from coag with lower categories
-        for i in 1:(k-1)
-            dMk += C * (M[i] * M[k] + _sce_Z(M[i], N[i]) * N[k])
-        end
+    # Term 4: cross-coag mass loss, Σ_{i=1}^{k-1} (S2+yS1+y2S0) using k params
+    @einsum term4_gM[k] := mask_lt1[k, i] * (d_coeff[k] * M[i] + e_coeff[k] * Z[i] + g_coeff[k] * Q[i] + α[k] * R[i])
 
-        # Term 6: mass loss from coag with higher categories
-        for i in (k+1):I
-            dMk -= C * (N[i] * Zk + M[i] * M[k])
-        end
+    # Lower sums for Term 5
+    @einsum M_lower[k] := mask_lt1[k, i] * M[i]
+    @einsum Z_lower[k] := mask_lt1[k, i] * Z[i]
 
-        dM[k] = dMk
-    end
+    # Assemble dM
+    @einsum dM[k] = C * (N_prev[k] * Z_prev[k] + M_prev[k]^2) + C * term2_gM[k] - C * (N[k] * Z[k] + M[k]^2) - C * term4_gM[k] + C * (M[k] * M_lower[k] + N[k] * Z_lower[k]) - C * (Z[k] * N_upper[k] + M[k] * M_upper[k])
+
     return nothing
 end
