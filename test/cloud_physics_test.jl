@@ -1,4 +1,4 @@
-@testitem "CloudWaterProperties structural" tags=[:cloud_physics] begin
+@testitem "CloudWaterProperties structural" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -17,7 +17,7 @@
     @test any(contains("p_sat_ice"), var_names)
 end
 
-@testitem "CloudWaterProperties saturation vapor pressure" tags=[:cloud_physics] begin
+@testitem "CloudWaterProperties saturation vapor pressure" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -50,7 +50,7 @@ end
     @test sol30[ssys.p_sat_water] > sol20[ssys.p_sat_water]
 end
 
-@testitem "CloudWaterProperties surface tension" tags=[:cloud_physics] begin
+@testitem "CloudWaterProperties surface tension" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -60,7 +60,7 @@ end
     # Surface tension at 20°C: ~0.0728 N/m (Table 17.1)
     prob = NonlinearProblem(ssys, Dict(ssys.T => 293.15))
     sol = solve(prob)
-    @test sol[ssys.σ_w0] ≈ 0.0730 atol = 0.002
+    @test sol[ssys.σ_w0] ≈ 0.073 atol = 0.002
 
     # Surface tension decreases with temperature
     prob0 = NonlinearProblem(ssys, Dict(ssys.T => 273.15))
@@ -68,7 +68,7 @@ end
     @test sol0[ssys.σ_w0] > sol[ssys.σ_w0]
 end
 
-@testitem "CloudWaterProperties latent heat" tags=[:cloud_physics] begin
+@testitem "CloudWaterProperties latent heat" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -86,7 +86,7 @@ end
     @test sol0[ssys.ΔH_m] ≈ 333500.0 atol = 1000.0
 end
 
-@testitem "CloudKelvinEffect structural" tags=[:cloud_physics] begin
+@testitem "CloudKelvinEffect structural" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -95,7 +95,7 @@ end
     @test length(unknowns(sys)) == 2
 end
 
-@testitem "CloudKelvinEffect physical behavior" tags=[:cloud_physics] begin
+@testitem "CloudKelvinEffect physical behavior" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -103,18 +103,18 @@ end
     ssys = mtkcompile(sys)
 
     # For D_p = 0.1 µm, Kelvin ratio should be > 1 (enhanced vapor pressure)
-    prob = NonlinearProblem(ssys, Dict(ssys.D_p => 1e-7, ssys.T => 293.15))
+    prob = NonlinearProblem(ssys, Dict(ssys.D_p => 1.0e-7, ssys.T => 293.15))
     sol = solve(prob)
     @test sol[ssys.kelvin_ratio] > 1.0
     @test sol[ssys.kelvin_ratio] < 1.1  # Should be small enhancement
 
     # For D_p = 1 µm, Kelvin effect should be negligible
-    prob_large = NonlinearProblem(ssys, Dict(ssys.D_p => 1e-6, ssys.T => 293.15))
+    prob_large = NonlinearProblem(ssys, Dict(ssys.D_p => 1.0e-6, ssys.T => 293.15))
     sol_large = solve(prob_large)
     @test sol_large[ssys.kelvin_ratio] ≈ 1.0 atol = 0.003
 
     # Smaller droplets should have larger Kelvin effect
-    prob_small = NonlinearProblem(ssys, Dict(ssys.D_p => 5e-8, ssys.T => 293.15))
+    prob_small = NonlinearProblem(ssys, Dict(ssys.D_p => 5.0e-8, ssys.T => 293.15))
     sol_small = solve(prob_small)
     @test sol_small[ssys.kelvin_ratio] > sol[ssys.kelvin_ratio]
 
@@ -122,7 +122,7 @@ end
     @test sol[ssys.A_kelvin] ≈ 2.1e-9 atol = 0.2e-9
 end
 
-@testitem "KohlerTheory structural" tags=[:cloud_physics] begin
+@testitem "KohlerTheory structural" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -131,7 +131,7 @@ end
     @test length(unknowns(sys)) == 9
 end
 
-@testitem "KohlerTheory critical supersaturation NaCl" tags=[:cloud_physics] begin
+@testitem "KohlerTheory critical supersaturation NaCl" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -140,15 +140,17 @@ end
 
     # NaCl: M_s = 0.05844 kg/mol, ρ_s = 2165 kg/m³, ν = 2
     # For d_s = 0.1 µm, critical supersaturation should be ~0.1-0.3%
-    prob = NonlinearProblem(ssys,
+    prob = NonlinearProblem(
+        ssys,
         Dict(
-            ssys.d_s => 1e-7,    # 0.1 µm dry diameter
+            ssys.d_s => 1.0e-7,    # 0.1 µm dry diameter
             ssys.M_s => 0.05844, # NaCl
             ssys.ρ_s => 2165.0,  # NaCl density
             ssys.ν_s => 2.0,     # NaCl dissociation
             ssys.T => 293.15,
             ssys.ε_m => 1.0     # Fully soluble
-        ))
+        )
+    )
     sol = solve(prob)
 
     # Critical supersaturation for 0.1 µm NaCl should be ~0.13%
@@ -157,26 +159,28 @@ end
     @test sc_pct < 0.5   # Less than 0.5%
 
     # Critical diameter should be larger than dry diameter
-    @test sol[ssys.D_pc] > 1e-7
+    @test sol[ssys.D_pc] > 1.0e-7
 
     # B parameter should be positive
     @test sol[ssys.B] > 0
 
     # Smaller dry particles should have higher critical supersaturation
-    prob_small = NonlinearProblem(ssys,
+    prob_small = NonlinearProblem(
+        ssys,
         Dict(
-            ssys.d_s => 5e-8,    # 0.05 µm dry diameter
+            ssys.d_s => 5.0e-8,    # 0.05 µm dry diameter
             ssys.M_s => 0.05844,
             ssys.ρ_s => 2165.0,
             ssys.ν_s => 2.0,
             ssys.T => 293.15,
             ssys.ε_m => 1.0
-        ))
+        )
+    )
     sol_small = solve(prob_small)
     @test sol_small[ssys.S_c] > sol[ssys.S_c]  # Higher critical S for smaller particles
 end
 
-@testitem "KohlerTheory critical supersaturation (NH4)2SO4" tags=[:cloud_physics] begin
+@testitem "KohlerTheory critical supersaturation (NH4)2SO4" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -184,15 +188,17 @@ end
     ssys = mtkcompile(sys)
 
     # (NH4)2SO4: M_s = 0.13214 kg/mol, ρ_s = 1770 kg/m³, ν = 3
-    prob = NonlinearProblem(ssys,
+    prob = NonlinearProblem(
+        ssys,
         Dict(
-            ssys.d_s => 1e-7,     # 0.1 µm dry diameter
+            ssys.d_s => 1.0e-7,     # 0.1 µm dry diameter
             ssys.M_s => 0.13214,  # (NH4)2SO4
             ssys.ρ_s => 1770.0,   # (NH4)2SO4 density
             ssys.ν_s => 3.0,      # (NH4)2SO4 dissociation
             ssys.T => 293.15,
             ssys.ε_m => 1.0
-        ))
+        )
+    )
     sol = solve(prob)
 
     # Critical supersaturation should be comparable to NaCl (slightly different)
@@ -201,7 +207,7 @@ end
     @test sc_pct < 0.5
 end
 
-@testitem "KohlerTheory with insoluble material" tags=[:cloud_physics] begin
+@testitem "KohlerTheory with insoluble material" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -209,26 +215,30 @@ end
     ssys = mtkcompile(sys)
 
     # Fully soluble NaCl particle
-    prob_full = NonlinearProblem(ssys,
+    prob_full = NonlinearProblem(
+        ssys,
         Dict(
-            ssys.d_s => 1e-7, ssys.M_s => 0.05844, ssys.ρ_s => 2165.0,
+            ssys.d_s => 1.0e-7, ssys.M_s => 0.05844, ssys.ρ_s => 2165.0,
             ssys.ν_s => 2.0, ssys.T => 293.15, ssys.ε_m => 1.0
-        ))
+        )
+    )
     sol_full = solve(prob_full)
 
     # Half soluble particle (ε_m = 0.5)
-    prob_half = NonlinearProblem(ssys,
+    prob_half = NonlinearProblem(
+        ssys,
         Dict(
-            ssys.d_s => 1e-7, ssys.M_s => 0.05844, ssys.ρ_s => 2165.0,
+            ssys.d_s => 1.0e-7, ssys.M_s => 0.05844, ssys.ρ_s => 2165.0,
             ssys.ν_s => 2.0, ssys.T => 293.15, ssys.ε_m => 0.5
-        ))
+        )
+    )
     sol_half = solve(prob_half)
 
     # More insoluble material should increase critical supersaturation
     @test sol_half[ssys.S_c] > sol_full[ssys.S_c]
 end
 
-@testitem "DropletGrowth structural" tags=[:cloud_physics] begin
+@testitem "DropletGrowth structural" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -237,7 +247,7 @@ end
     @test length(unknowns(sys)) == 9
 end
 
-@testitem "DropletGrowth physical behavior" tags=[:cloud_physics] begin
+@testitem "DropletGrowth physical behavior" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -245,20 +255,24 @@ end
     ssys = mtkcompile(sys)
 
     # In supersaturated environment (S_v > 1), droplet should grow
-    prob = NonlinearProblem(ssys,
+    prob = NonlinearProblem(
+        ssys,
         Dict(
-            ssys.S_v => 1.01, ssys.D_p => 1e-6, ssys.T => 293.15,
+            ssys.S_v => 1.01, ssys.D_p => 1.0e-6, ssys.T => 293.15,
             ssys.n_s => 0.0, ssys.d_u => 0.0
-        ))
+        )
+    )
     sol = solve(prob)
     @test sol[ssys.dDp_dt] > 0  # Growing
 
     # In subsaturated environment (S_v < 1), droplet should shrink
-    prob_sub = NonlinearProblem(ssys,
+    prob_sub = NonlinearProblem(
+        ssys,
         Dict(
-            ssys.S_v => 0.99, ssys.D_p => 1e-6, ssys.T => 293.15,
+            ssys.S_v => 0.99, ssys.D_p => 1.0e-6, ssys.T => 293.15,
             ssys.n_s => 0.0, ssys.d_u => 0.0
-        ))
+        )
+    )
     sol_sub = solve(prob_sub)
     @test sol_sub[ssys.dDp_dt] < 0  # Shrinking
 
@@ -269,16 +283,18 @@ end
     @test sol[ssys.k_a] ≈ 0.025 atol = 0.003
 
     # Growth rate proportional to 1/D_p: smaller droplet should grow faster
-    prob_small = NonlinearProblem(ssys,
+    prob_small = NonlinearProblem(
+        ssys,
         Dict(
-            ssys.S_v => 1.01, ssys.D_p => 5e-7, ssys.T => 293.15,
+            ssys.S_v => 1.01, ssys.D_p => 5.0e-7, ssys.T => 293.15,
             ssys.n_s => 0.0, ssys.d_u => 0.0
-        ))
+        )
+    )
     sol_small = solve(prob_small)
     @test sol_small[ssys.dDp_dt] > sol[ssys.dDp_dt]
 end
 
-@testitem "CloudDynamics structural" tags=[:cloud_physics] begin
+@testitem "CloudDynamics structural" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -287,7 +303,7 @@ end
     @test length(unknowns(sys)) == 5
 end
 
-@testitem "CloudDynamics dew point and LCL" tags=[:cloud_physics] begin
+@testitem "CloudDynamics dew point and LCL" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -315,7 +331,7 @@ end
     @test sol_80[ssys.Γ_d] ≈ 0.00976 atol = 0.001
 end
 
-@testitem "IcePhysics structural" tags=[:cloud_physics] begin
+@testitem "IcePhysics structural" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -324,7 +340,7 @@ end
     @test length(unknowns(sys)) == 4
 end
 
-@testitem "IcePhysics physical behavior" tags=[:cloud_physics] begin
+@testitem "IcePhysics physical behavior" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -352,7 +368,7 @@ end
     @test sol_cold[ssys.IN] > sol_warm[ssys.IN]
 end
 
-@testitem "RainFormation structural" tags=[:cloud_physics] begin
+@testitem "RainFormation structural" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -361,7 +377,7 @@ end
     @test length(unknowns(sys)) == 4
 end
 
-@testitem "RainFormation physical behavior" tags=[:cloud_physics] begin
+@testitem "RainFormation physical behavior" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -378,7 +394,7 @@ end
     @test sol[ssys.dm_dt] > 0
 
     # Marshall-Palmer distribution: n(D_p) should decrease with size
-    prob_large = NonlinearProblem(ssys, Dict(ssys.D_p => 2e-3))
+    prob_large = NonlinearProblem(ssys, Dict(ssys.D_p => 2.0e-3))
     sol_large = solve(prob_large)
     @test sol_large[ssys.n_MP] < sol[ssys.n_MP]
 
@@ -386,7 +402,7 @@ end
     @test 0 ≤ sol[ssys.F_dist] ≤ 1
 end
 
-@testitem "AerosolScavenging structural" tags=[:cloud_physics] begin
+@testitem "AerosolScavenging structural" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -395,7 +411,7 @@ end
     @test length(unknowns(sys)) == 3
 end
 
-@testitem "AerosolScavenging physical behavior" tags=[:cloud_physics] begin
+@testitem "AerosolScavenging physical behavior" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 
@@ -412,14 +428,14 @@ end
     @test sol[ssys.F_number] ≈ 0.7 atol = 0.01
 
     # Scavenging coefficient: 1e8 * 1e-12 = 1e-4 s^-1
-    @test sol[ssys.Λ] ≈ 1e-4 atol = 1e-6
+    @test sol[ssys.Λ] ≈ 1.0e-4 atol = 1.0e-6
 
     # Scavenging ratios should be between 0 and 1
     @test 0 ≤ sol[ssys.F_mass] ≤ 1
     @test 0 ≤ sol[ssys.F_number] ≤ 1
 end
 
-@testitem "CloudPhysics composite structural" tags=[:cloud_physics] begin
+@testitem "CloudPhysics composite structural" tags = [:cloud_physics] begin
     using ModelingToolkit
     using Aerosol
 

@@ -70,10 +70,10 @@ using ModelingToolkit, Aerosol
         T_ref = 298.0, [description = "Reference temperature", unit = u"K"]
         # Temperature coefficients with units for Eq. 10.91 and 10.88
         c1_Kp = 84.6,
-        [description = "First coefficient in Eq. 10.91 (dimensionless)", unit = u"1"]
+            [description = "First coefficient in Eq. 10.91 (dimensionless)", unit = u"1"]
         c2_Kp = 24220.0, [description = "Second coefficient in Eq. 10.91", unit = u"K"]
         c3_Kp = 6.1,
-        [description = "Third coefficient in Eq. 10.91 (dimensionless)", unit = u"1"]
+            [description = "Third coefficient in Eq. 10.91 (dimensionless)", unit = u"1"]
         c1_DRH = 723.7, [description = "DRH coefficient", unit = u"K"]
         c2_DRH = 1.6954, [description = "DRH constant (dimensionless)", unit = u"1"]
     end
@@ -85,22 +85,24 @@ using ModelingToolkit, Aerosol
 
     @variables begin
         ln_Kp(t),
-        [description = "Log of solid dissociation constant (ppb² basis) (dimensionless)",
-            unit = u"1"]
+            [
+                description = "Log of solid dissociation constant (ppb² basis) (dimensionless)",
+                unit = u"1",
+            ]
         DRH_out(t), [description = "Deliquescence RH (dimensionless)", unit = u"1"]
         is_aqueous(t),
-        [description = "Phase indicator (1=aqueous, 0=solid) (dimensionless)", unit = u"1"]
+            [description = "Phase indicator (1=aqueous, 0=solid) (dimensionless)", unit = u"1"]
     end
 
     eqs = [
         # Eq. 10.91: Solid NH4NO3 dissociation constant (ln(Kp) where Kp is in ppb²)
-        ln_Kp ~ c1_Kp - c2_Kp/T - c3_Kp * log(T/T_ref),  # Eq. 10.91
+        ln_Kp ~ c1_Kp - c2_Kp / T - c3_Kp * log(T / T_ref),  # Eq. 10.91
 
         # Eq. 10.88: NH4NO3 DRH vs temperature
-        DRH_out ~ exp(c1_DRH/T + c2_DRH) / 100.0,  # Eq. 10.88
+        DRH_out ~ exp(c1_DRH / T + c2_DRH) / 100.0,  # Eq. 10.88
 
         # Phase determination: aqueous if RH > DRH
-        is_aqueous ~ ifelse(RH > DRH_out, 1.0, 0.0)
+        is_aqueous ~ ifelse(RH > DRH_out, 1.0, 0.0),
     ]
 
     return System(eqs, t; name)
@@ -126,7 +128,7 @@ Implements Equation 10.91 from Seinfeld & Pandis (2006):
 Kp in ppb² units
 """
 function nh4no3_Kp(T::Real)
-    return exp(84.6 - 24220/T - 6.1 * log(T/298.0))
+    return exp(84.6 - 24220 / T - 6.1 * log(T / 298.0))
 end
 
 """
@@ -150,7 +152,7 @@ function nh4no3_K_AN(T::Real)
     a = 64.7
     b = 11.51
 
-    return K_AN_ref * exp(a * (T_ref/T - 1) + b * (1 + log(T_ref/T) - T_ref/T))
+    return K_AN_ref * exp(a * (T_ref / T - 1) + b * (1 + log(T_ref / T) - T_ref / T))
 end
 
 """
@@ -168,7 +170,7 @@ Calculate the ionic strength fraction Y (Eq. 10.100).
 Ionic strength fraction Y (dimensionless, 0-1)
 """
 function ionic_strength_fraction(C_NH4NO3::Real, C_NH42SO4::Real)
-    return C_NH4NO3 / (C_NH4NO3 + 3 * C_NH42SO4 + 1e-20)
+    return C_NH4NO3 / (C_NH4NO3 + 3 * C_NH42SO4 + 1.0e-20)
 end
 
 """
@@ -195,14 +197,15 @@ This form is used for equilibrium constants in Table 10.7 of Seinfeld & Pandis (
 Equilibrium constant at temperature T
 """
 function equilibrium_constant_temperature(
-        K_ref::Real, T::Real, T_ref::Real, a::Real, b::Real)
-    return K_ref * exp(a * (T_ref/T - 1) + b * (1 + log(T_ref/T) - T_ref/T))
+        K_ref::Real, T::Real, T_ref::Real, a::Real, b::Real
+    )
+    return K_ref * exp(a * (T_ref / T - 1) + b * (1 + log(T_ref / T) - T_ref / T))
 end
 
 # Table 10.7: Equilibrium constant parameters
 # Format: (K_298, a, b, units_description)
 const EQUILIBRIUM_CONSTANTS = Dict{Symbol, NTuple{4, Any}}(
-    :NaCl_HNO3 => (3.96, 5.50, -2.18, "dimensionless"),
+    :NaCl_HNO3 => (3.96, 5.5, -2.18, "dimensionless"),
     :HSO4_dissoc => (1.01e-2, 8.85, 25.14, "mol/kg"),
     :NH3_HNO3_aq => (4.0e17, 64.7, 11.51, "mol² kg⁻² atm⁻²"),
     :HCl_dissoc => (2.03e6, 30.21, 19.91, "mol² kg⁻² atm⁻¹"),
@@ -210,7 +213,7 @@ const EQUILIBRIUM_CONSTANTS = Dict{Symbol, NTuple{4, Any}}(
     :Na2SO4_dissoc => (0.48, 0.98, 39.57, "mol³ kg⁻³"),
     :NH42SO4_dissoc => (1.425, -2.65, 38.55, "mol³ kg⁻³"),
     :HNO3_dissoc => (3.638e6, 29.47, 16.84, "mol² kg⁻² atm⁻¹"),
-    :NH4Cl_dissoc => (1.039e-16, -71.04, 2.40, "atm²"),
+    :NH4Cl_dissoc => (1.039e-16, -71.04, 2.4, "atm²"),
     :NH4NO3_solid => (3.35e16, 75.11, -13.5, "atm⁻²"),
     :NaCl_dissoc => (37.74, -1.57, 16.89, "mol² kg⁻²"),
     :NaHSO4_dissoc => (2.44e4, 0.79, 4.53, "mol² kg⁻²"),

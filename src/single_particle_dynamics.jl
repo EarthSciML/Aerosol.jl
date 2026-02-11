@@ -1,6 +1,6 @@
 export SingleParticleDynamics, MeanFreePath, SlipCorrection, SettlingVelocity,
-       BrownianDiffusion, ParticleMobility, ElectricalMobility, StokesNumber,
-       AerodynamicDiameter
+    BrownianDiffusion, ParticleMobility, ElectricalMobility, StokesNumber,
+    AerodynamicDiameter
 
 """
     MeanFreePath(; name=:MeanFreePath)
@@ -37,8 +37,8 @@ and T is temperature.
     end
 
     eqs = [
-    # Eq. 9.6: λ = 2μ / [p * sqrt(8M/(πRT))]
-        λ ~ 2 * μ / (P * sqrt(8 * M_air / (π_val * R * T)))
+        # Eq. 9.6: λ = 2μ / [p * sqrt(8M/(πRT))]
+        λ ~ 2 * μ / (P * sqrt(8 * M_air / (π_val * R * T))),
     ]
 
     System(eqs, t; name = name)
@@ -64,19 +64,19 @@ where the constants A₁ = 1.257, A₂ = 0.4, A₃ = 1.1 are from Allen & Raabe 
 @component function SlipCorrection(; name = :SlipCorrection)
     @constants begin
         A1 = 1.257,
-        [unit = u"1", description = "Slip correction constant A1 (dimensionless)"]
+            [unit = u"1", description = "Slip correction constant A1 (dimensionless)"]
         A2 = 0.4, [unit = u"1", description = "Slip correction constant A2 (dimensionless)"]
         A3 = 1.1, [unit = u"1", description = "Slip correction constant A3 (dimensionless)"]
     end
 
     @parameters begin
-        D_p = 1e-6, [unit = u"m", description = "Particle diameter"]
+        D_p = 1.0e-6, [unit = u"m", description = "Particle diameter"]
         λ = 6.51e-8, [unit = u"m", description = "Mean free path of air"]
     end
 
     @variables begin
         C_c(t),
-        [unit = u"1", description = "Cunningham slip correction factor (dimensionless)"]
+            [unit = u"1", description = "Cunningham slip correction factor (dimensionless)"]
         Kn(t), [unit = u"1", description = "Knudsen number (dimensionless)"]
     end
 
@@ -84,7 +84,7 @@ where the constants A₁ = 1.257, A₂ = 0.4, A₃ = 1.1 are from Allen & Raabe 
         # Eq. 9.1: Kn = 2λ/D_p
         Kn ~ 2 * λ / D_p,
         # Eq. 9.34: C_c = 1 + Kn * [A1 + A2 * exp(-A3/Kn)]
-        C_c ~ 1 + Kn * (A1 + A2 * exp(-A3 / Kn))
+        C_c ~ 1 + Kn * (A1 + A2 * exp(-A3 / Kn)),
     ]
 
     System(eqs, t; name = name)
@@ -116,7 +116,7 @@ The relaxation time (time constant for velocity adjustment) is:
     end
 
     @parameters begin
-        D_p = 1e-6, [unit = u"m", description = "Particle diameter"]
+        D_p = 1.0e-6, [unit = u"m", description = "Particle diameter"]
         ρ_p = 1000.0, [unit = u"kg/m^3", description = "Particle density"]
         μ = 1.8e-5, [unit = u"kg/(m*s)", description = "Dynamic viscosity of air"]
         C_c = 1.0, [unit = u"1", description = "Slip correction factor (dimensionless)"]
@@ -131,7 +131,7 @@ The relaxation time (time constant for velocity adjustment) is:
         # Eq. 9.42: v_t = D_p² ρ_p g C_c / (18 μ)
         v_t ~ (D_p^2 * ρ_p * g * C_c) / (18 * μ),
         # Eq. 9.38: τ = ρ_p D_p² C_c / (18 μ)
-        τ ~ (ρ_p * D_p^2 * C_c) / (18 * μ)
+        τ ~ (ρ_p * D_p^2 * C_c) / (18 * μ),
     ]
 
     System(eqs, t; name = name)
@@ -176,7 +176,7 @@ The particle mean free path is derived from D = ½ c̄_p λ_p (Eq. 9.88):
     end
 
     @parameters begin
-        D_p = 1e-6, [unit = u"m", description = "Particle diameter"]
+        D_p = 1.0e-6, [unit = u"m", description = "Particle diameter"]
         ρ_p = 1000.0, [unit = u"kg/m^3", description = "Particle density"]
         T = 298.15, [unit = u"K", description = "Temperature"]
         μ = 1.8e-5, [unit = u"kg/(m*s)", description = "Dynamic viscosity of air"]
@@ -201,7 +201,7 @@ The particle mean free path is derived from D = ½ c̄_p λ_p (Eq. 9.88):
         # Eq. 9.87: c̄_p = sqrt(8 k T / (π m_p))
         c_p ~ sqrt(8 * k_B * T / (π_val * m_p)),
         # Eq. 9.88: λ_p = 2D / c̄_p (from D = ½ c̄_p λ_p)
-        λ_p ~ 2 * D_B / c_p
+        λ_p ~ 2 * D_B / c_p,
     ]
 
     System(eqs, t; name = name)
@@ -233,7 +233,7 @@ D = B k T
     end
 
     @parameters begin
-        D_p = 1e-6, [unit = u"m", description = "Particle diameter"]
+        D_p = 1.0e-6, [unit = u"m", description = "Particle diameter"]
         μ = 1.8e-5, [unit = u"kg/(m*s)", description = "Dynamic viscosity of air"]
         C_c = 1.0, [unit = u"1", description = "Slip correction factor (dimensionless)"]
     end
@@ -243,8 +243,8 @@ D = B k T
     end
 
     eqs = [
-    # Eq. 9.78: B = C_c / (3 π μ D_p)
-        B ~ C_c / (3 * π_val * μ * D_p)
+        # Eq. 9.78: B = C_c / (3 π μ D_p)
+        B ~ C_c / (3 * π_val * μ * D_p),
     ]
 
     System(eqs, t; name = name)
@@ -277,11 +277,11 @@ v_e = B_e E
     end
 
     @parameters begin
-        D_p = 1e-6, [unit = u"m", description = "Particle diameter"]
+        D_p = 1.0e-6, [unit = u"m", description = "Particle diameter"]
         μ = 1.8e-5, [unit = u"kg/(m*s)", description = "Dynamic viscosity of air"]
         C_c = 1.0, [unit = u"1", description = "Slip correction factor (dimensionless)"]
         n_charges = 1.0,
-        [unit = u"1", description = "Number of elementary charges (dimensionless)"]
+            [unit = u"1", description = "Number of elementary charges (dimensionless)"]
         E = 1000.0, [unit = u"V/m", description = "Electric field strength"]
     end
 
@@ -297,7 +297,7 @@ v_e = B_e E
         # Eq. 9.50: B_e = q C_c / (3 π μ D_p)
         B_e ~ (q * C_c) / (3 * π_val * μ * D_p),
         # Eq. 9.51: v_e = B_e E
-        v_e ~ B_e * E
+        v_e ~ B_e * E,
     ]
 
     System(eqs, t; name = name)
@@ -328,7 +328,7 @@ When St ≪ 1, particles follow fluid motion closely.
 """
 @component function StokesNumber(; name = :StokesNumber)
     @parameters begin
-        D_p = 1e-6, [unit = u"m", description = "Particle diameter"]
+        D_p = 1.0e-6, [unit = u"m", description = "Particle diameter"]
         ρ_p = 1000.0, [unit = u"kg/m^3", description = "Particle density"]
         μ = 1.8e-5, [unit = u"kg/(m*s)", description = "Dynamic viscosity of air"]
         C_c = 1.0, [unit = u"1", description = "Slip correction factor (dimensionless)"]
@@ -348,7 +348,7 @@ When St ≪ 1, particles follow fluid motion closely.
         # Eq. 9.98: s_p = τ U
         s_p ~ τ * U,
         # Eq. 9.101: St = τ u_0 / L
-        St ~ τ * U / L
+        St ~ τ * U / L,
     ]
 
     System(eqs, t; name = name)
@@ -393,7 +393,7 @@ D_{em} = D_{ve} \\chi \\frac{C_c(D_{em})}{C_c(D_{ve})}
     end
 
     @parameters begin
-        D_p = 1e-6, [unit = u"m", description = "Particle diameter"]
+        D_p = 1.0e-6, [unit = u"m", description = "Particle diameter"]
         ρ_p = 1500.0, [unit = u"kg/m^3", description = "Particle density"]
         C_c_Dp = 1.0, [unit = u"1", description = "Slip correction at D_p (dimensionless)"]
         C_c_Da = 1.0, [unit = u"1", description = "Slip correction at D_ca (dimensionless)"]
@@ -403,14 +403,14 @@ D_{em} = D_{ve} \\chi \\frac{C_c(D_{em})}{C_c(D_{ve})}
     @variables begin
         D_ca(t), [unit = u"m", description = "Classical aerodynamic diameter"]
         D_ca_continuum(t),
-        [unit = u"m", description = "Aerodynamic diameter (continuum limit)"]
+            [unit = u"m", description = "Aerodynamic diameter (continuum limit)"]
     end
 
     eqs = [
         # Eq. 9.110: D_ca = D_p * sqrt(ρ_p/ρ_p0) * sqrt(C_c(D_p)/C_c(D_ca))
         D_ca ~ D_p * sqrt(ρ_p / ρ_p0) * sqrt(C_c_Dp / C_c_Da),
         # Eq. 9.112: Continuum limit (C_c ≈ 1)
-        D_ca_continuum ~ D_p * sqrt(ρ_p / ρ_p0)
+        D_ca_continuum ~ D_p * sqrt(ρ_p / ρ_p0),
     ]
 
     System(eqs, t; name = name)
@@ -447,13 +447,13 @@ This component calculates key aerosol particle properties:
         ρ_p0 = 1000.0, [unit = u"kg/m^3", description = "Reference density (1 g/cm³)"]
         # Slip correction constants (Allen & Raabe 1982)
         A1 = 1.257,
-        [unit = u"1", description = "Slip correction constant A1 (dimensionless)"]
+            [unit = u"1", description = "Slip correction constant A1 (dimensionless)"]
         A2 = 0.4, [unit = u"1", description = "Slip correction constant A2 (dimensionless)"]
         A3 = 1.1, [unit = u"1", description = "Slip correction constant A3 (dimensionless)"]
     end
 
     @parameters begin
-        D_p = 1e-6, [unit = u"m", description = "Particle diameter"]
+        D_p = 1.0e-6, [unit = u"m", description = "Particle diameter"]
         ρ_p = 1000.0, [unit = u"kg/m^3", description = "Particle density"]
         T = 298.15, [unit = u"K", description = "Temperature"]
         P = 101325.0, [unit = u"Pa", description = "Pressure"]
@@ -466,7 +466,7 @@ This component calculates key aerosol particle properties:
         Kn(t), [unit = u"1", description = "Knudsen number (dimensionless)"]
         # Slip correction
         C_c(t),
-        [unit = u"1", description = "Cunningham slip correction factor (dimensionless)"]
+            [unit = u"1", description = "Cunningham slip correction factor (dimensionless)"]
         # Settling
         v_t(t), [unit = u"m/s", description = "Terminal settling velocity"]
         τ(t), [unit = u"s", description = "Relaxation time"]
@@ -502,7 +502,7 @@ This component calculates key aerosol particle properties:
         # Eq. 9.88: Particle mean free path (from D = ½ c̄_p λ_p)
         λ_p ~ 2 * D_B / c_p,
         # Eq. 9.112: Aerodynamic diameter (continuum limit)
-        D_ca ~ D_p * sqrt(ρ_p / ρ_p0)
+        D_ca ~ D_p * sqrt(ρ_p / ρ_p0),
     ]
 
     System(eqs, t; name = name)

@@ -101,8 +101,9 @@ partial pressure and aqueous-phase concentration.
 @component function HenrysLaw(; name = :HenrysLaw)
     @parameters begin
         H_A,
-        [
-            description = "Henry's law constant at reference temperature", unit = u"mol/m^3/Pa"]
+            [
+                description = "Henry's law constant at reference temperature", unit = u"mol/m^3/Pa",
+            ]
     end
 
     @variables begin
@@ -111,8 +112,8 @@ partial pressure and aqueous-phase concentration.
     end
 
     eqs = [
-    # Eq 7.3: Henry's law equilibrium
-    # (mol/m^3/Pa) * (Pa) = (mol/m^3) ✓
+        # Eq 7.3: Henry's law equilibrium
+        # (mol/m^3/Pa) * (Pa) = (mol/m^3) ✓
         C_aq ~ H_A * p_A,
     ]
 
@@ -156,8 +157,8 @@ Also calculates:
         R_gas = 8.314, [description = "Gas constant", unit = u"J/mol/K"]
         T_ref = 298.0, [description = "Reference temperature", unit = u"K"]
         # Inverse water density: 1/(10^6 g/m^3) = 10^-6 m^3/g
-        rho_water_inv = 1e-6,
-        [description = "Inverse water density for LWC conversion", unit = u"m^3/g"]
+        rho_water_inv = 1.0e-6,
+            [description = "Inverse water density for LWC conversion", unit = u"m^3/g"]
     end
 
     @parameters begin
@@ -171,7 +172,7 @@ Also calculates:
         p_A(t), [description = "Partial pressure of gas species A", unit = u"Pa"]
         C_aq(t), [description = "Aqueous concentration of species A", unit = u"mol/m^3"]
         H_T(t),
-        [description = "Temperature-corrected Henry's law constant", unit = u"mol/m^3/Pa"]
+            [description = "Temperature-corrected Henry's law constant", unit = u"mol/m^3/Pa"]
         w_L(t), [description = "Liquid water mixing ratio (dimensionless)", unit = u"1"]
         f_A(t), [description = "Distribution factor (dimensionless)", unit = u"1"]
         X_aq(t), [description = "Aqueous fraction (dimensionless)", unit = u"1"]
@@ -181,7 +182,7 @@ Also calculates:
         # Eq 7.5: Temperature dependence of Henry's law constant
         # H_A(T) = H_A(T_ref) * exp((dH/R) * (1/T_ref - 1/T))
         # Units: (mol/m^3/Pa) * exp((J/mol) / (J/mol/K) * (1/K)) = (mol/m^3/Pa) ✓
-        H_T ~ H_298 * exp((dH_diss / R_gas) * (1/T_ref - 1/T)),
+        H_T ~ H_298 * exp((dH_diss / R_gas) * (1 / T_ref - 1 / T)),
 
         # Eq 7.3: Henry's law equilibrium at temperature T
         # Units: (mol/m^3/Pa) * (Pa) = (mol/m^3) ✓
@@ -200,7 +201,7 @@ Also calculates:
 
         # Eq 7.9: Aqueous fraction
         # X_aq = f_A / (1 + f_A)
-        X_aq ~ f_A / (1 + f_A)
+        X_aq ~ f_A / (1 + f_A),
     ]
 
     return System(eqs, t; name)
@@ -249,11 +250,11 @@ Variables:
     end
 
     eqs = [
-    # General form for diprotic species
-    # H* = H * (1 + K_1/[H+] + K_1*K_2/[H+]^2)
-    # Units: K_1/H_plus = (mol/m^3)/(mol/m^3) = (1) ✓
-    # Units: K_1*K_2/H_plus^2 = (mol/m^3)^2/(mol/m^3)^2 = (1) ✓
-        H_eff ~ H_intrinsic * (1 + K_1/H_plus + K_1*K_2/H_plus^2),
+        # General form for diprotic species
+        # H* = H * (1 + K_1/[H+] + K_1*K_2/[H+]^2)
+        # Units: K_1/H_plus = (mol/m^3)/(mol/m^3) = (1) ✓
+        # Units: K_1*K_2/H_plus^2 = (mol/m^3)^2/(mol/m^3)^2 = (1) ✓
+        H_eff ~ H_intrinsic * (1 + K_1 / H_plus + K_1 * K_2 / H_plus^2),
     ]
 
     return System(eqs, t; name)
@@ -280,7 +281,7 @@ Returns:
   - H_eff: Effective Henry's law constant (mol/L/Pa)
 """
 function effective_henrys_constant(H, K1, K2, H_plus)
-    return H * (1 + K1/H_plus + K1*K2/H_plus^2)
+    return H * (1 + K1 / H_plus + K1 * K2 / H_plus^2)
 end
 
 """
@@ -342,5 +343,5 @@ Returns:
 function henrys_constant_at_T(H_298, dH_diss, T)
     R = 8.314  # J mol^-1 K^-1
     T_ref = 298.0  # K
-    return H_298 * exp((dH_diss / R) * (1/T_ref - 1/T))
+    return H_298 * exp((dH_diss / R) * (1 / T_ref - 1 / T))
 end

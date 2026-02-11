@@ -28,7 +28,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.24
     end
 
     eqs = [
-    # Eq. 12.24: c̄_A = √(8kT/(πm_A)) where m_A = M_A/N_Av
+        # Eq. 12.24: c̄_A = √(8kT/(πm_A)) where m_A = M_A/N_Av
         c_bar ~ sqrt(8 * k_B * T * N_Av / (π * M_A)),
     ]
 
@@ -65,7 +65,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Section 12.1.3
         ρ_air ~ P * M_air / (R * T),
         # Mean free path: λ = 2μ/(ρ_air * c̄) where c̄ = √(8RT/(πM))
         # Simplified form commonly used
-        λ ~ 2 * μ / (ρ_air * sqrt(8 * R * T / (π * M_air)))
+        λ ~ 2 * μ / (ρ_air * sqrt(8 * R * T / (π * M_air))),
     ]
 
     return System(eqs, t; name)
@@ -95,7 +95,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.31
     end
 
     eqs = [
-    # Eq. 12.31: Kn = λ/R_p
+        # Eq. 12.31: Kn = λ/R_p
         Kn ~ λ / R_p,
     ]
 
@@ -122,11 +122,11 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.43 (with accommodation co
 
     @variables begin
         f_FS(t),
-        [description = "Fuchs-Sutugin correction factor J/J_c (dimensionless)", unit = u"1"]
+            [description = "Fuchs-Sutugin correction factor J/J_c (dimensionless)", unit = u"1"]
     end
 
     eqs = [
-    # Eq. 12.43: J/J_c = 0.75α(1 + Kn) / (Kn² + Kn + 0.283Kn*α + 0.75α)
+        # Eq. 12.43: J/J_c = 0.75α(1 + Kn) / (Kn² + Kn + 0.283Kn*α + 0.75α)
         f_FS ~ 0.75 * α * (1 + Kn) / (Kn^2 + Kn + 0.283 * Kn * α + 0.75 * α),
     ]
 
@@ -150,11 +150,11 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.42
 
     @variables begin
         f_D(t),
-        [description = "Dahneke correction factor J/J_c (dimensionless)", unit = u"1"]
+            [description = "Dahneke correction factor J/J_c (dimensionless)", unit = u"1"]
     end
 
     eqs = [
-    # Eq. 12.42: J/J_c = (1 + Kn) / (1 + 2Kn(1 + Kn)/α)
+        # Eq. 12.42: J/J_c = (1 + Kn) / (1 + 2Kn(1 + Kn)/α)
         f_D ~ (1 + Kn) / (1 + 2 * Kn * (1 + Kn) / α),
     ]
 
@@ -183,7 +183,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.12
     end
 
     eqs = [
-    # Eq. 12.12: J_c = 4πR_p D_g (c_∞ - c_s)
+        # Eq. 12.12: J_c = 4πR_p D_g (c_∞ - c_s)
         J_c ~ 4 * π * R_p * D_g * (c_inf - c_s),
     ]
 
@@ -211,7 +211,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.14
     end
 
     eqs = [
-    # Eq. 12.14: dR_p/dt = (D_g M_A)/(ρ_p R_p)(c_∞ - c_s)
+        # Eq. 12.14: dR_p/dt = (D_g M_A)/(ρ_p R_p)(c_∞ - c_s)
         D(R_p) ~ (D_g * M_A / (ρ_p * R_p)) * (c_inf - c_s),
     ]
 
@@ -253,7 +253,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.116
         # Interfacial resistance (second term in Eq. 12.116)
         τ_i ~ (R_p / (3 * α)) * sqrt(2 * π * M_A / (R * T)),
         # Eq. 12.116: k_mt = [R_p²/(3D_g) + (R_p/3α)√(2πM_A/(RT))]⁻¹
-        k_mt ~ 1 / (τ_g + τ_i)
+        k_mt ~ 1 / (τ_g + τ_i),
     ]
 
     return System(eqs, t; name)
@@ -281,7 +281,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.121
         c_bar = 300.0, [description = "Mean molecular speed", unit = u"m/s"]
         T = 298.15, [description = "Temperature", unit = u"K"]
         H_star = 1.0e5,
-        [description = "Effective Henry's law coefficient", unit = u"mol/(m^3*Pa)"]
+            [description = "Effective Henry's law coefficient", unit = u"mol/(m^3*Pa)"]
         k_rxn = 1.0, [description = "First-order reaction rate constant", unit = u"s^-1"]
         D_aq = 1.0e-9, [description = "Aqueous-phase diffusivity", unit = u"m^2/s"]
     end
@@ -289,7 +289,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.121
     @variables begin
         γ(t), [description = "Uptake coefficient (dimensionless)", unit = u"1"]
         term_diff(t),
-        [description = "Gas-phase diffusion term (dimensionless)", unit = u"1"]
+            [description = "Gas-phase diffusion term (dimensionless)", unit = u"1"]
         term_acc(t), [description = "Accommodation term (dimensionless)", unit = u"1"]
         term_rxn(t), [description = "Reaction term (dimensionless)", unit = u"1"]
     end
@@ -299,7 +299,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.121
         term_diff ~ (R_p * c_bar) / (4 * D_g),
         term_acc ~ 1 / α,
         term_rxn ~ c_bar / (4 * R * T * H_star * sqrt(k_rxn * D_aq)),
-        γ ~ 1 / (term_diff + term_acc + term_rxn)
+        γ ~ 1 / (term_diff + term_acc + term_rxn),
     ]
 
     return System(eqs, t; name)
@@ -342,7 +342,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Sections 12.1.1-12.1.4
         ρ_air(t), [description = "Air density", unit = u"kg/m^3"]
         Kn(t), [description = "Knudsen number (dimensionless)", unit = u"1"]
         f_FS(t),
-        [description = "Fuchs-Sutugin correction factor (dimensionless)", unit = u"1"]
+            [description = "Fuchs-Sutugin correction factor (dimensionless)", unit = u"1"]
         J_c(t), [description = "Continuum regime molar flow rate", unit = u"mol/s"]
         J(t), [description = "Transition regime corrected molar flow rate", unit = u"mol/s"]
     end
@@ -367,7 +367,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Sections 12.1.1-12.1.4
         J_c ~ 4 * π * R_p * D_g * (c_inf - c_s),
 
         # Transition regime corrected flux
-        J ~ f_FS * J_c
+        J ~ f_FS * J_c,
     ]
 
     return System(eqs, t; name)

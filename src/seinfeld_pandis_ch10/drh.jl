@@ -9,14 +9,14 @@ and forms a saturated aqueous solution.
 const DRH_298 = Dict{Symbol, Float64}(
     :KCl => 0.842,
     :Na2SO4 => 0.842,
-    :NH4Cl => 0.800,
+    :NH4Cl => 0.8,
     :NH42SO4 => 0.799,  # (NH4)2SO4
     :NaCl => 0.753,
     :NaNO3 => 0.743,
-    :NH43HSO42 => 0.690,  # (NH4)3H(SO4)2
+    :NH43HSO42 => 0.69,  # (NH4)3H(SO4)2
     :NH4NO3 => 0.618,
-    :NaHSO4 => 0.520,
-    :NH4HSO4 => 0.400
+    :NaHSO4 => 0.52,
+    :NH4HSO4 => 0.4
 )
 
 # Enthalpy of solution at 298 K from Table 10.3 (kJ/mol)
@@ -37,7 +37,7 @@ const SOLUBILITY_PARAMS = Dict{Symbol, NTuple{3, Float64}}(
     :NaNO3 => (0.1868, -1.677e-3, 5.714e-6),
     :NH4NO3 => (4.298, -3.623e-2, 7.853e-5),
     :KCl => (-0.2368, 1.453e-3, -1.238e-6),
-    :NaCl => (0.1805, -5.310e-4, 9.965e-7)
+    :NaCl => (0.1805, -5.31e-4, 9.965e-7)
 )
 
 """
@@ -91,21 +91,23 @@ using ModelingToolkit, Aerosol
         DRH_298K = drh_ref, [description = "DRH at 298 K (dimensionless)", unit = u"1"]
         ΔH_s = delta_hs, [description = "Enthalpy of solution", unit = u"J/mol"]
         A_sol = sol_params[1],
-        [description = "Solubility coefficient A (dimensionless)", unit = u"1"]
+            [description = "Solubility coefficient A (dimensionless)", unit = u"1"]
         B_sol = sol_params[2], [description = "Solubility coefficient B", unit = u"K^-1"]
         C_sol = sol_params[3], [description = "Solubility coefficient C", unit = u"K^-2"]
     end
 
     @variables begin
         DRH(t),
-        [description = "Deliquescence RH at temperature T (dimensionless)", unit = u"1"]
+            [description = "Deliquescence RH at temperature T (dimensionless)", unit = u"1"]
     end
 
     eqs = [
-    # Eq. 10.72: Full form with A, B, C solubility coefficients
+        # Eq. 10.72: Full form with A, B, C solubility coefficients
         DRH ~
-        DRH_298K * exp(ΔH_s / R_gas *
-            (A_sol * (1/T - 1/T_ref) - B_sol * log(T/T_ref) - C_sol * (T - T_ref))),  # Eq. 10.72
+            DRH_298K * exp(
+            ΔH_s / R_gas *
+                (A_sol * (1 / T - 1 / T_ref) - B_sol * log(T / T_ref) - C_sol * (T - T_ref))
+        ),  # Eq. 10.72
     ]
 
     return System(eqs, t; name)
@@ -147,8 +149,10 @@ function drh_temperature(T::Real, salt::Symbol)
     A, B, C = get(SOLUBILITY_PARAMS, salt, (0.1, 0.0, 0.0))
 
     # Eq. 10.72: Full form with A, B, C solubility coefficients
-    return drh_ref * exp(delta_hs / R_gas *
-               (A * (1/T - 1/T_ref) - B * log(T/T_ref) - C * (T - T_ref)))
+    return drh_ref * exp(
+        delta_hs / R_gas *
+            (A * (1 / T - 1 / T_ref) - B * log(T / T_ref) - C * (T - T_ref))
+    )
 end
 
 """

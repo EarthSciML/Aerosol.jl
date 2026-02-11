@@ -40,12 +40,13 @@ Chapter 15, Equations 15.1-15.23, 15.37-15.43.
 
     @parameters begin
         D_p = 0.5e-6, [unit = u"m", description = "Particle diameter"]
-        λ = 550e-9, [unit = u"m", description = "Wavelength of incident radiation"]
+        λ = 550.0e-9, [unit = u"m", description = "Wavelength of incident radiation"]
         n_refr = 1.5,
-        [unit = u"1", description = "Real part of complex refractive index (dimensionless)"]
+            [unit = u"1", description = "Real part of complex refractive index (dimensionless)"]
         k_refr = 0.0,
-        [
-            unit = u"1", description = "Imaginary part of complex refractive index (dimensionless)"]
+            [
+                unit = u"1", description = "Imaginary part of complex refractive index (dimensionless)",
+            ]
         ρ_p = 1500.0, [unit = u"kg/m^3", description = "Particle density"]
     end
 
@@ -85,7 +86,7 @@ Chapter 15, Equations 15.1-15.23, 15.37-15.43.
         # Eq. 15.41, 15.42, 15.43 - Mass efficiencies
         E_ext ~ 3 * Q_ext / (2 * ρ_p * D_p),
         E_scat ~ 3 * Q_scat / (2 * ρ_p * D_p),
-        E_abs ~ 3 * Q_abs / (2 * ρ_p * D_p)
+        E_abs ~ 3 * Q_abs / (2 * ρ_p * D_p),
     ]
 
     return System(eqs, t; name)
@@ -111,41 +112,43 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.17-15.21.
     @constants begin
         π_val = Float64(π), [unit = u"1", description = "Pi (dimensionless)"]
         eight_thirds = 8.0 / 3.0,
-        [unit = u"1", description = "Constant 8/3 for Rayleigh scattering (dimensionless)"]
+            [unit = u"1", description = "Constant 8/3 for Rayleigh scattering (dimensionless)"]
         four = 4.0,
-        [unit = u"1", description = "Constant 4 for Rayleigh absorption (dimensionless)"]
+            [unit = u"1", description = "Constant 4 for Rayleigh absorption (dimensionless)"]
         three = 3.0,
-        [unit = u"1", description = "Constant 3 for mass efficiency (dimensionless)"]
+            [unit = u"1", description = "Constant 3 for mass efficiency (dimensionless)"]
         two = 2.0,
-        [unit = u"1", description = "Constant 2 for mass efficiency (dimensionless)"]
+            [unit = u"1", description = "Constant 2 for mass efficiency (dimensionless)"]
     end
 
     @parameters begin
         D_p = 0.05e-6, [unit = u"m", description = "Particle diameter"]
-        λ = 550e-9, [unit = u"m", description = "Wavelength of incident radiation"]
+        λ = 550.0e-9, [unit = u"m", description = "Wavelength of incident radiation"]
         n_refr = 1.5,
-        [unit = u"1", description = "Real part of complex refractive index (dimensionless)"]
+            [unit = u"1", description = "Real part of complex refractive index (dimensionless)"]
         k_refr = 0.0,
-        [
-            unit = u"1", description = "Imaginary part of complex refractive index (dimensionless)"]
+            [
+                unit = u"1", description = "Imaginary part of complex refractive index (dimensionless)",
+            ]
         ρ_p = 1500.0, [unit = u"kg/m^3", description = "Particle density"]
     end
 
     @variables begin
         α(t), [unit = u"1", description = "Size parameter (dimensionless)"]
         m2_factor_real(t),
-        [unit = u"1", description = "Real part of (m²-1)/(m²+2) factor (dimensionless)"]
+            [unit = u"1", description = "Real part of (m²-1)/(m²+2) factor (dimensionless)"]
         m2_factor_imag(t),
-        [
-            unit = u"1", description = "Imaginary part of (m²-1)/(m²+2) factor (dimensionless)"]
+            [
+                unit = u"1", description = "Imaginary part of (m²-1)/(m²+2) factor (dimensionless)",
+            ]
         m2_factor_mag_sq(t),
-        [unit = u"1", description = "|(m²-1)/(m²+2)|² factor (dimensionless)"]
+            [unit = u"1", description = "|(m²-1)/(m²+2)|² factor (dimensionless)"]
         Q_scat(t),
-        [unit = u"1", description = "Rayleigh scattering efficiency (dimensionless)"]
+            [unit = u"1", description = "Rayleigh scattering efficiency (dimensionless)"]
         Q_abs(t),
-        [unit = u"1", description = "Rayleigh absorption efficiency (dimensionless)"]
+            [unit = u"1", description = "Rayleigh absorption efficiency (dimensionless)"]
         Q_ext(t),
-        [unit = u"1", description = "Rayleigh extinction efficiency (dimensionless)"]
+            [unit = u"1", description = "Rayleigh extinction efficiency (dimensionless)"]
         ω(t), [unit = u"1", description = "Single-scattering albedo (dimensionless)"]
         E_scat(t), [unit = u"m^2/kg", description = "Mass scattering efficiency"]
         E_abs(t), [unit = u"m^2/kg", description = "Mass absorption efficiency"]
@@ -181,7 +184,7 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.17-15.21.
         # Mass efficiencies (Eq. 15.41-15.43)
         E_ext ~ three * Q_ext / (two * ρ_p * D_p),
         E_scat ~ three * Q_scat / (two * ρ_p * D_p),
-        E_abs ~ three * Q_abs / (two * ρ_p * D_p)
+        E_abs ~ three * Q_abs / (two * ρ_p * D_p),
     ]
 
     return System(eqs, t; name)
@@ -204,19 +207,20 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.24-15.30, 15.37-15.40.
     @constants begin
         π_val = Float64(π), [unit = u"1", description = "Pi (dimensionless)"]
         four = 4.0,
-        [unit = u"1", description = "Constant 4 for cross section (dimensionless)"]
+            [unit = u"1", description = "Constant 4 for cross section (dimensionless)"]
     end
 
     @parameters begin
         D_p = 0.5e-6, [unit = u"m", description = "Particle diameter"]
-        λ = 550e-9, [unit = u"m", description = "Wavelength of incident radiation"]
+        λ = 550.0e-9, [unit = u"m", description = "Wavelength of incident radiation"]
         n_refr = 1.5,
-        [unit = u"1", description = "Real part of complex refractive index (dimensionless)"]
+            [unit = u"1", description = "Real part of complex refractive index (dimensionless)"]
         k_refr = 0.0,
-        [
-            unit = u"1", description = "Imaginary part of complex refractive index (dimensionless)"]
+            [
+                unit = u"1", description = "Imaginary part of complex refractive index (dimensionless)",
+            ]
         ρ_p = 1500.0, [unit = u"kg/m^3", description = "Particle density"]
-        N = 1e9, [unit = u"m^-3", description = "Particle number concentration"]
+        N = 1.0e9, [unit = u"m^-3", description = "Particle number concentration"]
     end
 
     @variables begin
@@ -247,7 +251,7 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.24-15.30, 15.37-15.40.
         b_abs ~ (π_val / four) * D_p^2 * N * Q_abs,
 
         # Eq. 15.5 - Single-scattering albedo
-        ω ~ b_scat / b_ext
+        ω ~ b_scat / b_ext,
     ]
 
     return System(eqs, t; name)
@@ -270,23 +274,23 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.31-15.36.
     @constants begin
         # Eq. 15.36 - Koschmeider constant = -ln(0.02) ≈ 3.912
         Koschmeider_const = 3.912,
-        [unit = u"1", description = "Koschmeider constant = -ln(0.02) (dimensionless)"]
+            [unit = u"1", description = "Koschmeider constant = -ln(0.02) (dimensionless)"]
         # Reference length for computing optical depth over 1 km
         one_km = 1000.0, [unit = u"m", description = "One kilometer in meters"]
     end
 
     @parameters begin
-        b_ext = 1e-4, [unit = u"m^-1", description = "Total extinction coefficient"]
+        b_ext = 1.0e-4, [unit = u"m^-1", description = "Total extinction coefficient"]
         b_sg = 13.2e-6,
-        [unit = u"m^-1", description = "Rayleigh scattering coefficient (gas)"]
+            [unit = u"m^-1", description = "Rayleigh scattering coefficient (gas)"]
         b_ag = 0.0,
-        [unit = u"m^-1", description = "Absorption coefficient due to gases (mainly NO₂)"]
+            [unit = u"m^-1", description = "Absorption coefficient due to gases (mainly NO₂)"]
     end
 
     @variables begin
         x_v(t), [unit = u"m", description = "Visual range"]
         τ_per_km(t),
-        [unit = u"1", description = "Optical depth per kilometer (dimensionless)"]
+            [unit = u"1", description = "Optical depth per kilometer (dimensionless)"]
         b_sp(t), [unit = u"m^-1", description = "Scattering coefficient due to particles"]
     end
 
@@ -300,7 +304,7 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.31-15.36.
 
         # Eq. 15.30 - Particle scattering coefficient
         # b_scat = b_sg + b_sp, so b_sp = b_ext - b_sg - b_ag (assuming absorption from particles is small)
-        b_sp ~ b_ext - b_sg - b_ag
+        b_sp ~ b_ext - b_sg - b_ag,
     ]
 
     return System(eqs, t; name)
@@ -327,23 +331,24 @@ Seinfeld & Pandis (2006), Chapter 15, page 705 and Problem 15.1A.
         # Reference values at sea level, T = 293 K, λ = 550 nm
         # From Problem 15.1A: b_sg = 11.4 × (293/T) × p × 10⁻⁶ m⁻¹
         b_sg_ref = 11.4e-6,
-        [
-            unit = u"m^-1", description = "Reference Rayleigh coefficient at 293K, 1atm, 550nm"]
+            [
+                unit = u"m^-1", description = "Reference Rayleigh coefficient at 293K, 1atm, 550nm",
+            ]
         T_ref = 293.0, [unit = u"K", description = "Reference temperature"]
         p_ref = 101325.0, [unit = u"Pa", description = "Reference pressure (1 atm)"]
-        λ_ref = 550e-9, [unit = u"m", description = "Reference wavelength (550 nm)"]
+        λ_ref = 550.0e-9, [unit = u"m", description = "Reference wavelength (550 nm)"]
     end
 
     @parameters begin
         T = 293.0, [unit = u"K", description = "Temperature"]
         p = 101325.0, [unit = u"Pa", description = "Pressure"]
-        λ = 550e-9, [unit = u"m", description = "Wavelength"]
+        λ = 550.0e-9, [unit = u"m", description = "Wavelength"]
     end
 
     @variables begin
         b_sg(t), [unit = u"m^-1", description = "Rayleigh scattering coefficient"]
         x_v_max(t),
-        [unit = u"m", description = "Maximum visual range in Rayleigh atmosphere"]
+            [unit = u"m", description = "Maximum visual range in Rayleigh atmosphere"]
     end
 
     eqs = [
@@ -352,7 +357,7 @@ Seinfeld & Pandis (2006), Chapter 15, page 705 and Problem 15.1A.
         b_sg ~ b_sg_ref * (T_ref / T) * (p / p_ref) * (λ_ref / λ)^4,
 
         # Maximum visibility in clean Rayleigh atmosphere (Eq. 15.36)
-        x_v_max ~ 3.912 / b_sg
+        x_v_max ~ 3.912 / b_sg,
     ]
 
     return System(eqs, t; name)
@@ -451,7 +456,7 @@ function _mie_coefficients(α::Real, n::Real, k::Real)
     x = α  # Size parameter
 
     # Number of terms needed (Wiscombe, 1980 criterion)
-    nstop = ceil(Int, x + 4.05 * x^(1/3) + 2)
+    nstop = ceil(Int, x + 4.05 * x^(1 / 3) + 2)
 
     # For computing logarithmic derivatives of ψ
     nmx = max(nstop + 15, ceil(Int, abs(x * m)) + 15)
@@ -541,13 +546,13 @@ function _rayleigh_Q_ext(α::Real, n::Real, k::Real)
     m2_minus_1_real, m2_minus_1_imag, m2_plus_2_real, m2_plus_2_imag = _m2_components(n, k)
     denom = m2_plus_2_real^2 + m2_plus_2_imag^2
     imag_factor = (m2_minus_1_imag * m2_plus_2_real - m2_minus_1_real * m2_plus_2_imag) /
-                  denom
+        denom
     mag_sq = (m2_minus_1_real^2 + m2_minus_1_imag^2) / denom
 
     # Q_ext = Q_abs + Q_scat
     # Q_abs ≈ 4α × Im{(m²-1)/(m²+2)} (Eq. 15.21)
     # Q_scat ≈ (8/3)α⁴ × |(m²-1)/(m²+2)|² (Eq. 15.19)
-    return 4 * α * imag_factor + (8/3) * α^4 * mag_sq
+    return 4 * α * imag_factor + (8 / 3) * α^4 * mag_sq
 end
 
 """
@@ -562,7 +567,7 @@ function _rayleigh_Q_scat(α::Real, n::Real, k::Real)
     denom = m2_plus_2_real^2 + m2_plus_2_imag^2
     mag_sq = (m2_minus_1_real^2 + m2_minus_1_imag^2) / denom
 
-    return (8/3) * α^4 * mag_sq
+    return (8 / 3) * α^4 * mag_sq
 end
 
 """
@@ -612,16 +617,16 @@ end
 using DynamicQuantities: Quantity, ustrip
 
 function mie_Q_ext(α::Quantity, n::Quantity, k::Quantity)
-    mie_Q_ext(ustrip(α), ustrip(n), ustrip(k))
+    return mie_Q_ext(ustrip(α), ustrip(n), ustrip(k))
 end
 function mie_Q_scat(α::Quantity, n::Quantity, k::Quantity)
-    mie_Q_scat(ustrip(α), ustrip(n), ustrip(k))
+    return mie_Q_scat(ustrip(α), ustrip(n), ustrip(k))
 end
 function rayleigh_m2_factor_real(n::Quantity, k::Quantity)
-    rayleigh_m2_factor_real(ustrip(n), ustrip(k))
+    return rayleigh_m2_factor_real(ustrip(n), ustrip(k))
 end
 function rayleigh_m2_factor_imag(n::Quantity, k::Quantity)
-    rayleigh_m2_factor_imag(ustrip(n), ustrip(k))
+    return rayleigh_m2_factor_imag(ustrip(n), ustrip(k))
 end
 
 # Register the Mie functions for symbolic use in ModelingToolkit

@@ -77,27 +77,31 @@ end
     compiled = mtkcompile(sys)
 
     # Test S = 2
-    prob = ODEProblem(compiled,
+    prob = ODEProblem(
+        compiled,
         Dict(compiled.T => T, compiled.S => 2.0, compiled.σ => σ_water, compiled.v_1 => v_1_water),
-        (0.0, 1.0))
+        (0.0, 1.0)
+    )
     sol = solve(prob, Tsit5())
 
     # r* should be ~17.3 Å = 17.3e-10 m
     r_star = sol[compiled.r_star][1]
-    @test isapprox(r_star * 1e10, 17.3, rtol = 0.05)  # 5% tolerance
+    @test isapprox(r_star * 1.0e10, 17.3, rtol = 0.05)  # 5% tolerance
 
     # i* should be ~726
     i_star = sol[compiled.i_star][1]
     @test isapprox(i_star, 726, rtol = 0.1)  # 10% tolerance (capillarity approximation)
 
     # Test S = 5
-    prob5 = ODEProblem(compiled,
+    prob5 = ODEProblem(
+        compiled,
         Dict(compiled.T => T, compiled.S => 5.0, compiled.σ => σ_water, compiled.v_1 => v_1_water),
-        (0.0, 1.0))
+        (0.0, 1.0)
+    )
     sol5 = solve(prob5, Tsit5())
 
     r_star5 = sol5[compiled.r_star][1]
-    @test isapprox(r_star5 * 1e10, 7.5, rtol = 0.05)
+    @test isapprox(r_star5 * 1.0e10, 7.5, rtol = 0.05)
 
     i_star5 = sol5[compiled.i_star][1]
     @test isapprox(i_star5, 58, rtol = 0.15)
@@ -121,25 +125,29 @@ end
     compiled = mtkcompile(sys)
 
     # Test S = 2
-    prob = ODEProblem(compiled,
+    prob = ODEProblem(
+        compiled,
         Dict(compiled.T => T, compiled.S => 2.0, compiled.σ => σ_water, compiled.v_1 => v_1_water),
-        (0.0, 1.0))
+        (0.0, 1.0)
+    )
     sol = solve(prob, Tsit5())
 
     r_star = sol[compiled.r_star][1]
-    @test isapprox(r_star * 1e10, 15.1, rtol = 0.05)
+    @test isapprox(r_star * 1.0e10, 15.1, rtol = 0.05)
 
     i_star = sol[compiled.i_star][1]
     @test isapprox(i_star, 482, rtol = 0.1)
 
     # Test S = 5
-    prob5 = ODEProblem(compiled,
+    prob5 = ODEProblem(
+        compiled,
         Dict(compiled.T => T, compiled.S => 5.0, compiled.σ => σ_water, compiled.v_1 => v_1_water),
-        (0.0, 1.0))
+        (0.0, 1.0)
+    )
     sol5 = solve(prob5, Tsit5())
 
     r_star5 = sol5[compiled.r_star][1]
-    @test isapprox(r_star5 * 1e10, 6.5, rtol = 0.05)
+    @test isapprox(r_star5 * 1.0e10, 6.5, rtol = 0.05)
 
     i_star5 = sol5[compiled.i_star][1]
     @test isapprox(i_star5, 39, rtol = 0.15)
@@ -169,7 +177,8 @@ end
     S = 5.0
     p_A = S * p_sat_water
 
-    prob = ODEProblem(compiled,
+    prob = ODEProblem(
+        compiled,
         Dict(
             compiled.T => T,
             compiled.p_A => p_A,
@@ -178,7 +187,8 @@ end
             compiled.v_1 => v_1_water,
             compiled.m_1 => m_1_water
         ),
-        (0.0, 1.0))
+        (0.0, 1.0)
+    )
     sol = solve(prob, Tsit5())
 
     J = sol[compiled.J][1]
@@ -207,7 +217,8 @@ end
     p_A_s = 2336.5  # Pa
     p_A = 3 * p_A_s  # S = 3
 
-    prob = ODEProblem(compiled,
+    prob = ODEProblem(
+        compiled,
         Dict(
             compiled.T => T,
             compiled.p_A => p_A,
@@ -216,11 +227,12 @@ end
             compiled.v_1 => 2.99e-29,
             compiled.m_1 => 2.99e-26
         ),
-        (0.0, 1.0))
+        (0.0, 1.0)
+    )
     sol = solve(prob, Tsit5())
 
     S = sol[compiled.S][1]
-    @test isapprox(S, 3.0, rtol = 1e-6)
+    @test isapprox(S, 3.0, rtol = 1.0e-6)
 end
 
 @testitem "WaterProperties_values" begin
@@ -281,21 +293,25 @@ end
     N_1_S3 = 3 * p_sat / (k_B * T)
     N_1_S6 = 6 * p_sat / (k_B * T)
 
-    prob3 = ODEProblem(compiled,
+    prob3 = ODEProblem(
+        compiled,
         Dict(
             compiled.T => T, compiled.S => 3.0, compiled.N_1 => N_1_S3,
             compiled.σ => σ, compiled.v_1 => v_1, compiled.m_1 => m_1
         ),
-        (0.0, 1.0))
+        (0.0, 1.0)
+    )
     sol3 = solve(prob3, Tsit5())
     J3 = sol3[compiled.J][1]
 
-    prob6 = ODEProblem(compiled,
+    prob6 = ODEProblem(
+        compiled,
         Dict(
             compiled.T => T, compiled.S => 6.0, compiled.N_1 => N_1_S6,
             compiled.σ => σ, compiled.v_1 => v_1, compiled.m_1 => m_1
         ),
-        (0.0, 1.0))
+        (0.0, 1.0)
+    )
     sol6 = solve(prob6, Tsit5())
     J6 = sol6[compiled.J][1]
 
@@ -324,11 +340,13 @@ end
     r_stars = Float64[]
 
     for S in [2.0, 3.0, 4.0, 5.0, 6.0]
-        prob = ODEProblem(compiled,
+        prob = ODEProblem(
+            compiled,
             Dict(
                 compiled.T => T, compiled.S => S, compiled.σ => σ, compiled.v_1 => v_1
             ),
-            (0.0, 1.0))
+            (0.0, 1.0)
+        )
         sol = solve(prob, Tsit5())
         push!(i_stars, sol[compiled.i_star][1])
         push!(r_stars, sol[compiled.r_star][1])
@@ -357,11 +375,13 @@ end
     T = 293.0
 
     for S in [1.5, 2.0, 3.0, 5.0, 10.0]
-        prob = ODEProblem(compiled,
+        prob = ODEProblem(
+            compiled,
             Dict(
                 compiled.T => T, compiled.S => S, compiled.σ => σ, compiled.v_1 => v_1
             ),
-            (0.0, 1.0))
+            (0.0, 1.0)
+        )
         sol = solve(prob, Tsit5())
         ΔG_star = sol[compiled.ΔG_star][1]
         @test ΔG_star > 0
@@ -387,18 +407,20 @@ end
     v_1_ethanol = 9.694e-29  # m³/molecule
     T = 298.0
 
-    prob = ODEProblem(compiled,
+    prob = ODEProblem(
+        compiled,
         Dict(
             compiled.T => T, compiled.S => 3.0, compiled.σ => σ_ethanol, compiled.v_1 => v_1_ethanol
         ),
-        (0.0, 1.0))
+        (0.0, 1.0)
+    )
     sol = solve(prob, Tsit5())
 
     r_star = sol[compiled.r_star][1]
     i_star = sol[compiled.i_star][1]
 
     # Critical radius should be reasonable (order of nm)
-    @test 1e-10 < r_star < 1e-8
+    @test 1.0e-10 < r_star < 1.0e-8
 
     # Critical cluster size should be positive
     @test i_star > 1

@@ -7,7 +7,7 @@
     guess = [29]
     prob = NonlinearProblem(simplens, guess, [])
     sol = solve(prob, TrustRegion())
-    @test sol[simplens.C_OA] ≈ 10.6 atol=1e-2
+    @test sol[simplens.C_OA] ≈ 10.6 atol = 1.0e-2
 end
 
 @testitem "different_temperature" begin
@@ -16,7 +16,7 @@ end
     ns = VBS(Ci)
     simplens = mtkcompile(ns)
     guess = [29]
-    prob = NonlinearProblem(simplens, guess, [simplens.T=>285])
+    prob = NonlinearProblem(simplens, guess, [simplens.T => 285])
     sol = solve(prob, TrustRegion())
-    @test sol[simplens.C_OA] ≈ 15.93 atol=1e-2
+    @test sol[simplens.C_OA] ≈ 15.93 atol = 1.0e-2
 end
