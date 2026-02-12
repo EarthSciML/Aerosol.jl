@@ -1,6 +1,6 @@
 @mtkmodel EqConst begin
     @description """An equilibrium constant based on Equation 5 in Fountoukis and Nenes (2007),
-parameterized by values from Table 2 in the same paper."""
+    parameterized by values from Table 2 in the same paper."""
     @constants begin
         logK⁰, [description = "Log of the equilibrium constant at 298.15 K"]
         H⁺, [description = "ΔH⁰ / (R * T₀) (unitless)"]
@@ -11,7 +11,7 @@ parameterized by values from Table 2 in the same paper."""
         T, [unit = u"K", description = "Temperature"]
     end
     @variables begin
-        logK_eq(t), [description = "Log of the equilibrium constant", guess=logK⁰]
+        logK_eq(t), [description = "Log of the equilibrium constant", guess = logK⁰]
     end
     @equations begin
         logK_eq ~ logK⁰ + (-H⁺ * (T₀ / T - 1) - C⁺ * (1 + log(T₀ / T) - T₀ / T))
@@ -31,27 +31,27 @@ end
         r4 = EqConst(logK⁰ = log(1.569e-2), H⁺ = -9.589, C⁺ = 45.807)
         r5 = EqConst(logK⁰ = log(24.016), H⁺ = -8.423, C⁺ = 17.964)
         r6 = EqConst(logK⁰ = log(0.872), H⁺ = 14.075, C⁺ = 19.388)
-        r7 = EqConst(logK⁰ = log(8.680), H⁺ = -6.167, C⁺ = 19.953)
+        r7 = EqConst(logK⁰ = log(8.68), H⁺ = -6.167, C⁺ = 19.953)
         r8 = EqConst(logK⁰ = log(1.079e5), H⁺ = 36.798, C⁺ = 0.0)
         r9 = EqConst(logK⁰ = log(2.507e15), H⁺ = -8.754, C⁺ = 0.0)
         r10 = EqConst(logK⁰ = log(9.557e21), H⁺ = -1.347, C⁺ = 0.0)
         r11 = EqConst(logK⁰ = log(1.015e-2), H⁺ = 8.85, C⁺ = 25.14)
         r12 = EqConst(logK⁰ = log(5.764e1), H⁺ = 13.79, C⁺ = -5.39)
-        r13 = EqConst(logK⁰ = log(1.805e-5), H⁺ = -1.50, C⁺ = 26.92)
+        r13 = EqConst(logK⁰ = log(1.805e-5), H⁺ = -1.5, C⁺ = 26.92)
         r14 = EqConst(logK⁰ = log(2.511e6), H⁺ = 29.17, C⁺ = 16.83)
         r15 = EqConst(logK⁰ = log(2.1e5), H⁺ = 29.17, C⁺ = 16.83)
-        r16 = EqConst(logK⁰ = log(1.971e6), H⁺ = 30.20, C⁺ = 19.91)
-        r17 = EqConst(logK⁰ = log(2.5e3), H⁺ = 30.20, C⁺ = 19.91)
-        r18 = EqConst(logK⁰ = log(1.010e-14), H⁺ = -22.52, C⁺ = 26.92)
+        r16 = EqConst(logK⁰ = log(1.971e6), H⁺ = 30.2, C⁺ = 19.91)
+        r17 = EqConst(logK⁰ = log(2.5e3), H⁺ = 30.2, C⁺ = 19.91)
+        r18 = EqConst(logK⁰ = log(1.01e-14), H⁺ = -22.52, C⁺ = 26.92)
         r19 = EqConst(logK⁰ = log(4.799e-1), H⁺ = 0.98, C⁺ = 39.75)
         r20 = EqConst(logK⁰ = log(1.87e0), H⁺ = -2.65, C⁺ = 38.57)
-        r21 = EqConst(logK⁰ = log(1.086e-16), H⁺ = -71.00, C⁺ = 2.40)
+        r21 = EqConst(logK⁰ = log(1.086e-16), H⁺ = -71.0, C⁺ = 2.4)
         r22 = EqConst(logK⁰ = log(1.197e1), H⁺ = -8.22, C⁺ = 16.01)
-        r23 = EqConst(logK⁰ = log(3.766e1), H⁺ = -1.56, C⁺ = 16.90)
+        r23 = EqConst(logK⁰ = log(3.766e1), H⁺ = -1.56, C⁺ = 16.9)
         r24 = EqConst(logK⁰ = log(2.413e4), H⁺ = 0.79, C⁺ = 14.75)
         r25 = EqConst(logK⁰ = log(4.199e-17), H⁺ = -74.375, C⁺ = 6.025)
         r26 = EqConst(logK⁰ = log(1.383e0), H⁺ = -2.87, C⁺ = 15.83)
-        r27 = EqConst(logK⁰ = log(2.972e1), H⁺ = -5.19, C⁺ = 54.40)
+        r27 = EqConst(logK⁰ = log(2.972e1), H⁺ = -5.19, C⁺ = 54.4)
     end
     @constants begin
         k1_unit = 1, [unit = u"mol^3/kg^3", description = "Unit conversion factor"]

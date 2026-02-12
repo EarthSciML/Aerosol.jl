@@ -86,8 +86,8 @@ From Air Pollution to Climate Change*, 2nd Edition, Chapter 11, pp. 489-536.
         # Eq. 11.47: Classical nucleation rate
         # J = (2σ/(πm_1))^(1/2) * (v_1 * N_1² / S) * exp(-(16π/3) * v_1² * σ³ / ((kT)³ (ln S)²))
         J ~
-        sqrt(2 * σ / (π_val * m_1)) * (v_1 * N_1^2 / S) *
-        exp(-(16 * π_val / 3) * v_1^2 * σ^3 / ((k_B * T)^3 * log(S)^2))
+            sqrt(2 * σ / (π_val * m_1)) * (v_1 * N_1^2 / S) *
+            exp(-(16 * π_val / 3) * v_1^2 * σ^3 / ((k_B * T)^3 * log(S)^2)),
     ]
 
     return System(eqs, t; name)
@@ -125,7 +125,7 @@ Seinfeld, J.H. and Pandis, S.N. (2006). *Atmospheric Chemistry and Physics*, Cha
         # σ ≈ 75.6 - 0.1454*(T-273) mN/m based on Table 11.1 data
         σ_ref = 75.6e-3, [description = "Surface tension at 273 K", unit = u"N/m"]
         σ_slope = -0.1454e-3,
-        [description = "Surface tension temperature slope", unit = u"N/(m*K)"]
+            [description = "Surface tension temperature slope", unit = u"N/(m*K)"]
         T_ref = 273.0, [description = "Reference temperature", unit = u"K"]
 
         # Molecular volume (approximately constant over this T range)
@@ -135,19 +135,19 @@ Seinfeld, J.H. and Pandis, S.N. (2006). *Atmospheric Chemistry and Physics*, Cha
         # Antoine equation constants for water (dimensionless form)
         # ln(p/Pa) = A - B/(C+T/K) where T is in K
         A_antoine = 23.1964,
-        [description = "Antoine A coefficient (dimensionless)", unit = u"1"]
+            [description = "Antoine A coefficient (dimensionless)", unit = u"1"]
         B_antoine = 3816.44,
-        [description = "Antoine B coefficient (dimensionless)", unit = u"1"]
+            [description = "Antoine B coefficient (dimensionless)", unit = u"1"]
         C_antoine = -46.13,
-        [description = "Antoine C coefficient (dimensionless)", unit = u"1"]
+            [description = "Antoine C coefficient (dimensionless)", unit = u"1"]
     end
 
     @parameters begin
         T = 293.0, [description = "Temperature", unit = u"K"]
         T_unit = 1.0,
-        [description = "Unit temperature for conversion (dimensionless)", unit = u"K"]
+            [description = "Unit temperature for conversion (dimensionless)", unit = u"K"]
         Pa_unit = 1.0,
-        [description = "Unit pressure for conversion (dimensionless)", unit = u"Pa"]
+            [description = "Unit pressure for conversion (dimensionless)", unit = u"Pa"]
     end
 
     @variables begin
@@ -169,7 +169,7 @@ Seinfeld, J.H. and Pandis, S.N. (2006). *Atmospheric Chemistry and Physics*, Cha
 
         # Saturation vapor pressure from Antoine equation
         # Using natural log: ln(p/Pa) = A - B/(C + T/K)
-        p_sat ~ Pa_unit * exp(A_antoine - B_antoine / (C_antoine + T / T_unit))
+        p_sat ~ Pa_unit * exp(A_antoine - B_antoine / (C_antoine + T / T_unit)),
     ]
 
     return System(eqs, t; name)
@@ -228,7 +228,7 @@ This implements equations 11.35, 11.52, and 11.53 from Seinfeld & Pandis (2006).
         r_star ~ 2 * σ * v_1 / (k_B * T * log(S)),
 
         # Eq. 11.53: Free energy barrier
-        ΔG_star ~ (16 * π_val / 3) * v_1^2 * σ^3 / ((k_B * T * log(S))^2)
+        ΔG_star ~ (16 * π_val / 3) * v_1^2 * σ^3 / ((k_B * T * log(S))^2),
     ]
 
     return System(eqs, t; name)
@@ -274,10 +274,10 @@ cluster properties are not needed.
     end
 
     eqs = [
-    # Eq. 11.47: Classical nucleation rate
+        # Eq. 11.47: Classical nucleation rate
         J ~
-        sqrt(2 * σ / (π_val * m_1)) * (v_1 * N_1^2 / S) *
-        exp(-(16 * π_val / 3) * v_1^2 * σ^3 / ((k_B * T)^3 * log(S)^2)),
+            sqrt(2 * σ / (π_val * m_1)) * (v_1 * N_1^2 / S) *
+            exp(-(16 * π_val / 3) * v_1^2 * σ^3 / ((k_B * T)^3 * log(S)^2)),
     ]
 
     return System(eqs, t; name)

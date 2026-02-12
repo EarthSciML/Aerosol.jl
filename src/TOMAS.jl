@@ -14,18 +14,18 @@ begin
     # upper bound of mass bin (g)
     m_upper = []
 
-    mlow = 10^(-18)/2 # (g)
+    mlow = 10^(-18) / 2 # (g)
     mup = 10^(-18) # (g)
     # number of bins
     bin = 5
 
     for i in 1:bin
-        mlow = mlow*2
+        mlow = mlow * 2
         push!(m_lower, mlow)
     end
 
     for i in 1:bin
-        mup = mup*2
+        mup = mup * 2
         push!(m_upper, mup)
     end
 
@@ -33,7 +33,7 @@ begin
     m_k = []
     mass = 0
     for i in 1:length(m_lower)
-        mass = (m_lower[i] + m_upper[i])/2
+        mass = (m_lower[i] + m_upper[i]) / 2
         push!(m_k, mass)
     end
     # print(m_lower)
@@ -53,12 +53,12 @@ begin
     Dpup = 0
 
     for x in m_lower
-        Dplow = ((3*x/(4*ρ*pi))^(1/3))*2
+        Dplow = ((3 * x / (4 * ρ * pi))^(1 / 3)) * 2
         push!(Dp_lower, Dplow)
     end
 
     for x in m_upper
-        Dpup = ((3*x/(4*ρ*pi))^(1/3))*2
+        Dpup = ((3 * x / (4 * ρ * pi))^(1 / 3)) * 2
         push!(Dp_upper, Dpup)
     end
 end
@@ -84,7 +84,7 @@ begin
     Dp = Float64[]
     avgdia = 0
     for i in 1:length(Dp_lower)
-        avgdia = (Dp_upper[i] + Dp_lower[i])/2
+        avgdia = (Dp_upper[i] + Dp_lower[i]) / 2
         push!(Dp, avgdia)
     end
     print(Dp)
@@ -92,13 +92,13 @@ end
 
 begin
     # viscosity of air at T = 298 K
-    μ = 1.83*10^(-4) # (g cm-1 s-1)
+    μ = 1.83 * 10^(-4) # (g cm-1 s-1)
     # mean free path of air at T = 298 K
-    λ = 0.0686*10^(-4) # (cm)
+    λ = 0.0686 * 10^(-4) # (cm)
     # Temperature
     T = 298 # (K)
     # Boltzmann constant
-    k = 1.38*10^(-16) #(cm2 g s-2 K-1)
+    k = 1.38 * 10^(-16) #(cm2 g s-2 K-1)
 
     # parameters needed to calculate coagulation coefficient
 
@@ -107,7 +107,7 @@ begin
     cc = 0
     for i in 1:bin
         if Dp[i] < 10^(-5) # (cm) # free molecular regime (0.1 um)
-            cc = 1 + 2*λ / Dp[i]*(1.257+0.4*exp(-1.1 * Dp[i]/(2*λ)))
+            cc = 1 + 2 * λ / Dp[i] * (1.257 + 0.4 * exp(-1.1 * Dp[i] / (2 * λ)))
         else # continuum regime
             cc = 1
         end
@@ -118,27 +118,27 @@ begin
     D = Float64[] # diffusivity cm^2 s^-1
     Di = 0
     for i in 1:bin
-        Di = k*T*C_c[i]/(3*pi*μ*Dp[i])
+        Di = k * T * C_c[i] / (3 * pi * μ * Dp[i])
         push!(D, Di)
     end
     c = Float64[]
     ci = 0
     for i in 1:bin
-        ci = sqrt(8*k*T/(pi*m_k[i]))
+        ci = sqrt(8 * k * T / (pi * m_k[i]))
         push!(c, ci)
     end
 
     l = Float64[]
     li = 0
     for i in 1:bin
-        li = 8*D[i]/(pi*c[i])
+        li = 8 * D[i] / (pi * c[i])
         push!(l, li)
     end
 
     g = Float64[]
     gi = 0
     for i in 1:bin
-        gi = sqrt(2)/(3*Dp[i]*l[i])*((Dp[i]+l[i])^3-(Dp[i]^2+l[i]^2)^(3/2))-Dp[i]
+        gi = sqrt(2) / (3 * Dp[i] * l[i]) * ((Dp[i] + l[i])^3 - (Dp[i]^2 + l[i]^2)^(3 / 2)) - Dp[i]
         push!(g, gi)
     end
 end
@@ -147,15 +147,15 @@ end
 function coagcoef(i, j) # (cm^3 s^-1)
     if Dp[i] < 10^(-5) && Dp[j] < 10^(-5) # free molecular regime
         # Funchs Form of the Brownian Coagulation Coef
-        return 2*pi*(Dp[i]+Dp[j])*(D[i]+D[j])*(
+        return 2 * pi * (Dp[i] + Dp[j]) * (D[i] + D[j]) * (
             (
-            Dp[i]+Dp[j]
-        )/(
-            Dp[i]+Dp[j]+2*sqrt((g[i])^2+(g[j])^2)
-        )+8*(D[i]+D[j])/(sqrt((c[i])^2+(c[j])^2)*(Dp[i]+Dp[j]))
+                Dp[i] + Dp[j]
+            ) / (
+                Dp[i] + Dp[j] + 2 * sqrt((g[i])^2 + (g[j])^2)
+            ) + 8 * (D[i] + D[j]) / (sqrt((c[i])^2 + (c[j])^2) * (Dp[i] + Dp[j]))
         )^(-1)
     else # continuum regime
-        return 2*k*T/(3*μ)*(Dp[i]+Dp[j])^2/(Dp[i]*Dp[j])
+        return 2 * k * T / (3 * μ) * (Dp[i] + Dp[j])^2 / (Dp[i] * Dp[j])
     end
 end
 
@@ -169,7 +169,7 @@ end
 Kvec_eq = reduce(vcat, coagcoef(i, j) for i in 1:bin, j in 1:bin)
 
 begin
-    Kvec = zeros(I*I)
+    Kvec = zeros(I * I)
     for i in 1:(I * I)
         Kvec[i] = Kvec_eq[i]
         i += 1
@@ -200,61 +200,69 @@ begin
     ddt = Differential(t)
 end
 
-eqs = [[f[i] ~ 2 * N[i] / m_lower[i] * (2 - m_k[i] / m_lower[i]) for i in 1:I]
-       [ψ[i] ~ 2 * N[i] / m_lower[i] * (m_k[i] / m_lower[i] - 1) for i in 1:I]
-       [ddt(N[k]) ~
-        (k > 1 ? 1/2 * Kmat[k - 1, k - 1] * N[k - 1]^2 : 0) - Kmat[k, k] * N[k]^2 -
-        N[k] * sum(Kmat[k, (k + 1):I] .* N[(k + 1):I]) +
-        (k > 2 ? ψ[k - 1] * sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)]) : 0) +
-        (k > 1 ? -ψ[k] * sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)]) : 0) +
-        (
-            k > 1 ?
-            (ψ[k] - f[k]) / (2 * m_lower[k]) *
-            ξ *
-            sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)] .* m_k[1:(k - 1)]) : 0
-        ) +
-        (
-            k > 2 ?
-            -(ψ[k - 1] - f[k - 1]) / (2 * m_lower[k - 1]) *
-            ξ *
-            sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)] .* m_k[1:(k - 2)]) : 0
-        ) for k in 1:I]
-       [ddt(M[k]) ~
-        (k > 1 ? Kmat[k - 1, k - 1] * N[k - 1] * M[k - 1] : 0) - Kmat[k, k] * N[k] * M[k] +
-        (k > 1 ? N[k] * sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)]) : 0) +
-        (k <= I-1 ? -M[k] * sum(Kmat[k, (k + 1):I] .* N[(k + 1):I]) : 0) +
-        (k > 2 ? ψ[k - 1] * m_lower[k] * sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)]) : 0) +
-        (
-            k > 1 && k <= I-1 ?
-            -ψ[k] * m_lower[k + 1] * sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)]) : 0
-        ) +
-        (
-            k > 2 ?
-            f[k - 1] / 2 * ξ *
-            sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)] .* m_k[1:(k - 2)]) : 0
-        ) +
-        (k > 1 ? -f[k] / 2 * ξ * sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)] .* m_k[1:(k - 1)]) :
-         0) +
-        (
-            k > 1 ?
-            (ψ[k] - f[k]) / (2 * m_lower[k]) *
-            ξ^3 *
-            sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)] .* (m_k[1:(k - 1)] .^ 2)) : 0
-        ) +
-        (
-            k > 2 ?
-            -(ψ[k - 1] - f[k - 1]) / (2 * m_lower[k - 1]) *
-            ξ^3 *
-            sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)] .* (m_k[1:(k - 2)] .^ 2)) : 0
-        ) for k in 1:I]]
+eqs = [
+    [f[i] ~ 2 * N[i] / m_lower[i] * (2 - m_k[i] / m_lower[i]) for i in 1:I]
+    [ψ[i] ~ 2 * N[i] / m_lower[i] * (m_k[i] / m_lower[i] - 1) for i in 1:I]
+    [
+        ddt(N[k]) ~
+            (k > 1 ? 1 / 2 * Kmat[k - 1, k - 1] * N[k - 1]^2 : 0) - Kmat[k, k] * N[k]^2 -
+            N[k] * sum(Kmat[k, (k + 1):I] .* N[(k + 1):I]) +
+            (k > 2 ? ψ[k - 1] * sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)]) : 0) +
+            (k > 1 ? -ψ[k] * sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)]) : 0) +
+            (
+                k > 1 ?
+                (ψ[k] - f[k]) / (2 * m_lower[k]) *
+                ξ *
+                sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)] .* m_k[1:(k - 1)]) : 0
+            ) +
+            (
+                k > 2 ?
+                -(ψ[k - 1] - f[k - 1]) / (2 * m_lower[k - 1]) *
+                ξ *
+                sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)] .* m_k[1:(k - 2)]) : 0
+            ) for k in 1:I
+    ]
+    [
+        ddt(M[k]) ~
+            (k > 1 ? Kmat[k - 1, k - 1] * N[k - 1] * M[k - 1] : 0) - Kmat[k, k] * N[k] * M[k] +
+            (k > 1 ? N[k] * sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)]) : 0) +
+            (k <= I - 1 ? -M[k] * sum(Kmat[k, (k + 1):I] .* N[(k + 1):I]) : 0) +
+            (k > 2 ? ψ[k - 1] * m_lower[k] * sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)]) : 0) +
+            (
+                k > 1 && k <= I - 1 ?
+                -ψ[k] * m_lower[k + 1] * sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)]) : 0
+            ) +
+            (
+                k > 2 ?
+                f[k - 1] / 2 * ξ *
+                sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)] .* m_k[1:(k - 2)]) : 0
+            ) +
+            (
+                k > 1 ? -f[k] / 2 * ξ * sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)] .* m_k[1:(k - 1)]) :
+                0
+            ) +
+            (
+                k > 1 ?
+                (ψ[k] - f[k]) / (2 * m_lower[k]) *
+                ξ^3 *
+                sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)] .* (m_k[1:(k - 1)] .^ 2)) : 0
+            ) +
+            (
+                k > 2 ?
+                -(ψ[k - 1] - f[k - 1]) / (2 * m_lower[k - 1]) *
+                ξ^3 *
+                sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)] .* (m_k[1:(k - 2)] .^ 2)) : 0
+            ) for k in 1:I
+    ]
+]
 @named tomas = ODESystem(eqs)
 states(tomas)
 tomas_simplified = structural_simplify(tomas)
 states(tomas_simplified)
 begin
     # initial conditions
-    initial_valsN = [N[i] => pdf(Normal(15, 5), i)*10^10 for i in 1:I]
-    initial_valsM = [M[i] => m_k[i]*(pdf(Normal(15, 5), i)*10^10) for i in 1:I]
+    initial_valsN = [N[i] => pdf(Normal(15, 5), i) * 10^10 for i in 1:I]
+    initial_valsM = [M[i] => m_k[i] * (pdf(Normal(15, 5), i) * 10^10) for i in 1:I]
     ps = [T => 298]
     # time span
     tspan = (0, 86400) # run for a day

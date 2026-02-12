@@ -1,5 +1,5 @@
 export AerosolLayerRadiativeForcing, CriticalSingleScatteringAlbedo,
-       CloudOpticalDepth, CloudAlbedo, CloudAlbedoSensitivity, IndirectAerosolForcing
+    CloudOpticalDepth, CloudAlbedo, CloudAlbedoSensitivity, IndirectAerosolForcing
 
 """
     AerosolLayerRadiativeForcing(; name=:AerosolLayerRadiativeForcing)
@@ -46,9 +46,9 @@ Physics: From Air Pollution to Climate Change*, 2nd Edition, Chapter 24, Equatio
 
     @variables begin
         r_aer(t),
-        [unit = u"1", description = "Fraction of light reflected upward by aerosol"]
+            [unit = u"1", description = "Fraction of light reflected upward by aerosol"]
         t_aer(t),
-        [unit = u"1", description = "Fraction of light transmitted through aerosol"]
+            [unit = u"1", description = "Fraction of light transmitted through aerosol"]
         R_as(t), [unit = u"1", description = "Total reflectance of aerosol-surface system"]
         ΔR_p(t), [unit = u"1", description = "Change in planetary albedo"]
         ΔF(t), [unit = u"W/m^2", description = "Change in outgoing radiative flux"]
@@ -73,7 +73,7 @@ Physics: From Air Pollution to Climate Change*, 2nd Edition, Chapter 24, Equatio
 
         # Eq. 24.10: Change in outgoing radiative flux
         # ΔF = F_0 * ΔR_p
-        ΔF ~ F_0 * ΔR_p
+        ΔF ~ F_0 * ΔR_p,
     ]
 
     return System(eqs, t; name)
@@ -111,12 +111,12 @@ Physics*, Chapter 24, Section 24.2.
 
     @variables begin
         ω_crit(t),
-        [unit = u"1", description = "Critical single-scattering albedo (dimensionless)"]
+            [unit = u"1", description = "Critical single-scattering albedo (dimensionless)"]
     end
 
     eqs = [
-    # Eq. 24.15: Critical single-scattering albedo
-        ω_crit ~ 2 * R_s / (2 * R_s + β * (1 - R_s)^2)
+        # Eq. 24.15: Critical single-scattering albedo
+        ω_crit ~ 2 * R_s / (2 * R_s + β * (1 - R_s)^2),
     ]
 
     return System(eqs, t; name)
@@ -167,9 +167,9 @@ Physics*, Chapter 24, Section 24.8.1, Equations 24.34-24.36.
     end
 
     eqs = [
-    # Eq. 24.36: Cloud optical depth in terms of L, h, N
-    # τ_c = h * (9π*L²*N / 2ρ_w²)^(1/3)
-        τ_c ~ h * (9 * π * L^2 * N / (2 * ρ_w^2))^(1/3)
+        # Eq. 24.36: Cloud optical depth in terms of L, h, N
+        # τ_c = h * (9π*L²*N / 2ρ_w²)^(1/3)
+        τ_c ~ h * (9 * π * L^2 * N / (2 * ρ_w^2))^(1 / 3),
     ]
 
     return System(eqs, t; name)
@@ -211,7 +211,7 @@ Physics*, Chapter 24, Section 24.8.1, Equations 24.37-24.38.
     @variables begin
         R_c(t), [unit = u"1", description = "Cloud albedo (dimensionless)"]
         γ(t),
-        [unit = u"1", description = "Two-stream approximation coefficient (dimensionless)"]
+            [unit = u"1", description = "Two-stream approximation coefficient (dimensionless)"]
     end
 
     eqs = [
@@ -220,7 +220,7 @@ Physics*, Chapter 24, Section 24.8.1, Equations 24.37-24.38.
         γ ~ 2 / (sqrt(3) * (1 - g)),
 
         # Eq. 24.37/24.38: Cloud albedo (two-stream approximation)
-        R_c ~ τ_c / (τ_c + γ)
+        R_c ~ τ_c / (τ_c + γ),
     ]
 
     return System(eqs, t; name)
@@ -260,7 +260,7 @@ Physics*, Chapter 24, Section 24.8.2, Equations 24.39-24.42.
     @variables begin
         dRc_dN(t), [unit = u"m^3", description = "Sensitivity of cloud albedo to CDNC"]
         S(t),
-        [unit = u"1", description = "Twomey susceptibility dR_c/d(ln N) (dimensionless)"]
+            [unit = u"1", description = "Twomey susceptibility dR_c/d(ln N) (dimensionless)"]
     end
 
     eqs = [
@@ -268,7 +268,7 @@ Physics*, Chapter 24, Section 24.8.2, Equations 24.39-24.42.
         dRc_dN ~ R_c * (1 - R_c) / (3 * N),
 
         # Eq. 24.41: Twomey susceptibility
-        S ~ R_c * (1 - R_c) / 3
+        S ~ R_c * (1 - R_c) / 3,
     ]
 
     return System(eqs, t; name)
@@ -310,7 +310,7 @@ Physics*, Chapter 24, Section 24.8.2, Equations 24.42-24.43.
         T_a = 0.76, [unit = u"1", description = "Atmospheric transmittance (dimensionless)"]
         R_c = 0.5, [unit = u"1", description = "Cloud albedo (dimensionless)"]
         Δln_N = 0.262,
-        [unit = u"1", description = "Fractional change in CDNC ln(N₁/N₀) (dimensionless)"]
+            [unit = u"1", description = "Fractional change in CDNC ln(N₁/N₀) (dimensionless)"]
     end
 
     @variables begin
@@ -323,7 +323,7 @@ Physics*, Chapter 24, Section 24.8.2, Equations 24.42-24.43.
         ΔR_c ~ R_c * (1 - R_c) / 3 * Δln_N,
 
         # Eq. 24.43: Change in shortwave forcing (negative = cooling)
-        ΔF_c ~ -F_0 * A_c * T_a^2 * ΔR_c
+        ΔF_c ~ -F_0 * A_c * T_a^2 * ΔR_c,
     ]
 
     return System(eqs, t; name)

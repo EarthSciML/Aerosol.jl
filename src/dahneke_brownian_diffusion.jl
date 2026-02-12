@@ -38,24 +38,27 @@ Limiting cases:
     @parameters begin
         T = 298.15, [description = "Temperature", unit = u"K"]
         D_v = 2.0e-5,
-        [description = "Diffusion coefficient of vapor molecules", unit = u"m^2/s"]
+            [description = "Diffusion coefficient of vapor molecules", unit = u"m^2/s"]
         m_v = 4.81e-26,
-        [description = "Mass of diffusing vapor molecule", unit = u"kg"]
+            [description = "Mass of diffusing vapor molecule", unit = u"kg"]
         r = 1.0e-7, [description = "Sphere (droplet/particle) radius", unit = u"m"]
         δ_m = 1.0,
-        [description = "Condensation-evaporation (sticking) coefficient (dimensionless)",
-            unit = u"1"]
+            [
+                description = "Condensation-evaporation (sticking) coefficient (dimensionless)",
+                unit = u"1",
+            ]
     end
 
     @variables begin
         c_bar(t),
-        [description = "Mean thermal velocity of vapor molecules (Eq. 6.2)", unit = u"m/s"]
+            [description = "Mean thermal velocity of vapor molecules (Eq. 6.2)", unit = u"m/s"]
         ℓ_D(t), [description = "Diffusional mean-free-path of vapor (Eq. 3.6)", unit = u"m"]
         Kn_D(t),
-        [description = "Diffusion Knudsen number, ℓ_D/r (dimensionless)", unit = u"1"]
+            [description = "Diffusion Knudsen number, ℓ_D/r (dimensionless)", unit = u"1"]
         β(t),
-        [
-            description = "Mass transport correction factor, Eq. 5.5 (dimensionless)", unit = u"1"]
+            [
+                description = "Mass transport correction factor, Eq. 5.5 (dimensionless)", unit = u"1",
+            ]
     end
 
     eqs = [
@@ -66,7 +69,7 @@ Limiting cases:
         # Kn_D = ℓ_D / r (diffusion Knudsen number based on sphere radius)
         Kn_D ~ ℓ_D / r,
         # Eq. 5.5 - Correction factor for mass transport
-        β ~ (Kn_D + 1) / (2 * Kn_D * (Kn_D + 1) / δ_m + 1)
+        β ~ (Kn_D + 1) / (2 * Kn_D * (Kn_D + 1) / δ_m + 1),
     ]
 
     return System(eqs, t; name)
@@ -91,26 +94,30 @@ thermal accommodation coefficient.
     @parameters begin
         κ = 0.026, [description = "Thermal conductivity of gas", unit = u"W/(m*K)"]
         n_gas = 2.46e25,
-        [description = "Number concentration of suspending gas molecules", unit = u"m^-3"]
+            [description = "Number concentration of suspending gas molecules", unit = u"m^-3"]
         c_bar_gas = 500.0,
-        [description = "Mean thermal velocity of gas molecules", unit = u"m/s"]
+            [description = "Mean thermal velocity of gas molecules", unit = u"m/s"]
         c_v = 718.0,
-        [description = "Specific heat at constant volume of gas (per unit mass)",
-            unit = u"J/(kg*K)"]
+            [
+                description = "Specific heat at constant volume of gas (per unit mass)",
+                unit = u"J/(kg*K)",
+            ]
         m_gas = 4.81e-26, [description = "Mass of gas molecule", unit = u"kg"]
         r = 1.0e-7, [description = "Sphere (droplet/particle) radius", unit = u"m"]
         α = 1.0,
-        [description = "Thermal accommodation coefficient (dimensionless)", unit = u"1"]
+            [description = "Thermal accommodation coefficient (dimensionless)", unit = u"1"]
     end
 
     @variables begin
         Kn_K(t),
-        [
-            description = "Heat transfer Knudsen number, 2κ/(c̄'n'm_gas c_v r) (dimensionless)",
-            unit = u"1"]
+            [
+                description = "Heat transfer Knudsen number, 2κ/(c̄'n'm_gas c_v r) (dimensionless)",
+                unit = u"1",
+            ]
         β_q(t),
-        [
-            description = "Heat transport correction factor, Eq. 5.7 (dimensionless)", unit = u"1"]
+            [
+                description = "Heat transport correction factor, Eq. 5.7 (dimensionless)", unit = u"1",
+            ]
     end
 
     eqs = [
@@ -119,7 +126,7 @@ thermal accommodation coefficient.
         # to get volumetric heat capacity: n' * m_gas * c_v [J/(m^3*K)]
         Kn_K ~ 2 * κ / (c_bar_gas * n_gas * m_gas * c_v * r),
         # Eq. 5.7 - Correction factor for heat transport
-        β_q ~ (Kn_K + 1) / (2 * Kn_K * (Kn_K + 1) / α + 1)
+        β_q ~ (Kn_K + 1) / (2 * Kn_K * (Kn_K + 1) / α + 1),
     ]
 
     return System(eqs, t; name)
@@ -155,15 +162,17 @@ These are related through the conservation equation:
         T_inf = 298.15, [description = "Gas temperature at infinity", unit = u"K"]
         T_o = 293.15, [description = "Droplet surface temperature", unit = u"K"]
         n_inf = 1.0e21,
-        [description = "Vapor number concentration at infinity", unit = u"m^-3"]
+            [description = "Vapor number concentration at infinity", unit = u"m^-3"]
         n_s = 0.0,
-        [description = "Saturation vapor number concentration at droplet surface",
-            unit = u"m^-3"]
+            [
+                description = "Saturation vapor number concentration at droplet surface",
+                unit = u"m^-3",
+            ]
         L_vap = 7.48e-20,
-        [description = "Molecular latent heat of vaporization", unit = u"J"]
+            [description = "Molecular latent heat of vaporization", unit = u"J"]
         r = 1.0e-7, [description = "Droplet radius", unit = u"m"]
         D_v = 2.0e-5,
-        [description = "Diffusion coefficient of vapor molecules", unit = u"m^2/s"]
+            [description = "Diffusion coefficient of vapor molecules", unit = u"m^2/s"]
         κ = 0.026, [description = "Thermal conductivity of gas", unit = u"W/(m*K)"]
     end
 
@@ -188,7 +197,7 @@ These are related through the conservation equation:
         # Eq. 2.2 - Maxwell's heat conduction rate
         Q_M ~ 4 * π * r * κ * (T_inf - T_o),
         # Eq. 5.6 - Corrected heat conduction rate
-        Q ~ heat_corr.β_q * Q_M
+        Q ~ heat_corr.β_q * Q_M,
     ]
 
     return System(eqs, t; systems = [mass_corr, heat_corr], name)
@@ -232,49 +241,60 @@ be decomposed as β = β₁β₂ where:
         ρ_1 = 1000.0, [description = "Density of particle species 1", unit = u"kg/m^3"]
         ρ_2 = 1000.0, [description = "Density of particle species 2", unit = u"kg/m^3"]
         δ_p = 1.0,
-        [description = "Particle sticking probability (dimensionless)", unit = u"1"]
+            [description = "Particle sticking probability (dimensionless)", unit = u"1"]
         C_s1 = 1.0,
-        [description = "Cunningham slip correction factor for particle 1 (dimensionless)",
-            unit = u"1"]
+            [
+                description = "Cunningham slip correction factor for particle 1 (dimensionless)",
+                unit = u"1",
+            ]
         C_s2 = 1.0,
-        [description = "Cunningham slip correction factor for particle 2 (dimensionless)",
-            unit = u"1"]
+            [
+                description = "Cunningham slip correction factor for particle 2 (dimensionless)",
+                unit = u"1",
+            ]
     end
 
     @variables begin
         m_1(t), [description = "Mass of particle 1 (Eq. 6.2)", unit = u"kg"]
         m_2(t), [description = "Mass of particle 2 (Eq. 6.2)", unit = u"kg"]
         f_1(t),
-        [
-            description = "Stokes friction coefficient of particle 1, 6πμr/C_s", unit = u"kg/s"]
+            [
+                description = "Stokes friction coefficient of particle 1, 6πμr/C_s", unit = u"kg/s",
+            ]
         f_2(t),
-        [
-            description = "Stokes friction coefficient of particle 2, 6πμr/C_s", unit = u"kg/s"]
+            [
+                description = "Stokes friction coefficient of particle 2, 6πμr/C_s", unit = u"kg/s",
+            ]
         D_1(t),
-        [
-            description = "Diffusion coefficient of particle 1, kT/f (Eq. 6.5)", unit = u"m^2/s"]
+            [
+                description = "Diffusion coefficient of particle 1, kT/f (Eq. 6.5)", unit = u"m^2/s",
+            ]
         D_2(t),
-        [
-            description = "Diffusion coefficient of particle 2, kT/f (Eq. 6.5)", unit = u"m^2/s"]
+            [
+                description = "Diffusion coefficient of particle 2, kT/f (Eq. 6.5)", unit = u"m^2/s",
+            ]
         D_mutual(t),
-        [description = "Mutual diffusion coefficient, D₁+D₂ (p. 115)", unit = u"m^2/s"]
+            [description = "Mutual diffusion coefficient, D₁+D₂ (p. 115)", unit = u"m^2/s"]
         c_bar_1(t),
-        [description = "Mean thermal velocity of particle 1 (Eq. 6.2)", unit = u"m/s"]
+            [description = "Mean thermal velocity of particle 1 (Eq. 6.2)", unit = u"m/s"]
         c_bar_2(t),
-        [description = "Mean thermal velocity of particle 2 (Eq. 6.2)", unit = u"m/s"]
+            [description = "Mean thermal velocity of particle 2 (Eq. 6.2)", unit = u"m/s"]
         c_bar(t),
-        [
-            description = "Combined mean thermal velocity, √(c̄₁²+c̄₂²) (p. 115)", unit = u"m/s"]
+            [
+                description = "Combined mean thermal velocity, √(c̄₁²+c̄₂²) (p. 115)", unit = u"m/s",
+            ]
         f_mutual(t),
-        [description = "Mutual friction coefficient, f₁f₂/(f₁+f₂) (p. 115)", unit = u"kg/s"]
+            [description = "Mutual friction coefficient, f₁f₂/(f₁+f₂) (p. 115)", unit = u"kg/s"]
         R_coll(t), [description = "Collision radius r₁+r₂ (p. 114)", unit = u"m"]
         Kn_D(t),
-        [description = "Diffusion Knudsen number, 2kT/(c̄fR) (dimensionless)", unit = u"1"]
+            [description = "Diffusion Knudsen number, 2kT/(c̄fR) (dimensionless)", unit = u"1"]
         K_o(t),
-        [description = "Continuum coagulation constant, 4πRD (Eq. 8.8)", unit = u"m^3/s"]
+            [description = "Continuum coagulation constant, 4πRD (Eq. 8.8)", unit = u"m^3/s"]
         β₂(t),
-        [description = "Non-continuum correction factor β₂, Eq. 8.15 (dimensionless)",
-            unit = u"1"]
+            [
+                description = "Non-continuum correction factor β₂, Eq. 8.15 (dimensionless)",
+                unit = u"1",
+            ]
         K(t), [description = "Coagulation rate constant, Eq. 8.13", unit = u"m^3/s"]
     end
 
@@ -309,7 +329,7 @@ be decomposed as β = β₁β₂ where:
         # K_o already includes C_s via diffusion coefficients D_1, D_2.
         # The total correction β = K/K_o(C_s=1) decomposes as β₁β₂ (Eq. 8.14)
         # where β₁ = D_actual/D_base captures the C_s effect.
-        K ~ K_o * β₂
+        K ~ K_o * β₂,
     ]
 
     return System(eqs, t; name)
@@ -352,26 +372,30 @@ from these tables.
         v_mean = 0.01, [description = "Mean flow velocity", unit = u"m/s"]
         L_cap = 0.1, [description = "Capillary length", unit = u"m"]
         γ_flow = 1.0,
-        [
-            description = "Velocity profile parameter: 0=plug, 0.5=transition, 1=Poiseuille (dimensionless)",
-            unit = u"1"]
+            [
+                description = "Velocity profile parameter: 0=plug, 0.5=transition, 1=Poiseuille (dimensionless)",
+                unit = u"1",
+            ]
     end
 
     @variables begin
         σ_flow(t),
-        [
-            description = "Velocity profile normalization factor, 2/(2-γ), Eq. 9.4-9.5 (dimensionless)",
-            unit = u"1"]
+            [
+                description = "Velocity profile normalization factor, 2/(2-γ), Eq. 9.4-9.5 (dimensionless)",
+                unit = u"1",
+            ]
         z_dim(t),
-        [description = "Dimensionless capillary length, DL/(σv̄R²) (dimensionless)",
-            unit = u"1"]
+            [
+                description = "Dimensionless capillary length, DL/(σv̄R²) (dimensionless)",
+                unit = u"1",
+            ]
     end
 
     eqs = [
         # Eq. 9.4, 9.5 - σ = 2/(2-γ) from flow rate constraint
         σ_flow ~ 2 / (2 - γ_flow),
         # Dimensionless tube length z' = Dz/(σv̄R²)
-        z_dim ~ Dcoeff * L_cap / (σ_flow * v_mean * R_cap^2)
+        z_dim ~ Dcoeff * L_cap / (σ_flow * v_mean * R_cap^2),
     ]
 
     return System(eqs, t; name)
@@ -387,23 +411,29 @@ Keys are Kn_D values; values are vectors of (ω_i², B_i) tuples for i = 1..6.
 """
 const DAHNEKE_TABLE3 = Dict(
     0.0 => [
-        (5.78319, 0.69166), (30.4713, 0.13127), (74.8870, 0.05341),
-        (139.040, 0.02877), (222.932, 0.01794), (326.563, 0.01125)],
+        (5.78319, 0.69166), (30.4713, 0.13127), (74.887, 0.05341),
+        (139.04, 0.02877), (222.932, 0.01794), (326.563, 0.01125),
+    ],
     0.1 => [
-        (4.75021, 0.80388), (25.3332, 0.12598), (63.3120, 0.03869),
-        (119.603, 0.01523), (194.827, 0.00696), (289.336, 0.00353)],
+        (4.75021, 0.80388), (25.3332, 0.12598), (63.312, 0.03869),
+        (119.603, 0.01523), (194.827, 0.00696), (289.336, 0.00353),
+    ],
     0.2 => [
         (3.95936, 0.87214), (22.2137, 0.09535), (58.0295, 0.02075),
-        (112.833, 0.00642), (187.103, 0.00252), (280.998, 0.00116)],
+        (112.833, 0.00642), (187.103, 0.00252), (280.998, 0.00116),
+    ],
     0.3 => [
-        (3.36390, 0.91276), (20.3669, 0.06932), (55.4762, 0.01203),
-        (109.951, 0.00334), (184.057, 0.00124), (277.861, 0.00055)],
+        (3.3639, 0.91276), (20.3669, 0.06932), (55.4762, 0.01203),
+        (109.951, 0.00334), (184.057, 0.00124), (277.861, 0.00055),
+    ],
     0.4 => [
         (2.91051, 0.93767), (19.2003, 0.05116), (54.0341, 0.00767),
-        (108.406, 0.00201), (182.464, 0.00073), (276.244, 0.00032)],
+        (108.406, 0.00201), (182.464, 0.00073), (276.244, 0.00032),
+    ],
     0.5 => [
         (2.55824, 0.95366), (18.4123, 0.03877), (53.1206, 0.00527),
-        (107.450, 0.00134), (181.492, 0.00048), (275.262, 0.00021)]
+        (107.45, 0.00134), (181.492, 0.00048), (275.262, 0.00021),
+    ]
 )
 
 """
@@ -413,23 +443,29 @@ Keys are Kn_D values; values are vectors of (ω_i², B_i) tuples for i = 1..6.
 """
 const DAHNEKE_TABLE4 = Dict(
     0.0 => [
-        (6.47641, 0.72680), (36.1924, 0.11940), (89.8982, 0.04708),
-        (167.527, 0.02505), (269.062, 0.01536), (394.496, 0.00020)],
+        (6.47641, 0.7268), (36.1924, 0.1194), (89.8982, 0.04708),
+        (167.527, 0.02505), (269.062, 0.01536), (394.496, 0.0002),
+    ],
     0.1 => [
-        (5.45150, 0.81527), (31.1557, 0.11352), (78.3677, 0.03671),
-        (147.702, 0.01558), (239.731, 0.00758), (354.873, 0.00098)],
+        (5.4515, 0.81527), (31.1557, 0.11352), (78.3677, 0.03671),
+        (147.702, 0.01558), (239.731, 0.00758), (354.873, 0.00098),
+    ],
     0.2 => [
-        (4.64778, 0.87221), (27.8208, 0.09105), (72.2133, 0.02230),
-        (139.209, 0.00757), (229.500, 0.00314), (343.394, 0.00039)],
+        (4.64778, 0.87221), (27.8208, 0.09105), (72.2133, 0.0223),
+        (139.209, 0.00757), (229.5, 0.00314), (343.394, 0.00039),
+    ],
     0.3 => [
-        (4.02261, 0.90850), (25.6742, 0.07000), (68.9119, 0.01392),
-        (135.226, 0.00418), (225.124, 0.00161), (338.782, 0.00020)],
+        (4.02261, 0.9085), (25.6742, 0.07), (68.9119, 0.01392),
+        (135.226, 0.00418), (225.124, 0.00161), (338.782, 0.0002),
+    ],
     0.4 => [
         (3.53186, 0.93215), (24.2373, 0.05397), (66.9437, 0.00927),
-        (133.002, 0.00260), (222.769, 0.00097), (336.354, 0.00013)],
+        (133.002, 0.0026), (222.769, 0.00097), (336.354, 0.00013),
+    ],
     0.5 => [
-        (3.14060, 0.94809), (23.2277, 0.04230), (65.6588, 0.00655),
-        (131.600, 0.00176), (221.310, 0.00064), (334.864, 0.00008)]
+        (3.1406, 0.94809), (23.2277, 0.0423), (65.6588, 0.00655),
+        (131.6, 0.00176), (221.31, 0.00064), (334.864, 0.00008),
+    ]
 )
 
 """
@@ -439,23 +475,29 @@ Keys are Kn_D values; values are vectors of (ω_i², B_i) tuples for i = 1..6.
 """
 const DAHNEKE_TABLE5 = Dict(
     0.0 => [
-        (7.31359, 0.81905), (44.6095, 0.09753), (113.921, 0.03250),
-        (215.241, 0.01543), (348.564, 0.00168), (513.890, 0.00000)],
+        (7.31359, 0.81905), (44.6095, 0.09753), (113.921, 0.0325),
+        (215.241, 0.01543), (348.564, 0.00168), (513.89, 0.0),
+    ],
     0.1 => [
-        (6.33404, 0.86923), (40.5081, 0.08320), (105.487, 0.02358),
-        (201.646, 0.00977), (329.192, 0.00379), (488.261, 0.00000)],
+        (6.33404, 0.86923), (40.5081, 0.0832), (105.487, 0.02358),
+        (201.646, 0.00977), (329.192, 0.00379), (488.261, 0.0),
+    ],
     0.2 => [
-        (5.55381, 0.90293), (37.6387, 0.06760), (100.270, 0.01633),
-        (194.094, 0.00602), (319.401, 0.00217), (476.348, 0.00000)],
+        (5.55381, 0.90293), (37.6387, 0.0676), (100.27, 0.01633),
+        (194.094, 0.00602), (319.401, 0.00217), (476.348, 0.0),
+    ],
     0.3 => [
         (4.92768, 0.92594), (35.6031, 0.05441), (96.9237, 0.01156),
-        (189.606, 0.00393), (313.917, 0.00135), (469.977, 0.00000)],
+        (189.606, 0.00393), (313.917, 0.00135), (469.977, 0.0),
+    ],
     0.4 => [
         (4.41898, 0.94205), (34.1151, 0.04405), (94.6517, 0.00847),
-        (186.705, 0.00273), (310.492, 0.00091), (466.107, 0.00000)],
+        (186.705, 0.00273), (310.492, 0.00091), (466.107, 0.0),
+    ],
     0.5 => [
-        (4.00000, 0.95362), (32.9926, 0.03608), (93.0272, 0.00642),
-        (184.697, 0.00199), (308.171, 0.00066), (463.521, 0.00000)]
+        (4.0, 0.95362), (32.9926, 0.03608), (93.0272, 0.00642),
+        (184.697, 0.00199), (308.171, 0.00066), (463.521, 0.0),
+    ]
 )
 
 """

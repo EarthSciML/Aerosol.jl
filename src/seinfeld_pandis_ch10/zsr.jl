@@ -45,10 +45,10 @@ using ModelingToolkit, Aerosol
 @component function ZSRWaterContent(; name = :ZSRWaterContent, n_species::Int = 3)
     @parameters begin
         RH = 0.8, [description = "Relative humidity (0-1) (dimensionless)", unit = u"1"]
-        C[1:n_species] = fill(1e-6, n_species),
-        [description = "Salt concentrations", unit = u"mol/m^3"]
+        C[1:n_species] = fill(1.0e-6, n_species),
+            [description = "Salt concentrations", unit = u"mol/m^3"]
         m0[1:n_species] = fill(5.0, n_species),
-        [description = "Binary solution molalities at water activity α_w", unit = u"mol/kg"]
+            [description = "Binary solution molalities at water activity α_w", unit = u"mol/kg"]
     end
 
     @variables begin
@@ -61,7 +61,7 @@ using ModelingToolkit, Aerosol
         α_w ~ RH,  # Eq. 10.63
 
         # Eq. 10.98: ZSR mixing rule for water content
-        W ~ sum(C[i] / m0[i] for i in 1:n_species)  # Eq. 10.98
+        W ~ sum(C[i] / m0[i] for i in 1:n_species),  # Eq. 10.98
     ]
 
     return System(eqs, t; name)
@@ -82,7 +82,7 @@ function binary_molality_nh42so4(a_w)
     # Valid for a_w between ~0.4 and 1.0
     if a_w >= 0.99
         return 0.01
-    elseif a_w <= 0.40
+    elseif a_w <= 0.4
         return 29.0  # Near saturation
     end
     # Polynomial fit: m = f(a_w)
@@ -97,7 +97,7 @@ Calculate the molality of NH4NO3 in binary aqueous solution at water activity a_
 function binary_molality_nh4no3(a_w)
     if a_w >= 0.99
         return 0.01
-    elseif a_w <= 0.30
+    elseif a_w <= 0.3
         return 30.0  # Near saturation
     end
     return 12.0 * (1 - a_w)^0.52 + 0.1

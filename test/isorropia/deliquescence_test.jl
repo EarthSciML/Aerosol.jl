@@ -17,23 +17,23 @@ active_salts = collect(values(salts))
 ) ≈ 0.5513060522349494
 
 @test ModelingToolkit.get_unit(ISORROPIA.drh(salts[:CaNO32])) isa
-      Unitful.FreeUnits{(), NoDims, nothing}
+    Unitful.FreeUnits{(), NoDims, nothing}
 
-# TODO(CT): Our solution MDRH selection doesn't work in most cases, 
-# because our method of checking which ions are present doesn't 
-# yield unique matches. We need to find a better 
-# way to do this, perhaps based on the ratios in Fountoukis and 
-# Nenes (2007) Table 3. 
+# TODO(CT): Our solution MDRH selection doesn't work in most cases,
+# because our method of checking which ions are present doesn't
+# yield unique matches. We need to find a better
+# way to do this, perhaps based on the ratios in Fountoukis and
+# Nenes (2007) Table 3.
 @testset "solution_mdrh_recurrent" begin
     for i in eachindex(ISORROPIA.mdrhs)
         u = Dict()
         for ion in values(ions)
-            u[ion.m] = 1.e-20
-            u[ion.m] = 1.e-20
+            u[ion.m] = 1.0e-20
+            u[ion.m] = 1.0e-20
         end
         for s in ISORROPIA.mdrhs[i][1]
-            u[salts[s].cation.m] = 1.e-9
-            u[salts[s].anion.m] = 1.e-9
+            u[salts[s].cation.m] = 1.0e-9
+            u[salts[s].anion.m] = 1.0e-9
         end
         @testset "$i" begin
             x = ModelingToolkit.substitute(

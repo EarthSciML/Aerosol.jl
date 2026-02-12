@@ -55,7 +55,7 @@ using ModelingToolkit, Aerosol
 
     @parameters begin
         T = 298.15, [description = "Temperature", unit = u"K"]
-        R_p = 50e-9, [description = "Particle radius", unit = u"m"]
+        R_p = 50.0e-9, [description = "Particle radius", unit = u"m"]
         σ = 0.072, [description = "Surface tension", unit = u"N/m"]
         M_mol = 0.018, [description = "Molar mass", unit = u"kg/mol"]
         ρ_l = 1000.0, [description = "Liquid density", unit = u"kg/m^3"]
@@ -63,14 +63,14 @@ using ModelingToolkit, Aerosol
 
     @variables begin
         ln_S(t),
-        [description = "Natural log of saturation ratio (dimensionless)", unit = u"1"]
+            [description = "Natural log of saturation ratio (dimensionless)", unit = u"1"]
         S(t), [description = "Saturation ratio p_A/p°_A (dimensionless)", unit = u"1"]
     end
 
     eqs = [
         # Eq. 10.86: Kelvin equation
         ln_S ~ 2 * σ * M_mol / (R_gas * T * ρ_l * R_p),  # Eq. 10.86
-        S ~ exp(ln_S)  # Saturation ratio
+        S ~ exp(ln_S),  # Saturation ratio
     ]
 
     return System(eqs, t; name)
