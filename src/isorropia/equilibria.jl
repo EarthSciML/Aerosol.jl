@@ -2,16 +2,16 @@
     @description """An equilibrium constant based on Equation 5 in Fountoukis and Nenes (2007),
     parameterized by values from Table 2 in the same paper."""
     @constants begin
-        logK⁰, [description = "Log of the equilibrium constant at 298.15 K"]
-        H⁺, [description = "ΔH⁰ / (R * T₀) (unitless)"]
-        C⁺, [description = "ΔC⁰ₚ / R (unitless)"]
+        logK⁰, [description = "Log of the equilibrium constant at 298.15 K (dimensionless)"]
+        H⁺, [description = "ΔH⁰ / (R * T₀) (dimensionless)"]
+        C⁺, [description = "ΔC⁰ₚ / R (dimensionless)"]
         T₀ = 298.15, [unit = u"K", description = "Standard temperature"]
     end
     @parameters begin
         T, [unit = u"K", description = "Temperature"]
     end
     @variables begin
-        logK_eq(t), [description = "Log of the equilibrium constant", guess = logK⁰]
+        logK_eq(t), [description = "Log of the equilibrium constant (dimensionless)", guess = logK⁰]
     end
     @equations begin
         logK_eq ~ logK⁰ + H⁺ * (T₀ / T - 1) + C⁺ * (1 + log(T₀ / T) - T₀ / T)

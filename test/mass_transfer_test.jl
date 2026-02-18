@@ -52,7 +52,8 @@ end
     @test length(equations(sys)) == 1
 end
 
-@testitem "FuchsSutugin limiting behavior" setup = [MassTransferSetup] tags = [:mass_transfer] begin
+@testitem "FuchsSutugin limiting behavior" setup = [MassTransferSetup] tags =
+    [:mass_transfer] begin
     sys = FuchsSutugin()
     compiled = mtkcompile(sys)
 
@@ -74,7 +75,8 @@ end
     @test f_trans ≈ 0.494 rtol = 0.01
 end
 
-@testitem "FuchsSutugin accommodation effect" setup = [MassTransferSetup] tags = [:mass_transfer] begin
+@testitem "FuchsSutugin accommodation effect" setup = [MassTransferSetup] tags =
+    [:mass_transfer] begin
     # Test that lower accommodation coefficient reduces mass transfer
     sys = FuchsSutugin()
     compiled = mtkcompile(sys)
@@ -128,16 +130,19 @@ end
     prob = NonlinearProblem(
         compiled,
         Dict(
-            compiled.R_p => R_p, compiled.D_g => D_g,
-            compiled.c_inf => c_inf, compiled.c_s => c_s
-        )
+            compiled.R_p => R_p,
+            compiled.D_g => D_g,
+            compiled.c_inf => c_inf,
+            compiled.c_s => c_s,
+        ),
     )
     sol = solve(prob)
 
     @test sol[compiled.J_c] ≈ expected_J_c rtol = 1.0e-10
 end
 
-@testitem "MassTransferCoefficient structure" setup = [MassTransferSetup] tags = [:mass_transfer] begin
+@testitem "MassTransferCoefficient structure" setup = [MassTransferSetup] tags =
+    [:mass_transfer] begin
     sys = MassTransferCoefficient()
     @test sys isa System
 end
@@ -155,7 +160,8 @@ end
     @test any(occursin("J_c", s) for s in eq_strs)
 end
 
-@testitem "MassTransfer regime dependence" setup = [MassTransferSetup] tags = [:mass_transfer] begin
+@testitem "MassTransfer regime dependence" setup = [MassTransferSetup] tags =
+    [:mass_transfer] begin
     sys = MassTransfer()
     compiled = mtkcompile(sys)
 
@@ -163,9 +169,11 @@ end
     prob_large = NonlinearProblem(
         compiled,
         Dict(
-            compiled.R_p => 1.0e-5, compiled.α => 1.0,
-            compiled.c_inf => 1.0e-6, compiled.c_s => 0.0
-        )
+            compiled.R_p => 1.0e-5,
+            compiled.α => 1.0,
+            compiled.c_inf => 1.0e-6,
+            compiled.c_s => 0.0,
+        ),
     )
     sol_large = solve(prob_large)
     J_large = sol_large[compiled.J]
@@ -177,9 +185,11 @@ end
     prob_small = NonlinearProblem(
         compiled,
         Dict(
-            compiled.R_p => 1.0e-8, compiled.α => 1.0,
-            compiled.c_inf => 1.0e-6, compiled.c_s => 0.0
-        )
+            compiled.R_p => 1.0e-8,
+            compiled.α => 1.0,
+            compiled.c_inf => 1.0e-6,
+            compiled.c_s => 0.0,
+        ),
     )
     sol_small = solve(prob_small)
     J_small = sol_small[compiled.J]

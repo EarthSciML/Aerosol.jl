@@ -49,13 +49,14 @@ function deliquescence(t, RH, active_salts, salts, all_ions)
                 #   - Solids deliquesce (become liquid) completely when RH > DRH.
                 #   - Solids do not deliquesce at all when when RH < MDRH.
                 #   - Solids deliquesce partially when MDRH < RH < DRH.
-                eq = v ~ ifelse(
+                eq =
+                    v ~ ifelse(
                     $(metastable) > 0.5,
                     0.0,
                     min(
                         1.0,
-                        max(0.0, ($RH - $drhname) / (min($MDRH, $drhname) - $drhname))
-                    )                #ifelse(RH > $drhname, 0.0, 1.0)
+                        max(0.0, ($RH - $drhname) / (min($MDRH, $drhname) - $drhname)),
+                    ),                #ifelse(RH > $drhname, 0.0, 1.0)
                 )
                 push!($drh_eqs, eq)
                 push!($drh_vars, v)
@@ -75,7 +76,7 @@ function deliquescence(t, RH, active_salts, salts, all_ions)
         ],
         t,
         [drh_vars; MDRH],
-        [metastable]
+        [metastable],
     )
     return deliquescence, f_deliquescence
 end
@@ -126,10 +127,7 @@ mdrhs = [
         0.24,
     ),
     ([:NH42SO4, :NH4Cl, :Na2SO4, :K2SO4, :MgSO4], 0.691),
-    (
-        [:CaNO32, :K2SO4, :KNO3, :KCl, :MgSO4, :MgNO32, :NaNO3, :NaCl, :NH4NO3, :NH4Cl],
-        0.24,
-    ),
+    ([:CaNO32, :K2SO4, :KNO3, :KCl, :MgSO4, :MgNO32, :NaNO3, :NaCl, :NH4NO3, :NH4Cl], 0.24),
     ([:NH42SO4, :Na2SO4, :K2SO4, :MgSO4], 0.697),
     ([:K2SO4, :MgSO4, :KHSO4, :NH4HSO4, :NaHSO4, :NH42SO4, :Na2SO4, :NH43HSO42], 0.24),
     ([:NH42SO4, :NH4NO3, :Na2SO4, :K2SO4, :MgSO4], 0.494),
@@ -137,10 +135,7 @@ mdrhs = [
     ([:K2SO4, :MgSO4, :KHSO4, :NaHSO4, :NH42SO4, :Na2SO4, :NH43HSO42], 0.363),
     ([:K2SO4, :KNO3, :KCl, :MgSO4, :NaNO3, :NaCl, :NH4NO3, :NH4Cl], 0.596),
     ([:K2SO4, :MgSO4, :KHSO4, :NH42SO4, :Na2SO4, :NH43HSO42], 0.61),
-    (
-        [:CaNO32, :K2SO4, :KNO3, :KCl, :MgSO4, :MgNO32, :NaNO3, :NaCl, :NH4NO3, :NH4Cl],
-        0.24,
-    ),
+    ([:CaNO32, :K2SO4, :KNO3, :KCl, :MgSO4, :MgNO32, :NaNO3, :NaCl, :NH4NO3, :NH4Cl], 0.24),
     ([:K2SO4, :KNO3, :KCl, :MgSO4, :MgNO32, :NaNO3, :NaCl, :NH4NO3, :NH4Cl], 0.24),    # TODO(CT): Fountoukis and Nenes (2007) imply that this table is missing all of the mixtures that were included in ISORROPIA I.
 ]
 
@@ -156,18 +151,18 @@ concentrations greater than `conc_threshold`, and all the ions not in the given 
 are present at concentrations less than `conc_threshold`.
 """
 function is_solution(i, active_salts, salts, all_ions)
-    active_salt_dict = filter(
-        ((k, v),) -> !isnothing(findfirst(isequal(v), active_salts)), salts
-    )
+    active_salt_dict =
+        filter(((k, v),) -> !isnothing(findfirst(isequal(v), active_salts)), salts)
     if length(setdiff(mdrhs[i][1], keys(active_salt_dict))) > 0
         return false # The equation system doesn't contain all of the salts for this MDRH.
     end
-    ions_present = unique(vcat([[salts[s].cation.m, salts[s].anion.m] for s in mdrhs[i][1]]...))
+    ions_present =
+        unique(vcat([[salts[s].cation.m, salts[s].anion.m] for s in mdrhs[i][1]]...))
     ions_not_present = setdiff([i.m for i in values(all_ions)], ions_present)
     return sum(
         vcat(
             [ion > conc_threshold for ion in ions_present],
-            [ion < conc_threshold for ion in ions_not_present]
+            [ion < conc_threshold for ion in ions_not_present],
         ),
     ) > length(all_ions) - 0.5
 end
@@ -177,12 +172,12 @@ function solution_mdrh_recurrent(i, active_salts, salts, all_ions)
         return ifelse(
             is_solution(i, active_salts, salts, all_ions),
             mdrhs[i][2],
-            sum([mdrh[2] for mdrh in mdrhs]) / length(mdrhs) # Average of all MDRHs
+            sum([mdrh[2] for mdrh in mdrhs]) / length(mdrhs), # Average of all MDRHs
         )
     end
     return ifelse(
         is_solution(i, active_salts, salts, all_ions),
         mdrhs[i][2],
-        solution_mdrh_recurrent(i + 1, active_salts, salts, all_ions)
+        solution_mdrh_recurrent(i + 1, active_salts, salts, all_ions),
     )
 end

@@ -21,8 +21,9 @@ function VBS(Ci, Ci_star_standard)
 
     eqs = [
         [
-            ξ[i] ~ 1 / (1 + calc_Ci_star(T / T_unit, Ci_star_standard[i]) / (C_OA * C_OA_unit))
-                for i in 1:n
+            ξ[i] ~
+                1 / (1 + calc_Ci_star(T / T_unit, Ci_star_standard[i]) / (C_OA * C_OA_unit)) for
+                i in 1:n
         ]
         C_OA * C_OA_unit ~ sum(collect(ξ) .* Ci)
     ] # TODO: Remove collect when unit bug is fixed in MTK

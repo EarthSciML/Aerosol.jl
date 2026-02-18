@@ -100,11 +100,9 @@ end
         csys = mtkcompile(sys)
 
         prob = NonlinearProblem(
-            csys, Dict(), Dict(
-                csys.D_p => D_p,
-                csys.ρ_p => 1000.0,
-                csys.C_c => C_c
-            )
+            csys,
+            Dict(),
+            Dict(csys.D_p => D_p, csys.ρ_p => 1000.0, csys.C_c => C_c),
         )
         sol = solve(prob)
 
@@ -122,11 +120,9 @@ end
     C_c = 1.164
 
     prob = NonlinearProblem(
-        csys, Dict(), Dict(
-            csys.D_p => D_p,
-            csys.ρ_p => ρ_p,
-            csys.C_c => C_c
-        )
+        csys,
+        Dict(),
+        Dict(csys.D_p => D_p, csys.ρ_p => ρ_p, csys.C_c => C_c),
     )
     sol = solve(prob)
 
@@ -154,12 +150,9 @@ end
         csys = mtkcompile(sys)
 
         prob = NonlinearProblem(
-            csys, Dict(), Dict(
-                csys.D_p => D_p,
-                csys.ρ_p => 1000.0,
-                csys.T => 298.0,
-                csys.C_c => C_c
-            )
+            csys,
+            Dict(),
+            Dict(csys.D_p => D_p, csys.ρ_p => 1000.0, csys.T => 298.0, csys.C_c => C_c),
         )
         sol = solve(prob)
 
@@ -356,13 +349,8 @@ end
     μ = 1.8e-5  # kg/(m·s)
     C_c = 1.164  # slip correction for 1 μm
 
-    prob = NonlinearProblem(
-        csys, Dict(), Dict(
-            csys.D_p => D_p,
-            csys.μ => μ,
-            csys.C_c => C_c
-        )
-    )
+    prob =
+        NonlinearProblem(csys, Dict(), Dict(csys.D_p => D_p, csys.μ => μ, csys.C_c => C_c))
     sol = solve(prob)
 
     # Calculate expected mobility

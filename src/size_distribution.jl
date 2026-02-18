@@ -63,45 +63,34 @@ Default parameter values correspond to the "Urban" distribution from Table 8.3.
         # Eq. 8.54 — Multi-modal lognormal number distribution dN/d(log D_p)
         n_N_o ~ sum(
             N[i] / (sqrt(2 * π_c) * logσ[i]) *
-                exp(-(log10(D_p / D_g[i]))^2 / (2 * logσ[i]^2))
-                for i in 1:n_modes
+                exp(-(log10(D_p / D_g[i]))^2 / (2 * logσ[i]^2)) for i in 1:n_modes
         ),
 
         # Eq. 8.49/8.50 — Surface area distribution dS/d(log D_p)
         n_S_o ~ sum(
             π_c * N[i] * (D_g[i] * exp(2 * (logσ[i] * ln10)^2))^2 /
-                (sqrt(2 * π_c) * logσ[i]) *
-                exp(
-                    -(log10(D_p / (D_g[i] * exp(2 * (logσ[i] * ln10)^2))))^2 /
-                    (2 * logσ[i]^2)
-                )
-                for i in 1:n_modes
+                (sqrt(2 * π_c) * logσ[i]) * exp(
+                    -(log10(D_p / (D_g[i] * exp(2 * (logσ[i] * ln10)^2))))^2 / (2 * logσ[i]^2),
+                ) for i in 1:n_modes
         ),
 
         # Eq. 8.52/8.53 — Volume distribution dV/d(log D_p)
         n_V_o ~ sum(
             (π_c / 6) * N[i] * (D_g[i] * exp(3 * (logσ[i] * ln10)^2))^3 /
-                (sqrt(2 * π_c) * logσ[i]) *
-                exp(
-                    -(log10(D_p / (D_g[i] * exp(3 * (logσ[i] * ln10)^2))))^2 /
-                    (2 * logσ[i]^2)
-                )
-                for i in 1:n_modes
+                (sqrt(2 * π_c) * logσ[i]) * exp(
+                    -(log10(D_p / (D_g[i] * exp(3 * (logσ[i] * ln10)^2))))^2 / (2 * logσ[i]^2),
+                ) for i in 1:n_modes
         ),
 
         # Total number concentration — sum of all modes
         N_t ~ sum(N[i] for i in 1:n_modes),
 
         # Total surface area — Eq. 8.5 with Eq. 8.41 (k=2 moment)
-        S_t ~ sum(
-            π_c * N[i] * D_g[i]^2 * exp(2 * (logσ[i] * ln10)^2)
-                for i in 1:n_modes
-        ),
+        S_t ~ sum(π_c * N[i] * D_g[i]^2 * exp(2 * (logσ[i] * ln10)^2) for i in 1:n_modes),
 
         # Total volume — Eq. 8.7 with Eq. 8.41 (k=3 moment)
         V_t ~ sum(
-            (π_c / 6) * N[i] * D_g[i]^3 * exp(4.5 * (logσ[i] * ln10)^2)
-                for i in 1:n_modes
+            (π_c / 6) * N[i] * D_g[i]^3 * exp(4.5 * (logσ[i] * ln10)^2) for i in 1:n_modes
         ),
 
         # Eq. 8.50 — Surface area median diameter (first mode)
@@ -140,13 +129,22 @@ Three lognormal modes with parameters:
 @component function UrbanAerosol(; name = :UrbanAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
-        sys.N[1] => 9.93e4 * 1.0e6, sys.D_g[1] => 0.013e-6, sys.logσ[1] => 0.245,
-        sys.N[2] => 1.11e3 * 1.0e6, sys.D_g[2] => 0.014e-6, sys.logσ[2] => 0.666,
-        sys.N[3] => 3.64e4 * 1.0e6, sys.D_g[3] => 0.05e-6, sys.logσ[3] => 0.337
+        sys.N[1] => 9.93e4 * 1.0e6,
+        sys.D_g[1] => 0.013e-6,
+        sys.logσ[1] => 0.245,
+        sys.N[2] => 1.11e3 * 1.0e6,
+        sys.D_g[2] => 0.014e-6,
+        sys.logσ[2] => 0.666,
+        sys.N[3] => 3.64e4 * 1.0e6,
+        sys.D_g[3] => 0.05e-6,
+        sys.logσ[3] => 0.337,
     )
     return System(
-        equations(sys), t; name, defaults,
-        systems = ModelingToolkit.get_systems(sys)
+        equations(sys),
+        t;
+        name,
+        defaults,
+        systems = ModelingToolkit.get_systems(sys),
     )
 end
 
@@ -164,13 +162,22 @@ Three lognormal modes with parameters:
 @component function MarineAerosol(; name = :MarineAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
-        sys.N[1] => 133.0 * 1.0e6, sys.D_g[1] => 0.008e-6, sys.logσ[1] => 0.657,
-        sys.N[2] => 66.6 * 1.0e6, sys.D_g[2] => 0.266e-6, sys.logσ[2] => 0.21,
-        sys.N[3] => 3.1 * 1.0e6, sys.D_g[3] => 0.58e-6, sys.logσ[3] => 0.396
+        sys.N[1] => 133.0 * 1.0e6,
+        sys.D_g[1] => 0.008e-6,
+        sys.logσ[1] => 0.657,
+        sys.N[2] => 66.6 * 1.0e6,
+        sys.D_g[2] => 0.266e-6,
+        sys.logσ[2] => 0.21,
+        sys.N[3] => 3.1 * 1.0e6,
+        sys.D_g[3] => 0.58e-6,
+        sys.logσ[3] => 0.396,
     )
     return System(
-        equations(sys), t; name, defaults,
-        systems = ModelingToolkit.get_systems(sys)
+        equations(sys),
+        t;
+        name,
+        defaults,
+        systems = ModelingToolkit.get_systems(sys),
     )
 end
 
@@ -188,13 +195,22 @@ Three lognormal modes with parameters:
 @component function RuralAerosol(; name = :RuralAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
-        sys.N[1] => 6.65e3 * 1.0e6, sys.D_g[1] => 0.015e-6, sys.logσ[1] => 0.225,
-        sys.N[2] => 147.0 * 1.0e6, sys.D_g[2] => 0.054e-6, sys.logσ[2] => 0.557,
-        sys.N[3] => 1990.0 * 1.0e6, sys.D_g[3] => 0.084e-6, sys.logσ[3] => 0.266
+        sys.N[1] => 6.65e3 * 1.0e6,
+        sys.D_g[1] => 0.015e-6,
+        sys.logσ[1] => 0.225,
+        sys.N[2] => 147.0 * 1.0e6,
+        sys.D_g[2] => 0.054e-6,
+        sys.logσ[2] => 0.557,
+        sys.N[3] => 1990.0 * 1.0e6,
+        sys.D_g[3] => 0.084e-6,
+        sys.logσ[3] => 0.266,
     )
     return System(
-        equations(sys), t; name, defaults,
-        systems = ModelingToolkit.get_systems(sys)
+        equations(sys),
+        t;
+        name,
+        defaults,
+        systems = ModelingToolkit.get_systems(sys),
     )
 end
 
@@ -212,13 +228,22 @@ Three lognormal modes with parameters:
 @component function RemoteContinentalAerosol(; name = :RemoteContinentalAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
-        sys.N[1] => 3200.0 * 1.0e6, sys.D_g[1] => 0.02e-6, sys.logσ[1] => 0.161,
-        sys.N[2] => 2900.0 * 1.0e6, sys.D_g[2] => 0.116e-6, sys.logσ[2] => 0.217,
-        sys.N[3] => 0.3 * 1.0e6, sys.D_g[3] => 1.8e-6, sys.logσ[3] => 0.38
+        sys.N[1] => 3200.0 * 1.0e6,
+        sys.D_g[1] => 0.02e-6,
+        sys.logσ[1] => 0.161,
+        sys.N[2] => 2900.0 * 1.0e6,
+        sys.D_g[2] => 0.116e-6,
+        sys.logσ[2] => 0.217,
+        sys.N[3] => 0.3 * 1.0e6,
+        sys.D_g[3] => 1.8e-6,
+        sys.logσ[3] => 0.38,
     )
     return System(
-        equations(sys), t; name, defaults,
-        systems = ModelingToolkit.get_systems(sys)
+        equations(sys),
+        t;
+        name,
+        defaults,
+        systems = ModelingToolkit.get_systems(sys),
     )
 end
 
@@ -236,13 +261,22 @@ Three lognormal modes with parameters:
 @component function FreeTroposphereAerosol(; name = :FreeTroposphereAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
-        sys.N[1] => 129.0 * 1.0e6, sys.D_g[1] => 0.007e-6, sys.logσ[1] => 0.645,
-        sys.N[2] => 59.7 * 1.0e6, sys.D_g[2] => 0.25e-6, sys.logσ[2] => 0.253,
-        sys.N[3] => 63.5 * 1.0e6, sys.D_g[3] => 0.52e-6, sys.logσ[3] => 0.425
+        sys.N[1] => 129.0 * 1.0e6,
+        sys.D_g[1] => 0.007e-6,
+        sys.logσ[1] => 0.645,
+        sys.N[2] => 59.7 * 1.0e6,
+        sys.D_g[2] => 0.25e-6,
+        sys.logσ[2] => 0.253,
+        sys.N[3] => 63.5 * 1.0e6,
+        sys.D_g[3] => 0.52e-6,
+        sys.logσ[3] => 0.425,
     )
     return System(
-        equations(sys), t; name, defaults,
-        systems = ModelingToolkit.get_systems(sys)
+        equations(sys),
+        t;
+        name,
+        defaults,
+        systems = ModelingToolkit.get_systems(sys),
     )
 end
 
@@ -260,13 +294,22 @@ Three lognormal modes with parameters:
 @component function PolarAerosol(; name = :PolarAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
-        sys.N[1] => 21.7 * 1.0e6, sys.D_g[1] => 0.138e-6, sys.logσ[1] => 0.245,
-        sys.N[2] => 0.186 * 1.0e6, sys.D_g[2] => 0.75e-6, sys.logσ[2] => 0.3,
-        sys.N[3] => 3.0e-4 * 1.0e6, sys.D_g[3] => 8.6e-6, sys.logσ[3] => 0.291
+        sys.N[1] => 21.7 * 1.0e6,
+        sys.D_g[1] => 0.138e-6,
+        sys.logσ[1] => 0.245,
+        sys.N[2] => 0.186 * 1.0e6,
+        sys.D_g[2] => 0.75e-6,
+        sys.logσ[2] => 0.3,
+        sys.N[3] => 3.0e-4 * 1.0e6,
+        sys.D_g[3] => 8.6e-6,
+        sys.logσ[3] => 0.291,
     )
     return System(
-        equations(sys), t; name, defaults,
-        systems = ModelingToolkit.get_systems(sys)
+        equations(sys),
+        t;
+        name,
+        defaults,
+        systems = ModelingToolkit.get_systems(sys),
     )
 end
 
@@ -284,12 +327,21 @@ Three lognormal modes with parameters:
 @component function DesertAerosol(; name = :DesertAerosol)
     sys = AerosolDistribution(3; name)
     defaults = Dict(
-        sys.N[1] => 726.0 * 1.0e6, sys.D_g[1] => 0.002e-6, sys.logσ[1] => 0.247,
-        sys.N[2] => 114.0 * 1.0e6, sys.D_g[2] => 0.038e-6, sys.logσ[2] => 0.77,
-        sys.N[3] => 0.178 * 1.0e6, sys.D_g[3] => 21.6e-6, sys.logσ[3] => 0.438
+        sys.N[1] => 726.0 * 1.0e6,
+        sys.D_g[1] => 0.002e-6,
+        sys.logσ[1] => 0.247,
+        sys.N[2] => 114.0 * 1.0e6,
+        sys.D_g[2] => 0.038e-6,
+        sys.logσ[2] => 0.77,
+        sys.N[3] => 0.178 * 1.0e6,
+        sys.D_g[3] => 21.6e-6,
+        sys.logσ[3] => 0.438,
     )
     return System(
-        equations(sys), t; name, defaults,
-        systems = ModelingToolkit.get_systems(sys)
+        equations(sys),
+        t;
+        name,
+        defaults,
+        systems = ModelingToolkit.get_systems(sys),
     )
 end

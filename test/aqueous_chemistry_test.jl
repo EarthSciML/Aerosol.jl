@@ -76,8 +76,11 @@ end
 
 @testitem "SulfateFormation structure" setup = [AqueousSetup] tags = [:aqueous] begin
     for F in [
-            SulfateFormationO3, SulfateFormationH2O2, SulfateFormationFe,
-            SulfateFormationMn, SulfateFormationFeMn,
+            SulfateFormationO3,
+            SulfateFormationH2O2,
+            SulfateFormationFe,
+            SulfateFormationMn,
+            SulfateFormationFeMn,
         ]
         sys = F()
         @test sys isa System
@@ -325,7 +328,8 @@ end
     @test alpha_1_mid > 0.9  # HSO3- dominates at pH 4
 end
 
-@testitem "Effective Henry's constant limiting behavior" setup = [AqueousSetup] tags = [:aqueous] begin
+@testitem "Effective Henry's constant limiting behavior" setup = [AqueousSetup] tags =
+    [:aqueous] begin
     # H_eff should always be >= H_intrinsic
     H_SO2 = 1.23 / ATM_TO_PA
     K_s1 = K_S1_298

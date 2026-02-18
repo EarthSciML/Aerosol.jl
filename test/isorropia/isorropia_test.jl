@@ -33,12 +33,12 @@ end
         :r25 => 4.199e-17,  # XK10: NH4NO3(s) ⇌ NH3(g) + HNO3(g)
         :r26 => 1.382e2,    # XK12: NH4HSO4(s) ⇌ NH4(aq) + HSO4(aq)
         :r27 => 2.972e1,    # XK13: (NH4)3H(SO4)2(s) ⇌ 3NH4(aq) + HSO4(aq) + SO4(aq)
-        :r4  => 1.569e-2,   # XK17: K2SO4(s) ⇌ 2K(aq) + SO4(aq)
-        :r5  => 24.016,     # XK18: KHSO4(s) ⇌ K(aq) + HSO4(aq)
-        :r6  => 0.872,      # XK19: KNO3(s) ⇌ K(aq) + NO3(aq)
-        :r7  => 8.68,       # XK20: KCl(s) ⇌ K(aq) + Cl(aq)
-        :r8  => 1.079e5,    # XK23: MgSO4(s) ⇌ Mg(aq) + SO4(aq)
-        :r9  => 2.507e15,   # XK24: Mg(NO3)2(s) ⇌ Mg(aq) + 2NO3(aq)
+        :r4 => 1.569e-2,   # XK17: K2SO4(s) ⇌ 2K(aq) + SO4(aq)
+        :r5 => 24.016,     # XK18: KHSO4(s) ⇌ K(aq) + HSO4(aq)
+        :r6 => 0.872,      # XK19: KNO3(s) ⇌ K(aq) + NO3(aq)
+        :r7 => 8.68,       # XK20: KCl(s) ⇌ K(aq) + Cl(aq)
+        :r8 => 1.079e5,    # XK23: MgSO4(s) ⇌ Mg(aq) + SO4(aq)
+        :r9 => 2.507e15,   # XK24: Mg(NO3)2(s) ⇌ Mg(aq) + 2NO3(aq)
         :r10 => 9.557e21,   # XK25: MgCl2(s) ⇌ Mg(aq) + 2Cl(aq)
     )
 
@@ -53,11 +53,12 @@ end
         rsym = getproperty(sys, rname)
         logK_val = sol[rsym.logK_eq]
         K_computed = exp(logK_val)
-        @test K_computed ≈ K0 rtol = 1e-3
+        @test K_computed ≈ K0 rtol = 1.0e-3
     end
 end
 
-@testitem "Equilibrium constants temperature dependence" setup = [IsorropiaSetup] tags = [:isorropia] begin
+@testitem "Equilibrium constants temperature dependence" setup = [IsorropiaSetup] tags =
+    [:isorropia] begin
     # Verify temperature correction against FORTRAN reference at T=310K
     # FORTRAN formula: K(T) = K0 * exp(A*(T0/T - 1) + B*(1 + ln(T0/T) - T0/T))
     T = 310.0
@@ -69,22 +70,22 @@ end
     fortran_params = Dict(
         :r11 => (1.015e-2, 8.85, 25.14),       # XK1
         :r12 => (5.764e1, 13.79, -5.393),       # XK21
-        :r13 => (1.805e-5, -1.50, 26.92),       # XK22
+        :r13 => (1.805e-5, -1.5, 26.92),       # XK22
         :r14 => (2.511e6, 29.17, 16.83),        # XK4
-        :r16 => (1.971e6, 30.20, 19.91),        # XK3
+        :r16 => (1.971e6, 30.2, 19.91),        # XK3
         :r18 => (1.01e-14, -22.52, 26.92),      # XKW
-        :r19 => (4.799e-1, 0.98, 39.50),        # XK5 (note: FORTRAN has 39.5, paper may have 39.75)
+        :r19 => (4.799e-1, 0.98, 39.5),        # XK5 (note: FORTRAN has 39.5, paper may have 39.75)
         :r20 => (1.817e0, -2.65, 38.57),        # XK7
-        :r21 => (1.086e-16, -71.0, 2.40),       # XK6
+        :r21 => (1.086e-16, -71.0, 2.4),       # XK6
         :r22 => (1.197e1, -8.22, 16.01),        # XK9
-        :r23 => (3.766e1, -1.56, 16.90),        # XK8
+        :r23 => (3.766e1, -1.56, 16.9),        # XK8
         :r24 => (2.413e4, 0.79, 14.746),        # XK11
         :r26 => (1.382e2, -2.87, 15.83),        # XK12
-        :r27 => (2.972e1, -5.19, 54.40),        # XK13
-        :r4  => (1.569e-2, -9.585, 45.81),      # XK17
-        :r5  => (24.016, -8.423, 17.96),        # XK18
-        :r6  => (0.872, -14.08, 19.39),         # XK19 (note: FORTRAN uses -14.08, Julia uses -14.075)
-        :r7  => (8.68, -6.902, 19.95),          # XK20 (note: value diffs from Julia's -6.167)
+        :r27 => (2.972e1, -5.19, 54.4),        # XK13
+        :r4 => (1.569e-2, -9.585, 45.81),      # XK17
+        :r5 => (24.016, -8.423, 17.96),        # XK18
+        :r6 => (0.872, -14.08, 19.39),         # XK19 (note: FORTRAN uses -14.08, Julia uses -14.075)
+        :r7 => (8.68, -6.902, 19.95),          # XK20 (note: value diffs from Julia's -6.167)
     )
 
     @named eq = ISORROPIA.EquilibriumConstants()
@@ -128,7 +129,8 @@ end
     @test hasproperty(sys, :SO4)
 end
 
-@testitem "Isorropia aerosol type classification" setup = [IsorropiaSetup] tags = [:isorropia] begin
+@testitem "Isorropia aerosol type classification" setup = [IsorropiaSetup] tags =
+    [:isorropia] begin
     # Test the aerosol type smoothed classification based on sulfate ratios (Section 3.1)
     # Type 1: R₁ < 1 (sulfate rich, free acid)
     # Type 2: 1 ≤ R₁ < 2 (sulfate rich)
@@ -183,20 +185,29 @@ end
     sys = mtkcompile(isrpa)
 
     prob = ODEProblem(
-        sys, [],
+        sys,
+        [],
         (0.0, 10.0),
         [sys.RH => 0.7];
         initializealg = BrownFullBasicInit(nlsolve = RobustMultiNewton()),
-        use_scc = false
+        use_scc = false,
     )
 
     sol = solve(prob, Rosenbrock23())
 
     # Check that totals are conserved (D(total) ~ 0 for all species)
-    for sp in [sys.NH.total, sys.Na.total, sys.Ca.total, sys.K.total,
-               sys.Mg.total, sys.Cl.total, sys.NO3.total, sys.SO4.total]
+    for sp in [
+            sys.NH.total,
+            sys.Na.total,
+            sys.Ca.total,
+            sys.K.total,
+            sys.Mg.total,
+            sys.Cl.total,
+            sys.NO3.total,
+            sys.SO4.total,
+        ]
         vals = sol[sp]
-        @test vals[1] ≈ vals[end] rtol = 1e-6
+        @test vals[1] ≈ vals[end] rtol = 1.0e-6
     end
 end
 

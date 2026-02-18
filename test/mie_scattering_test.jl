@@ -19,8 +19,17 @@ end
 
     # Check that all expected variables are present
     expected_vars = [
-        "α", "Q_scat", "Q_abs", "Q_ext", "ω", "C_scat",
-        "C_abs", "C_ext", "E_scat", "E_abs", "E_ext",
+        "α",
+        "Q_scat",
+        "Q_abs",
+        "Q_ext",
+        "ω",
+        "C_scat",
+        "C_abs",
+        "C_ext",
+        "E_scat",
+        "E_abs",
+        "E_ext",
     ]
     for v in expected_vars
         @test any(occursin(v, vn) for vn in var_names)
@@ -359,7 +368,8 @@ end
     @test any(occursin("x_v_max", vn) for vn in var_names)
 end
 
-@testitem "RayleighAtmosphere reference values (Problem 15.1A)" setup = [MieSetup] tags = [:mie] begin
+@testitem "RayleighAtmosphere reference values (Problem 15.1A)" setup = [MieSetup] tags =
+    [:mie] begin
     # From page 705: At sea level, λ = 520 nm, b_sg ≈ 13.2 × 10⁻⁶ m⁻¹
     # This gives x_v ≈ 296 km
 
@@ -399,7 +409,8 @@ end
     @test b_sg_450 / b_sg_550 ≈ expected_ratio rtol = 1.0e-10
 end
 
-@testitem "RayleighAtmosphere temperature and pressure dependence" setup = [MieSetup] tags = [:mie] begin
+@testitem "RayleighAtmosphere temperature and pressure dependence" setup = [MieSetup] tags =
+    [:mie] begin
     # b_sg ~ (1/T) × p
     # At higher altitude (lower T and p), b_sg should decrease
 

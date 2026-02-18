@@ -21,7 +21,8 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.110
     @variables begin
         q(t),
             [
-                description = "Dimensionless reaction-diffusion parameter (dimensionless)", unit = u"1",
+                description = "Dimensionless reaction-diffusion parameter (dimensionless)",
+                unit = u"1",
             ]
         Q(t),
             [description = "Aqueous diffusion correction factor (dimensionless)", unit = u"1"]
@@ -73,11 +74,13 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.85, 12.86, 12.93
             ]
         k1_aq_limit(t),
             [
-                description = "Aqueous-phase diffusion limitation threshold for k₁", unit = u"s^-1",
+                description = "Aqueous-phase diffusion limitation threshold for k₁",
+                unit = u"s^-1",
             ]
         k1H_interface_limit(t),
             [
-                description = "Interfacial limitation threshold for k₁H*", unit = u"mol/(m^3*Pa*s)",
+                description = "Interfacial limitation threshold for k₁H*",
+                unit = u"mol/(m^3*Pa*s)",
             ]
     end
 

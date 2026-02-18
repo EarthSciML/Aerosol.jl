@@ -86,7 +86,8 @@ From Air Pollution to Climate Change*, 2nd Edition, Chapter 11, pp. 489-536.
         # Eq. 11.47: Classical nucleation rate
         # J = (2σ/(πm_1))^(1/2) * (v_1 * N_1² / S) * exp(-(16π/3) * v_1² * σ³ / ((kT)³ (ln S)²))
         J ~
-            sqrt(2 * σ / (π_val * m_1)) * (v_1 * N_1^2 / S) *
+            sqrt(2 * σ / (π_val * m_1)) *
+            (v_1 * N_1^2 / S) *
             exp(-(16 * π_val / 3) * v_1^2 * σ^3 / ((k_B * T)^3 * log(S)^2)),
     ]
 
@@ -134,12 +135,12 @@ Seinfeld, J.H. and Pandis, S.N. (2006). *Atmospheric Chemistry and Physics*, Cha
 
         # Antoine equation constants for water (dimensionless form)
         # ln(p/Pa) = A - B/(C+T/K) where T is in K
-        A_antoine = 23.1964,
-            [description = "Antoine A coefficient (dimensionless)", unit = u"1"]
-        B_antoine = 3816.44,
-            [description = "Antoine B coefficient (dimensionless)", unit = u"1"]
-        C_antoine = -46.13,
-            [description = "Antoine C coefficient (dimensionless)", unit = u"1"]
+        A_antoine =
+            23.1964, [description = "Antoine A coefficient (dimensionless)", unit = u"1"]
+        B_antoine =
+            3816.44, [description = "Antoine B coefficient (dimensionless)", unit = u"1"]
+        C_antoine =
+            -46.13, [description = "Antoine C coefficient (dimensionless)", unit = u"1"]
     end
 
     @parameters begin
@@ -276,7 +277,8 @@ cluster properties are not needed.
     eqs = [
         # Eq. 11.47: Classical nucleation rate
         J ~
-            sqrt(2 * σ / (π_val * m_1)) * (v_1 * N_1^2 / S) *
+            sqrt(2 * σ / (π_val * m_1)) *
+            (v_1 * N_1^2 / S) *
             exp(-(16 * π_val / 3) * v_1^2 * σ^3 / ((k_B * T)^3 * log(S)^2)),
     ]
 

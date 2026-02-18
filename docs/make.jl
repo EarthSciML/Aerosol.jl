@@ -10,7 +10,7 @@ makedocs(;
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://aerosol.earthsci.dev",
-        assets = String[]        #size_threshold=10000000,
+        assets = String[],        #size_threshold=10000000,
     ),
     repo = Remotes.GitHub("EarthSciML", "Aerosol.jl"),
     pages = [
@@ -33,7 +33,7 @@ makedocs(;
         "Radiative Forcing" => "aerosol_radiative_forcing.md",
         "API" => "api.md",
     ],
-    warnonly = [:missing_docs]
+    warnonly = [:missing_docs],
 )
 
 deploydocs(; repo = "github.com/EarthSciML/Aerosol.jl")

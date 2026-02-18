@@ -38,6 +38,6 @@ function ElementalCarbon(; name = :ElementalCarbon)
         vars,
         [params; consts];
         name = name,
-        metadata = Dict(CoupleType => ElementalCarbonCoupler)
+        metadata = Dict(CoupleType => ElementalCarbonCoupler),
     )
 end

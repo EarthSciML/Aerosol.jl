@@ -42,10 +42,14 @@ Chapter 15, Equations 15.1-15.23, 15.37-15.43.
         D_p = 0.5e-6, [unit = u"m", description = "Particle diameter"]
         λ = 550.0e-9, [unit = u"m", description = "Wavelength of incident radiation"]
         n_refr = 1.5,
-            [unit = u"1", description = "Real part of complex refractive index (dimensionless)"]
+            [
+                unit = u"1",
+                description = "Real part of complex refractive index (dimensionless)",
+            ]
         k_refr = 0.0,
             [
-                unit = u"1", description = "Imaginary part of complex refractive index (dimensionless)",
+                unit = u"1",
+                description = "Imaginary part of complex refractive index (dimensionless)",
             ]
         ρ_p = 1500.0, [unit = u"kg/m^3", description = "Particle density"]
     end
@@ -125,10 +129,14 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.17-15.21.
         D_p = 0.05e-6, [unit = u"m", description = "Particle diameter"]
         λ = 550.0e-9, [unit = u"m", description = "Wavelength of incident radiation"]
         n_refr = 1.5,
-            [unit = u"1", description = "Real part of complex refractive index (dimensionless)"]
+            [
+                unit = u"1",
+                description = "Real part of complex refractive index (dimensionless)",
+            ]
         k_refr = 0.0,
             [
-                unit = u"1", description = "Imaginary part of complex refractive index (dimensionless)",
+                unit = u"1",
+                description = "Imaginary part of complex refractive index (dimensionless)",
             ]
         ρ_p = 1500.0, [unit = u"kg/m^3", description = "Particle density"]
     end
@@ -139,7 +147,8 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.17-15.21.
             [unit = u"1", description = "Real part of (m²-1)/(m²+2) factor (dimensionless)"]
         m2_factor_imag(t),
             [
-                unit = u"1", description = "Imaginary part of (m²-1)/(m²+2) factor (dimensionless)",
+                unit = u"1",
+                description = "Imaginary part of (m²-1)/(m²+2) factor (dimensionless)",
             ]
         m2_factor_mag_sq(t),
             [unit = u"1", description = "|(m²-1)/(m²+2)|² factor (dimensionless)"]
@@ -206,18 +215,22 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.24-15.30, 15.37-15.40.
 @component function AerosolExtinction(; name = :AerosolExtinction)
     @constants begin
         π_val = Float64(π), [unit = u"1", description = "Pi (dimensionless)"]
-        four = 4.0,
-            [unit = u"1", description = "Constant 4 for cross section (dimensionless)"]
+        four =
+            4.0, [unit = u"1", description = "Constant 4 for cross section (dimensionless)"]
     end
 
     @parameters begin
         D_p = 0.5e-6, [unit = u"m", description = "Particle diameter"]
         λ = 550.0e-9, [unit = u"m", description = "Wavelength of incident radiation"]
         n_refr = 1.5,
-            [unit = u"1", description = "Real part of complex refractive index (dimensionless)"]
+            [
+                unit = u"1",
+                description = "Real part of complex refractive index (dimensionless)",
+            ]
         k_refr = 0.0,
             [
-                unit = u"1", description = "Imaginary part of complex refractive index (dimensionless)",
+                unit = u"1",
+                description = "Imaginary part of complex refractive index (dimensionless)",
             ]
         ρ_p = 1500.0, [unit = u"kg/m^3", description = "Particle density"]
         N = 1.0e9, [unit = u"m^-3", description = "Particle number concentration"]
@@ -281,8 +294,8 @@ Seinfeld & Pandis (2006), Chapter 15, Equations 15.31-15.36.
 
     @parameters begin
         b_ext = 1.0e-4, [unit = u"m^-1", description = "Total extinction coefficient"]
-        b_sg = 13.2e-6,
-            [unit = u"m^-1", description = "Rayleigh scattering coefficient (gas)"]
+        b_sg =
+            13.2e-6, [unit = u"m^-1", description = "Rayleigh scattering coefficient (gas)"]
         b_ag = 0.0,
             [unit = u"m^-1", description = "Absorption coefficient due to gases (mainly NO₂)"]
     end
@@ -332,7 +345,8 @@ Seinfeld & Pandis (2006), Chapter 15, page 705 and Problem 15.1A.
         # From Problem 15.1A: b_sg = 11.4 × (293/T) × p × 10⁻⁶ m⁻¹
         b_sg_ref = 11.4e-6,
             [
-                unit = u"m^-1", description = "Reference Rayleigh coefficient at 293K, 1atm, 550nm",
+                unit = u"m^-1",
+                description = "Reference Rayleigh coefficient at 293K, 1atm, 550nm",
             ]
         T_ref = 293.0, [unit = u"K", description = "Reference temperature"]
         p_ref = 101325.0, [unit = u"Pa", description = "Reference pressure (1 atm)"]
@@ -545,8 +559,8 @@ function _rayleigh_Q_ext(α::Real, n::Real, k::Real)
     # (m² - 1)/(m² + 2) where m = n + ik
     m2_minus_1_real, m2_minus_1_imag, m2_plus_2_real, m2_plus_2_imag = _m2_components(n, k)
     denom = m2_plus_2_real^2 + m2_plus_2_imag^2
-    imag_factor = (m2_minus_1_imag * m2_plus_2_real - m2_minus_1_real * m2_plus_2_imag) /
-        denom
+    imag_factor =
+        (m2_minus_1_imag * m2_plus_2_real - m2_minus_1_real * m2_plus_2_imag) / denom
     mag_sq = (m2_minus_1_real^2 + m2_minus_1_imag^2) / denom
 
     # Q_ext = Q_abs + Q_scat

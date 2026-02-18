@@ -5,7 +5,7 @@ using Aerosol, EarthSciData, ModelingToolkit, EarthSciMLBase, DynamicQuantities
 
 function EarthSciMLBase.couple2(
         c::Aerosol.ElementalCarbonCoupler,
-        e::EarthSciData.NEI2016MonthlyEmisCoupler
+        e::EarthSciData.NEI2016MonthlyEmisCoupler,
     )
     c, e = c.sys, e.sys
 
@@ -31,7 +31,7 @@ end
 
 function EarthSciMLBase.couple2(
         c::Aerosol.ElementalCarbonCoupler,
-        g::EarthSciData.GEOSFPCoupler
+        g::EarthSciData.GEOSFPCoupler,
     )
     c, g = c.sys, g.sys
     c = param_to_var(c, :T, :P)

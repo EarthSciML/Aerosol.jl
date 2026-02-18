@@ -93,7 +93,8 @@ Output Variables:
         L, [description = "Liquid water content", unit = u"g/m^3"]
         xi_SO2,
             [
-                description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1",
+                description = "SO2 mixing ratio for lifetime calculation (dimensionless)",
+                unit = u"1",
             ]
     end
 
@@ -224,18 +225,23 @@ Output Variables:
         # [H+] + [NH4+] = [OH-] + [HCO3-] + 2[CO3^2-] + [HSO3-] + 2[SO3^2-] + [NO3-] + [Cl-] + 2[SO4^2-]
         # Residual should be zero
         charge_balance ~
-            (H_plus + NH4_plus) -
-            (
-            OH_minus + HCO3_minus + 2 * CO3_2minus +
-                HSO3_minus + 2 * SO3_2minus + NO3_minus +
-                Cl_minus + 2 * SO4_2minus
+            (H_plus + NH4_plus) - (
+            OH_minus +
+                HCO3_minus +
+                2 * CO3_2minus +
+                HSO3_minus +
+                2 * SO3_2minus +
+                NO3_minus +
+                Cl_minus +
+                2 * SO4_2minus
         ),
     ]
 
     return System(
-        eqs, t;
+        eqs,
+        t;
         systems = [water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq, sulfate],
-        name
+        name,
     )
 end
 
@@ -289,7 +295,8 @@ Input Variables:
         L, [description = "Liquid water content", unit = u"g/m^3"]
         xi_SO2,
             [
-                description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1",
+                description = "SO2 mixing ratio for lifetime calculation (dimensionless)",
+                unit = u"1",
             ]
     end
 
@@ -389,9 +396,10 @@ Input Variables:
     ]
 
     return System(
-        eqs, t;
+        eqs,
+        t;
         systems = [water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq, sulfate],
-        name
+        name,
     )
 end
 
@@ -475,7 +483,8 @@ Parameters and other variables same as CloudChemistryFixedpH.
         so2_eq.T ~ T,
         h2o2_eq.T ~ T,
         o3_eq.T ~ T,
-        sulfate.T ~ T, so2_eq.H_plus ~ H_plus,
+        sulfate.T ~ T,
+        so2_eq.H_plus ~ H_plus,
         h2o2_eq.H_plus ~ H_plus,
         sulfate.H_plus ~ H_plus,
 
@@ -502,16 +511,13 @@ Parameters and other variables same as CloudChemistryFixedpH.
         sulfate.Fe_III ~ Fe_III,
         sulfate.Mn_II ~ Mn_II,
         sulfate.L ~ L,
-        sulfate.xi_SO2 ~ xi_SO2, R_total ~ sulfate.R_total,
+        sulfate.xi_SO2 ~ xi_SO2,
+        R_total ~ sulfate.R_total,
 
         # ODE: Sulfate production
         # d[SO4^2-]/dt = R_total (S(IV) oxidation rate)
         D(SO4_2minus) ~ R_total,
     ]
 
-    return System(
-        eqs, t;
-        systems = [so2_eq, h2o2_eq, o3_eq, sulfate],
-        name
-    )
+    return System(eqs, t; systems = [so2_eq, h2o2_eq, o3_eq, sulfate], name)
 end
