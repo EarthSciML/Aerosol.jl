@@ -48,6 +48,7 @@ end
                 unit = u"mol^0.5/kg^0.5",
                 description = "Debye-Hückel constant at 298.15 K",
             ]
+        ln10 = 2.302585093, [description = "Natural log of 10, for converting log₁₀ constants to ln"]
         T₀₂ = 273.15, [unit = u"K", description = "Standard temperature 2"]
         c_1 = 0.005,
             [
@@ -109,9 +110,9 @@ end
     @equations begin
         zz ~ z_cation * z_anion
 
-        # Equation 6
+        # Equation 6 (constants multiplied by ln10 to convert from log₁₀ to natural log)
         logγₜ₀ ~
-            -Aᵧ * zz * √I / (√I_one + √I) / √I_one + # NOTE: The last √I_one here is not in the paper but is needed to make the units balance.
+            -ln10 * Aᵧ * zz * √I / (√I_one + √I) / √I_one + # NOTE: The last √I_one here is not in the paper but is needed to make the units balance.
             (zz / (z_cation + z_anion)) *
             (F_cat / z_cation + F_an / z_anion)
 
@@ -124,8 +125,8 @@ end
         logΓ⁰ ~ log(1 + B * (1 + 0.1I / I_one)^q - B) + logΓ⁺
         # Equation 11
         B ~ 0.75 - 0.065q
-        # Equation 12
-        logΓ⁺ ~ -0.5107√I / (√I_one + C * √I)
+        # Equation 12 (constant multiplied by ln10 to convert from log₁₀ to natural log)
+        logΓ⁺ ~ -0.5107 * ln10 * √I / (√I_one + C * √I)
         # Equation 13
         C ~ 1 + 0.055q * exp(-0.023I^3 / I_one^3)
 
@@ -142,11 +143,12 @@ end
             logγ ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀ - (0.125 - c_1 * (T - T₀₂)) * A
         end
 
-        # Equation in text below Equation 14
-        A ~ -((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
+        # Equation in text below Equation 14 (constants multiplied by ln10 to convert from log₁₀ to natural log)
+        A ~ -ln10 * ((0.41√I / (√I_one + √I)) + 0.039(I / I_one)^0.92)
 
         # Activity (Section 2.2)
-        logm ~ (loga - (ν_cation + ν_anion) * logγ) / (ν_cation + ν_anion)
+        # ln(a) = ln(ν_c^ν_c * ν_a^ν_a) + ν*(ln(m) + ln(γ±))
+        logm ~ (loga - log(ν_cation^ν_cation * ν_anion^ν_anion) - (ν_cation + ν_anion) * logγ) / (ν_cation + ν_anion)
 
         if can_precipitate
             M ~ (1 - deliquesced) * min( # Below DRH, may not be fully dissolved
@@ -199,6 +201,7 @@ end
                 unit = u"mol^0.5/kg^0.5",
                 description = "Debye-Hückel constant at 298.15 K",
             ]
+        ln10 = 2.302585093, [description = "Natural log of 10, for converting log₁₀ constants to ln"]
         I_one = 1, [unit = u"mol/kg", description = "An ionic strength of 1"]
 
         m_one = 1.0, [unit = u"mol/kg", description = "unit molality"]
@@ -362,7 +365,7 @@ end
         maw_KNO3 = BinaryMolality(k_0 = 1.2141e4, k_1 = -5.1173e4, k_2 = 8.1252e4,
             k_3 = -5.7527e4, k_4 = 1.5305e4, k_5 = 0, k_6 = 0)
         maw_KCl = BinaryMolality(k_0 = 179.721, k_1 = -721.266, k_2 = 1161.03,
-            k_3 = -841.479, k_4 = 221 / 943, k_5 = 0, k_6 = 0)
+            k_3 = -841.479, k_4 = 221.943, k_5 = 0, k_6 = 0)
         maw_MgSO4 = BinaryMolality(k_0 = -0.778, k_1 = 177.74, k_2 = -719.79,
             k_3 = 1174.6, k_4 = -863.44, k_5 = 232.31, k_6 = 0)
         maw_MgNO32 = BinaryMolality(k_0 = 12.166, k_1 = -16.154, k_2 = 0,
@@ -393,7 +396,7 @@ end
         #! format: on
     end
     @equations begin
-        Aᵧ_term ~ Aᵧ * √I / (√I_one + √I) / √I_one # NOTE: The last √I_one here is not in the paper but is needed to make the units balance.
+        Aᵧ_term ~ ln10 * Aᵧ * √I / (√I_one + √I) / √I_one # NOTE: The last √I_one here is not in the paper but is needed to make the units balance. Constants multiplied by ln10 to convert from log₁₀ to natural log.
         # Equation 7
         F_NH4 ~
             sum([s.Y * s.logγ⁰ for s in [NH4NO3, NH4Cl, NH4HSO4, NH42SO4, NH43HSO42]]) +

@@ -286,7 +286,7 @@ end
         )
         type5 ~ min(
             (tanh((R_1 - 2) * 30) + 1) / 2, (tanh((R_2 - 2) * 30) + 1) / 2,
-            1 - (tanh((R_3 - 2) * 30) + 1) / 2
+            (tanh((R_3 - 2) * 30) + 1) / 2
         )
 
         # Aqueous mass balances
