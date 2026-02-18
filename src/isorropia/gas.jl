@@ -16,8 +16,10 @@
     end
     @variables begin
         p(t), [description = "Partial pressure", unit = u"Pa"]
-        logp(t), [description = "Log of the partial pressure (in atm.)", guess = log(1.0e-8)]
-        M(t), [description = "Molarity of the gas in air", unit = u"mol/m^3", guess = M_guess]
+        logp(t),
+            [description = "Log of the partial pressure (in atm.) (dimensionless)", guess = log(1.0e-8)]
+        M(t),
+            [description = "Molarity of the gas in air", unit = u"mol/m^3", guess = M_guess]
     end
     @equations begin
         p ~ exp(logp) * p_one
