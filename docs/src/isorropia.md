@@ -249,3 +249,282 @@ DataFrame(
     :Relative_Change => [abs(sol[s[2]][end] - sol[s[2]][1]) / max(abs(sol[s[2]][1]), 1e-30) for s in species],
 )
 ```
+
+### Figure 6: Sulfate Rich Aerosol — Urban Case (cf. Figure 6)
+
+Figure 6 of Fountoukis and Nenes (2007) shows aerosol composition as a function of relative humidity for the "Urban (1)" case from Table 8 (Case 1). This case represents a sulfate-rich aerosol with R₁ = 2.14, R₂ = 0.18, R₃ = 0.18 (aerosol type 2: 1 ≤ R₁ < 2). Temperature is 298.15 K. The four panels show: (a) aerosol water content, (b) aqueous potassium, (c) aqueous ammonium, and (d) aqueous nitrate. Black lines show approximate reference data digitized from the published ISORROPIA II results; blue lines show the output of our implementation.
+
+```@example isorropia_analysis
+# Molar masses (g/mol) for unit conversions
+MW_Na = 22.990; MW_H2SO4 = 98.079; MW_NH3 = 17.031
+MW_HNO3 = 63.013; MW_HCl = 36.461; MW_Ca = 40.078
+MW_K = 39.098; MW_Mg = 24.305; MW_NH4 = 18.04
+MW_NO3 = 62.005; MW_NaCl = 58.44
+
+# Case 1 (Urban (1)) from Table 8: convert μg/m³ to mol/m³
+eps_conc = 1e-15  # small nonzero value for species with zero input
+case1 = Dict(
+    :NH  => 3.4e-6 / MW_NH3,
+    :Na  => max(0.0e-6 / MW_Na, eps_conc),
+    :Ca  => 0.4e-6 / MW_Ca,
+    :K   => 0.33e-6 / MW_K,
+    :Mg  => max(0.0e-6 / MW_Mg, eps_conc),
+    :Cl  => max(0.0e-6 / MW_HCl, eps_conc),
+    :NO3 => 2.0e-6 / MW_HNO3,
+    :SO4 => 10.0e-6 / MW_H2SO4,
+)
+
+RH_fig = [0.10, 0.25, 0.40, 0.55, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.98]
+
+h2o_fig6 = Float64[]
+k_aq_fig6 = Float64[]
+nh4_aq_fig6 = Float64[]
+no3_aq_fig6 = Float64[]
+
+for rh in RH_fig
+    local prob_fig6, sol_fig6
+    prob_fig6 = ODEProblem(
+        compiled_sys,
+        [
+            compiled_sys.NH.total => case1[:NH],
+            compiled_sys.Na.total => case1[:Na],
+            compiled_sys.Ca.total => case1[:Ca],
+            compiled_sys.K.total => case1[:K],
+            compiled_sys.Mg.total => case1[:Mg],
+            compiled_sys.Cl.total => case1[:Cl],
+            compiled_sys.NO3.total => case1[:NO3],
+            compiled_sys.SO4.total => case1[:SO4],
+        ],
+        (0.0, 10.0),
+        [compiled_sys.RH => rh, compiled_sys.T => 298.15],
+    )
+    sol_fig6 = solve(prob_fig6, Rosenbrock23())
+    push!(h2o_fig6, sol_fig6[compiled_sys.aq.W][end] * 1e9)  # kg/m³ → μg/m³
+    push!(k_aq_fig6, max(0.0, sol_fig6[compiled_sys.K.total][end] - sol_fig6[compiled_sys.K.precip][end]) * MW_K * 1e6)
+    push!(nh4_aq_fig6, max(0.0, sol_fig6[compiled_sys.NH.total][end] - sol_fig6[compiled_sys.g.NH3.M][end] - sol_fig6[compiled_sys.NH.precip][end]) * MW_NH4 * 1e6)
+    push!(no3_aq_fig6, max(0.0, sol_fig6[compiled_sys.NO3.total][end] - sol_fig6[compiled_sys.g.HNO3.M][end] - sol_fig6[compiled_sys.NO3.precip][end]) * MW_NO3 * 1e6)
+end
+
+# Approximate ISORROPIA II reference data (digitized from Figure 6, Fountoukis and Nenes, 2007)
+ref_rh = [10, 25, 40, 55, 65, 70, 75, 80, 85, 90, 98]
+ref_h2o = [0.0, 0.0, 4.0, 6.0, 7.5, 9.0, 11.0, 14.0, 19.0, 27.0, 45.0]
+ref_k = [0.0, 0.0, 0.0, 0.0, 0.04, 0.12, 0.22, 0.29, 0.33, 0.33, 0.33]
+ref_nh4 = [0.0, 0.0, 1.5, 1.5, 1.6, 2.6, 2.7, 2.7, 2.7, 2.7, 2.7]
+ref_no3 = [0.0, 0.0, 0.02, 0.05, 0.08, 0.10, 0.12, 0.14, 0.16, 0.18, 0.20]
+
+p1 = plot(ref_rh, ref_h2o, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "H₂O (μg/m³)", title = "(a) Aerosol Water")
+plot!(p1, RH_fig .* 100, h2o_fig6, marker = :diamond, color = :blue, label = "This model")
+
+p2 = plot(ref_rh, ref_k, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "K⁺(aq) (μg/m³)", title = "(b) Aqueous Potassium")
+plot!(p2, RH_fig .* 100, k_aq_fig6, marker = :diamond, color = :blue, label = "This model")
+
+p3 = plot(ref_rh, ref_nh4, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "NH₄⁺(aq) (μg/m³)", title = "(c) Aqueous Ammonium")
+plot!(p3, RH_fig .* 100, nh4_aq_fig6, marker = :diamond, color = :blue, label = "This model")
+
+p4 = plot(ref_rh, ref_no3, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "NO₃⁻(aq) (μg/m³)", title = "(d) Aqueous Nitrate")
+plot!(p4, RH_fig .* 100, no3_aq_fig6, marker = :diamond, color = :blue, label = "This model")
+
+plot(p1, p2, p3, p4, layout = (2, 2), size = (900, 600),
+    plot_title = "Figure 6: Urban (1) — Sulfate Rich (1 < R₁ < 2)")
+```
+
+### Figure 7: Sulfate Poor Marine Aerosol (cf. Figure 7)
+
+Figure 7 of Fountoukis and Nenes (2007) shows aerosol composition for the "Marine (4)" case from Table 8 (Case 12). This case represents a sulfate-poor, crustal- and sodium-rich aerosol with R₁ = 5.14, R₂ = 5.10, R₃ = 0.84 (aerosol type 4: R₁ ≥ 2, R₂ ≥ 2, R₃ < 2). Temperature is 298.15 K. The four panels show: (a) aerosol water content, (b) aqueous potassium, (c) precipitated sodium (as NaCl equivalent), and (d) aqueous magnesium. Black lines show approximate reference data digitized from the published ISORROPIA II results; blue lines show our implementation.
+
+```@example isorropia_analysis
+# Case 12 (Marine (4)) from Table 8: convert μg/m³ to mol/m³
+case12 = Dict(
+    :NH  => 0.02e-6 / MW_NH3,
+    :Na  => 3.0e-6 / MW_Na,
+    :Ca  => 0.36e-6 / MW_Ca,
+    :K   => 0.45e-6 / MW_K,
+    :Mg  => 0.13e-6 / MW_Mg,
+    :Cl  => 3.121e-6 / MW_HCl,
+    :NO3 => 2.0e-6 / MW_HNO3,
+    :SO4 => 3.0e-6 / MW_H2SO4,
+)
+
+h2o_fig7 = Float64[]
+k_aq_fig7 = Float64[]
+na_precip_fig7 = Float64[]
+mg_aq_fig7 = Float64[]
+
+for rh in RH_fig
+    local prob_fig7, sol_fig7
+    prob_fig7 = ODEProblem(
+        compiled_sys,
+        [
+            compiled_sys.NH.total => case12[:NH],
+            compiled_sys.Na.total => case12[:Na],
+            compiled_sys.Ca.total => case12[:Ca],
+            compiled_sys.K.total => case12[:K],
+            compiled_sys.Mg.total => case12[:Mg],
+            compiled_sys.Cl.total => case12[:Cl],
+            compiled_sys.NO3.total => case12[:NO3],
+            compiled_sys.SO4.total => case12[:SO4],
+        ],
+        (0.0, 10.0),
+        [compiled_sys.RH => rh, compiled_sys.T => 298.15],
+    )
+    sol_fig7 = solve(prob_fig7, Rosenbrock23())
+    push!(h2o_fig7, sol_fig7[compiled_sys.aq.W][end] * 1e9)  # kg/m³ → μg/m³
+    push!(k_aq_fig7, max(0.0, sol_fig7[compiled_sys.K.total][end] - sol_fig7[compiled_sys.K.precip][end]) * MW_K * 1e6)
+    push!(na_precip_fig7, max(0.0, sol_fig7[compiled_sys.Na.precip][end]) * MW_NaCl * 1e6)  # NaCl equivalent
+    push!(mg_aq_fig7, max(0.0, sol_fig7[compiled_sys.Mg.total][end] - sol_fig7[compiled_sys.Mg.precip][end]) * MW_Mg * 1e6)
+end
+
+# Approximate ISORROPIA II reference data (digitized from Figure 7, Fountoukis and Nenes, 2007)
+ref7_h2o = [0.0, 2.0, 8.0, 16.0, 25.0, 35.0, 50.0, 80.0, 115.0, 165.0, 250.0]
+ref7_k = [0.0, 0.05, 0.18, 0.32, 0.38, 0.41, 0.43, 0.45, 0.45, 0.45, 0.45]
+ref7_nacl = [3.8, 3.8, 3.5, 2.5, 1.5, 0.8, 0.0, 0.0, 0.0, 0.0, 0.0]
+ref7_mg = [0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13, 0.13]
+
+p5 = plot(ref_rh, ref7_h2o, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "H₂O (μg/m³)", title = "(a) Aerosol Water")
+plot!(p5, RH_fig .* 100, h2o_fig7, marker = :diamond, color = :blue, label = "This model")
+
+p6 = plot(ref_rh, ref7_k, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "K⁺(aq) (μg/m³)", title = "(b) Aqueous Potassium")
+plot!(p6, RH_fig .* 100, k_aq_fig7, marker = :diamond, color = :blue, label = "This model")
+
+p7 = plot(ref_rh, ref7_nacl, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "NaCl(s) equiv. (μg/m³)", title = "(c) Precipitated Sodium")
+plot!(p7, RH_fig .* 100, na_precip_fig7, marker = :diamond, color = :blue, label = "This model")
+
+p8 = plot(ref_rh, ref7_mg, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "Mg²⁺(aq) (μg/m³)", title = "(d) Aqueous Magnesium")
+plot!(p8, RH_fig .* 100, mg_aq_fig7, marker = :diamond, color = :blue, label = "This model")
+
+plot(p5, p6, p7, p8, layout = (2, 2), size = (900, 600),
+    plot_title = "Figure 7: Marine (4) — Sulfate Poor (R₁ > 2, R₂ > 2)")
+```
+
+### Figure 8: Non-urban Continental Aerosol (cf. Figure 8)
+
+Figure 8 of Fountoukis and Nenes (2007) shows aerosol composition for the "Non-urban Continental (1)" case from Table 8 (Case 5). This case represents a sulfate-poor, ammonium-rich aerosol with R₁ = 23.9, R₂ = 0.80, R₃ = 0.37 (aerosol type 3: R₁ ≥ 2, R₂ < 2). Temperature is 298.15 K. The three panels show: (a) aerosol water content, (b) aqueous nitrate, and (c) aqueous ammonium. In the paper, ISORROPIA II slightly underpredicts water, nitrate, and ammonium compared to SCAPE2 because SCAPE2 predicts total deliquescence of sulfates at RH = 40% while ISORROPIA II does so at RH = 70%.
+
+```@example isorropia_analysis
+# Case 5 (Non-urban Continental (1)) from Table 8: convert μg/m³ to mol/m³
+case5 = Dict(
+    :NH  => 8.0e-6 / MW_NH3,
+    :Na  => 0.2e-6 / MW_Na,
+    :Ca  => 0.12e-6 / MW_Ca,
+    :K   => 0.18e-6 / MW_K,
+    :Mg  => max(0.0e-6 / MW_Mg, eps_conc),
+    :Cl  => 0.2e-6 / MW_HCl,
+    :NO3 => 12.0e-6 / MW_HNO3,
+    :SO4 => 2.0e-6 / MW_H2SO4,
+)
+
+h2o_fig8 = Float64[]
+no3_aq_fig8 = Float64[]
+nh4_aq_fig8 = Float64[]
+
+for rh in RH_fig
+    local prob_fig8, sol_fig8
+    prob_fig8 = ODEProblem(
+        compiled_sys,
+        [
+            compiled_sys.NH.total => case5[:NH],
+            compiled_sys.Na.total => case5[:Na],
+            compiled_sys.Ca.total => case5[:Ca],
+            compiled_sys.K.total => case5[:K],
+            compiled_sys.Mg.total => case5[:Mg],
+            compiled_sys.Cl.total => case5[:Cl],
+            compiled_sys.NO3.total => case5[:NO3],
+            compiled_sys.SO4.total => case5[:SO4],
+        ],
+        (0.0, 10.0),
+        [compiled_sys.RH => rh, compiled_sys.T => 298.15],
+    )
+    sol_fig8 = solve(prob_fig8, Rosenbrock23())
+    push!(h2o_fig8, sol_fig8[compiled_sys.aq.W][end] * 1e9)
+    push!(no3_aq_fig8, max(0.0, sol_fig8[compiled_sys.NO3.total][end] - sol_fig8[compiled_sys.g.HNO3.M][end] - sol_fig8[compiled_sys.NO3.precip][end]) * MW_NO3 * 1e6)
+    push!(nh4_aq_fig8, max(0.0, sol_fig8[compiled_sys.NH.total][end] - sol_fig8[compiled_sys.g.NH3.M][end] - sol_fig8[compiled_sys.NH.precip][end]) * MW_NH4 * 1e6)
+end
+
+# Approximate ISORROPIA II reference data (digitized from Figure 8, Fountoukis and Nenes, 2007)
+# ISORROPIA II shows delayed deliquescence vs SCAPE2 — sulfate dissolves at RH≈70% rather than 40%
+ref8_h2o = [0.0, 0.0, 0.0, 0.0, 0.0, 10.0, 30.0, 55.0, 95.0, 160.0, 450.0]
+ref8_no3 = [0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 4.5, 6.5, 8.0, 9.5, 11.5]
+ref8_nh4 = [0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 3.0, 4.5, 5.5, 6.0, 6.5]
+
+p9 = plot(ref_rh, ref8_h2o, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "H₂O (μg/m³)", title = "(a) Aerosol Water")
+plot!(p9, RH_fig .* 100, h2o_fig8, marker = :diamond, color = :blue, label = "This model")
+
+p10 = plot(ref_rh, ref8_no3, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "NO₃⁻(aq) (μg/m³)", title = "(b) Aqueous Nitrate")
+plot!(p10, RH_fig .* 100, no3_aq_fig8, marker = :diamond, color = :blue, label = "This model")
+
+p11 = plot(ref_rh, ref8_nh4, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "NH₄⁺(aq) (μg/m³)", title = "(c) Aqueous Ammonium")
+plot!(p11, RH_fig .* 100, nh4_aq_fig8, marker = :diamond, color = :blue, label = "This model")
+
+plot(p9, p10, p11, layout = (1, 3), size = (1100, 350),
+    plot_title = "Figure 8: Non-urban Cont. (1) — Sulfate Poor, NH₄ Rich (R₁ > 2, R₂ < 2)")
+```
+
+### Figure 9: Remote Continental Aerosol (cf. Figure 9)
+
+Figure 9 of Fountoukis and Nenes (2007) shows aerosol composition for the "Remote Continental (1)" case from Table 8 (Case 13). This case represents a sulfate near-neutral aerosol with R₁ = 2.49, R₂ = 0.04, R₃ = 0.04. Temperature is 298.15 K. The two panels show: (a) aerosol water content and (b) aqueous potassium. In the paper, the ISORROPIA II stable solution shows no deliquescence below the MDRH of ~0.46, while the metastable solution (not shown here) predicts water and K⁺ at all RH values.
+
+```@example isorropia_analysis
+# Case 13 (Remote Continental (1)) from Table 8: convert μg/m³ to mol/m³
+case13 = Dict(
+    :NH  => 4.25e-6 / MW_NH3,
+    :Na  => max(0.0e-6 / MW_Na, eps_conc),
+    :Ca  => 0.08e-6 / MW_Ca,
+    :K   => 0.09e-6 / MW_K,
+    :Mg  => max(0.0e-6 / MW_Mg, eps_conc),
+    :Cl  => max(0.0e-6 / MW_HCl, eps_conc),
+    :NO3 => 0.145e-6 / MW_HNO3,
+    :SO4 => 10.0e-6 / MW_H2SO4,
+)
+
+h2o_fig9 = Float64[]
+k_aq_fig9 = Float64[]
+
+for rh in RH_fig
+    local prob_fig9, sol_fig9
+    prob_fig9 = ODEProblem(
+        compiled_sys,
+        [
+            compiled_sys.NH.total => case13[:NH],
+            compiled_sys.Na.total => case13[:Na],
+            compiled_sys.Ca.total => case13[:Ca],
+            compiled_sys.K.total => case13[:K],
+            compiled_sys.Mg.total => case13[:Mg],
+            compiled_sys.Cl.total => case13[:Cl],
+            compiled_sys.NO3.total => case13[:NO3],
+            compiled_sys.SO4.total => case13[:SO4],
+        ],
+        (0.0, 10.0),
+        [compiled_sys.RH => rh, compiled_sys.T => 298.15],
+    )
+    sol_fig9 = solve(prob_fig9, Rosenbrock23())
+    push!(h2o_fig9, sol_fig9[compiled_sys.aq.W][end] * 1e9)
+    push!(k_aq_fig9, max(0.0, sol_fig9[compiled_sys.K.total][end] - sol_fig9[compiled_sys.K.precip][end]) * MW_K * 1e6)
+end
+
+# Approximate ISORROPIA II reference data (digitized from Figure 9, Fountoukis and Nenes, 2007)
+# Stable solution: no deliquescence below MDRH ≈ 0.46
+ref9_h2o = [0.0, 0.0, 0.0, 3.0, 5.0, 7.0, 9.0, 13.0, 18.0, 27.0, 60.0]
+ref9_k = [0.0, 0.0, 0.0, 0.04, 0.06, 0.07, 0.08, 0.09, 0.09, 0.09, 0.09]
+
+p12 = plot(ref_rh, ref9_h2o, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "H₂O (μg/m³)", title = "(a) Aerosol Water")
+plot!(p12, RH_fig .* 100, h2o_fig9, marker = :diamond, color = :blue, label = "This model")
+
+p13 = plot(ref_rh, ref9_k, marker = :circle, color = :black, label = "ISORROPIA II (ref.)",
+    xlabel = "Relative Humidity (%)", ylabel = "K⁺(aq) (μg/m³)", title = "(b) Aqueous Potassium")
+plot!(p13, RH_fig .* 100, k_aq_fig9, marker = :diamond, color = :blue, label = "This model")
+
+plot(p12, p13, layout = (1, 2), size = (800, 350),
+    plot_title = "Figure 9: Remote Cont. (1) — Sulfate Near-Neutral (R₁ ≈ 2.5)")
+```

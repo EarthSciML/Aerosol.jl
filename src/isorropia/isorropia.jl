@@ -135,7 +135,7 @@ end
     @components begin
         aq = Aqueous(T = T, RH = RH)
         #s = Solids()
-        g = Gases()
+        g = Gases(T = T)
         eq = EquilibriumConstants(T = T)
 
         NH = Species(M_total = 2.0e-7)
