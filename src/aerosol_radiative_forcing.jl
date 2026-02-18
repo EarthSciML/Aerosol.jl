@@ -1,9 +1,5 @@
-export AerosolLayerRadiativeForcing,
-    CriticalSingleScatteringAlbedo,
-    CloudOpticalDepth,
-    CloudAlbedo,
-    CloudAlbedoSensitivity,
-    IndirectAerosolForcing
+export AerosolLayerRadiativeForcing, CriticalSingleScatteringAlbedo,
+    CloudOpticalDepth, CloudAlbedo, CloudAlbedoSensitivity, IndirectAerosolForcing
 
 """
     AerosolLayerRadiativeForcing(; name=:AerosolLayerRadiativeForcing)

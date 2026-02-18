@@ -162,16 +162,10 @@ end
     # Use Urban Table 8.3 values (converted to m^-3)
     N_vals = [9.93e4 * 1.0e6, 1.11e3 * 1.0e6, 3.64e4 * 1.0e6]
     params = Dict(
-        sys.N[1] => N_vals[1],
-        sys.N[2] => N_vals[2],
-        sys.N[3] => N_vals[3],
-        sys.D_g[1] => 0.013e-6,
-        sys.D_g[2] => 0.014e-6,
-        sys.D_g[3] => 0.05e-6,
-        sys.logσ[1] => 0.245,
-        sys.logσ[2] => 0.666,
-        sys.logσ[3] => 0.337,
-        sys.D_p => 1.0e-7,
+        sys.N[1] => N_vals[1], sys.N[2] => N_vals[2], sys.N[3] => N_vals[3],
+        sys.D_g[1] => 0.013e-6, sys.D_g[2] => 0.014e-6, sys.D_g[3] => 0.05e-6,
+        sys.logσ[1] => 0.245, sys.logσ[2] => 0.666, sys.logσ[3] => 0.337,
+        sys.D_p => 1.0e-7
     )
 
     result = eval_eq(sys, sys.N_t, params)
@@ -197,8 +191,10 @@ end
     D_pg = 0.1e-6  # 0.1 μm
     logσ = 0.3
     lnσ = logσ * log(10)  # convert to natural log
-    params =
-        Dict(sys.N[1] => 1.0e11, sys.D_g[1] => D_pg, sys.logσ[1] => logσ, sys.D_p => D_pg)
+    params = Dict(
+        sys.N[1] => 1.0e11, sys.D_g[1] => D_pg, sys.logσ[1] => logσ,
+        sys.D_p => D_pg
+    )
 
     # Eq. 8.44: Mean diameter = D_pg * exp(0.5 * ln²(σ_g))
     D_bar_result = eval_eq(sys, sys.D_bar, params)
@@ -231,8 +227,10 @@ end
     D_pg = 0.1e-6  # m
     logσ = 0.3
     lnσ = logσ * log(10)
-    params =
-        Dict(sys.N[1] => N_val, sys.D_g[1] => D_pg, sys.logσ[1] => logσ, sys.D_p => D_pg)
+    params = Dict(
+        sys.N[1] => N_val, sys.D_g[1] => D_pg, sys.logσ[1] => logσ,
+        sys.D_p => D_pg
+    )
 
     # Total surface area — Eq. 8.5 with Eq. 8.41 (k=2 moment)
     # S_t = π * N * D_pg^2 * exp(2 * ln²σ)
@@ -257,33 +255,28 @@ end
     # Eq. 8.55: Verify the system's M_z equation
     sys = AerosolDistribution(1)
     base_params = Dict(
-        sys.N[1] => 1.0e11,
-        sys.D_g[1] => 1.0e-7,
-        sys.logσ[1] => 0.3,
-        sys.D_p => 1.0e-7,
+        sys.N[1] => 1.0e11, sys.D_g[1] => 1.0e-7, sys.logσ[1] => 0.3,
+        sys.D_p => 1.0e-7
     )
 
     # At z=0, M_z = 1.0
-    result_z0 =
-        eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => 0.0, sys.H_p => 1000.0)))
+    result_z0 = eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => 0.0, sys.H_p => 1000.0)))
     @test result_z0 ≈ 1.0 rtol = 1.0e-10
 
     # At z=H_p, M_z = exp(-1) ≈ 0.368
     H_p = 1000.0
-    result_zHp =
-        eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => H_p, sys.H_p => H_p)))
+    result_zHp = eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => H_p, sys.H_p => H_p)))
     @test result_zHp ≈ exp(-1) rtol = 1.0e-10
 
     # At z=2*H_p, M_z = exp(-2) ≈ 0.135
-    result_z2Hp =
-        eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => 2 * H_p, sys.H_p => H_p)))
+    result_z2Hp = eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => 2 * H_p, sys.H_p => H_p)))
     @test result_z2Hp ≈ exp(-2) rtol = 1.0e-10
 
     # Monotonically decreasing
     z_vals = [0.0, 500.0, 1000.0, 2000.0, 5000.0]
     M_vals = [
-        eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => z, sys.H_p => H_p))) for
-            z in z_vals
+        eval_eq(sys, sys.M_z, merge(base_params, Dict(sys.z => z, sys.H_p => H_p)))
+            for z in z_vals
     ]
     for i in 1:(length(M_vals) - 1)
         @test M_vals[i] > M_vals[i + 1]
@@ -317,8 +310,10 @@ end
     D_pg = 0.05e-6  # 50 nm
     logσ = 0.3
     lnσ = logσ * log(10)
-    params =
-        Dict(sys.N[1] => 1.0e11, sys.D_g[1] => D_pg, sys.logσ[1] => logσ, sys.D_p => D_pg)
+    params = Dict(
+        sys.N[1] => 1.0e11, sys.D_g[1] => D_pg, sys.logσ[1] => logσ,
+        sys.D_p => D_pg
+    )
 
     D_s_result = eval_eq(sys, sys.D_s, params)
     D_v_result = eval_eq(sys, sys.D_v, params)
@@ -335,10 +330,8 @@ end
     # For near-monodisperse (logσ → 0), all diameters should approach D_pg
     logσ_mono = 1.0e-6
     params_mono = Dict(
-        sys.N[1] => 1.0e11,
-        sys.D_g[1] => D_pg,
-        sys.logσ[1] => logσ_mono,
-        sys.D_p => D_pg,
+        sys.N[1] => 1.0e11, sys.D_g[1] => D_pg, sys.logσ[1] => logσ_mono,
+        sys.D_p => D_pg
     )
     D_s_mono = eval_eq(sys, sys.D_s, params_mono)
     D_v_mono = eval_eq(sys, sys.D_v, params_mono)
@@ -355,7 +348,7 @@ end
         "Remote continental" => RemoteContinentalAerosol,
         "Free troposphere" => FreeTroposphereAerosol,
         "Polar" => PolarAerosol,
-        "Desert" => DesertAerosol,
+        "Desert" => DesertAerosol
     )
 
     for (env_type, dist_fn) in distributions

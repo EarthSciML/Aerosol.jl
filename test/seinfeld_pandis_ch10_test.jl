@@ -143,12 +143,8 @@ end
 
     # Verify solubility parameters at 298 K match Table 10.2
     for (salt, expected_n) in [
-            (:NH42SO4, 0.104),
-            (:Na2SO4, 0.065),
-            (:NaNO3, 0.194),
-            (:NH4NO3, 0.475),
-            (:KCl, 0.086),
-            (:NaCl, 0.111),
+            (:NH42SO4, 0.104), (:Na2SO4, 0.065), (:NaNO3, 0.194),
+            (:NH4NO3, 0.475), (:KCl, 0.086), (:NaCl, 0.111),
         ]
         A, B, C = SeinfeldPandisCh10.SOLUBILITY_PARAMS[salt]
         n_298 = A + B * 298.0 + C * 298.0^2
@@ -360,12 +356,10 @@ end
     prob_zsr = ODEProblem(
         compiled_zsr,
         Dict(
-            compiled_zsr.C[1] => 1.0e-6,
-            compiled_zsr.C[2] => 1.0e-6,
-            compiled_zsr.m0[1] => 5.0,
-            compiled_zsr.m0[2] => 5.0,
+            compiled_zsr.C[1] => 1.0e-6, compiled_zsr.C[2] => 1.0e-6,
+            compiled_zsr.m0[1] => 5.0, compiled_zsr.m0[2] => 5.0
         ),
-        (0.0, 1.0),
+        (0.0, 1.0)
     )
     sol_zsr = solve(prob_zsr, Tsit5())
     @test sol_zsr.retcode == ReturnCode.Success

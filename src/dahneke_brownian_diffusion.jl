@@ -39,7 +39,8 @@ Limiting cases:
         T = 298.15, [description = "Temperature", unit = u"K"]
         D_v = 2.0e-5,
             [description = "Diffusion coefficient of vapor molecules", unit = u"m^2/s"]
-        m_v = 4.81e-26, [description = "Mass of diffusing vapor molecule", unit = u"kg"]
+        m_v = 4.81e-26,
+            [description = "Mass of diffusing vapor molecule", unit = u"kg"]
         r = 1.0e-7, [description = "Sphere (droplet/particle) radius", unit = u"m"]
         δ_m = 1.0,
             [
@@ -56,8 +57,7 @@ Limiting cases:
             [description = "Diffusion Knudsen number, ℓ_D/r (dimensionless)", unit = u"1"]
         β(t),
             [
-                description = "Mass transport correction factor, Eq. 5.5 (dimensionless)",
-                unit = u"1",
+                description = "Mass transport correction factor, Eq. 5.5 (dimensionless)", unit = u"1",
             ]
     end
 
@@ -95,8 +95,8 @@ thermal accommodation coefficient.
         κ = 0.026, [description = "Thermal conductivity of gas", unit = u"W/(m*K)"]
         n_gas = 2.46e25,
             [description = "Number concentration of suspending gas molecules", unit = u"m^-3"]
-        c_bar_gas =
-            500.0, [description = "Mean thermal velocity of gas molecules", unit = u"m/s"]
+        c_bar_gas = 500.0,
+            [description = "Mean thermal velocity of gas molecules", unit = u"m/s"]
         c_v = 718.0,
             [
                 description = "Specific heat at constant volume of gas (per unit mass)",
@@ -116,8 +116,7 @@ thermal accommodation coefficient.
             ]
         β_q(t),
             [
-                description = "Heat transport correction factor, Eq. 5.7 (dimensionless)",
-                unit = u"1",
+                description = "Heat transport correction factor, Eq. 5.7 (dimensionless)", unit = u"1",
             ]
     end
 
@@ -162,15 +161,15 @@ These are related through the conservation equation:
     @parameters begin
         T_inf = 298.15, [description = "Gas temperature at infinity", unit = u"K"]
         T_o = 293.15, [description = "Droplet surface temperature", unit = u"K"]
-        n_inf =
-            1.0e21, [description = "Vapor number concentration at infinity", unit = u"m^-3"]
+        n_inf = 1.0e21,
+            [description = "Vapor number concentration at infinity", unit = u"m^-3"]
         n_s = 0.0,
             [
                 description = "Saturation vapor number concentration at droplet surface",
                 unit = u"m^-3",
             ]
-        L_vap =
-            7.48e-20, [description = "Molecular latent heat of vaporization", unit = u"J"]
+        L_vap = 7.48e-20,
+            [description = "Molecular latent heat of vaporization", unit = u"J"]
         r = 1.0e-7, [description = "Droplet radius", unit = u"m"]
         D_v = 2.0e-5,
             [description = "Diffusion coefficient of vapor molecules", unit = u"m^2/s"]
@@ -260,23 +259,19 @@ be decomposed as β = β₁β₂ where:
         m_2(t), [description = "Mass of particle 2 (Eq. 6.2)", unit = u"kg"]
         f_1(t),
             [
-                description = "Stokes friction coefficient of particle 1, 6πμr/C_s",
-                unit = u"kg/s",
+                description = "Stokes friction coefficient of particle 1, 6πμr/C_s", unit = u"kg/s",
             ]
         f_2(t),
             [
-                description = "Stokes friction coefficient of particle 2, 6πμr/C_s",
-                unit = u"kg/s",
+                description = "Stokes friction coefficient of particle 2, 6πμr/C_s", unit = u"kg/s",
             ]
         D_1(t),
             [
-                description = "Diffusion coefficient of particle 1, kT/f (Eq. 6.5)",
-                unit = u"m^2/s",
+                description = "Diffusion coefficient of particle 1, kT/f (Eq. 6.5)", unit = u"m^2/s",
             ]
         D_2(t),
             [
-                description = "Diffusion coefficient of particle 2, kT/f (Eq. 6.5)",
-                unit = u"m^2/s",
+                description = "Diffusion coefficient of particle 2, kT/f (Eq. 6.5)", unit = u"m^2/s",
             ]
         D_mutual(t),
             [description = "Mutual diffusion coefficient, D₁+D₂ (p. 115)", unit = u"m^2/s"]
@@ -286,14 +281,10 @@ be decomposed as β = β₁β₂ where:
             [description = "Mean thermal velocity of particle 2 (Eq. 6.2)", unit = u"m/s"]
         c_bar(t),
             [
-                description = "Combined mean thermal velocity, √(c̄₁²+c̄₂²) (p. 115)",
-                unit = u"m/s",
+                description = "Combined mean thermal velocity, √(c̄₁²+c̄₂²) (p. 115)", unit = u"m/s",
             ]
         f_mutual(t),
-            [
-                description = "Mutual friction coefficient, f₁f₂/(f₁+f₂) (p. 115)",
-                unit = u"kg/s",
-            ]
+            [description = "Mutual friction coefficient, f₁f₂/(f₁+f₂) (p. 115)", unit = u"kg/s"]
         R_coll(t), [description = "Collision radius r₁+r₂ (p. 114)", unit = u"m"]
         Kn_D(t),
             [description = "Diffusion Knudsen number, 2kT/(c̄fR) (dimensionless)", unit = u"1"]
@@ -420,53 +411,29 @@ Keys are Kn_D values; values are vectors of (ω_i², B_i) tuples for i = 1..6.
 """
 const DAHNEKE_TABLE3 = Dict(
     0.0 => [
-        (5.78319, 0.69166),
-        (30.4713, 0.13127),
-        (74.887, 0.05341),
-        (139.04, 0.02877),
-        (222.932, 0.01794),
-        (326.563, 0.01125),
+        (5.78319, 0.69166), (30.4713, 0.13127), (74.887, 0.05341),
+        (139.04, 0.02877), (222.932, 0.01794), (326.563, 0.01125),
     ],
     0.1 => [
-        (4.75021, 0.80388),
-        (25.3332, 0.12598),
-        (63.312, 0.03869),
-        (119.603, 0.01523),
-        (194.827, 0.00696),
-        (289.336, 0.00353),
+        (4.75021, 0.80388), (25.3332, 0.12598), (63.312, 0.03869),
+        (119.603, 0.01523), (194.827, 0.00696), (289.336, 0.00353),
     ],
     0.2 => [
-        (3.95936, 0.87214),
-        (22.2137, 0.09535),
-        (58.0295, 0.02075),
-        (112.833, 0.00642),
-        (187.103, 0.00252),
-        (280.998, 0.00116),
+        (3.95936, 0.87214), (22.2137, 0.09535), (58.0295, 0.02075),
+        (112.833, 0.00642), (187.103, 0.00252), (280.998, 0.00116),
     ],
     0.3 => [
-        (3.3639, 0.91276),
-        (20.3669, 0.06932),
-        (55.4762, 0.01203),
-        (109.951, 0.00334),
-        (184.057, 0.00124),
-        (277.861, 0.00055),
+        (3.3639, 0.91276), (20.3669, 0.06932), (55.4762, 0.01203),
+        (109.951, 0.00334), (184.057, 0.00124), (277.861, 0.00055),
     ],
     0.4 => [
-        (2.91051, 0.93767),
-        (19.2003, 0.05116),
-        (54.0341, 0.00767),
-        (108.406, 0.00201),
-        (182.464, 0.00073),
-        (276.244, 0.00032),
+        (2.91051, 0.93767), (19.2003, 0.05116), (54.0341, 0.00767),
+        (108.406, 0.00201), (182.464, 0.00073), (276.244, 0.00032),
     ],
     0.5 => [
-        (2.55824, 0.95366),
-        (18.4123, 0.03877),
-        (53.1206, 0.00527),
-        (107.45, 0.00134),
-        (181.492, 0.00048),
-        (275.262, 0.00021),
-    ],
+        (2.55824, 0.95366), (18.4123, 0.03877), (53.1206, 0.00527),
+        (107.45, 0.00134), (181.492, 0.00048), (275.262, 0.00021),
+    ]
 )
 
 """
@@ -476,53 +443,29 @@ Keys are Kn_D values; values are vectors of (ω_i², B_i) tuples for i = 1..6.
 """
 const DAHNEKE_TABLE4 = Dict(
     0.0 => [
-        (6.47641, 0.7268),
-        (36.1924, 0.1194),
-        (89.8982, 0.04708),
-        (167.527, 0.02505),
-        (269.062, 0.01536),
-        (394.496, 0.0002),
+        (6.47641, 0.7268), (36.1924, 0.1194), (89.8982, 0.04708),
+        (167.527, 0.02505), (269.062, 0.01536), (394.496, 0.0002),
     ],
     0.1 => [
-        (5.4515, 0.81527),
-        (31.1557, 0.11352),
-        (78.3677, 0.03671),
-        (147.702, 0.01558),
-        (239.731, 0.00758),
-        (354.873, 0.00098),
+        (5.4515, 0.81527), (31.1557, 0.11352), (78.3677, 0.03671),
+        (147.702, 0.01558), (239.731, 0.00758), (354.873, 0.00098),
     ],
     0.2 => [
-        (4.64778, 0.87221),
-        (27.8208, 0.09105),
-        (72.2133, 0.0223),
-        (139.209, 0.00757),
-        (229.5, 0.00314),
-        (343.394, 0.00039),
+        (4.64778, 0.87221), (27.8208, 0.09105), (72.2133, 0.0223),
+        (139.209, 0.00757), (229.5, 0.00314), (343.394, 0.00039),
     ],
     0.3 => [
-        (4.02261, 0.9085),
-        (25.6742, 0.07),
-        (68.9119, 0.01392),
-        (135.226, 0.00418),
-        (225.124, 0.00161),
-        (338.782, 0.0002),
+        (4.02261, 0.9085), (25.6742, 0.07), (68.9119, 0.01392),
+        (135.226, 0.00418), (225.124, 0.00161), (338.782, 0.0002),
     ],
     0.4 => [
-        (3.53186, 0.93215),
-        (24.2373, 0.05397),
-        (66.9437, 0.00927),
-        (133.002, 0.0026),
-        (222.769, 0.00097),
-        (336.354, 0.00013),
+        (3.53186, 0.93215), (24.2373, 0.05397), (66.9437, 0.00927),
+        (133.002, 0.0026), (222.769, 0.00097), (336.354, 0.00013),
     ],
     0.5 => [
-        (3.1406, 0.94809),
-        (23.2277, 0.0423),
-        (65.6588, 0.00655),
-        (131.6, 0.00176),
-        (221.31, 0.00064),
-        (334.864, 0.00008),
-    ],
+        (3.1406, 0.94809), (23.2277, 0.0423), (65.6588, 0.00655),
+        (131.6, 0.00176), (221.31, 0.00064), (334.864, 0.00008),
+    ]
 )
 
 """
@@ -532,53 +475,29 @@ Keys are Kn_D values; values are vectors of (ω_i², B_i) tuples for i = 1..6.
 """
 const DAHNEKE_TABLE5 = Dict(
     0.0 => [
-        (7.31359, 0.81905),
-        (44.6095, 0.09753),
-        (113.921, 0.0325),
-        (215.241, 0.01543),
-        (348.564, 0.00168),
-        (513.89, 0.0),
+        (7.31359, 0.81905), (44.6095, 0.09753), (113.921, 0.0325),
+        (215.241, 0.01543), (348.564, 0.00168), (513.89, 0.0),
     ],
     0.1 => [
-        (6.33404, 0.86923),
-        (40.5081, 0.0832),
-        (105.487, 0.02358),
-        (201.646, 0.00977),
-        (329.192, 0.00379),
-        (488.261, 0.0),
+        (6.33404, 0.86923), (40.5081, 0.0832), (105.487, 0.02358),
+        (201.646, 0.00977), (329.192, 0.00379), (488.261, 0.0),
     ],
     0.2 => [
-        (5.55381, 0.90293),
-        (37.6387, 0.0676),
-        (100.27, 0.01633),
-        (194.094, 0.00602),
-        (319.401, 0.00217),
-        (476.348, 0.0),
+        (5.55381, 0.90293), (37.6387, 0.0676), (100.27, 0.01633),
+        (194.094, 0.00602), (319.401, 0.00217), (476.348, 0.0),
     ],
     0.3 => [
-        (4.92768, 0.92594),
-        (35.6031, 0.05441),
-        (96.9237, 0.01156),
-        (189.606, 0.00393),
-        (313.917, 0.00135),
-        (469.977, 0.0),
+        (4.92768, 0.92594), (35.6031, 0.05441), (96.9237, 0.01156),
+        (189.606, 0.00393), (313.917, 0.00135), (469.977, 0.0),
     ],
     0.4 => [
-        (4.41898, 0.94205),
-        (34.1151, 0.04405),
-        (94.6517, 0.00847),
-        (186.705, 0.00273),
-        (310.492, 0.00091),
-        (466.107, 0.0),
+        (4.41898, 0.94205), (34.1151, 0.04405), (94.6517, 0.00847),
+        (186.705, 0.00273), (310.492, 0.00091), (466.107, 0.0),
     ],
     0.5 => [
-        (4.0, 0.95362),
-        (32.9926, 0.03608),
-        (93.0272, 0.00642),
-        (184.697, 0.00199),
-        (308.171, 0.00066),
-        (463.521, 0.0),
-    ],
+        (4.0, 0.95362), (32.9926, 0.03608), (93.0272, 0.00642),
+        (184.697, 0.00199), (308.171, 0.00066), (463.521, 0.0),
+    ]
 )
 
 """

@@ -1,11 +1,5 @@
-export SingleParticleDynamics,
-    MeanFreePath,
-    SlipCorrection,
-    SettlingVelocity,
-    BrownianDiffusion,
-    ParticleMobility,
-    ElectricalMobility,
-    StokesNumber,
+export SingleParticleDynamics, MeanFreePath, SlipCorrection, SettlingVelocity,
+    BrownianDiffusion, ParticleMobility, ElectricalMobility, StokesNumber,
     AerodynamicDiameter
 
 """
@@ -286,8 +280,8 @@ v_e = B_e E
         D_p = 1.0e-6, [unit = u"m", description = "Particle diameter"]
         μ = 1.8e-5, [unit = u"kg/(m*s)", description = "Dynamic viscosity of air"]
         C_c = 1.0, [unit = u"1", description = "Slip correction factor (dimensionless)"]
-        n_charges =
-            1.0, [unit = u"1", description = "Number of elementary charges (dimensionless)"]
+        n_charges = 1.0,
+            [unit = u"1", description = "Number of elementary charges (dimensionless)"]
         E = 1000.0, [unit = u"V/m", description = "Electric field strength"]
     end
 

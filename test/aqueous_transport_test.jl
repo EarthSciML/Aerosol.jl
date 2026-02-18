@@ -6,15 +6,13 @@
     using Aerosol
 end
 
-@testitem "AqueousDiffusionReaction structure" setup = [AqueousTransportSetup] tags =
-    [:aqueous_transport] begin
+@testitem "AqueousDiffusionReaction structure" setup = [AqueousTransportSetup] tags = [:aqueous_transport] begin
     sys = AqueousDiffusionReaction()
     @test sys isa System
     @test length(equations(sys)) == 2
 end
 
-@testitem "AqueousDiffusionReaction Q limiting values" setup = [AqueousTransportSetup] tags =
-    [:aqueous_transport] begin
+@testitem "AqueousDiffusionReaction Q limiting values" setup = [AqueousTransportSetup] tags = [:aqueous_transport] begin
     sys = AqueousDiffusionReaction()
     compiled = mtkcompile(sys)
 
@@ -28,16 +26,10 @@ end
     k_fast = 1.0e6  # s⁻¹ (very fast reaction)
     q_fast = R_p * sqrt(k_fast / D_aq)
 
-    prob_slow = NonlinearProblem(
-        compiled,
-        Dict(compiled.R_p => R_p, compiled.D_aq => D_aq, compiled.k_rxn => k_slow),
-    )
+    prob_slow = NonlinearProblem(compiled, Dict(compiled.R_p => R_p, compiled.D_aq => D_aq, compiled.k_rxn => k_slow))
     sol_slow = solve(prob_slow)
 
-    prob_fast = NonlinearProblem(
-        compiled,
-        Dict(compiled.R_p => R_p, compiled.D_aq => D_aq, compiled.k_rxn => k_fast),
-    )
+    prob_fast = NonlinearProblem(compiled, Dict(compiled.R_p => R_p, compiled.D_aq => D_aq, compiled.k_rxn => k_fast))
     sol_fast = solve(prob_fast)
 
     q_calc_slow = sol_slow[compiled.q]
@@ -60,15 +52,13 @@ end
     @test Q_fast ≈ expected_Q_fast rtol = 0.1
 end
 
-@testitem "MassTransportLimitation structure" setup = [AqueousTransportSetup] tags =
-    [:aqueous_transport] begin
+@testitem "MassTransportLimitation structure" setup = [AqueousTransportSetup] tags = [:aqueous_transport] begin
     sys = MassTransportLimitation()
     @test sys isa System
     @test length(equations(sys)) == 3
 end
 
-@testitem "MassTransportLimitation scaling" setup = [AqueousTransportSetup] tags =
-    [:aqueous_transport] begin
+@testitem "MassTransportLimitation scaling" setup = [AqueousTransportSetup] tags = [:aqueous_transport] begin
     sys = MassTransportLimitation()
     compiled = mtkcompile(sys)
 
@@ -82,13 +72,9 @@ end
     prob = NonlinearProblem(
         compiled,
         Dict(
-            compiled.R_p => R_p,
-            compiled.D_g => D_g,
-            compiled.D_aq => D_aq,
-            compiled.T => T,
-            compiled.α => α,
-            compiled.M_A => M_A,
-        ),
+            compiled.R_p => R_p, compiled.D_g => D_g, compiled.D_aq => D_aq,
+            compiled.T => T, compiled.α => α, compiled.M_A => M_A
+        )
     )
     sol = solve(prob)
 
@@ -108,13 +94,9 @@ end
     prob2 = NonlinearProblem(
         compiled,
         Dict(
-            compiled.R_p => R_p2,
-            compiled.D_g => D_g,
-            compiled.D_aq => D_aq,
-            compiled.T => T,
-            compiled.α => α,
-            compiled.M_A => M_A,
-        ),
+            compiled.R_p => R_p2, compiled.D_g => D_g, compiled.D_aq => D_aq,
+            compiled.T => T, compiled.α => α, compiled.M_A => M_A
+        )
     )
     sol2 = solve(prob2)
 
@@ -130,15 +112,13 @@ end
     @test k1H_int / k1H_int_2 ≈ R_p2 / R_p rtol = 1.0e-6
 end
 
-@testitem "DropletMassBalance structure" setup = [AqueousTransportSetup] tags =
-    [:aqueous_transport] begin
+@testitem "DropletMassBalance structure" setup = [AqueousTransportSetup] tags = [:aqueous_transport] begin
     sys = DropletMassBalance()
     @test sys isa System
     @test length(equations(sys)) == 2
 end
 
-@testitem "DropletMassBalance dynamics" setup = [AqueousTransportSetup] tags =
-    [:aqueous_transport] begin
+@testitem "DropletMassBalance dynamics" setup = [AqueousTransportSetup] tags = [:aqueous_transport] begin
     # Test that the mass balance equations produce sensible dynamics:
     # - When gas phase has higher concentration than equilibrium with aqueous,
     #   gas should decrease and aqueous should increase (uptake)
@@ -160,15 +140,12 @@ end
         merge(
             Dict(compiled.p => p0, compiled.C_aq => C_aq0),
             Dict(
-                compiled.k_mt => k_mt,
-                compiled.w_L => w_L,
-                compiled.H_star => H_star,
-                compiled.T => T,
-                compiled.Q => 1.0,
-                compiled.R_aq => 0.0,
-            ),
+                compiled.k_mt => k_mt, compiled.w_L => w_L,
+                compiled.H_star => H_star, compiled.T => T,
+                compiled.Q => 1.0, compiled.R_aq => 0.0
+            )
         ),
-        (0.0, 1.0),
+        (0.0, 1.0)
     )
     sol = solve(prob)
 
@@ -191,8 +168,7 @@ end
     @test ratio < 1  # Hasn't overshot
 end
 
-@testitem "DropletMassBalance mass conservation" setup = [AqueousTransportSetup] tags =
-    [:aqueous_transport] begin
+@testitem "DropletMassBalance mass conservation" setup = [AqueousTransportSetup] tags = [:aqueous_transport] begin
     # Test mass conservation when there is no reaction
     sys = DropletMassBalance()
     compiled = mtkcompile(sys)
@@ -212,15 +188,12 @@ end
         merge(
             Dict(compiled.p => p0, compiled.C_aq => C_aq0),
             Dict(
-                compiled.k_mt => k_mt,
-                compiled.w_L => w_L,
-                compiled.H_star => H_star,
-                compiled.T => T,
-                compiled.Q => 1.0,
-                compiled.R_aq => 0.0,
-            ),
+                compiled.k_mt => k_mt, compiled.w_L => w_L,
+                compiled.H_star => H_star, compiled.T => T,
+                compiled.Q => 1.0, compiled.R_aq => 0.0
+            )
         ),
-        (0.0, 100.0),
+        (0.0, 100.0)
     )
     sol = solve(prob)
 

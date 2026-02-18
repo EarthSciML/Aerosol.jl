@@ -1,8 +1,5 @@
-export AerosolDynamics,
-    DiameterGrowthRate,
-    BrownianCoagulationCoefficient,
-    MonodisperseCoagulation,
-    DiscreteCoagulation
+export AerosolDynamics, DiameterGrowthRate, BrownianCoagulationCoefficient,
+    MonodisperseCoagulation, DiscreteCoagulation
 
 """
     DiameterGrowthRate(; name=:DiameterGrowthRate)
@@ -31,8 +28,8 @@ where ``A = \\frac{4 D_i M_i}{R T \\rho_p} (p_i - p_{eq,i})``.
         T = 298.0, [description = "Temperature", unit = u"K"]
         D_diff = 1.0e-5,
             [description = "Diffusion coefficient of condensing species", unit = u"m^2/s"]
-        M_i =
-            0.1, [description = "Molecular weight of condensing species", unit = u"kg/mol"]
+        M_i = 0.1,
+            [description = "Molecular weight of condensing species", unit = u"kg/mol"]
         ρ_p = 1000.0, [description = "Particle density", unit = u"kg/m^3"]
         Δp = 1.0e-4, [description = "Vapor pressure difference (p_i - p_eq)", unit = u"Pa"]
     end
@@ -96,15 +93,9 @@ where:
         m_2(t), [description = "Mass of particle 2", unit = u"kg"]
         # Slip correction factors (Cunningham correction)
         C_c1(t),
-            [
-                description = "Slip correction factor for particle 1 (dimensionless)",
-                unit = u"1",
-            ]
+            [description = "Slip correction factor for particle 1 (dimensionless)", unit = u"1"]
         C_c2(t),
-            [
-                description = "Slip correction factor for particle 2 (dimensionless)",
-                unit = u"1",
-            ]
+            [description = "Slip correction factor for particle 2 (dimensionless)", unit = u"1"]
         Kn_1(t),
             [description = "Knudsen number for particle 1 (dimensionless)", unit = u"1"]
         Kn_2(t),

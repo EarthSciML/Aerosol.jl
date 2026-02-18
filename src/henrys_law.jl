@@ -59,7 +59,7 @@ const HENRY_CONSTANTS_298 = Dict(
     :HCHO => 2.5 / ATM_TO_PA,  # Without diol formation
     :HCHO_diol => 6.3e3 / ATM_TO_PA,  # With diol formation
     :HCOOH => 3.6e3 / ATM_TO_PA,
-    :CH3OOH => 310.0 / ATM_TO_PA,
+    :CH3OOH => 310.0 / ATM_TO_PA
 )
 
 # =============================================================================
@@ -72,7 +72,7 @@ const DELTA_H_DISSOLUTION = Dict(
     :NH3 => -8.17 * 4184,
     :SO2 => -6.25 * 4184,
     :H2O2 => -14.5 * 4184,
-    :O3 => -5.04 * 4184,
+    :O3 => -5.04 * 4184
 )
 
 # =============================================================================
@@ -102,8 +102,7 @@ partial pressure and aqueous-phase concentration.
     @parameters begin
         H_A,
             [
-                description = "Henry's law constant at reference temperature",
-                unit = u"mol/m^3/Pa",
+                description = "Henry's law constant at reference temperature", unit = u"mol/m^3/Pa",
             ]
     end
 

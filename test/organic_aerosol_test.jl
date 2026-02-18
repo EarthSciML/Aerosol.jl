@@ -22,11 +22,9 @@ end
     prob = NonlinearProblem(
         ssys,
         Dict(
-            ssys.OC => 10.0e-9,
-            ssys.EC => 3.0e-9,
-            ssys.OC_primary => 1.0e-9,
-            ssys.OC_secondary => 1.0e-9,
-        ),
+            ssys.OC => 10.0e-9, ssys.EC => 3.0e-9,
+            ssys.OC_primary => 1.0e-9, ssys.OC_secondary => 1.0e-9
+        )
     )
     sol = solve(prob)
     @test sol[ssys.OC_primary] ≈ 6.0e-9 rtol = 1.0e-6
@@ -36,11 +34,9 @@ end
     prob2 = NonlinearProblem(
         ssys,
         Dict(
-            ssys.OC => 5.0e-9,
-            ssys.EC => 5.0e-9,
-            ssys.OC_primary => 1.0e-9,
-            ssys.OC_secondary => 1.0e-9,
-        ),
+            ssys.OC => 5.0e-9, ssys.EC => 5.0e-9,
+            ssys.OC_primary => 1.0e-9, ssys.OC_secondary => 1.0e-9
+        )
     )
     sol2 = solve(prob2)
     @test sol2[ssys.OC_secondary] ≈ 0.0 atol = 1.0e-18
@@ -84,14 +80,11 @@ end
         ssys,
         Dict(
             ssys.ΔROG => ΔROG_val,
-            ssys.c_eq => 1.0e-10,
-            ssys.c_total => 1.0e-10,
-            ssys.c_aer => 1.0e-10,
-            ssys.c_gas => 1.0e-10,
+            ssys.c_eq => 1.0e-10, ssys.c_total => 1.0e-10,
+            ssys.c_aer => 1.0e-10, ssys.c_gas => 1.0e-10,
             ssys.ΔROG_threshold => 1.0e-10,
-            ssys.X_p => 0.5,
-            ssys.Y => 0.01,
-        ),
+            ssys.X_p => 0.5, ssys.Y => 0.01
+        )
     )
     sol = solve(prob)
     @test sol[ssys.c_eq] ≈ c_eq_expected rtol = 1.0e-6
@@ -108,14 +101,11 @@ end
         ssys,
         Dict(
             ssys.ΔROG => ΔROG_below,
-            ssys.c_eq => 1.0e-10,
-            ssys.c_total => 1.0e-10,
-            ssys.c_aer => 1.0e-10,
-            ssys.c_gas => 1.0e-10,
+            ssys.c_eq => 1.0e-10, ssys.c_total => 1.0e-10,
+            ssys.c_aer => 1.0e-10, ssys.c_gas => 1.0e-10,
             ssys.ΔROG_threshold => 1.0e-10,
-            ssys.X_p => 0.5,
-            ssys.Y => 0.01,
-        ),
+            ssys.X_p => 0.5, ssys.Y => 0.01
+        )
     )
     sol2 = solve(prob2)
     @test sol2[ssys.c_aer] ≈ 0.0 atol = 1.0e-20
@@ -154,12 +144,15 @@ end
     X_p_expected = m_0 * R * T / (m_0 * R * T + p_i * M_0)
 
     ΔROG_val = 50.0e-9
-    c_aer_expected =
-        (a_i * R * T / M_ROG) * (M_i * m_0 / (m_0 * R * T + M_0 * p_i)) * ΔROG_val
+    c_aer_expected = (a_i * R * T / M_ROG) * (M_i * m_0 / (m_0 * R * T + M_0 * p_i)) *
+        ΔROG_val
 
     prob = NonlinearProblem(
         ssys,
-        Dict(ssys.ΔROG => ΔROG_val, ssys.c_aer => 1.0e-10, ssys.X_p => 0.5, ssys.Y => 0.01),
+        Dict(
+            ssys.ΔROG => ΔROG_val,
+            ssys.c_aer => 1.0e-10, ssys.X_p => 0.5, ssys.Y => 0.01
+        )
     )
     sol = solve(prob)
     @test sol[ssys.X_p] ≈ X_p_expected rtol = 1.0e-6
@@ -171,10 +164,8 @@ end
         ssys,
         Dict(
             ssys.ΔROG => 2 * ΔROG_val,
-            ssys.c_aer => 1.0e-10,
-            ssys.X_p => 0.5,
-            ssys.Y => 0.01,
-        ),
+            ssys.c_aer => 1.0e-10, ssys.X_p => 0.5, ssys.Y => 0.01
+        )
     )
     sol2 = solve(prob2)
     @test sol2[ssys.c_aer] ≈ 2 * c_aer_expected rtol = 1.0e-6
@@ -193,11 +184,9 @@ end
         ssys,
         Dict(
             ssys.ΔROG => 50.0e-9,
-            ssys.c_aer => 1.0e-10,
-            ssys.X_p => 0.5,
-            ssys.Y => 0.01,
-            ssys.p_i => 1.0e-20,
-        ),
+            ssys.c_aer => 1.0e-10, ssys.X_p => 0.5, ssys.Y => 0.01,
+            ssys.p_i => 1.0e-20
+        )
     )
     sol_low_p = solve(prob_low_p)
     @test sol_low_p[ssys.X_p] ≈ 1.0 atol = 1.0e-6
@@ -207,11 +196,9 @@ end
         ssys,
         Dict(
             ssys.ΔROG => 50.0e-9,
-            ssys.c_aer => 1.0e-10,
-            ssys.X_p => 0.5,
-            ssys.Y => 0.01,
-            ssys.m_0 => 1.0e-20,
-        ),
+            ssys.c_aer => 1.0e-10, ssys.X_p => 0.5, ssys.Y => 0.01,
+            ssys.m_0 => 1.0e-20
+        )
     )
     sol_no_oa = solve(prob_no_oa)
     @test sol_no_oa[ssys.X_p] ≈ 0.0 atol = 1.0e-6
@@ -249,9 +236,8 @@ end
         Dict(
             ssys.ΔROG => 100.0e-9,
             ssys.c_aer => 10.0e-9,
-            ssys.Y => 0.1,
-            ssys.ΔROG_threshold => 1.0e-9,
-        ),
+            ssys.Y => 0.1, ssys.ΔROG_threshold => 1.0e-9
+        )
     )
     sol = solve(prob)
     @test sol[ssys.ΔROG_threshold] ≈ threshold_expected rtol = 1.0e-6
@@ -377,8 +363,10 @@ end
 
     # Test with different A,B parameters
     prob_b2 = NonlinearProblem(
-        ssys,
-        Dict(ssys.S => 0.5, ssys.V => 1.0, ssys.A_FHH => 2.0, ssys.B_FHH => 2.0),
+        ssys, Dict(
+            ssys.S => 0.5, ssys.V => 1.0,
+            ssys.A_FHH => 2.0, ssys.B_FHH => 2.0
+        )
     )
     sol_b2 = solve(prob_b2)
     V_expected_b2 = V_m * (2.0 / log(2.0))^0.5

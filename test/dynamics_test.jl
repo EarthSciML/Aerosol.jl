@@ -22,8 +22,7 @@ end
     @test length(eqs) >= 3
 end
 
-@testitem "DiameterGrowthRate analytical solution" setup = [DynamicsSetup] tags =
-    [:dynamics] begin
+@testitem "DiameterGrowthRate analytical solution" setup = [DynamicsSetup] tags = [:dynamics] begin
     # Test that diameter evolves according to D_p^2 = D_p0^2 + 2*A*t (Eq. 13.21)
     sys = DiameterGrowthRate()
     compiled_sys = mtkcompile(sys)
@@ -46,7 +45,7 @@ end
             compiled_sys.Δp => Δp,
             compiled_sys.T => T_val,
             compiled_sys.ρ_p => ρ_p,
-        ],
+        ]
     )
     sol = solve(prob)
 
@@ -64,8 +63,7 @@ end
     end
 end
 
-@testitem "BrownianCoagulationCoefficient structure" setup = [DynamicsSetup] tags =
-    [:dynamics] begin
+@testitem "BrownianCoagulationCoefficient structure" setup = [DynamicsSetup] tags = [:dynamics] begin
     sys = BrownianCoagulationCoefficient()
     @test sys isa System
 
@@ -77,8 +75,7 @@ end
     @test "D_2" in var_names || "D_2(t)" in var_names
 end
 
-@testitem "BrownianCoagulationCoefficient continuum limit" setup = [DynamicsSetup] tags =
-    [:dynamics] begin
+@testitem "BrownianCoagulationCoefficient continuum limit" setup = [DynamicsSetup] tags = [:dynamics] begin
     # For large particles (continuum regime), K should approach 8kT/3μ for equal sizes (Eq. 13.52)
     sys = BrownianCoagulationCoefficient()
     compiled_sys = mtkcompile(sys)
@@ -98,7 +95,7 @@ end
             compiled_sys.D_p2 => D_p_large,
             compiled_sys.T => T_val,
             compiled_sys.μ => μ_val,
-        ],
+        ]
     )
     sol = solve(prob)
 
@@ -109,8 +106,7 @@ end
     @test isapprox(K_computed, K_continuum, rtol = 0.15)
 end
 
-@testitem "BrownianCoagulationCoefficient size dependence" setup = [DynamicsSetup] tags =
-    [:dynamics] begin
+@testitem "BrownianCoagulationCoefficient size dependence" setup = [DynamicsSetup] tags = [:dynamics] begin
     # Test that K increases for unequal particle sizes in continuum regime
     sys = BrownianCoagulationCoefficient()
     compiled_sys = mtkcompile(sys)
@@ -128,7 +124,7 @@ end
             compiled_sys.D_p2 => 1.0e-6,
             compiled_sys.T => T_val,
             compiled_sys.μ => μ_val,
-        ],
+        ]
     )
     sol_equal = solve(prob_equal)
     K_equal = sol_equal[compiled_sys.K_12][1]
@@ -143,7 +139,7 @@ end
             compiled_sys.D_p2 => 1.0e-6,
             compiled_sys.T => T_val,
             compiled_sys.μ => μ_val,
-        ],
+        ]
     )
     sol_unequal = solve(prob_unequal)
     K_unequal = sol_unequal[compiled_sys.K_12][1]
@@ -162,8 +158,7 @@ end
     @test "τ_c" in var_names || "τ_c(t)" in var_names
 end
 
-@testitem "MonodisperseCoagulation analytical solution" setup = [DynamicsSetup] tags =
-    [:dynamics] begin
+@testitem "MonodisperseCoagulation analytical solution" setup = [DynamicsSetup] tags = [:dynamics] begin
     # Test against analytical solution N(t) = N_0 / (1 + t/τ_c) (Eq. 13.66)
     sys = MonodisperseCoagulation()
     compiled_sys = mtkcompile(sys)
@@ -176,7 +171,10 @@ end
         compiled_sys,
         [compiled_sys.N => N_0_val],
         (0.0, 5 * τ_c_expected),
-        [compiled_sys.K => K_val, compiled_sys.N_0 => N_0_val],
+        [
+            compiled_sys.K => K_val,
+            compiled_sys.N_0 => N_0_val,
+        ]
     )
     sol = solve(prob; reltol = 1.0e-8, abstol = 1.0e-10)
 
@@ -191,8 +189,7 @@ end
     @test isapprox(N_at_4τc, N_0_val / 5, rtol = 0.15)
 end
 
-@testitem "MonodisperseCoagulation characteristic time" setup = [DynamicsSetup] tags =
-    [:dynamics] begin
+@testitem "MonodisperseCoagulation characteristic time" setup = [DynamicsSetup] tags = [:dynamics] begin
     # Test τ_c values from Chapter 13 examples
     sys = MonodisperseCoagulation()
     compiled_sys = mtkcompile(sys)
@@ -202,7 +199,10 @@ end
         compiled_sys,
         [compiled_sys.N => 1.0e10],
         (0.0, 1.0),
-        [compiled_sys.K => 1.0e-15, compiled_sys.N_0 => 1.0e10],
+        [
+            compiled_sys.K => 1.0e-15,
+            compiled_sys.N_0 => 1.0e10,
+        ]
     )
     sol1 = solve(prob1)
     τ_c1 = sol1[compiled_sys.τ_c][1]
@@ -214,7 +214,10 @@ end
         compiled_sys,
         [compiled_sys.N => 1.0e12],
         (0.0, 1.0),
-        [compiled_sys.K => 1.0e-15, compiled_sys.N_0 => 1.0e12],
+        [
+            compiled_sys.K => 1.0e-15,
+            compiled_sys.N_0 => 1.0e12,
+        ]
     )
     sol2 = solve(prob2)
     τ_c2 = sol2[compiled_sys.τ_c][1]
@@ -232,8 +235,7 @@ end
     @test length(vars) >= n_bins  # At least n_bins for N[1:n_bins]
 end
 
-@testitem "DiscreteCoagulation monodisperse initial condition" setup = [DynamicsSetup] tags =
-    [:dynamics] begin
+@testitem "DiscreteCoagulation monodisperse initial condition" setup = [DynamicsSetup] tags = [:dynamics] begin
     # Test against analytical solution N_k(t) = N_0 * (t/τ_c)^(k-1) / (1 + t/τ_c)^(k+1) (Eq. 13.71)
     n_bins = 5
     sys = DiscreteCoagulation(n_bins)
@@ -253,7 +255,10 @@ end
         compiled_sys,
         u0,
         (0.0, 3 * τ_c),
-        [compiled_sys.K => K_val, compiled_sys.N_0 => N_0_val],
+        [
+            compiled_sys.K => K_val,
+            compiled_sys.N_0 => N_0_val,
+        ]
     )
     sol = solve(prob)
 
@@ -311,7 +316,10 @@ end
         compiled_sys,
         u0,
         (0.0, 0.5 * τ_c),  # Shorter time to avoid too many particles growing beyond n_bins
-        [compiled_sys.K => K_val, compiled_sys.N_0 => N_0_val],
+        [
+            compiled_sys.K => K_val,
+            compiled_sys.N_0 => N_0_val,
+        ]
     )
     sol = solve(prob; reltol = 1.0e-8, abstol = 1.0e-10)
 

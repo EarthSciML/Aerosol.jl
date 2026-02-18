@@ -1,10 +1,5 @@
-export ECTracerMethod,
-    NoninteractingSOA,
-    AbsorptivePartitioning,
-    TwoProductSOA,
-    LangmuirAdsorption,
-    BETAdsorption,
-    FHHAdsorption
+export ECTracerMethod, NoninteractingSOA, AbsorptivePartitioning, TwoProductSOA,
+    LangmuirAdsorption, BETAdsorption, FHHAdsorption
 
 """
     ECTracerMethod(; name=:ECTracerMethod)
@@ -22,16 +17,13 @@ From Air Pollution to Climate Change*, 2nd Edition, Chapter 14. John Wiley & Son
 """
 @component function ECTracerMethod(; name = :ECTracerMethod)
     @constants begin
-        zero_conc =
-            0.0, [description = "Zero concentration for unit consistency", unit = u"kg/m^3"]
+        zero_conc = 0.0,
+            [description = "Zero concentration for unit consistency", unit = u"kg/m^3"]
     end
 
     @parameters begin
         OC_EC_ratio = 1.7,
-            [
-                description = "OC-to-EC ratio for combustion sources (dimensionless)",
-                unit = u"1",
-            ]
+            [description = "OC-to-EC ratio for combustion sources (dimensionless)", unit = u"1"]
         OC_NC = 0.9e-9,
             [description = "Noncombustion primary OC concentration", unit = u"kg/m^3"]
     end
@@ -72,10 +64,10 @@ From Air Pollution to Climate Change*, 2nd Edition, Chapter 14. John Wiley & Son
 @component function NoninteractingSOA(; name = :NoninteractingSOA)
     @constants begin
         R_gas = 8.314, [description = "Universal gas constant", unit = u"Pa*m^3/(mol*K)"]
-        zero_conc =
-            0.0, [description = "Zero concentration for unit consistency", unit = u"kg/m^3"]
-        zero_dimless =
-            0.0, [description = "Zero dimensionless for unit consistency", unit = u"1"]
+        zero_conc = 0.0,
+            [description = "Zero concentration for unit consistency", unit = u"kg/m^3"]
+        zero_dimless = 0.0,
+            [description = "Zero dimensionless for unit consistency", unit = u"1"]
     end
 
     @parameters begin
@@ -97,8 +89,7 @@ From Air Pollution to Climate Change*, 2nd Edition, Chapter 14. John Wiley & Son
             [description = "Threshold reacted ROG for SOA formation", unit = u"kg/m^3"]
         X_p(t),
             [
-                description = "Mass fraction of product in aerosol phase (dimensionless)",
-                unit = u"1",
+                description = "Mass fraction of product in aerosol phase (dimensionless)", unit = u"1",
             ]
         Y(t), [description = "Aerosol mass yield (dimensionless)", unit = u"1"]
     end
@@ -134,10 +125,10 @@ From Air Pollution to Climate Change*, 2nd Edition, Chapter 14. John Wiley & Son
 @component function AbsorptivePartitioning(; name = :AbsorptivePartitioning)
     @constants begin
         R_gas = 8.314, [description = "Universal gas constant", unit = u"Pa*m^3/(mol*K)"]
-        zero_conc =
-            0.0, [description = "Zero concentration for unit consistency", unit = u"kg/m^3"]
-        zero_dimless =
-            0.0, [description = "Zero dimensionless for unit consistency", unit = u"1"]
+        zero_conc = 0.0,
+            [description = "Zero concentration for unit consistency", unit = u"kg/m^3"]
+        zero_dimless = 0.0,
+            [description = "Zero dimensionless for unit consistency", unit = u"1"]
     end
 
     @parameters begin
@@ -161,8 +152,7 @@ From Air Pollution to Climate Change*, 2nd Edition, Chapter 14. John Wiley & Son
             [description = "Aerosol-phase concentration of product i", unit = u"kg/m^3"]
         X_p(t),
             [
-                description = "Mass fraction of product in aerosol phase (dimensionless)",
-                unit = u"1",
+                description = "Mass fraction of product in aerosol phase (dimensionless)", unit = u"1",
             ]
         Y(t), [description = "Aerosol mass yield (dimensionless)", unit = u"1"]
     end
@@ -208,13 +198,11 @@ Aerosol Yields. *Environ. Sci. Technol.*, 30, 2580-2585.
     @parameters begin
         a_1 = 0.038,
             [
-                description = "Stoichiometric mass yield of product 1 (dimensionless)",
-                unit = u"1",
+                description = "Stoichiometric mass yield of product 1 (dimensionless)", unit = u"1",
             ]
         a_2 = 0.326,
             [
-                description = "Stoichiometric mass yield of product 2 (dimensionless)",
-                unit = u"1",
+                description = "Stoichiometric mass yield of product 2 (dimensionless)", unit = u"1",
             ]
         c_sat_1 = 5.8e-9,
             [description = "Saturation concentration of product 1", unit = u"kg/m^3"]
@@ -293,8 +281,7 @@ From Air Pollution to Climate Change*, 2nd Edition, Chapter 14. John Wiley & Son
         V_m = 1.0, [description = "Gas volume for monolayer formation", unit = u"m^3"]
         c_BET = 10.0,
             [
-                description = "BET constant for the adsorbing surface (dimensionless)",
-                unit = u"1",
+                description = "BET constant for the adsorbing surface (dimensionless)", unit = u"1",
             ]
     end
 

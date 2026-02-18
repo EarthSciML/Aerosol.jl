@@ -138,9 +138,7 @@ begin
     g = Float64[]
     gi = 0
     for i in 1:bin
-        gi =
-            sqrt(2) / (3 * Dp[i] * l[i]) * ((Dp[i] + l[i])^3 - (Dp[i]^2 + l[i]^2)^(3 / 2)) -
-            Dp[i]
+        gi = sqrt(2) / (3 * Dp[i] * l[i]) * ((Dp[i] + l[i])^3 - (Dp[i]^2 + l[i]^2)^(3 / 2)) - Dp[i]
         push!(g, gi)
     end
 end
@@ -149,13 +147,12 @@ end
 function coagcoef(i, j) # (cm^3 s^-1)
     if Dp[i] < 10^(-5) && Dp[j] < 10^(-5) # free molecular regime
         # Funchs Form of the Brownian Coagulation Coef
-        return 2 *
-            pi *
-            (Dp[i] + Dp[j]) *
-            (D[i] + D[j]) *
+        return 2 * pi * (Dp[i] + Dp[j]) * (D[i] + D[j]) * (
             (
-            (Dp[i] + Dp[j]) / (Dp[i] + Dp[j] + 2 * sqrt((g[i])^2 + (g[j])^2)) +
-                8 * (D[i] + D[j]) / (sqrt((c[i])^2 + (c[j])^2) * (Dp[i] + Dp[j]))
+                Dp[i] + Dp[j]
+            ) / (
+                Dp[i] + Dp[j] + 2 * sqrt((g[i])^2 + (g[j])^2)
+            ) + 8 * (D[i] + D[j]) / (sqrt((c[i])^2 + (c[j])^2) * (Dp[i] + Dp[j]))
         )^(-1)
     else # continuum regime
         return 2 * k * T / (3 * μ) * (Dp[i] + Dp[j])^2 / (Dp[i] * Dp[j])
@@ -237,9 +234,13 @@ eqs = [
             ) +
             (
                 k > 2 ?
-                f[k - 1] / 2 * ξ * sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)] .* m_k[1:(k - 2)]) : 0
+                f[k - 1] / 2 * ξ *
+                sum(Kmat[k - 1, 1:(k - 2)] .* M[1:(k - 2)] .* m_k[1:(k - 2)]) : 0
             ) +
-            (k > 1 ? -f[k] / 2 * ξ * sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)] .* m_k[1:(k - 1)]) : 0) +
+            (
+                k > 1 ? -f[k] / 2 * ξ * sum(Kmat[k, 1:(k - 1)] .* M[1:(k - 1)] .* m_k[1:(k - 1)]) :
+                0
+            ) +
             (
                 k > 1 ?
                 (ψ[k] - f[k]) / (2 * m_lower[k]) *
@@ -375,7 +376,7 @@ begin
         xlabel = "Time(s)",
         ylabel = "Number of aerosols",
         yaxis = :log10,
-        label = "N1(t)",
+        label = "N1(t)"
     )
     plot!(time, N_2, label = "N2(t)")
     plot!(time, N_3, label = "N3(t)")
@@ -400,7 +401,7 @@ begin
         xlabel = "Time (s)",
         ylabel = "Mass of aerosols (kg)",
         yaxis = :log10,
-        label = "M1(t)",
+        label = "M1(t)"
     )
     plot!(time, M_2, label = "M2(t)")
     plot!(time, M_3, label = "M3(t)")

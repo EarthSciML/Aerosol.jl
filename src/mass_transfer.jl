@@ -122,10 +122,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.43 (with accommodation co
 
     @variables begin
         f_FS(t),
-            [
-                description = "Fuchs-Sutugin correction factor J/J_c (dimensionless)",
-                unit = u"1",
-            ]
+            [description = "Fuchs-Sutugin correction factor J/J_c (dimensionless)", unit = u"1"]
     end
 
     eqs = [

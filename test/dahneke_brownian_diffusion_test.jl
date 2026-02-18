@@ -9,15 +9,13 @@ end
 # DahnekeMassTransportCorrection tests
 # ============================================================
 
-@testitem "DahnekeMassTransportCorrection structure" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeMassTransportCorrection structure" setup = [DahnekeSetup] tags = [:dahneke] begin
     sys = DahnekeMassTransportCorrection()
     @test sys isa System
     @test length(equations(sys)) == 4  # c_bar, ℓ_D, Kn_D, β
 end
 
-@testitem "DahnekeMassTransportCorrection continuum limit" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeMassTransportCorrection continuum limit" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Eq. 5.5: β → 1 as Kn_D → 0
     sys = DahnekeMassTransportCorrection()
     compiled = mtkcompile(sys)
@@ -26,20 +24,25 @@ end
     # For D_v=2e-5, T=298 K, m_v=4.81e-26 kg:
     # c_bar ≈ 417 m/s, ℓ_D = 2D/c̄ ≈ 9.6e-8 m
     # For r = 0.01 m: Kn_D = ℓ_D/r ≈ 1e-5
-    prob = NonlinearProblem(compiled, Dict(compiled.r => 0.01, compiled.δ_m => 1.0))
+    prob = NonlinearProblem(
+        compiled,
+        Dict(compiled.r => 0.01, compiled.δ_m => 1.0)
+    )
     sol = solve(prob)
     @test sol[compiled.β] ≈ 1.0 rtol = 1.0e-4
     @test sol[compiled.Kn_D] < 1.0e-4
 end
 
-@testitem "DahnekeMassTransportCorrection free-molecular limit" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeMassTransportCorrection free-molecular limit" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Eq. 5.5: as Kn_D → ∞, β → δ/(2Kn_D) → δc̄r/(4D)
     sys = DahnekeMassTransportCorrection()
     compiled = mtkcompile(sys)
 
     # Use very small sphere so Kn_D >> 1
-    prob = NonlinearProblem(compiled, Dict(compiled.r => 1.0e-9, compiled.δ_m => 1.0))
+    prob = NonlinearProblem(
+        compiled,
+        Dict(compiled.r => 1.0e-9, compiled.δ_m => 1.0)
+    )
     sol = solve(prob)
     Kn_D_val = sol[compiled.Kn_D]
     β_val = sol[compiled.β]
@@ -50,30 +53,37 @@ end
     @test β_val ≈ β_expected rtol = 0.05
 end
 
-@testitem "DahnekeMassTransportCorrection δ dependence" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeMassTransportCorrection δ dependence" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Lower sticking coefficient should reduce β
     sys = DahnekeMassTransportCorrection()
     compiled = mtkcompile(sys)
 
     # Choose r so Kn_D is moderate (transition regime)
-    prob_δ1 = NonlinearProblem(compiled, Dict(compiled.r => 1.0e-7, compiled.δ_m => 1.0))
+    prob_δ1 = NonlinearProblem(
+        compiled,
+        Dict(compiled.r => 1.0e-7, compiled.δ_m => 1.0)
+    )
     sol_δ1 = solve(prob_δ1)
 
-    prob_δ01 = NonlinearProblem(compiled, Dict(compiled.r => 1.0e-7, compiled.δ_m => 0.1))
+    prob_δ01 = NonlinearProblem(
+        compiled,
+        Dict(compiled.r => 1.0e-7, compiled.δ_m => 0.1)
+    )
     sol_δ01 = solve(prob_δ01)
 
     @test sol_δ01[compiled.β] < sol_δ1[compiled.β]
 end
 
-@testitem "DahnekeMassTransportCorrection exact formula" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeMassTransportCorrection exact formula" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Verify Eq. 5.5 exactly: β = (Kn_D + 1) / (2*Kn_D*(Kn_D+1)/δ + 1)
     sys = DahnekeMassTransportCorrection()
     compiled = mtkcompile(sys)
 
     for (r_val, δ_val) in [(1.0e-7, 1.0), (1.0e-8, 0.5), (1.0e-6, 0.01)]
-        prob = NonlinearProblem(compiled, Dict(compiled.r => r_val, compiled.δ_m => δ_val))
+        prob = NonlinearProblem(
+            compiled,
+            Dict(compiled.r => r_val, compiled.δ_m => δ_val)
+        )
         sol = solve(prob)
         Kn = sol[compiled.Kn_D]
         β_calc = (Kn + 1) / (2 * Kn * (Kn + 1) / δ_val + 1)
@@ -85,48 +95,56 @@ end
 # DahnekeHeatTransportCorrection tests
 # ============================================================
 
-@testitem "DahnekeHeatTransportCorrection structure" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeHeatTransportCorrection structure" setup = [DahnekeSetup] tags = [:dahneke] begin
     sys = DahnekeHeatTransportCorrection()
     @test sys isa System
     @test length(equations(sys)) == 2  # Kn_K, β_q
 end
 
-@testitem "DahnekeHeatTransportCorrection exact formula" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeHeatTransportCorrection exact formula" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Verify Eq. 5.7: β_q = (Kn_K + 1) / (2*Kn_K*(Kn_K+1)/α + 1)
     sys = DahnekeHeatTransportCorrection()
     compiled = mtkcompile(sys)
 
-    prob = NonlinearProblem(compiled, Dict(compiled.r => 1.0e-7, compiled.α => 1.0))
+    prob = NonlinearProblem(
+        compiled,
+        Dict(compiled.r => 1.0e-7, compiled.α => 1.0)
+    )
     sol = solve(prob)
     Kn_K = sol[compiled.Kn_K]
     β_q_calc = (Kn_K + 1) / (2 * Kn_K * (Kn_K + 1) / 1.0 + 1)
     @test sol[compiled.β_q] ≈ β_q_calc rtol = 1.0e-10
 end
 
-@testitem "DahnekeHeatTransportCorrection continuum limit" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeHeatTransportCorrection continuum limit" setup = [DahnekeSetup] tags = [:dahneke] begin
     # β_q → 1 as Kn_K → 0 (large sphere)
     sys = DahnekeHeatTransportCorrection()
     compiled = mtkcompile(sys)
 
-    prob = NonlinearProblem(compiled, Dict(compiled.r => 0.01, compiled.α => 1.0))
+    prob = NonlinearProblem(
+        compiled,
+        Dict(compiled.r => 0.01, compiled.α => 1.0)
+    )
     sol = solve(prob)
     @test sol[compiled.β_q] ≈ 1.0 rtol = 1.0e-3
     @test sol[compiled.Kn_K] < 0.01
 end
 
-@testitem "DahnekeHeatTransportCorrection α dependence" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeHeatTransportCorrection α dependence" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Lower thermal accommodation coefficient should reduce β_q
     sys = DahnekeHeatTransportCorrection()
     compiled = mtkcompile(sys)
 
-    prob_α1 = NonlinearProblem(compiled, Dict(compiled.r => 1.0e-7, compiled.α => 1.0))
+    prob_α1 = NonlinearProblem(
+        compiled,
+        Dict(compiled.r => 1.0e-7, compiled.α => 1.0)
+    )
     sol_α1 = solve(prob_α1)
 
-    prob_α01 = NonlinearProblem(compiled, Dict(compiled.r => 1.0e-7, compiled.α => 0.1))
+    prob_α01 = NonlinearProblem(
+        compiled,
+        Dict(compiled.r => 1.0e-7, compiled.α => 0.1)
+    )
     sol_α01 = solve(prob_α01)
 
     @test sol_α01[compiled.β_q] < sol_α1[compiled.β_q]
@@ -136,14 +154,12 @@ end
 # DahnekeCondensationEvaporation tests
 # ============================================================
 
-@testitem "DahnekeCondensationEvaporation structure" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeCondensationEvaporation structure" setup = [DahnekeSetup] tags = [:dahneke] begin
     sys = DahnekeCondensationEvaporation()
     @test sys isa System
 end
 
-@testitem "DahnekeCondensationEvaporation Maxwell equation" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeCondensationEvaporation Maxwell equation" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Verify I_M = 4πrD(n_∞ - n_s) (Eq. 2.1)
     sys = DahnekeCondensationEvaporation()
     compiled = mtkcompile(sys)
@@ -155,11 +171,9 @@ end
     prob = NonlinearProblem(
         compiled,
         Dict(
-            compiled.r => r_val,
-            compiled.D_v => D_val,
-            compiled.n_inf => n_inf_val,
-            compiled.n_s => n_s_val,
-        ),
+            compiled.r => r_val, compiled.D_v => D_val,
+            compiled.n_inf => n_inf_val, compiled.n_s => n_s_val
+        )
     )
     sol = solve(prob)
 
@@ -171,8 +185,7 @@ end
     @test sol[compiled.I] ≈ β * I_M_expected rtol = 1.0e-8
 end
 
-@testitem "DahnekeCondensationEvaporation heat equation" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeCondensationEvaporation heat equation" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Verify Q_M = 4πrκ(T_∞ - T_o) (Eq. 2.2)
     sys = DahnekeCondensationEvaporation()
     compiled = mtkcompile(sys)
@@ -184,11 +197,9 @@ end
     prob = NonlinearProblem(
         compiled,
         Dict(
-            compiled.r => r_val,
-            compiled.κ => κ_val,
-            compiled.T_inf => T_inf_val,
-            compiled.T_o => T_o_val,
-        ),
+            compiled.r => r_val, compiled.κ => κ_val,
+            compiled.T_inf => T_inf_val, compiled.T_o => T_o_val
+        )
     )
     sol = solve(prob)
 
@@ -196,8 +207,7 @@ end
     @test sol[compiled.Q_M] ≈ Q_M_expected rtol = 1.0e-8
 end
 
-@testitem "DahnekeCondensationEvaporation Eq. 2.3 conservation" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeCondensationEvaporation Eq. 2.3 conservation" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Verify Eq. 2.3: I_M = Q_M / L (conservation of energy in continuum limit)
     # In the continuum limit (large r), β → 1 and β_q → 1, so I = I_M, Q = Q_M.
     # The conservation equation Eq. 5.8 states β*I_M = β_q*Q_M/L.
@@ -219,12 +229,9 @@ end
     prob = NonlinearProblem(
         compiled,
         Dict(
-            compiled.r => r_val,
-            compiled.D_v => D_val,
-            compiled.κ => κ_val,
-            compiled.T_inf => T_inf_val,
-            compiled.T_o => T_o_val,
-        ),
+            compiled.r => r_val, compiled.D_v => D_val, compiled.κ => κ_val,
+            compiled.T_inf => T_inf_val, compiled.T_o => T_o_val
+        )
     )
     sol = solve(prob)
 
@@ -266,12 +273,10 @@ end
     prob = NonlinearProblem(
         compiled,
         Dict(
-            compiled.r_1 => 1.0e-4,
-            compiled.r_2 => 1.0e-4,
-            compiled.C_s1 => 1.0,
-            compiled.C_s2 => 1.0,
-            compiled.δ_p => 1.0,
-        ),
+            compiled.r_1 => 1.0e-4, compiled.r_2 => 1.0e-4,
+            compiled.C_s1 => 1.0, compiled.C_s2 => 1.0,
+            compiled.δ_p => 1.0
+        )
     )
     sol = solve(prob)
 
@@ -279,8 +284,7 @@ end
     @test sol[compiled.K] ≈ sol[compiled.K_o] rtol = 0.02
 end
 
-@testitem "DahnekeCoagulationRate equal-size formula" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeCoagulationRate equal-size formula" setup = [DahnekeSetup] tags = [:dahneke] begin
     # For equal-size particles with C_s1 = C_s2 = 1:
     # K_o = 8πrD = 8kT/(3η) (Smoluchowski result when C_s=1)
     sys = DahnekeCoagulationRate()
@@ -293,14 +297,11 @@ end
     prob = NonlinearProblem(
         compiled,
         Dict(
-            compiled.T => T_val,
-            compiled.μ => μ_val,
-            compiled.r_1 => r_val,
-            compiled.r_2 => r_val,
-            compiled.C_s1 => 1.0,
-            compiled.C_s2 => 1.0,
-            compiled.δ_p => 1.0,
-        ),
+            compiled.T => T_val, compiled.μ => μ_val,
+            compiled.r_1 => r_val, compiled.r_2 => r_val,
+            compiled.C_s1 => 1.0, compiled.C_s2 => 1.0,
+            compiled.δ_p => 1.0
+        )
     )
     sol = solve(prob)
 
@@ -316,8 +317,7 @@ end
     @test sol[compiled.K_o] ≈ K_o_smoluchowski rtol = 1.0e-6
 end
 
-@testitem "DahnekeCoagulationRate Table 2 validation" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeCoagulationRate Table 2 validation" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Validate against Table 2 from Dahneke (1983), p. 120
     # Parameters: r₁=r₂=0.22 μm, T=25°C, δ=1, η=1.84e-4 g/(cm·s)=1.84e-5 Pa·s,
     # ρ=0.917 g/cm³=917 kg/m³
@@ -370,16 +370,12 @@ end
         prob = NonlinearProblem(
             compiled,
             Dict(
-                compiled.T => T_val,
-                compiled.μ => μ_val,
-                compiled.r_1 => r_val,
-                compiled.r_2 => r_val,
-                compiled.ρ_1 => ρ_val,
-                compiled.ρ_2 => ρ_val,
-                compiled.C_s1 => C_s,
-                compiled.C_s2 => C_s,
-                compiled.δ_p => δ_val,
-            ),
+                compiled.T => T_val, compiled.μ => μ_val,
+                compiled.r_1 => r_val, compiled.r_2 => r_val,
+                compiled.ρ_1 => ρ_val, compiled.ρ_2 => ρ_val,
+                compiled.C_s1 => C_s, compiled.C_s2 => C_s,
+                compiled.δ_p => δ_val
+            )
         )
         sol = solve(prob)
 
@@ -399,21 +395,20 @@ end
 
     prob_δ1 = NonlinearProblem(
         compiled,
-        Dict(compiled.r_1 => 1.0e-7, compiled.r_2 => 1.0e-7, compiled.δ_p => 1.0),
+        Dict(compiled.r_1 => 1.0e-7, compiled.r_2 => 1.0e-7, compiled.δ_p => 1.0)
     )
     sol_δ1 = solve(prob_δ1)
 
     prob_δ01 = NonlinearProblem(
         compiled,
-        Dict(compiled.r_1 => 1.0e-7, compiled.r_2 => 1.0e-7, compiled.δ_p => 0.01),
+        Dict(compiled.r_1 => 1.0e-7, compiled.r_2 => 1.0e-7, compiled.δ_p => 0.01)
     )
     sol_δ01 = solve(prob_δ01)
 
     @test sol_δ01[compiled.K] < sol_δ1[compiled.K]
 end
 
-@testitem "DahnekeCoagulationRate free-molecular limit" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeCoagulationRate free-molecular limit" setup = [DahnekeSetup] tags = [:dahneke] begin
     # When Kn_D → ∞, β₂ → δ/(2Kn_D) and K → K_o * δ/(2Kn_D)
     # This should give the free-molecular coagulation rate: K_fm = π*δ*c̄*R² (Eq. 8.10)
     sys = DahnekeCoagulationRate()
@@ -423,12 +418,10 @@ end
     prob = NonlinearProblem(
         compiled,
         Dict(
-            compiled.r_1 => 1.0e-9,
-            compiled.r_2 => 1.0e-9,
-            compiled.C_s1 => 1000.0,
-            compiled.C_s2 => 1000.0,
-            compiled.δ_p => 1.0,
-        ),
+            compiled.r_1 => 1.0e-9, compiled.r_2 => 1.0e-9,
+            compiled.C_s1 => 1000.0, compiled.C_s2 => 1000.0,
+            compiled.δ_p => 1.0
+        )
     )
     sol = solve(prob)
 
@@ -461,8 +454,7 @@ end
     end
 end
 
-@testitem "DahnekeCapillaryPenetration z_dim formula" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "DahnekeCapillaryPenetration z_dim formula" setup = [DahnekeSetup] tags = [:dahneke] begin
     # z' = DL/(σv̄R²)
     sys = DahnekeCapillaryPenetration()
     compiled = mtkcompile(sys)
@@ -477,12 +469,10 @@ end
     prob = NonlinearProblem(
         compiled,
         Dict(
-            compiled.Dcoeff => D_val,
-            compiled.L_cap => L_val,
-            compiled.R_cap => R_val,
-            compiled.v_mean => v_val,
-            compiled.γ_flow => γ_val,
-        ),
+            compiled.Dcoeff => D_val, compiled.L_cap => L_val,
+            compiled.R_cap => R_val, compiled.v_mean => v_val,
+            compiled.γ_flow => γ_val
+        )
     )
     sol = solve(prob)
 
@@ -504,8 +494,7 @@ end
     end
 end
 
-@testitem "dahneke_capillary_penetration monotonic decrease" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "dahneke_capillary_penetration monotonic decrease" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Penetration should decrease monotonically with z
     z_vals = [0.0, 0.1, 0.2, 0.5, 1.0]
     for γ in [0.0, 0.5, 1.0]
@@ -518,8 +507,7 @@ end
     end
 end
 
-@testitem "dahneke_capillary_penetration Kn_D effect" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "dahneke_capillary_penetration Kn_D effect" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Higher Kn_D should increase penetration (less deposition) at same z
     # because non-continuum effects reduce the deposition rate
     z_test = 0.5
@@ -530,8 +518,7 @@ end
     end
 end
 
-@testitem "dahneke_capillary_penetration Tables 3-5 eigenvalues" setup = [DahnekeSetup] tags =
-    [:dahneke] begin
+@testitem "dahneke_capillary_penetration Tables 3-5 eigenvalues" setup = [DahnekeSetup] tags = [:dahneke] begin
     # Verify specific eigenvalue entries from Tables 3, 4, 5
 
     # Table 3, Kn_D=0, mode 1: ω²=5.78319, B=0.69166

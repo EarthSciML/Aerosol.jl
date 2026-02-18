@@ -79,13 +79,8 @@ end
     # Test S = 2
     prob = ODEProblem(
         compiled,
-        Dict(
-            compiled.T => T,
-            compiled.S => 2.0,
-            compiled.σ => σ_water,
-            compiled.v_1 => v_1_water,
-        ),
-        (0.0, 1.0),
+        Dict(compiled.T => T, compiled.S => 2.0, compiled.σ => σ_water, compiled.v_1 => v_1_water),
+        (0.0, 1.0)
     )
     sol = solve(prob, Tsit5())
 
@@ -100,13 +95,8 @@ end
     # Test S = 5
     prob5 = ODEProblem(
         compiled,
-        Dict(
-            compiled.T => T,
-            compiled.S => 5.0,
-            compiled.σ => σ_water,
-            compiled.v_1 => v_1_water,
-        ),
-        (0.0, 1.0),
+        Dict(compiled.T => T, compiled.S => 5.0, compiled.σ => σ_water, compiled.v_1 => v_1_water),
+        (0.0, 1.0)
     )
     sol5 = solve(prob5, Tsit5())
 
@@ -137,13 +127,8 @@ end
     # Test S = 2
     prob = ODEProblem(
         compiled,
-        Dict(
-            compiled.T => T,
-            compiled.S => 2.0,
-            compiled.σ => σ_water,
-            compiled.v_1 => v_1_water,
-        ),
-        (0.0, 1.0),
+        Dict(compiled.T => T, compiled.S => 2.0, compiled.σ => σ_water, compiled.v_1 => v_1_water),
+        (0.0, 1.0)
     )
     sol = solve(prob, Tsit5())
 
@@ -156,13 +141,8 @@ end
     # Test S = 5
     prob5 = ODEProblem(
         compiled,
-        Dict(
-            compiled.T => T,
-            compiled.S => 5.0,
-            compiled.σ => σ_water,
-            compiled.v_1 => v_1_water,
-        ),
-        (0.0, 1.0),
+        Dict(compiled.T => T, compiled.S => 5.0, compiled.σ => σ_water, compiled.v_1 => v_1_water),
+        (0.0, 1.0)
     )
     sol5 = solve(prob5, Tsit5())
 
@@ -205,9 +185,9 @@ end
             compiled.p_A_s => p_sat_water,
             compiled.σ => σ_water,
             compiled.v_1 => v_1_water,
-            compiled.m_1 => m_1_water,
+            compiled.m_1 => m_1_water
         ),
-        (0.0, 1.0),
+        (0.0, 1.0)
     )
     sol = solve(prob, Tsit5())
 
@@ -245,9 +225,9 @@ end
             compiled.p_A_s => p_A_s,
             compiled.σ => 72.75e-3,
             compiled.v_1 => 2.99e-29,
-            compiled.m_1 => 2.99e-26,
+            compiled.m_1 => 2.99e-26
         ),
-        (0.0, 1.0),
+        (0.0, 1.0)
     )
     sol = solve(prob, Tsit5())
 
@@ -316,14 +296,10 @@ end
     prob3 = ODEProblem(
         compiled,
         Dict(
-            compiled.T => T,
-            compiled.S => 3.0,
-            compiled.N_1 => N_1_S3,
-            compiled.σ => σ,
-            compiled.v_1 => v_1,
-            compiled.m_1 => m_1,
+            compiled.T => T, compiled.S => 3.0, compiled.N_1 => N_1_S3,
+            compiled.σ => σ, compiled.v_1 => v_1, compiled.m_1 => m_1
         ),
-        (0.0, 1.0),
+        (0.0, 1.0)
     )
     sol3 = solve(prob3, Tsit5())
     J3 = sol3[compiled.J][1]
@@ -331,14 +307,10 @@ end
     prob6 = ODEProblem(
         compiled,
         Dict(
-            compiled.T => T,
-            compiled.S => 6.0,
-            compiled.N_1 => N_1_S6,
-            compiled.σ => σ,
-            compiled.v_1 => v_1,
-            compiled.m_1 => m_1,
+            compiled.T => T, compiled.S => 6.0, compiled.N_1 => N_1_S6,
+            compiled.σ => σ, compiled.v_1 => v_1, compiled.m_1 => m_1
         ),
-        (0.0, 1.0),
+        (0.0, 1.0)
     )
     sol6 = solve(prob6, Tsit5())
     J6 = sol6[compiled.J][1]
@@ -370,8 +342,10 @@ end
     for S in [2.0, 3.0, 4.0, 5.0, 6.0]
         prob = ODEProblem(
             compiled,
-            Dict(compiled.T => T, compiled.S => S, compiled.σ => σ, compiled.v_1 => v_1),
-            (0.0, 1.0),
+            Dict(
+                compiled.T => T, compiled.S => S, compiled.σ => σ, compiled.v_1 => v_1
+            ),
+            (0.0, 1.0)
         )
         sol = solve(prob, Tsit5())
         push!(i_stars, sol[compiled.i_star][1])
@@ -403,8 +377,10 @@ end
     for S in [1.5, 2.0, 3.0, 5.0, 10.0]
         prob = ODEProblem(
             compiled,
-            Dict(compiled.T => T, compiled.S => S, compiled.σ => σ, compiled.v_1 => v_1),
-            (0.0, 1.0),
+            Dict(
+                compiled.T => T, compiled.S => S, compiled.σ => σ, compiled.v_1 => v_1
+            ),
+            (0.0, 1.0)
         )
         sol = solve(prob, Tsit5())
         ΔG_star = sol[compiled.ΔG_star][1]
@@ -434,12 +410,9 @@ end
     prob = ODEProblem(
         compiled,
         Dict(
-            compiled.T => T,
-            compiled.S => 3.0,
-            compiled.σ => σ_ethanol,
-            compiled.v_1 => v_1_ethanol,
+            compiled.T => T, compiled.S => 3.0, compiled.σ => σ_ethanol, compiled.v_1 => v_1_ethanol
         ),
-        (0.0, 1.0),
+        (0.0, 1.0)
     )
     sol = solve(prob, Tsit5())
 

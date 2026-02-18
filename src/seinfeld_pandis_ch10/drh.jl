@@ -16,7 +16,7 @@ const DRH_298 = Dict{Symbol, Float64}(
     :NH43HSO42 => 0.69,  # (NH4)3H(SO4)2
     :NH4NO3 => 0.618,
     :NaHSO4 => 0.52,
-    :NH4HSO4 => 0.4,
+    :NH4HSO4 => 0.4
 )
 
 # Enthalpy of solution at 298 K from Table 10.3 (kJ/mol)
@@ -26,7 +26,7 @@ const DELTA_HS_298 = Dict{Symbol, Float64}(
     :NaNO3 => 13.24,
     :NH4NO3 => 16.27,
     :KCl => 15.34,
-    :NaCl => 1.88,
+    :NaCl => 1.88
 )
 
 # Solubility parameter n(T) = A + B*T + C*T^2 from Table 10.2
@@ -37,7 +37,7 @@ const SOLUBILITY_PARAMS = Dict{Symbol, NTuple{3, Float64}}(
     :NaNO3 => (0.1868, -1.677e-3, 5.714e-6),
     :NH4NO3 => (4.298, -3.623e-2, 7.853e-5),
     :KCl => (-0.2368, 1.453e-3, -1.238e-6),
-    :NaCl => (0.1805, -5.31e-4, 9.965e-7),
+    :NaCl => (0.1805, -5.31e-4, 9.965e-7)
 )
 
 """
@@ -105,9 +105,8 @@ using ModelingToolkit, Aerosol
         # Eq. 10.72: Full form with A, B, C solubility coefficients
         DRH ~
             DRH_298K * exp(
-            ΔH_s / R_gas * (
-                A_sol * (1 / T - 1 / T_ref) - B_sol * log(T / T_ref) - C_sol * (T - T_ref)
-            ),
+            ΔH_s / R_gas *
+                (A_sol * (1 / T - 1 / T_ref) - B_sol * log(T / T_ref) - C_sol * (T - T_ref))
         ),  # Eq. 10.72
     ]
 
@@ -151,7 +150,8 @@ function drh_temperature(T::Real, salt::Symbol)
 
     # Eq. 10.72: Full form with A, B, C solubility coefficients
     return drh_ref * exp(
-        delta_hs / R_gas * (A * (1 / T - 1 / T_ref) - B * log(T / T_ref) - C * (T - T_ref)),
+        delta_hs / R_gas *
+            (A * (1 / T - 1 / T_ref) - B * log(T / T_ref) - C * (T - T_ref))
     )
 end
 

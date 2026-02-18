@@ -1,12 +1,5 @@
-export CloudWaterProperties,
-    CloudKelvinEffect,
-    KohlerTheory,
-    DropletGrowth,
-    CloudDynamics,
-    IcePhysics,
-    RainFormation,
-    AerosolScavenging,
-    CloudPhysics
+export CloudWaterProperties, CloudKelvinEffect, KohlerTheory, DropletGrowth, CloudDynamics,
+    IcePhysics, RainFormation, AerosolScavenging, CloudPhysics
 
 """
     CloudWaterProperties(; name=:CloudWaterProperties)
@@ -22,8 +15,8 @@ Equations 17.1-17.6, Table 17.2.
 @component function CloudWaterProperties(; name = :CloudWaterProperties)
     @constants begin
         T_ref = 273.15, [description = "Reference temperature (0°C)", unit = u"K"]
-        T_unit =
-            1.0, [description = "Unit temperature for nondimensionalization", unit = u"K"]
+        T_unit = 1.0,
+            [description = "Unit temperature for nondimensionalization", unit = u"K"]
         # Saturation vapor pressure polynomial coefficients (Table 17.2)
         # Polynomial: p°(mbar) = a0 + a1*T + a2*T^2 + ... (T in °C)
         # Converted to SI: p°(Pa) = 100*(a0 + a1*T_C + a2*T_C^2 + ...)
@@ -86,8 +79,7 @@ Equations 17.1-17.6, Table 17.2.
             ]
         Hv_exp_const = 0.167,
             [
-                description = "Exponent constant for latent heat (Eq. 17.3, dimensionless)",
-                unit = u"1",
+                description = "Exponent constant for latent heat (Eq. 17.3, dimensionless)", unit = u"1",
             ]
         Hv_exp_coeff = 3.67e-4,
             [description = "Exponent coefficient for latent heat (Eq. 17.3)", unit = u"1/K"]
@@ -111,12 +103,11 @@ Equations 17.1-17.6, Table 17.2.
             ]
         # Eq. 17.5 constants - Surface tension of pure water
         # σ_w0 = 0.0761 - 1.55e-4*(T-273) in J/m^2 = N/m
-        sigma_base =
-            0.0761, [description = "Base surface tension (Eq. 17.5)", unit = u"N/m"]
+        sigma_base = 0.0761,
+            [description = "Base surface tension (Eq. 17.5)", unit = u"N/m"]
         sigma_coeff = 1.55e-4,
             [
-                description = "Surface tension temperature coefficient (Eq. 17.5)",
-                unit = u"N/(m*K)",
+                description = "Surface tension temperature coefficient (Eq. 17.5)", unit = u"N/(m*K)",
             ]
     end
 
@@ -142,8 +133,7 @@ Equations 17.1-17.6, Table 17.2.
 
         # Eq. 17.2 - Specific heat of liquid water (273 < T <= 308 K)
         c_pw ~
-            cpw_base +
-            cpw_c2 * ((T - T_cpw_ref) / T_unit)^2 +
+            cpw_base + cpw_c2 * ((T - T_cpw_ref) / T_unit)^2 +
             cpw_c4 * ((T - T_cpw_ref) / T_unit)^4,
 
         # Eq. 17.3 - Latent heat of vaporization (J/kg)
@@ -160,23 +150,15 @@ Equations 17.1-17.6, Table 17.2.
         # Table 17.2 - Saturation vapor pressure over water (Pa)
         # Polynomial in dimensionless T_C/T_unit
         p_sat_water ~
-            a0_w +
-            a1_w * (T_C / T_unit) +
-            a2_w * (T_C / T_unit)^2 +
-            a3_w * (T_C / T_unit)^3 +
-            a4_w * (T_C / T_unit)^4 +
-            a5_w * (T_C / T_unit)^5 +
-            a6_w * (T_C / T_unit)^6,
+            a0_w + a1_w * (T_C / T_unit) + a2_w * (T_C / T_unit)^2 +
+            a3_w * (T_C / T_unit)^3 + a4_w * (T_C / T_unit)^4 +
+            a5_w * (T_C / T_unit)^5 + a6_w * (T_C / T_unit)^6,
 
         # Table 17.2 - Saturation vapor pressure over ice (Pa)
         p_sat_ice ~
-            a0_i +
-            a1_i * (T_C / T_unit) +
-            a2_i * (T_C / T_unit)^2 +
-            a3_i * (T_C / T_unit)^3 +
-            a4_i * (T_C / T_unit)^4 +
-            a5_i * (T_C / T_unit)^5 +
-            a6_i * (T_C / T_unit)^6,
+            a0_i + a1_i * (T_C / T_unit) + a2_i * (T_C / T_unit)^2 +
+            a3_i * (T_C / T_unit)^3 + a4_i * (T_C / T_unit)^4 +
+            a5_i * (T_C / T_unit)^5 + a6_i * (T_C / T_unit)^6,
     ]
 
     return System(eqs, t; name)
@@ -253,8 +235,8 @@ Based on Equations 17.26-17.40 from Seinfeld & Pandis (2006).
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
         ρ_w = 997.0, [description = "Density of liquid water", unit = u"kg/m^3"]
         π_val = 3.141592653589793, [description = "Pi (dimensionless)", unit = u"1"]
-        vol_eps =
-            1.0e-60, [description = "Small volume for numerical stability", unit = u"m^3"]
+        vol_eps = 1.0e-60,
+            [description = "Small volume for numerical stability", unit = u"m^3"]
         dim_eps = 1.0e-30,
             [
                 description = "Small dimensionless value for numerical stability (dimensionless)",
@@ -350,29 +332,29 @@ Based on Equations 17.60-17.72 from Seinfeld & Pandis (2006).
         p_ref = 101325.0, [description = "Reference pressure (1 atm)", unit = u"Pa"]
         T_Dv_ref = 273.0, [description = "Reference temperature for D_v", unit = u"K"]
         # Eq. 17.71 constants (k_a in W/(m*K))
-        ka_c0 =
-            4.39e-3, [description = "Thermal conductivity constant", unit = u"J/(m*s*K)"]
-        ka_c1 =
-            0.071e-3, [description = "Thermal conductivity slope", unit = u"J/(m*s*K^2)"]
+        ka_c0 = 4.39e-3,
+            [description = "Thermal conductivity constant", unit = u"J/(m*s*K)"]
+        ka_c1 = 0.071e-3,
+            [description = "Thermal conductivity slope", unit = u"J/(m*s*K^2)"]
         # Saturation vapor pressure (Magnus formula)
         p_sat_ref = 610.94, [description = "Reference saturation pressure", unit = u"Pa"]
-        magnus_a =
-            17.625, [description = "Magnus coefficient a (dimensionless)", unit = u"1"]
+        magnus_a = 17.625,
+            [description = "Magnus coefficient a (dimensionless)", unit = u"1"]
         T_magnus_offset = 273.15, [description = "Magnus temperature offset", unit = u"K"]
         magnus_b = 243.04, [description = "Magnus coefficient b", unit = u"K"]
-        T_unit =
-            1.0, [description = "Unit temperature for nondimensionalization", unit = u"K"]
+        T_unit = 1.0,
+            [description = "Unit temperature for nondimensionalization", unit = u"K"]
         # Latent heat constants (Eq. 17.3, converted to J/kg)
-        Hv_ref_kg =
-            2.5e6, [description = "Reference latent heat of vaporization", unit = u"J/kg"]
-        T_Hv_ref =
-            273.15, [description = "Reference temperature for latent heat", unit = u"K"]
-        Hv_exp_const =
-            0.167, [description = "Exponent constant (dimensionless)", unit = u"1"]
+        Hv_ref_kg = 2.5e6,
+            [description = "Reference latent heat of vaporization", unit = u"J/kg"]
+        T_Hv_ref = 273.15,
+            [description = "Reference temperature for latent heat", unit = u"K"]
+        Hv_exp_const = 0.167,
+            [description = "Exponent constant (dimensionless)", unit = u"1"]
         Hv_exp_coeff = 3.67e-4, [description = "Exponent coefficient", unit = u"1/K"]
         one = 1.0, [description = "Unit value (dimensionless)", unit = u"1"]
-        vol_eps =
-            1.0e-60, [description = "Small volume for numerical stability", unit = u"m^3"]
+        vol_eps = 1.0e-60,
+            [description = "Small volume for numerical stability", unit = u"m^3"]
     end
 
     @parameters begin
@@ -403,8 +385,7 @@ Based on Equations 17.60-17.72 from Seinfeld & Pandis (2006).
         ΔH_v(t), [description = "Latent heat of vaporization", unit = u"J/kg"]
         S_eq(t),
             [
-                description = "Equilibrium saturation ratio over droplet (dimensionless)",
-                unit = u"1",
+                description = "Equilibrium saturation ratio over droplet (dimensionless)", unit = u"1",
             ]
         dDp_dt(t), [description = "Droplet diameter growth rate", unit = u"m/s"]
     end
@@ -440,12 +421,13 @@ Based on Equations 17.60-17.72 from Seinfeld & Pandis (2006).
         # Equilibrium saturation ratio over the droplet (Köhler, Eq. 17.27)
         S_eq ~ exp(
             4 * M_w * σ_w / (R * T * ρ_w * D_p) -
-                6 * n_s * M_w / (π_val * ρ_w * (D_p^3 - d_u^3 + vol_eps)),
+                6 * n_s * M_w / (π_val * ρ_w * (D_p^3 - d_u^3 + vol_eps))
         ),
 
         # Eq. 17.70 - Simplified droplet growth equation
         dDp_dt ~
-            (one / D_p) * (S_v - S_eq) / (
+            (one / D_p) * (S_v - S_eq) /
+            (
             ρ_w * R * T / (4 * p_sat * D_v_prime * M_w) +
                 ΔH_v * ρ_w / (4 * k_a_prime * T) * (ΔH_v * M_w / (T * R) - one)
         ),
@@ -480,8 +462,8 @@ Based on Equations 17.43-17.49 from Seinfeld & Pandis (2006).
             [description = "Specific heat of air at constant pressure", unit = u"J/(kg*K)"]
         # Magnus formula constants
         p_sat_ref = 610.94, [description = "Reference saturation pressure", unit = u"Pa"]
-        magnus_a =
-            17.625, [description = "Magnus coefficient a (dimensionless)", unit = u"1"]
+        magnus_a = 17.625,
+            [description = "Magnus coefficient a (dimensionless)", unit = u"1"]
         T_magnus_offset = 273.15, [description = "Magnus temperature offset", unit = u"K"]
         magnus_b = 243.04, [description = "Magnus coefficient b", unit = u"K"]
     end
@@ -546,8 +528,8 @@ and Physics: From Air Pollution to Climate Change", 2nd Edition, Chapter 17.
         R = 8.314, [description = "Universal gas constant", unit = u"J/(mol*K)"]
         ρ_i = 917.0, [description = "Density of ice", unit = u"kg/m^3"]
         T_freeze = 273.15, [description = "Freezing point of pure water", unit = u"K"]
-        ΔH_m_mass =
-            333500.0, [description = "Latent heat of fusion of water", unit = u"J/kg"]
+        ΔH_m_mass = 333500.0,
+            [description = "Latent heat of fusion of water", unit = u"J/kg"]
         ΔH_s = 2.83e6, [description = "Latent heat of sublimation", unit = u"J/kg"]
         # Eq. 17.101: ΔT_f = R*T_0^2*M_w / (1000*ΔH_m) * m
         # 1000 g/kg factor: convert ΔH_m from J/kg to J/g effectively
@@ -558,8 +540,7 @@ and Physics: From Air Pollution to Climate Change", 2nd Edition, Chapter 17.
         # Eq. 17.103 constants
         IN_ref = 1000.0,
             [
-                description = "Ice nuclei concentration reference (per L -> per m^3)",
-                unit = u"1/m^3",
+                description = "Ice nuclei concentration reference (per L -> per m^3)", unit = u"1/m^3",
             ]
         IN_coeff = 0.6, [description = "Ice nuclei exponential coefficient", unit = u"1/K"]
         T_IN_ref = 253.0,
@@ -627,22 +608,15 @@ Based on Equations 17.104-17.108 from Seinfeld & Pandis (2006).
         # F(D_p) = 1 - exp[-(D_p / (1.3*p_0^0.232 mm))^2.25]
         # where p_0 is rainfall intensity in mm/h
         F_diam_ref = 1.3e-3,
-            [
-                description = "Best distribution diameter scale (Eq. 17.107: 1.3 mm)",
-                unit = u"m",
-            ]
+            [description = "Best distribution diameter scale (Eq. 17.107: 1.3 mm)", unit = u"m"]
         F_exp = 2.25,
             [
-                description = "Best distribution exponent (Eq. 17.107, dimensionless)",
-                unit = u"1",
+                description = "Best distribution exponent (Eq. 17.107, dimensionless)", unit = u"1",
             ]
         one = 1.0, [description = "Unity (dimensionless)", unit = u"1"]
         # For p_0 exponent nondimensionalization
         p0_unit = 1.0,
-            [
-                description = "Unit rainfall intensity for nondimensionalization",
-                unit = u"mm/hr",
-            ]
+            [description = "Unit rainfall intensity for nondimensionalization", unit = u"mm/hr"]
     end
 
     @parameters begin
@@ -769,9 +743,8 @@ From Air Pollution to Climate Change", 2nd Edition, John Wiley & Sons.
     scav = AerosolScavenging(; name = :scav)
 
     return System(
-        Equation[],
-        t;
-        systems = [water, kelvin, kohler, growth, cloud, ice, rain, scav],
-        name,
+        Equation[], t; systems = [
+            water, kelvin, kohler, growth, cloud, ice, rain, scav,
+        ], name
     )
 end

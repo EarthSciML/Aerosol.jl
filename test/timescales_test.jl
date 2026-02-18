@@ -29,8 +29,7 @@ end
     @test sol[compiled.τ_dg] ≈ 1.25e-6 rtol = 1.0e-6
 end
 
-@testitem "AqueousDiffusionTimescale structure" setup = [TimescalesSetup] tags =
-    [:timescales] begin
+@testitem "AqueousDiffusionTimescale structure" setup = [TimescalesSetup] tags = [:timescales] begin
     sys = AqueousDiffusionTimescale()
     @test sys isa System
     @test length(equations(sys)) == 1
@@ -69,13 +68,10 @@ end
     prob = NonlinearProblem(
         compiled,
         Dict(
-            compiled.R_p => 1.0e-5,
-            compiled.α => 1.0,
-            compiled.M_A => 0.064,
-            compiled.T => 298.15,
-            compiled.H_star => 1.0e5,
-            compiled.D_aq => 1.0e-9,
-        ),
+            compiled.R_p => 1.0e-5, compiled.α => 1.0,
+            compiled.M_A => 0.064, compiled.T => 298.15,
+            compiled.H_star => 1.0e5, compiled.D_aq => 1.0e-9
+        )
     )
     sol = solve(prob)
 
@@ -103,25 +99,20 @@ end
     expected_τ_ra = 1 / k_rxn
     expected_τ_rg = expected_τ_ra / (H_star * R * T)
 
-    prob = NonlinearProblem(
-        compiled,
-        Dict(compiled.k_rxn => k_rxn, compiled.H_star => H_star, compiled.T => T),
-    )
+    prob = NonlinearProblem(compiled, Dict(compiled.k_rxn => k_rxn, compiled.H_star => H_star, compiled.T => T))
     sol = solve(prob)
 
     @test sol[compiled.τ_ra] ≈ expected_τ_ra rtol = 1.0e-10
     @test sol[compiled.τ_rg] ≈ expected_τ_rg rtol = 1.0e-6
 end
 
-@testitem "SolidEquilibrationTimescale structure" setup = [TimescalesSetup] tags =
-    [:timescales] begin
+@testitem "SolidEquilibrationTimescale structure" setup = [TimescalesSetup] tags = [:timescales] begin
     sys = SolidEquilibrationTimescale()
     @test sys isa System
     @test length(equations(sys)) == 2
 end
 
-@testitem "SolidEquilibrationTimescale values" setup = [TimescalesSetup] tags =
-    [:timescales] begin
+@testitem "SolidEquilibrationTimescale values" setup = [TimescalesSetup] tags = [:timescales] begin
     sys = SolidEquilibrationTimescale()
     compiled = mtkcompile(sys)
 
@@ -137,28 +128,23 @@ end
     prob = NonlinearProblem(
         compiled,
         Dict(
-            compiled.R_p => R_p,
-            compiled.ρ_p => ρ_p,
-            compiled.D_A => D_A,
-            compiled.m_p => m_p,
-            compiled.f_Kn => f_Kn,
-            compiled.N => 1.0e9,
-        ),
+            compiled.R_p => R_p, compiled.ρ_p => ρ_p,
+            compiled.D_A => D_A, compiled.m_p => m_p,
+            compiled.f_Kn => f_Kn, compiled.N => 1.0e9
+        )
     )
     sol = solve(prob)
 
     @test sol[compiled.τ_s] ≈ expected_τ rtol = 1.0e-10
 end
 
-@testitem "AqueousEquilibrationTimescale structure" setup = [TimescalesSetup] tags =
-    [:timescales] begin
+@testitem "AqueousEquilibrationTimescale structure" setup = [TimescalesSetup] tags = [:timescales] begin
     sys = AqueousEquilibrationTimescale()
     @test sys isa System
     @test length(equations(sys)) == 1
 end
 
-@testitem "AqueousEquilibrationTimescale values" setup = [TimescalesSetup] tags =
-    [:timescales] begin
+@testitem "AqueousEquilibrationTimescale values" setup = [TimescalesSetup] tags = [:timescales] begin
     sys = AqueousEquilibrationTimescale()
     compiled = mtkcompile(sys)
 
@@ -169,10 +155,7 @@ end
 
     expected_τ_a = (m_w / K_A) * τ_s
 
-    prob = NonlinearProblem(
-        compiled,
-        Dict(compiled.m_w => m_w, compiled.K_A => K_A, compiled.τ_s => τ_s),
-    )
+    prob = NonlinearProblem(compiled, Dict(compiled.m_w => m_w, compiled.K_A => K_A, compiled.τ_s => τ_s))
     sol = solve(prob)
 
     @test sol[compiled.τ_a] ≈ expected_τ_a rtol = 1.0e-10
@@ -194,14 +177,10 @@ end
     D_g = 2.0e-5
     D_aq = 1.0e-9
 
-    prob_dg =
-        NonlinearProblem(compiled_dg, Dict(compiled_dg.R_p => R_p, compiled_dg.D_g => D_g))
+    prob_dg = NonlinearProblem(compiled_dg, Dict(compiled_dg.R_p => R_p, compiled_dg.D_g => D_g))
     sol_dg = solve(prob_dg)
 
-    prob_da = NonlinearProblem(
-        compiled_da,
-        Dict(compiled_da.R_p => R_p, compiled_da.D_aq => D_aq),
-    )
+    prob_da = NonlinearProblem(compiled_da, Dict(compiled_da.R_p => R_p, compiled_da.D_aq => D_aq))
     sol_da = solve(prob_da)
 
     # Gas-phase diffusion should be much faster than aqueous diffusion

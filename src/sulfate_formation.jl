@@ -301,8 +301,7 @@ Variables:
             [description = "Synergistic contribution to rate", unit = u"mol/m^3/s"]
         R_FeMn(t),
             [
-                description = "Total S(IV) oxidation rate with Fe/Mn synergism",
-                unit = u"mol/m^3/s",
+                description = "Total S(IV) oxidation rate with Fe/Mn synergism", unit = u"mol/m^3/s",
             ]
     end
 
@@ -356,8 +355,8 @@ Also calculates rate conversion factors (Section 7.4):
     femn_ox = SulfateFormationFeMn(; name = :femn_ox)
 
     @constants begin
-        R_gas =
-            8.31446, [description = "Gas constant for rate conversion", unit = u"J/mol/K"]
+        R_gas = 8.31446,
+            [description = "Gas constant for rate conversion", unit = u"J/mol/K"]
         p_total = 101325.0, [description = "Standard atmospheric pressure", unit = u"Pa"]
         # Inverse water density: 1/(10^6 g/m^3) = 10^-6 m^3/g
         rho_w_inv = 1.0e-6,
@@ -368,8 +367,8 @@ Also calculates rate conversion factors (Section 7.4):
         ppb_factor = 1.0e9,
             [description = "Parts per billion scaling factor (dimensionless)", unit = u"1"]
         # percent scaling factor (dimensionless)
-        pct_factor =
-            100.0, [description = "Percent scaling factor (dimensionless)", unit = u"1"]
+        pct_factor = 100.0,
+            [description = "Percent scaling factor (dimensionless)", unit = u"1"]
     end
 
     @parameters begin
@@ -450,7 +449,11 @@ Also calculates rate conversion factors (Section 7.4):
         tau_SO2 ~ xi_SO2 * p_total / (w_L * R_gas * T * R_total),
     ]
 
-    return System(eqs, t; systems = [o3_ox, h2o2_ox, fe_ox, mn_ox, femn_ox], name)
+    return System(
+        eqs, t;
+        systems = [o3_ox, h2o2_ox, fe_ox, mn_ox, femn_ox],
+        name
+    )
 end
 
 # =============================================================================

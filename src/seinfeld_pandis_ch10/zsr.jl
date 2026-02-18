@@ -48,10 +48,7 @@ using ModelingToolkit, Aerosol
         C[1:n_species] = fill(1.0e-6, n_species),
             [description = "Salt concentrations", unit = u"mol/m^3"]
         m0[1:n_species] = fill(5.0, n_species),
-            [
-                description = "Binary solution molalities at water activity α_w",
-                unit = u"mol/kg",
-            ]
+            [description = "Binary solution molalities at water activity α_w", unit = u"mol/kg"]
     end
 
     @variables begin
@@ -153,7 +150,7 @@ function zsr_water_content(RH::Real, concentrations::Dict{Symbol, Float64})
     molality_funcs = Dict{Symbol, Function}(
         :NH42SO4 => binary_molality_nh42so4,
         :NH4NO3 => binary_molality_nh4no3,
-        :NaCl => binary_molality_nacl,
+        :NaCl => binary_molality_nacl
     )
 
     W = 0.0

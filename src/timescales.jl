@@ -150,8 +150,7 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eqs. 12.135, 12.139
         m_p = 1.0e-8, [description = "Aerosol mass concentration", unit = u"kg/m^3"]
         f_Kn = 1.0,
             [
-                description = "Transition regime correction factor f(Kn,α) (dimensionless)",
-                unit = u"1",
+                description = "Transition regime correction factor f(Kn,α) (dimensionless)", unit = u"1",
             ]
         N = 1.0e9, [description = "Particle number concentration", unit = u"m^-3"]
     end

@@ -148,8 +148,8 @@ end
             ssys.ρ_s => 2165.0,  # NaCl density
             ssys.ν_s => 2.0,     # NaCl dissociation
             ssys.T => 293.15,
-            ssys.ε_m => 1.0,     # Fully soluble
-        ),
+            ssys.ε_m => 1.0     # Fully soluble
+        )
     )
     sol = solve(prob)
 
@@ -173,8 +173,8 @@ end
             ssys.ρ_s => 2165.0,
             ssys.ν_s => 2.0,
             ssys.T => 293.15,
-            ssys.ε_m => 1.0,
-        ),
+            ssys.ε_m => 1.0
+        )
     )
     sol_small = solve(prob_small)
     @test sol_small[ssys.S_c] > sol[ssys.S_c]  # Higher critical S for smaller particles
@@ -196,8 +196,8 @@ end
             ssys.ρ_s => 1770.0,   # (NH4)2SO4 density
             ssys.ν_s => 3.0,      # (NH4)2SO4 dissociation
             ssys.T => 293.15,
-            ssys.ε_m => 1.0,
-        ),
+            ssys.ε_m => 1.0
+        )
     )
     sol = solve(prob)
 
@@ -218,13 +218,9 @@ end
     prob_full = NonlinearProblem(
         ssys,
         Dict(
-            ssys.d_s => 1.0e-7,
-            ssys.M_s => 0.05844,
-            ssys.ρ_s => 2165.0,
-            ssys.ν_s => 2.0,
-            ssys.T => 293.15,
-            ssys.ε_m => 1.0,
-        ),
+            ssys.d_s => 1.0e-7, ssys.M_s => 0.05844, ssys.ρ_s => 2165.0,
+            ssys.ν_s => 2.0, ssys.T => 293.15, ssys.ε_m => 1.0
+        )
     )
     sol_full = solve(prob_full)
 
@@ -232,13 +228,9 @@ end
     prob_half = NonlinearProblem(
         ssys,
         Dict(
-            ssys.d_s => 1.0e-7,
-            ssys.M_s => 0.05844,
-            ssys.ρ_s => 2165.0,
-            ssys.ν_s => 2.0,
-            ssys.T => 293.15,
-            ssys.ε_m => 0.5,
-        ),
+            ssys.d_s => 1.0e-7, ssys.M_s => 0.05844, ssys.ρ_s => 2165.0,
+            ssys.ν_s => 2.0, ssys.T => 293.15, ssys.ε_m => 0.5
+        )
     )
     sol_half = solve(prob_half)
 
@@ -266,12 +258,9 @@ end
     prob = NonlinearProblem(
         ssys,
         Dict(
-            ssys.S_v => 1.01,
-            ssys.D_p => 1.0e-6,
-            ssys.T => 293.15,
-            ssys.n_s => 0.0,
-            ssys.d_u => 0.0,
-        ),
+            ssys.S_v => 1.01, ssys.D_p => 1.0e-6, ssys.T => 293.15,
+            ssys.n_s => 0.0, ssys.d_u => 0.0
+        )
     )
     sol = solve(prob)
     @test sol[ssys.dDp_dt] > 0  # Growing
@@ -280,12 +269,9 @@ end
     prob_sub = NonlinearProblem(
         ssys,
         Dict(
-            ssys.S_v => 0.99,
-            ssys.D_p => 1.0e-6,
-            ssys.T => 293.15,
-            ssys.n_s => 0.0,
-            ssys.d_u => 0.0,
-        ),
+            ssys.S_v => 0.99, ssys.D_p => 1.0e-6, ssys.T => 293.15,
+            ssys.n_s => 0.0, ssys.d_u => 0.0
+        )
     )
     sol_sub = solve(prob_sub)
     @test sol_sub[ssys.dDp_dt] < 0  # Shrinking
@@ -300,12 +286,9 @@ end
     prob_small = NonlinearProblem(
         ssys,
         Dict(
-            ssys.S_v => 1.01,
-            ssys.D_p => 5.0e-7,
-            ssys.T => 293.15,
-            ssys.n_s => 0.0,
-            ssys.d_u => 0.0,
-        ),
+            ssys.S_v => 1.01, ssys.D_p => 5.0e-7, ssys.T => 293.15,
+            ssys.n_s => 0.0, ssys.d_u => 0.0
+        )
     )
     sol_small = solve(prob_small)
     @test sol_small[ssys.dDp_dt] > sol[ssys.dDp_dt]
@@ -365,18 +348,12 @@ end
     ssys = mtkcompile(sys)
 
     # Freezing point depression for pure water (a_w = 1): should be ~0
-    prob = NonlinearProblem(
-        ssys,
-        Dict(ssys.T => 263.15, ssys.a_w => 1.0, ssys.molality => 0.0),
-    )
+    prob = NonlinearProblem(ssys, Dict(ssys.T => 263.15, ssys.a_w => 1.0, ssys.molality => 0.0))
     sol = solve(prob)
     @test sol[ssys.ΔT_f] ≈ 0.0 atol = 0.01
 
     # For 1 mol/kg NaCl solution, ΔT_f ≈ 1.86 K (cryoscopic constant)
-    prob_salt = NonlinearProblem(
-        ssys,
-        Dict(ssys.T => 263.15, ssys.a_w => 1.0, ssys.molality => 1.0),
-    )
+    prob_salt = NonlinearProblem(ssys, Dict(ssys.T => 263.15, ssys.a_w => 1.0, ssys.molality => 1.0))
     sol_salt = solve(prob_salt)
     @test sol_salt[ssys.ΔT_f] ≈ 1.86 atol = 0.1
 

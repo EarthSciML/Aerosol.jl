@@ -80,14 +80,10 @@ Variables:
         K_w_298 = 1.0e-14 * 1.0e6, [description = "K_w at 298 K", unit = u"mol^2/m^6"]  # 1e6× for mol²/m⁶
         dH_Kw = 55856.4,
             [
-                description = "Enthalpy for K_w (13.35 kcal/mol converted to J/mol)",
-                unit = u"J/mol",
+                description = "Enthalpy for K_w (13.35 kcal/mol converted to J/mol)", unit = u"J/mol",
             ]
         C_ref = 1000.0,
-            [
-                description = "Reference concentration (1 mol/L = 1000 mol/m³)",
-                unit = u"mol/m^3",
-            ]
+            [description = "Reference concentration (1 mol/L = 1000 mol/m³)", unit = u"mol/m^3"]
     end
 
     @variables begin
@@ -156,10 +152,10 @@ Variables:
             [description = "First dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
         K_c2_298 = 4.7e-11 * 1000.0,
             [description = "Second dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
-        dH_Kc1 =
-            7657.12, [description = "Enthalpy for K_c1 (1.83 kcal/mol)", unit = u"J/mol"]
-        dH_Kc2 =
-            14853.2, [description = "Enthalpy for K_c2 (3.55 kcal/mol)", unit = u"J/mol"]
+        dH_Kc1 = 7657.12,
+            [description = "Enthalpy for K_c1 (1.83 kcal/mol)", unit = u"J/mol"]
+        dH_Kc2 = 14853.2,
+            [description = "Enthalpy for K_c2 (3.55 kcal/mol)", unit = u"J/mol"]
     end
 
     @variables begin
@@ -256,10 +252,10 @@ Variables:
             [description = "First dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
         K_s2_298 = 6.6e-8 * 1000.0,
             [description = "Second dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
-        dH_Ks1 =
-            -17405.44, [description = "Enthalpy for K_s1 (-4.16 kcal/mol)", unit = u"J/mol"]
-        dH_Ks2 =
-            -9330.32, [description = "Enthalpy for K_s2 (-2.23 kcal/mol)", unit = u"J/mol"]
+        dH_Ks1 = -17405.44,
+            [description = "Enthalpy for K_s1 (-4.16 kcal/mol)", unit = u"J/mol"]
+        dH_Ks2 = -9330.32,
+            [description = "Enthalpy for K_s2 (-2.23 kcal/mol)", unit = u"J/mol"]
     end
 
     @variables begin
@@ -359,11 +355,11 @@ Variables:
             [description = "Heat of dissolution for NH3 (-8.17 kcal/mol)", unit = u"J/mol"]
         K_a1_298 = 1.7e-5 * 1000.0,
             [description = "Dissociation constant at 298 K", unit = u"mol/m^3"]  # 1000× for mol/m³
-        dH_Ka1 =
-            36191.6, [description = "Enthalpy for K_a1 (8.65 kcal/mol)", unit = u"J/mol"]
+        dH_Ka1 = 36191.6,
+            [description = "Enthalpy for K_a1 (8.65 kcal/mol)", unit = u"J/mol"]
         K_w_298 = 1.0e-14 * 1.0e6, [description = "K_w at 298 K", unit = u"mol^2/m^6"]  # 1e6× for mol²/m⁶
-        dH_Kw =
-            55856.4, [description = "Enthalpy for K_w (13.35 kcal/mol)", unit = u"J/mol"]
+        dH_Kw = 55856.4,
+            [description = "Enthalpy for K_w (13.35 kcal/mol)", unit = u"J/mol"]
     end
 
     @variables begin
@@ -679,9 +675,8 @@ Subsystems:
     ]
 
     return System(
-        eqs,
-        t;
+        eqs, t;
         systems = [water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq],
-        name,
+        name
     )
 end

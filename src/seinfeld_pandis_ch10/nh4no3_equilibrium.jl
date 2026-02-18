@@ -197,11 +197,7 @@ This form is used for equilibrium constants in Table 10.7 of Seinfeld & Pandis (
 Equilibrium constant at temperature T
 """
 function equilibrium_constant_temperature(
-        K_ref::Real,
-        T::Real,
-        T_ref::Real,
-        a::Real,
-        b::Real,
+        K_ref::Real, T::Real, T_ref::Real, a::Real, b::Real
     )
     return K_ref * exp(a * (T_ref / T - 1) + b * (1 + log(T_ref / T) - T_ref / T))
 end
@@ -221,7 +217,7 @@ const EQUILIBRIUM_CONSTANTS = Dict{Symbol, NTuple{4, Any}}(
     :NH4NO3_solid => (3.35e16, 75.11, -13.5, "atm⁻²"),
     :NaCl_dissoc => (37.74, -1.57, 16.89, "mol² kg⁻²"),
     :NaHSO4_dissoc => (2.44e4, 0.79, 4.53, "mol² kg⁻²"),
-    :NaNO3_dissoc => (11.97, -8.22, 16.0, "mol² kg⁻²"),
+    :NaNO3_dissoc => (11.97, -8.22, 16.0, "mol² kg⁻²")
 )
 
 """
