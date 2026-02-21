@@ -3,7 +3,7 @@
 
 A solid with the given concentration.
 """
-@component function Solid(; name=:Solid)
+@component function Solid(; name = :Solid)
     @variables begin
         M(t),
             [description = "Molarity of the solid in air", unit = u"mol/m^3", guess = 1.0e-20]
@@ -19,7 +19,7 @@ end
 
 Solids in Isorropia II.
 """
-@component function Solids(; name=:Solids)
+@component function Solids(; name = :Solids)
     # CaNO32 = Solid(; name=:CaNO32)
     # CaCl2 = Solid(; name=:CaCl2)
     # CaSO4 = Solid(; name=:CaSO4)

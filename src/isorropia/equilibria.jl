@@ -2,7 +2,7 @@
 An equilibrium constant based on Equation 5 in Fountoukis and Nenes (2007),
 parameterized by values from Table 2 in the same paper.
 """
-@component function EqConst(; name=:EqConst, logK⁰, H⁺, C⁺)
+@component function EqConst(; name = :EqConst, logK⁰, H⁺, C⁺)
     @constants begin
         _logK⁰ = logK⁰, [description = "Log of the equilibrium constant at 298.15 K (dimensionless)"]
         _H⁺ = H⁺, [description = "ΔH⁰ / (R * T₀) (dimensionless)"]
@@ -14,12 +14,12 @@ parameterized by values from Table 2 in the same paper.
         logK_eq(t), [description = "Log of the equilibrium constant (dimensionless)", guess = logK⁰]
     end
     eqs = [
-        logK_eq ~ _logK⁰ + _H⁺ * (T₀ / T - 1) + _C⁺ * (1 + log(T₀ / T) - T₀ / T)
+        logK_eq ~ _logK⁰ + _H⁺ * (T₀ / T - 1) + _C⁺ * (1 + log(T₀ / T) - T₀ / T),
     ]
     return System(eqs, t; name)
 end
 
-@component function EquilibriumConstants(; name=:EquilibriumConstants)
+@component function EquilibriumConstants(; name = :EquilibriumConstants)
     @variables begin
         T(t), [unit = u"K", description = "Temperature", guess = 298.15]
     end
@@ -116,7 +116,11 @@ end
         r27.T ~ T,
     ]
 
-    return System(eqs, t; systems=[r1, r2, r3, r4, r5, r6, r7, r8, r9, r10,
-        r11, r12, r13, r14, r15, r16, r17, r18, r19, r20,
-        r21, r22, r23, r24, r25, r26, r27], name)
+    return System(
+        eqs, t; systems = [
+            r1, r2, r3, r4, r5, r6, r7, r8, r9, r10,
+            r11, r12, r13, r14, r15, r16, r17, r18, r19, r20,
+            r21, r22, r23, r24, r25, r26, r27,
+        ], name
+    )
 end
