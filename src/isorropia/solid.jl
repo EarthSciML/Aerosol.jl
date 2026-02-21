@@ -1,33 +1,45 @@
-@mtkmodel Solid begin
-    @description "A solid with the given concentration."
+"""
+    Solid(; name=:Solid)
+
+A solid with the given concentration.
+"""
+@component function Solid(; name=:Solid)
     @variables begin
-        M(t), [description = "Molarity of the solid in air", unit = u"mol/m^3", guess=1e-20]
+        M(t),
+            [description = "Molarity of the solid in air", unit = u"mol/m^3", guess = 1.0e-20]
     end
+
+    eqs = []
+
+    return System(eqs, t; name)
 end
 
-@mtkmodel Solids begin
-    @description "Solids in Isorropia II."
-    # @components begin
-    #     CaNO32 = Solid()
-    #     CaCl2 = Solid()
-    #     CaSO4 = Solid()
-    #     KHSO4 = Solid()
-    #     K2SO4 = Solid()
-    #     KNO3 = Solid()
-    #     KCl = Solid()
-    #     MgSO4 = Solid()
-    #     MgNO32 = Solid()
-    #     MgCl2 = Solid()
-    #     NaCl = Solid()
-    #     NaNO3 = Solid()
-    #     Na2SO4 = Solid()
-    #     NaHSO4 = Solid()
-    #     NH4Cl = Solid()
-    #     NH4NO3 = Solid()
-    #     NH42SO4 = Solid()
-    #     NH4HSO4 = Solid()
-    #     NH43HSO42 = Solid()
-    # end
+"""
+    Solids(; name=:Solids)
+
+Solids in Isorropia II.
+"""
+@component function Solids(; name=:Solids)
+    # CaNO32 = Solid(; name=:CaNO32)
+    # CaCl2 = Solid(; name=:CaCl2)
+    # CaSO4 = Solid(; name=:CaSO4)
+    # KHSO4 = Solid(; name=:KHSO4)
+    # K2SO4 = Solid(; name=:K2SO4)
+    # KNO3 = Solid(; name=:KNO3)
+    # KCl = Solid(; name=:KCl)
+    # MgSO4 = Solid(; name=:MgSO4)
+    # MgNO32 = Solid(; name=:MgNO32)
+    # MgCl2 = Solid(; name=:MgCl2)
+    # NaCl = Solid(; name=:NaCl)
+    # NaNO3 = Solid(; name=:NaNO3)
+    # Na2SO4 = Solid(; name=:Na2SO4)
+    # NaHSO4 = Solid(; name=:NaHSO4)
+    # NH4Cl = Solid(; name=:NH4Cl)
+    # NH4NO3 = Solid(; name=:NH4NO3)
+    # NH42SO4 = Solid(; name=:NH42SO4)
+    # NH4HSO4 = Solid(; name=:NH4HSO4)
+    # NH43HSO42 = Solid(; name=:NH43HSO42)
+
     @variables begin
         #! format: off
         NH4(t), [description = "Molarity of NH4+ in the solid", unit = u"mol/m^3", guess=1e-14]
@@ -41,8 +53,11 @@ end
         #HSO4(t), [description = "Molarity of HSO4- in the solid", unit = u"mol/m^3", guess=1e-14]
         #! format: on
     end
-    @equations begin
+
+    eqs = [
         #0 ~ min(NH4, Na, Ca, K, Mg, Cl, NO3, SO4)#, HSO4) # Non-negativity constraints
         #        SO4 ~ HSO4
-    end
+    ]
+
+    return System(eqs, t; name)
 end

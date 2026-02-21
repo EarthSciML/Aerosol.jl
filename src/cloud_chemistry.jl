@@ -85,15 +85,16 @@ Output Variables:
 
     @constants begin
         R_gas = 8.31446, [description = "Gas constant", unit = u"J/mol/K"]
-        rho_w_inv = 1e-6,
-        [description = "Inverse water density for LWC conversion", unit = u"m^3/g"]
+        rho_w_inv = 1.0e-6,
+            [description = "Inverse water density for LWC conversion", unit = u"m^3/g"]
     end
 
     @parameters begin
         L, [description = "Liquid water content", unit = u"g/m^3"]
         xi_SO2,
-        [
-            description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1"]
+            [
+                description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1",
+            ]
     end
 
     @variables begin
@@ -223,15 +224,19 @@ Output Variables:
         # [H+] + [NH4+] = [OH-] + [HCO3-] + 2[CO3^2-] + [HSO3-] + 2[SO3^2-] + [NO3-] + [Cl-] + 2[SO4^2-]
         # Residual should be zero
         charge_balance ~
-        (H_plus + NH4_plus) -
-        (OH_minus + HCO3_minus + 2*CO3_2minus +
-         HSO3_minus + 2*SO3_2minus + NO3_minus +
-         Cl_minus + 2*SO4_2minus)
+            (H_plus + NH4_plus) -
+            (
+            OH_minus + HCO3_minus + 2 * CO3_2minus +
+                HSO3_minus + 2 * SO3_2minus + NO3_minus +
+                Cl_minus + 2 * SO4_2minus
+        ),
     ]
 
-    return System(eqs, t;
+    return System(
+        eqs, t;
         systems = [water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq, sulfate],
-        name)
+        name
+    )
 end
 
 # =============================================================================
@@ -277,14 +282,15 @@ Input Variables:
     @constants begin
         R_gas = 8.31446, [description = "Gas constant", unit = u"J/mol/K"]
         C_ref = 1000.0,
-        [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
+            [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
     end
 
     @parameters begin
         L, [description = "Liquid water content", unit = u"g/m^3"]
         xi_SO2,
-        [
-            description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1"]
+            [
+                description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1",
+            ]
     end
 
     @variables begin
@@ -379,12 +385,14 @@ Input Variables:
         R_total ~ sulfate.R_total,
         R_O3 ~ sulfate.o3_ox.R_O3,
         R_H2O2 ~ sulfate.h2o2_ox.R_H2O2,
-        R_FeMn ~ sulfate.femn_ox.R_FeMn
+        R_FeMn ~ sulfate.femn_ox.R_FeMn,
     ]
 
-    return System(eqs, t;
+    return System(
+        eqs, t;
         systems = [water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq, sulfate],
-        name)
+        name
+    )
 end
 
 # =============================================================================
@@ -421,7 +429,7 @@ Parameters and other variables same as CloudChemistryFixedpH.
     @constants begin
         R_gas = 8.31446, [description = "Gas constant", unit = u"J/mol/K"]
         C_ref = 1000.0,
-        [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
+            [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
     end
 
     @parameters begin
@@ -498,10 +506,12 @@ Parameters and other variables same as CloudChemistryFixedpH.
 
         # ODE: Sulfate production
         # d[SO4^2-]/dt = R_total (S(IV) oxidation rate)
-        D(SO4_2minus) ~ R_total
+        D(SO4_2minus) ~ R_total,
     ]
 
-    return System(eqs, t;
+    return System(
+        eqs, t;
         systems = [so2_eq, h2o2_eq, o3_eq, sulfate],
-        name)
+        name
+    )
 end

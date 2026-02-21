@@ -6,7 +6,7 @@ using Aerosol, EarthSciData, ModelingToolkit, EarthSciMLBase, DynamicQuantities
 function EarthSciMLBase.couple2(
         c::Aerosol.ElementalCarbonCoupler,
         e::EarthSciData.NEI2016MonthlyEmisCoupler
-)
+    )
     c, e = c.sys, e.sys
 
     @constants(MW_C=12.011e-3,
@@ -24,10 +24,10 @@ end
 function EarthSciMLBase.couple2(
         c::Aerosol.ElementalCarbonCoupler,
         g::EarthSciData.GEOSFPCoupler
-)
+    )
     c, g = c.sys, g.sys
     c = param_to_var(c, :T, :P)
-    ConnectorSystem([c.T ~ g.I3₊T, c.P ~ g.P], c, g)
+    return ConnectorSystem([c.T ~ g.I3₊T, c.P ~ g.P], c, g)
 end
 
 end

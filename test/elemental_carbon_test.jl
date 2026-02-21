@@ -1,4 +1,5 @@
 @testitem "elemental carbon" begin
+    using Aerosol
     using EarthSciData, EarthSciMLBase
     using ModelingToolkit
     using Dates
@@ -23,8 +24,8 @@
 
     obs = string(observed(sys))
     @test occursin(
-        "ElementalCarbon₊NEI2016MonthlyEmis_PEC(t) ~ (ElementalCarbon₊T*R*nmolpermol*NEI2016MonthlyEmis₊PEC(t)) / (ElementalCarbon₊P*MW_C)",
+        "ElementalCarbon₊NEI2016MonthlyEmis_PEC(t) ~ (MW_air*nmolpermol*NEI2016MonthlyEmis₊PEC(t)) / MW_C",
         obs
     )
-    @test occursin("ElementalCarbon₊T(t) ~ GEOSFP₊I3₊T", obs)
+    @test occursin("ElementalCarbon₊T(t) ~ GEOSFP₊I3₊T(t)", obs)
 end

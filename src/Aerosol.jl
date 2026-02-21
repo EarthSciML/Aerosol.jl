@@ -10,8 +10,21 @@ using EarthSciMLBase
 
 include("VBS.jl")
 include("elemental_carbon.jl")
+include("cloud_physics.jl")
+include("mie_scattering.jl")
+include("organic_aerosol.jl")
+include("dynamics.jl")
+include("mass_transfer.jl")
+include("dahneke_brownian_diffusion.jl")
+include("timescales.jl")
+include("aqueous_transport.jl")
+include("single_particle_dynamics.jl")
+include("nucleation.jl")
+include("size_distribution.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA
+include("seinfeld_pandis_ch10/seinfeld_pandis_ch10.jl")
+@reexport using .SeinfeldPandisCh10
 
 # Aqueous chemistry module (Seinfeld & Pandis Chapter 7)
 include("henrys_law.jl")
@@ -38,5 +51,8 @@ export ATM_TO_PA, R_GAS_PA, R_GAS_J
 export HENRY_CONSTANTS_298, DELTA_H_DISSOLUTION
 export K_W_298, K_C1_298, K_C2_298, K_S1_298, K_S2_298, K_A1_298
 export K0_O3, K1_O3, K2_O3, K_H2O2, K_MN_SIV, K_FE_SIV, K_FEMN_SIV
+
+# Aerosol radiative forcing (Seinfeld & Pandis Chapter 24)
+include("aerosol_radiative_forcing.jl")
 
 end

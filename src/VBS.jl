@@ -5,7 +5,7 @@ function calc_Ci_star(T, Ci_star_standard)
     T1 = 300 # K
     ΔH = 100000 # J/mol
     R = 8.314 # J/K/mol
-    return Ci_star_standard / exp(ΔH/R*(1/(T)-1/T1))
+    return Ci_star_standard / exp(ΔH / R * (1 / (T) - 1 / T1))
 end
 
 # The function create a nonlinear system with input Ci (the organic compound concentration in all phases) and Ci_star_standard(basic set at standard temperatures)
@@ -19,11 +19,15 @@ function VBS(Ci, Ci_star_standard)
     @variables C_OA [unit = u"μg/(m^3)", description = "organic compound in aerosol phase"]
     @variables ξ[1:n] [description = "partitioning coefficient at corresponding Ci_star"]
 
-    eqs = [[ξ[i] ~ 1/(1+calc_Ci_star(T/T_unit, Ci_star_standard[i])/(C_OA*C_OA_unit))
-            for i in 1:n]
-           C_OA*C_OA_unit ~ sum(collect(ξ) .* Ci)] # TODO: Remove collect when unit bug is fixed in MTK
+    eqs = [
+        [
+            ξ[i] ~ 1 / (1 + calc_Ci_star(T / T_unit, Ci_star_standard[i]) / (C_OA * C_OA_unit))
+                for i in 1:n
+        ]
+        C_OA * C_OA_unit ~ sum(collect(ξ) .* Ci)
+    ] # TODO: Remove collect when unit bug is fixed in MTK
 
-    System(eqs, [C_OA, collect(ξ)...], [T, C_OA_unit, T_unit]; name = :VBS)
+    return System(eqs, [C_OA, collect(ξ)...], [T, C_OA_unit, T_unit]; name = :VBS)
 end
 
 VBS(Ci) = VBS(Ci, [0.01, 0.1, 1, 10, 100, 1000, 10000, 100000]) # standard saturation concentrations

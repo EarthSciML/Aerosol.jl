@@ -8,39 +8,39 @@ active_salts = collect(values(salts))
 
 @test ModelingToolkit.substitute(
     ModelingToolkit.subs_constants(ISORROPIA.drh(salts[:CaNO32])),
-    ISORROPIA.T => 298.15
+    ISORROPIA.T => 298.15,
 ) == salts[:CaNO32].drh
 
 @test ModelingToolkit.substitute(
     ModelingToolkit.subs_constants(ISORROPIA.drh(salts[:CaNO32])),
-    ISORROPIA.T => 320
+    ISORROPIA.T => 320,
 ) ≈ 0.5513060522349494
 
 @test ModelingToolkit.get_unit(ISORROPIA.drh(salts[:CaNO32])) isa
-      Unitful.FreeUnits{(), NoDims, nothing}
+    Unitful.FreeUnits{(), NoDims, nothing}
 
-# TODO(CT): Our solution MDRH selection doesn't work in most cases, 
-# because our method of checking which ions are present doesn't 
-# yield unique matches. We need to find a better 
-# way to do this, perhaps based on the ratios in Fountoukis and 
-# Nenes (2007) Table 3. 
+# TODO(CT): Our solution MDRH selection doesn't work in most cases,
+# because our method of checking which ions are present doesn't
+# yield unique matches. We need to find a better
+# way to do this, perhaps based on the ratios in Fountoukis and
+# Nenes (2007) Table 3.
 @testset "solution_mdrh_recurrent" begin
     for i in eachindex(ISORROPIA.mdrhs)
         u = Dict()
         for ion in values(ions)
-            u[ion.m] = 1.e-20
-            u[ion.m] = 1.e-20
+            u[ion.m] = 1.0e-20
+            u[ion.m] = 1.0e-20
         end
         for s in ISORROPIA.mdrhs[i][1]
-            u[salts[s].cation.m] = 1.e-9
-            u[salts[s].anion.m] = 1.e-9
+            u[salts[s].cation.m] = 1.0e-9
+            u[salts[s].anion.m] = 1.0e-9
         end
         @testset "$i" begin
             x = ModelingToolkit.substitute(
                 ModelingToolkit.subs_constants(
                     ISORROPIA.solution_mdrh_recurrent(1, active_salts, salts, ions),
                 ),
-                u
+                u,
             )
             if i ∈ [3, 5, 9, 10, 11, 12, 13, 14]
                 @test_broken x == ISORROPIA.mdrhs[i][2]
