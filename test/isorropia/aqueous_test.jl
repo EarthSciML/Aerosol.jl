@@ -129,41 +129,40 @@ using Test
     @test issubset(diff_salts, [:HNO3, :MgSO4])
 end
 
-@mtkmodel AqueousTestMolality begin
-    @components begin
-        aq = Aqueous()
-    end
+@component function AqueousTestMolality(; name = :AqueousTestMolality)
+    aq = Aqueous(; name = :aq)
     @constants begin
         no_change = 0.0, [unit = u"mol/kg/s"]
         M_no_change = 0.0, [unit = u"mol/m^3/s"]
         m_one = 1.0, [unit = u"mol/kg"]
     end
-    @equations begin
+    eqs = [
         # Fix the molalities at the initial concentration.
-        D(aq.NH4.m) ~ 0
-        D(aq.Na.m) ~ 0
-        D(aq.H.m) ~ 0
-        D(aq.Ca.m) ~ 0
-        D(aq.K.m) ~ 0
-        D(aq.Mg.m) ~ 0
-        D(aq.Cl.m) ~ 0
-        D(aq.NO3.m) ~ 0
-        D(aq.SO4.m) ~ 0
-        D(aq.HSO4.m) ~ 0
+        D(aq.NH4.m) ~ 0,
+        D(aq.Na.m) ~ 0,
+        D(aq.H.m) ~ 0,
+        D(aq.Ca.m) ~ 0,
+        D(aq.K.m) ~ 0,
+        D(aq.Mg.m) ~ 0,
+        D(aq.Cl.m) ~ 0,
+        D(aq.NO3.m) ~ 0,
+        D(aq.SO4.m) ~ 0,
+        D(aq.HSO4.m) ~ 0,
 
         # These species are neutral and are not in any salts, so
         # we fix their concentration.
-        aq.NH3.m ~ 0
-        aq.HCl_aq.m ~ 0
-        aq.HNO3_aq.m ~ 0
+        aq.NH3.m ~ 0,
+        aq.HCl_aq.m ~ 0,
+        aq.HNO3_aq.m ~ 0,
 
         # We need to fix the molar concentration of one of the salts in
         # order to be able to calculate the water concentration.
-        D(aq.NH42SO4.M) ~ M_no_change
-    end
+        D(aq.NH42SO4.M) ~ M_no_change,
+    ]
+    return System(eqs, t; systems = [aq], name)
 end
 
-@named aqt = AqueousTestMolality()
+aqt = AqueousTestMolality()
 sys = mtkcompile(aqt)
 
 prob = ODEProblem(
@@ -218,10 +217,8 @@ end
 
 lb, ub = -20, 100
 
-@mtkmodel AqueousTestActivity begin
-    @components begin
-        aq = Aqueous()
-    end
+@component function AqueousTestActivity(; name = :AqueousTestActivity)
+    aq = Aqueous(; name = :aq)
     @constants begin
         M_no_change = 0.0, [unit = u"mol/m^3/s"]
         no_change = 0.0, [unit = u"mol/m^3/s"]
@@ -233,40 +230,41 @@ lb, ub = -20, 100
         m3_no_change = 0.0, [unit = u"(mol/kg)^3/s"]
         m5_no_change = 0.0, [unit = u"(mol/kg)^5/s"]
     end
-    @equations begin
+    eqs = [
         # aqueous activities set by Table 2.
-        aq.CaNO32.loga_eq ~ clamp(13.0, lb, ub) # r1
-        aq.CaCl2.loga_eq ~ clamp(27.0, lb, ub) # r2
-        aq.CaSO4.loga_eq ~ clamp(-10.0, lb, ub) # r3
-        aq.K2SO4.loga_eq ~ clamp(-4.2, lb, ub) # r4
-        aq.KHSO4.loga_eq ~ clamp(3.2, lb, ub) # r5
-        aq.KNO3.loga_eq ~ clamp(-0.14, lb, ub) # r6
-        aq.KCl.loga_eq ~ clamp(2.2, lb, ub) # r7
-        aq.MgSO4.loga_eq ~ clamp(12.0, lb, ub) # r8
-        aq.MgNO32.loga_eq ~ clamp(35.0, lb, ub) # r9
-        aq.MgCl2.loga_eq ~ clamp(51.0, lb, ub) # r10
-        #aq.HNO3.loga_eq ~ clamp(-11.0, lb, ub) # r14
-        #aq.HCl.loga_eq ~ clamp(14.0, lb, ub) # r16
-        aq.Na2SO4.loga_eq ~ clamp(-0.73, lb, ub) # r19
-        aq.NH42SO4.loga_eq ~ clamp(0.63, lb, ub) # r20
-        aq.NaNO3.loga_eq ~ clamp(2.5, lb, ub) # r22
-        aq.NaCl.loga_eq ~ clamp(3.6, lb, ub) # r23
-        aq.NaHSO4.loga_eq ~ clamp(10.0, lb, ub) # r24
-        aq.NH4HSO4.loga_eq ~ clamp(0.32, lb, ub) # r26
-        aq.NH43HSO42.loga_eq ~ clamp(3.4, lb, ub) # r27
+        aq.CaNO32.loga_eq ~ clamp(13.0, lb, ub), # r1
+        aq.CaCl2.loga_eq ~ clamp(27.0, lb, ub), # r2
+        aq.CaSO4.loga_eq ~ clamp(-10.0, lb, ub), # r3
+        aq.K2SO4.loga_eq ~ clamp(-4.2, lb, ub), # r4
+        aq.KHSO4.loga_eq ~ clamp(3.2, lb, ub), # r5
+        aq.KNO3.loga_eq ~ clamp(-0.14, lb, ub), # r6
+        aq.KCl.loga_eq ~ clamp(2.2, lb, ub), # r7
+        aq.MgSO4.loga_eq ~ clamp(12.0, lb, ub), # r8
+        aq.MgNO32.loga_eq ~ clamp(35.0, lb, ub), # r9
+        aq.MgCl2.loga_eq ~ clamp(51.0, lb, ub), # r10
+        #aq.HNO3.loga_eq ~ clamp(-11.0, lb, ub), # r14
+        #aq.HCl.loga_eq ~ clamp(14.0, lb, ub), # r16
+        aq.Na2SO4.loga_eq ~ clamp(-0.73, lb, ub), # r19
+        aq.NH42SO4.loga_eq ~ clamp(0.63, lb, ub), # r20
+        aq.NaNO3.loga_eq ~ clamp(2.5, lb, ub), # r22
+        aq.NaCl.loga_eq ~ clamp(3.6, lb, ub), # r23
+        aq.NaHSO4.loga_eq ~ clamp(10.0, lb, ub), # r24
+        aq.NH4HSO4.loga_eq ~ clamp(0.32, lb, ub), # r26
+        aq.NH43HSO42.loga_eq ~ clamp(3.4, lb, ub), # r27
 
-        D(aq.NH3_dissociated.M_eq) ~ 0
+        D(aq.NH3_dissociated.M_eq) ~ 0,
 
         # These species are neutral and are not in any salts, so
         # we fix their concentration.
-        aq.NH3.m_eq ~ m_one
-        aq.HCl_aq.m_eq ~ m_one
-        aq.HNO3_aq.m_eq ~ m_one
-        aq.H2O_dissociated.m_eq ~ m_one
-    end
+        aq.NH3.m_eq ~ m_one,
+        aq.HCl_aq.m_eq ~ m_one,
+        aq.HNO3_aq.m_eq ~ m_one,
+        aq.H2O_dissociated.m_eq ~ m_one,
+    ]
+    return System(eqs, t; systems = [aq], name)
 end
 
-@named aqt = AqueousTestActivity()
+aqt = AqueousTestActivity()
 sys = mtkcompile(aqt)
 
 prob = ODEProblem(
@@ -557,24 +555,24 @@ f(prob)
 solve(prob, Rosenbrock23())
 
 using ModelingToolkit
-using ModelingToolkit: t_nounits, D_nounits
+using ModelingToolkit: t, D
 using OrdinaryDiffEq
 
 @variables begin
-    cation1m(t_nounits), [guess = 1.0]
-    anion1m(t_nounits), [guess = 1.0]
-    salt1M(t_nounits), [guess = 1.0]
-    anion2m(t_nounits), [guess = 1.0]
-    salt2M(t_nounits), [guess = 1.0]
-    # a1(t_nounits), [guess=1.0]
-    # a2(t_nounits), [guess=1.0]
-    # I(t_nounits), [guess=1.0]
-    W(t_nounits), [guess = 1.0]
-    totalcat(t_nounits), [guess = 2.0]
-    totalan1(t_nounits), [guess = 2.0]
-    totalan2(t_nounits), [guess = 2.0]
-    solid1(t_nounits), [guess = 0.0]
-    solid2(t_nounits), [guess = 0.0]
+    cation1m(t), [guess = 1.0]
+    anion1m(t), [guess = 1.0]
+    salt1M(t), [guess = 1.0]
+    anion2m(t), [guess = 1.0]
+    salt2M(t), [guess = 1.0]
+    # a1(t), [guess=1.0]
+    # a2(t), [guess=1.0]
+    # I(t), [guess=1.0]
+    W(t), [guess = 1.0]
+    totalcat(t), [guess = 2.0]
+    totalan1(t), [guess = 2.0]
+    totalan2(t), [guess = 2.0]
+    solid1(t), [guess = 0.0]
+    solid2(t), [guess = 0.0]
 end
 @parameters begin
     maw1 = 2.0
@@ -593,12 +591,12 @@ eqs = [
     totalan2 ~ salt2M + 2solid1 #+ solid2
     #totalan2 ~ abs(totalan2)
     #0 ~ cation1m - anion1m - anion2m
-    D_nounits(totalcat) ~ 0.0
-    D_nounits(totalan1) ~ 0.0
-    D_nounits(totalan2) ~ 0.0
+    D(totalcat) ~ 0.0
+    D(totalan1) ~ 0.0
+    D(totalan2) ~ 0.0
 ]
-@named aqt_sys = System(eqs, t_nounits)
-aqt = structural_simplify(aqt_sys)
+aqt_sys = System(eqs, t; name = :aqt_sys)
+aqt = mtkcompile(aqt_sys)
 
 prob = ODEProblem(
     aqt,
@@ -615,30 +613,30 @@ unknowns(aqt)
 using Plots
 using Aerosol.ISORROPIA: Salt, Ion
 
-@mtkmodel BinarySolution begin
-    @components begin
-        salt = Salt(drh = 0, l_t = 0, q, ν_cation, ν_anion, z_cation, z_anion)
-    end
+@component function BinarySolution(; name = :BinarySolution, q, ν_cation, ν_anion, z_cation, z_anion)
+    salt = Salt(; name = :salt, drh = 0, l_t = 0, q = q, ν_cation = ν_cation,
+        ν_anion = ν_anion, z_cation = z_cation, z_anion = z_anion)
     @constants begin
         I_rate = 1.0, [unit = u"mol/kg/s"]
-        W = 1.0e-6, [unit = u"kg/m^3"]
+        _W = 1.0e-6, [unit = u"kg/m^3"]
     end
     @variables begin
         Aᵧ_term(t), [description = "Debye-Hückel term used in Equation 7 and 8"]
         F_cat(t), [description = "Activity contribution from the cation"]
         F_an(t), [description = "Activity contribution from the anion"]
     end
-    @equations begin
-        D(salt.I) ~ I_rate
-        salt.logm ~ log(salt.I / salt.m_one)
-        salt.W ~ W
+    eqs = [
+        D(salt.I) ~ I_rate,
+        salt.logm ~ log(salt.I / salt.m_one),
+        salt.W ~ _W,
 
-        Aᵧ_term ~ salt.Aᵧ * √salt.I / (√salt.I_one + √salt.I) / √salt.I_one
-        F_cat ~ salt.Y * salt.logγ⁰ + Aᵧ_term * salt.zz * salt.Y
-        F_an ~ salt.X * salt.logγ⁰ + Aᵧ_term * salt.zz * salt.X
-        salt.F_cat ~ F_cat
-        salt.F_an ~ F_an
-    end
+        Aᵧ_term ~ salt.Aᵧ * √salt.I / (√salt.I_one + √salt.I) / √salt.I_one,
+        F_cat ~ salt.Y * salt.logγ⁰ + Aᵧ_term * salt.zz * salt.Y,
+        F_an ~ salt.X * salt.logγ⁰ + Aᵧ_term * salt.zz * salt.X,
+        salt.F_cat ~ F_cat,
+        salt.F_an ~ F_an,
+    ]
+    return System(eqs, t; systems = [salt], name)
 end
 
 # Binary activity coefficients for comparison with Figures 1-4 in
@@ -655,13 +653,13 @@ let
     plots = []
 
     for s in salts
-        @mtkcompile slt = BinarySolution(
-            salt.z_cation = s.z_cat,
-            salt.ν_cation = s.ν_cat,
-            salt.z_anion = s.z_an,
-            salt.ν_anion = s.ν_an,
-            salt.q = s.q,
-        )
+        slt = mtkcompile(BinarySolution(;
+            z_cation = s.z_cat,
+            ν_cation = s.ν_cat,
+            z_anion = s.z_an,
+            ν_anion = s.ν_an,
+            q = s.q,
+        ))
 
         prob = ODEProblem(slt, [slt.salt.I => 0.00001], (0.0, 40.0), saveat = 0.1)
         sol = solve(prob, Rosenbrock23())
