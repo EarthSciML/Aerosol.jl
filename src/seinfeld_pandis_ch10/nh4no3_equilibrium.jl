@@ -62,7 +62,7 @@ Y = \\frac{[NH_4NO_3]}{[NH_4NO_3] + 3[(NH_4)_2SO_4]}
 
 ```julia
 using ModelingToolkit, Aerosol
-@mtkbuild sys = NH4NO3Equilibrium()
+sys = mtkcompile(NH4NO3Equilibrium())
 ```
 """
 @component function NH4NO3Equilibrium(; name = :NH4NO3Equilibrium)

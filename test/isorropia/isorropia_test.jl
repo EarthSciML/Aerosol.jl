@@ -1,6 +1,8 @@
 @testsnippet IsorropiaSetup begin
     using Test
     using ModelingToolkit
+    using ModelingToolkit: t
+    using DynamicQuantities
     using Aerosol
     using OrdinaryDiffEqRosenbrock
     using OrdinaryDiffEqNonlinearSolve
@@ -42,15 +44,18 @@ end
         :r10 => 9.557e21,   # XK25: MgCl2(s) ⇌ Mg(aq) + 2Cl(aq)
     )
 
-    @named eq = ISORROPIA.EquilibriumConstants()
-    sys = mtkcompile(eq)
+    eq = ISORROPIA.EquilibriumConstants()
+    # Wrap EquilibriumConstants to constrain T (a variable) with a parameter
+    @parameters T_val = 298.15 [unit = u"K"]
+    wrapper = System([eq.T ~ T_val], t; systems=[eq], name=:test_eq)
+    sys = mtkcompile(wrapper)
     # At T=298.15, equilibrium constants should equal K⁰
-    prob = NonlinearProblem(sys, [], [sys.T => 298.15])
+    prob = NonlinearProblem(sys, [])
     sol = solve(prob, NewtonRaphson())
     @test sol.retcode == SciMLBase.ReturnCode.Success
 
     for (rname, K0) in fortran_K0
-        rsym = getproperty(sys, rname)
+        rsym = getproperty(eq, rname)
         logK_val = sol[rsym.logK_eq]
         K_computed = exp(logK_val)
         @test K_computed ≈ K0 rtol = 1.0e-3
@@ -88,9 +93,12 @@ end
         :r7 => (8.68, -6.902, 19.95),          # XK20 (note: value diffs from Julia's -6.167)
     )
 
-    @named eq = ISORROPIA.EquilibriumConstants()
-    sys = mtkcompile(eq)
-    prob = NonlinearProblem(sys, [], [sys.T => T])
+    eq = ISORROPIA.EquilibriumConstants()
+    # Wrap EquilibriumConstants to constrain T (a variable) with a parameter
+    @parameters T_val = T [unit = u"K"]
+    wrapper = System([eq.T ~ T_val], t; systems=[eq], name=:test_eq)
+    sys = mtkcompile(wrapper)
+    prob = NonlinearProblem(sys, [])
     sol = solve(prob, NewtonRaphson())
     @test sol.retcode == SciMLBase.ReturnCode.Success
 
@@ -98,7 +106,7 @@ end
         # Compute expected K using FORTRAN formula
         K_expected = K0 * exp(A * (T0T - 1.0) + B * COEF)
 
-        rsym = getproperty(sys, rname)
+        rsym = getproperty(eq, rname)
         K_computed = exp(sol[rsym.logK_eq])
 
         # Allow some tolerance for reactions where Julia's H/C values differ slightly from FORTRAN
@@ -111,7 +119,7 @@ end
 # =============================================================================
 
 @testitem "Isorropia model compilation" setup = [IsorropiaSetup] tags = [:isorropia] begin
-    @named isrpa = Isorropia()
+    isrpa = Isorropia()
     sys = mtkcompile(isrpa)
     @test sys isa System
 
@@ -181,16 +189,14 @@ end
 end
 
 @testitem "Isorropia ODE solve" setup = [IsorropiaSetup] tags = [:isorropia] begin
-    @named isrpa = Isorropia()
+    isrpa = Isorropia()
     sys = mtkcompile(isrpa)
 
     prob = ODEProblem(
         sys,
-        [],
-        (0.0, 10.0),
-        [sys.RH => 0.7];
+        [sys.RH => 0.7],
+        (0.0, 10.0);
         initializealg = BrownFullBasicInit(nlsolve = RobustMultiNewton()),
-        use_scc = false,
     )
 
     sol = solve(prob, Rosenbrock23())
@@ -212,7 +218,7 @@ end
 end
 
 @testitem "Salt group helper functions" setup = [IsorropiaSetup] tags = [:isorropia] begin
-    @named isrpa = Isorropia()
+    isrpa = Isorropia()
 
     # Test salt_group returns correct number of salts for each group
     @test length(ISORROPIA.salt_group(isrpa.aq, :NH4, :M)) == 5

@@ -1,7 +1,7 @@
 module EarthSciDataExt
 using Aerosol, EarthSciData, ModelingToolkit, EarthSciMLBase, DynamicQuantities
 
-# Note: ppb unit is already registered in the main Aerosol module
+@register_unit ppb 1
 
 function EarthSciMLBase.couple2(
         c::Aerosol.ElementalCarbonCoupler,
@@ -12,21 +12,19 @@ function EarthSciMLBase.couple2(
     @constants(
         MW_C = 12.011e-3,
         [unit = u"kg/mol", description = "Carbon molar mass"],
+        MW_air = 28.97e-3,
+        [unit = u"kg/mol", description = "Dry air molar mass"],
         nmolpermol = 1.0e9,
         [unit = u"ppb", description = "nmol/mol, Conversion factor from mol to nmol"],
-        R = 8.31446261815324,
-        [unit = u"m^3*Pa/mol/K", description = "Ideal gas constant"],
     )
 
-    # Emissions are in units of "kg/m3/s" and need to be converted to "ppb/s" or "nmol/mol/s".
-    # To do this we need to convert kg of emissions to nmol of emissions,
-    # and we need to convert m3 of air to mol of air.
-    # nmol_emissions = kg_emissions * gperkg / MW_emission * nmolpermol = kg / kg/mol * nmol/mol = nmol
-    # mol_air = m3_air / R / T * P = m3 / (m3*Pa/mol/K) / K * Pa = mol
-    # So, the overall conversion is:
-    # nmol_emissions / mol_air = (kg_emissions / MW_emission * nmolpermol) / (m3_air / R / T * P)
-    uconv = nmolpermol * R * c.T / c.P # Conversion factor with MW factored out.
-    return operator_compose(c, e, Dict(c.EC => e.PEC => uconv / MW_C))
+    # In EarthSciData v0.15, emissions are in units of "kg/kg/s" (mass mixing ratio per second).
+    # To convert to "ppb/s" (= nmol/mol/s):
+    #   ppb/s = (kg_EC/kg_air/s) × (MW_air/MW_C) × nmolpermol
+    # MW_air/MW_C converts mass mixing ratio to molar mixing ratio,
+    # and nmolpermol (=1e9) converts mol/mol to nmol/mol (=ppb).
+    uconv = nmolpermol * MW_air / MW_C
+    return operator_compose(c, e, Dict(c.EC => e.PEC => uconv))
 end
 
 function EarthSciMLBase.couple2(

@@ -70,7 +70,7 @@ where A, B, C are the solubility polynomial coefficients from Table 10.2.
 
 ```julia
 using ModelingToolkit, Aerosol
-@mtkbuild sys = DRHTemperature(salt = :NH4NO3)
+sys = mtkcompile(DRHTemperature(salt = :NH4NO3))
 ```
 """
 @component function DRHTemperature(; name = :DRHTemperature, salt::Symbol = :NH4NO3)

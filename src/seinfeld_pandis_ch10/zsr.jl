@@ -39,7 +39,7 @@ The water activity equals the relative humidity for equilibrium aerosols (Eq. 10
 
 ```julia
 using ModelingToolkit, Aerosol
-@mtkbuild sys = ZSRWaterContent(n_species = 2)
+sys = mtkcompile(ZSRWaterContent(n_species = 2))
 ```
 """
 @component function ZSRWaterContent(; name = :ZSRWaterContent, n_species::Int = 3)
