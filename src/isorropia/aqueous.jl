@@ -23,25 +23,26 @@ end
 An aqueous salt comprised of a cation, an anion, and an activity parameter (q).
 q values are given in Table 4 of Fountoukis and Nenes (2007).
 """
-@component function Salt(; name = :Salt,
-    is_KHSO4 = false,
-    is_NH4HSO4 = false,
-    is_NaHSO4 = false,
-    is_NH43HSO42 = false,
-    salt1 = nothing,
-    salt2 = nothing,
-    salt3 = nothing,
-    can_precipitate = false,
-    logm_guess = nothing,
-    M_salt_guess = nothing,
-    drh = 0.0,
-    l_t = NaN,
-    q = 0.0,
-    ν_cation = 1,
-    ν_anion = 1,
-    z_cation = 1,
-    z_anion = 1,
-)
+@component function Salt(;
+        name = :Salt,
+        is_KHSO4 = false,
+        is_NH4HSO4 = false,
+        is_NaHSO4 = false,
+        is_NH43HSO42 = false,
+        salt1 = nothing,
+        salt2 = nothing,
+        salt3 = nothing,
+        can_precipitate = false,
+        logm_guess = nothing,
+        M_salt_guess = nothing,
+        drh = 0.0,
+        l_t = NaN,
+        q = 0.0,
+        ν_cation = 1,
+        ν_anion = 1,
+        z_cation = 1,
+        z_anion = 1,
+    )
     # Precompute derived constants from keyword arguments
     _zz = z_cation * z_anion
     _B = 0.75 - 0.065 * q
@@ -139,25 +140,33 @@ q values are given in Table 4 of Fountoukis and Nenes (2007).
 
     # Equation 14 (conditional)
     if is_KHSO4 || is_NH4HSO4 || is_NaHSO4  # From Table 4 footnote b, c & d
-        push!(eqs,
+        push!(
+            eqs,
             logγ ~
                 0.5 *
-                (ParentScope(salt1.logγ) + ParentScope(salt2.logγ) - ParentScope(salt3.logγ)))
+                (ParentScope(salt1.logγ) + ParentScope(salt2.logγ) - ParentScope(salt3.logγ))
+        )
     elseif is_NH43HSO42
-        push!(eqs,
-            logγ ~ (ParentScope(salt1.logγ) * 3 + ParentScope(salt2.logγ)) * (1 / 5)) # From Table 4 footnote e
+        push!(
+            eqs,
+            logγ ~ (ParentScope(salt1.logγ) * 3 + ParentScope(salt2.logγ)) * (1 / 5)
+        ) # From Table 4 footnote e
     else
-        push!(eqs,
-            logγ ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀ - (0.125 - c_1 * (T - T₀₂)) * A)
+        push!(
+            eqs,
+            logγ ~ (1.125 - c_1 * (T - T₀₂)) * logγₜ₀ - (0.125 - c_1 * (T - T₀₂)) * A
+        )
     end
 
     # M equation (conditional on can_precipitate)
     if can_precipitate
-        push!(eqs,
+        push!(
+            eqs,
             M ~ (1 - deliquesced) * min(
                 M₀, # Maximum dissolved concentration
                 exp(logm) * m_one * W, # Equilibrium with solid.
-            ) + deliquesced * M₀) # Fully dissolved above the DRH
+            ) + deliquesced * M₀
+        ) # Fully dissolved above the DRH
     else
         push!(eqs, M ~ exp(logm) * m_one * W)
     end
@@ -237,86 +246,138 @@ end
     HCl_aq = Ion(; name = :HCl_aq, z = 0, logm_guess = 0)
 
     # Salts
-    CaNO32 = Salt(; name = :CaNO32,
+    CaNO32 = Salt(;
+        name = :CaNO32,
         z_cation = 2, ν_anion = 2, drh = 0.4906, l_t = 509.4, q = 0.93,
-        logm_guess = 0, M_salt_guess = 1.9e-8, can_precipitate = false)
-    CaCl2 = Salt(; name = :CaCl2,
+        logm_guess = 0, M_salt_guess = 1.9e-8, can_precipitate = false
+    )
+    CaCl2 = Salt(;
+        name = :CaCl2,
         z_cation = 2, ν_anion = 2, drh = 0.283, l_t = 551.1, q = 2.4,
-        logm_guess = 0, can_precipitate = false)
-    CaSO4 = Salt(; name = :CaSO4,
+        logm_guess = 0, can_precipitate = false
+    )
+    CaSO4 = Salt(;
+        name = :CaSO4,
         z_cation = 2, z_anion = 2, drh = 0.97, l_t = NaN, q = q0,
-        logm_guess = 0, can_precipitate = false)
-    K2SO4 = Salt(; name = :K2SO4,
+        logm_guess = 0, can_precipitate = false
+    )
+    K2SO4 = Salt(;
+        name = :K2SO4,
         ν_cation = 2, z_anion = 2, drh = 0.9751, l_t = 35.6, q = -0.25,
-        logm_guess = 0, can_precipitate = true)
-    KNO3 = Salt(; name = :KNO3,
+        logm_guess = 0, can_precipitate = true
+    )
+    KNO3 = Salt(;
+        name = :KNO3,
         z_cation = 1, z_anion = 1, drh = 0.9248, l_t = NaN, q = -2.33,
-        logm_guess = 0)
-    KCl = Salt(; name = :KCl,
+        logm_guess = 0
+    )
+    KCl = Salt(;
+        name = :KCl,
         z_cation = 1, z_anion = 1, drh = 0.8426, l_t = 158.9, q = 0.92,
-        logm_guess = 0)
-    MgSO4 = Salt(; name = :MgSO4,
+        logm_guess = 0
+    )
+    MgSO4 = Salt(;
+        name = :MgSO4,
         z_cation = 2, z_anion = 2, drh = 0.8613, l_t = -714.5, q = 0.15,
-        logm_guess = 0)
-    MgNO32 = Salt(; name = :MgNO32,
+        logm_guess = 0
+    )
+    MgNO32 = Salt(;
+        name = :MgNO32,
         z_cation = 2, ν_anion = 2, drh = 0.54, l_t = 230.2, q = 2.32,
-        logm_guess = 0, can_precipitate = false)
-    MgCl2 = Salt(; name = :MgCl2,
+        logm_guess = 0, can_precipitate = false
+    )
+    MgCl2 = Salt(;
+        name = :MgCl2,
         z_cation = 2, ν_anion = 2, drh = 0.3284, l_t = 42.23, q = 2.9,
-        logm_guess = 0, can_precipitate = false)
-    NaCl = Salt(; name = :NaCl,
+        logm_guess = 0, can_precipitate = false
+    )
+    NaCl = Salt(;
+        name = :NaCl,
         z_cation = 1, z_anion = 1, drh = 0.7528, l_t = 25.0, q = 2.23,
-        logm_guess = 0)
-    Na2SO4 = Salt(; name = :Na2SO4,
+        logm_guess = 0
+    )
+    Na2SO4 = Salt(;
+        name = :Na2SO4,
         ν_cation = 2, z_anion = 2, drh = 0.93, l_t = 80.0, q = -0.19,
-        logm_guess = 0, can_precipitate = true)
-    NaNO3 = Salt(; name = :NaNO3,
+        logm_guess = 0, can_precipitate = true
+    )
+    NaNO3 = Salt(;
+        name = :NaNO3,
         z_cation = 1, z_anion = 1, drh = 0.7379, l_t = 304.0, q = -0.39,
-        logm_guess = 0)
-    NH42SO4 = Salt(; name = :NH42SO4,
+        logm_guess = 0
+    )
+    NH42SO4 = Salt(;
+        name = :NH42SO4,
         ν_cation = 2, z_anion = 2, drh = 0.7997, l_t = 80.0, q = -0.25,
-        logm_guess = 0)
-    NH4NO3 = Salt(; name = :NH4NO3,
+        logm_guess = 0
+    )
+    NH4NO3 = Salt(;
+        name = :NH4NO3,
         z_cation = 1, z_anion = 1, drh = 0.6183, l_t = 852.0, q = -1.15,
-        logm_guess = 0)
-    NH4Cl = Salt(; name = :NH4Cl,
+        logm_guess = 0
+    )
+    NH4Cl = Salt(;
+        name = :NH4Cl,
         z_cation = 1, z_anion = 1, drh = 0.771, l_t = 239.0, q = 0.82,
-        logm_guess = 0)
-    HHSO4 = Salt(; name = :HHSO4,
-        z_cation = 1, z_anion = 1, drh = 0.0, l_t = NaN, q = 8.0)
-    H2SO4 = Salt(; name = :H2SO4,
+        logm_guess = 0
+    )
+    HHSO4 = Salt(;
+        name = :HHSO4,
+        z_cation = 1, z_anion = 1, drh = 0.0, l_t = NaN, q = 8.0
+    )
+    H2SO4 = Salt(;
+        name = :H2SO4,
         z_cation = 1, z_anion = 1, drh = 0.0, l_t = NaN, q = -0.1,
-        logm_guess = 0)
-    HNO3 = Salt(; name = :HNO3,
+        logm_guess = 0
+    )
+    HNO3 = Salt(;
+        name = :HNO3,
         z_cation = 1, z_anion = 1, drh = 0, l_t = NaN, q = 2.6,
-        logm_guess = 0)
-    HCl = Salt(; name = :HCl,
+        logm_guess = 0
+    )
+    HCl = Salt(;
+        name = :HCl,
         z_cation = 1, z_anion = 1, drh = 0, l_t = NaN, q = 6.0,
-        logm_guess = 0)
-    KHSO4 = Salt(; name = :KHSO4,
+        logm_guess = 0
+    )
+    KHSO4 = Salt(;
+        name = :KHSO4,
         z_cation = 1, z_anion = 1, drh = 0.86, l_t = NaN, q = q0,
         is_KHSO4 = true, salt1 = HHSO4, salt2 = KCl, salt3 = HCl,
-        logm_guess = 0)
-    NH4HSO4 = Salt(; name = :NH4HSO4,
+        logm_guess = 0
+    )
+    NH4HSO4 = Salt(;
+        name = :NH4HSO4,
         z_cation = 1, z_anion = 1, drh = 0.4, l_t = 384.0, q = q0,
         is_NH4HSO4 = true, salt1 = HHSO4, salt2 = NH4Cl, salt3 = HCl,
-        logm_guess = 0)
-    NaHSO4 = Salt(; name = :NaHSO4,
+        logm_guess = 0
+    )
+    NaHSO4 = Salt(;
+        name = :NaHSO4,
         z_cation = 1, z_anion = 1, drh = 0.52, l_t = -45.0, q = q0,
         is_NaHSO4 = true, salt1 = HHSO4, salt2 = NaCl, salt3 = HCl,
-        logm_guess = 0)
-    NH43HSO42 = Salt(; name = :NH43HSO42,
+        logm_guess = 0
+    )
+    NH43HSO42 = Salt(;
+        name = :NH43HSO42,
         ν_cation = 3, ν_anion = 2, drh = 0.69, l_t = 186.0, q = q0,
         is_NH43HSO42 = true, salt1 = NH42SO4, salt2 = NH4HSO4,
-        logm_guess = 0)
+        logm_guess = 0
+    )
 
     # Species that are not in the paper. Assume q=0
-    HSO4_dissociated = Salt(; name = :HSO4_dissociated,
-        z_anion = abs(-2), drh = 0, l_t = NaN, q = 0.0, logm_guess = 1) # H + SO4
-    NH3_dissociated = Salt(; name = :NH3_dissociated,
-        drh = 0, l_t = NaN, q = 0.0, logm_guess = 1) # NH4 + OH
-    H2O_dissociated = Salt(; name = :H2O_dissociated,
-        drh = 0, l_t = NaN, q = 0.0, logm_guess = 1) # H + OH
+    HSO4_dissociated = Salt(;
+        name = :HSO4_dissociated,
+        z_anion = abs(-2), drh = 0, l_t = NaN, q = 0.0, logm_guess = 1
+    ) # H + SO4
+    NH3_dissociated = Salt(;
+        name = :NH3_dissociated,
+        drh = 0, l_t = NaN, q = 0.0, logm_guess = 1
+    ) # NH4 + OH
+    H2O_dissociated = Salt(;
+        name = :H2O_dissociated,
+        drh = 0, l_t = NaN, q = 0.0, logm_guess = 1
+    ) # H + OH
 
     # Water content
     #! format: off
@@ -359,13 +420,17 @@ end
     #! format: on
 
     # Collect all subsystems
-    all_salts = [CaNO32, CaCl2, CaSO4, K2SO4, KNO3, KCl, MgSO4, MgNO32, MgCl2,
+    all_salts = [
+        CaNO32, CaCl2, CaSO4, K2SO4, KNO3, KCl, MgSO4, MgNO32, MgCl2,
         NaCl, Na2SO4, NaNO3, NH42SO4, NH4NO3, NH4Cl, HHSO4, H2SO4, HNO3, HCl,
-        KHSO4, NH4HSO4, NaHSO4, NH43HSO42, HSO4_dissociated, NH3_dissociated, H2O_dissociated]
+        KHSO4, NH4HSO4, NaHSO4, NH43HSO42, HSO4_dissociated, NH3_dissociated, H2O_dissociated,
+    ]
     all_ions = [H, OH, NH3, HNO3_aq, HCl_aq]
-    all_maws = [maw_CaNO32, maw_CaCl2, maw_KHSO4, maw_K2SO4, maw_KNO3, maw_KCl,
+    all_maws = [
+        maw_CaNO32, maw_CaCl2, maw_KHSO4, maw_K2SO4, maw_KNO3, maw_KCl,
         maw_MgSO4, maw_MgNO32, maw_MgCl2, maw_NaNO3, maw_NaHSO4, maw_NaCl,
-        maw_Na2SO4, maw_NH42SO4, maw_NH4Cl, maw_NH4NO3, maw_NH4HSO4, maw_NH43HSO42]
+        maw_Na2SO4, maw_NH42SO4, maw_NH4Cl, maw_NH4NO3, maw_NH4HSO4, maw_NH43HSO42,
+    ]
 
     eqs = [
         Aᵧ_term ~ ln10 * Aᵧ * √I / (√I_one + √I) / √I_one, # NOTE: The last √I_one here is not in the paper but is needed to make the units balance. Constants multiplied by ln10 to convert from log₁₀ to natural log.

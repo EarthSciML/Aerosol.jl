@@ -47,7 +47,7 @@ end
     eq = ISORROPIA.EquilibriumConstants()
     # Wrap EquilibriumConstants to constrain T (a variable) with a parameter
     @parameters T_val = 298.15 [unit = u"K"]
-    wrapper = System([eq.T ~ T_val], t; systems=[eq], name=:test_eq)
+    wrapper = System([eq.T ~ T_val], t; systems = [eq], name = :test_eq)
     sys = mtkcompile(wrapper)
     # At T=298.15, equilibrium constants should equal K⁰
     prob = NonlinearProblem(sys, [])
@@ -96,7 +96,7 @@ end
     eq = ISORROPIA.EquilibriumConstants()
     # Wrap EquilibriumConstants to constrain T (a variable) with a parameter
     @parameters T_val = T [unit = u"K"]
-    wrapper = System([eq.T ~ T_val], t; systems=[eq], name=:test_eq)
+    wrapper = System([eq.T ~ T_val], t; systems = [eq], name = :test_eq)
     sys = mtkcompile(wrapper)
     prob = NonlinearProblem(sys, [])
     sol = solve(prob, NewtonRaphson())

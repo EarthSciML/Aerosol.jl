@@ -614,8 +614,10 @@ using Plots
 using Aerosol.ISORROPIA: Salt, Ion
 
 @component function BinarySolution(; name = :BinarySolution, q, ν_cation, ν_anion, z_cation, z_anion)
-    salt = Salt(; name = :salt, drh = 0, l_t = 0, q = q, ν_cation = ν_cation,
-        ν_anion = ν_anion, z_cation = z_cation, z_anion = z_anion)
+    salt = Salt(;
+        name = :salt, drh = 0, l_t = 0, q = q, ν_cation = ν_cation,
+        ν_anion = ν_anion, z_cation = z_cation, z_anion = z_anion
+    )
     @constants begin
         I_rate = 1.0, [unit = u"mol/kg/s"]
         _W = 1.0e-6, [unit = u"kg/m^3"]
@@ -653,13 +655,15 @@ let
     plots = []
 
     for s in salts
-        slt = mtkcompile(BinarySolution(;
-            z_cation = s.z_cat,
-            ν_cation = s.ν_cat,
-            z_anion = s.z_an,
-            ν_anion = s.ν_an,
-            q = s.q,
-        ))
+        slt = mtkcompile(
+            BinarySolution(;
+                z_cation = s.z_cat,
+                ν_cation = s.ν_cat,
+                z_anion = s.z_an,
+                ν_anion = s.ν_an,
+                q = s.q,
+            )
+        )
 
         prob = ODEProblem(slt, [slt.salt.I => 0.00001], (0.0, 40.0), saveat = 0.1)
         sol = solve(prob, Rosenbrock23())
