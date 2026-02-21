@@ -22,8 +22,10 @@ The implementation also includes the vertical mass profile (Eq. 8.55).
 
 Default parameter values correspond to the "Urban" distribution from Table 8.3.
 """
-@component function AerosolDistribution(n_modes = 3; name = :AerosolDistribution,
-    N_vals = nothing, D_g_vals = nothing, logσ_vals = nothing)
+@component function AerosolDistribution(
+        n_modes = 3; name = :AerosolDistribution,
+        N_vals = nothing, D_g_vals = nothing, logσ_vals = nothing
+    )
     @constants begin
         π_c = π, [description = "Pi", unit = u"1"]
         ln10 = log(10.0), [description = "Natural log of 10", unit = u"1"]
@@ -158,10 +160,12 @@ Three lognormal modes with parameters:
   - Mode 3: accumulation mode (N=3.64×10⁴ cm⁻³, Dg=0.050 μm, log σ=0.337)
 """
 function UrbanAerosol(; name = :UrbanAerosol)
-    return AerosolDistribution(3; name,
+    return AerosolDistribution(
+        3; name,
         N_vals = [9.93e4 * 1.0e6, 1.11e3 * 1.0e6, 3.64e4 * 1.0e6],
         D_g_vals = [0.013e-6, 0.014e-6, 0.05e-6],
-        logσ_vals = [0.245, 0.666, 0.337])
+        logσ_vals = [0.245, 0.666, 0.337]
+    )
 end
 
 """
@@ -176,10 +180,12 @@ Three lognormal modes with parameters:
   - Mode 3: (N=3.1 cm⁻³, Dg=0.58 μm, log σ=0.396)
 """
 function MarineAerosol(; name = :MarineAerosol)
-    return AerosolDistribution(3; name,
+    return AerosolDistribution(
+        3; name,
         N_vals = [133.0 * 1.0e6, 66.6 * 1.0e6, 3.1 * 1.0e6],
         D_g_vals = [0.008e-6, 0.266e-6, 0.58e-6],
-        logσ_vals = [0.657, 0.21, 0.396])
+        logσ_vals = [0.657, 0.21, 0.396]
+    )
 end
 
 """
@@ -194,10 +200,12 @@ Three lognormal modes with parameters:
   - Mode 3: (N=1990 cm⁻³, Dg=0.084 μm, log σ=0.266)
 """
 function RuralAerosol(; name = :RuralAerosol)
-    return AerosolDistribution(3; name,
+    return AerosolDistribution(
+        3; name,
         N_vals = [6.65e3 * 1.0e6, 147.0 * 1.0e6, 1990.0 * 1.0e6],
         D_g_vals = [0.015e-6, 0.054e-6, 0.084e-6],
-        logσ_vals = [0.225, 0.557, 0.266])
+        logσ_vals = [0.225, 0.557, 0.266]
+    )
 end
 
 """
@@ -212,10 +220,12 @@ Three lognormal modes with parameters:
   - Mode 3: (N=0.300 cm⁻³, Dg=1.800 μm, log σ=0.380)
 """
 function RemoteContinentalAerosol(; name = :RemoteContinentalAerosol)
-    return AerosolDistribution(3; name,
+    return AerosolDistribution(
+        3; name,
         N_vals = [3200.0 * 1.0e6, 2900.0 * 1.0e6, 0.3 * 1.0e6],
         D_g_vals = [0.02e-6, 0.116e-6, 1.8e-6],
-        logσ_vals = [0.161, 0.217, 0.38])
+        logσ_vals = [0.161, 0.217, 0.38]
+    )
 end
 
 """
@@ -230,10 +240,12 @@ Three lognormal modes with parameters:
   - Mode 3: (N=63.5 cm⁻³, Dg=0.520 μm, log σ=0.425)
 """
 function FreeTroposphereAerosol(; name = :FreeTroposphereAerosol)
-    return AerosolDistribution(3; name,
+    return AerosolDistribution(
+        3; name,
         N_vals = [129.0 * 1.0e6, 59.7 * 1.0e6, 63.5 * 1.0e6],
         D_g_vals = [0.007e-6, 0.25e-6, 0.52e-6],
-        logσ_vals = [0.645, 0.253, 0.425])
+        logσ_vals = [0.645, 0.253, 0.425]
+    )
 end
 
 """
@@ -248,10 +260,12 @@ Three lognormal modes with parameters:
   - Mode 3: (N=3×10⁻⁴ cm⁻³, Dg=8.6 μm, log σ=0.291)
 """
 function PolarAerosol(; name = :PolarAerosol)
-    return AerosolDistribution(3; name,
+    return AerosolDistribution(
+        3; name,
         N_vals = [21.7 * 1.0e6, 0.186 * 1.0e6, 3.0e-4 * 1.0e6],
         D_g_vals = [0.138e-6, 0.75e-6, 8.6e-6],
-        logσ_vals = [0.245, 0.3, 0.291])
+        logσ_vals = [0.245, 0.3, 0.291]
+    )
 end
 
 """
@@ -266,8 +280,10 @@ Three lognormal modes with parameters:
   - Mode 3: (N=0.178 cm⁻³, Dg=21.60 μm, log σ=0.438)
 """
 function DesertAerosol(; name = :DesertAerosol)
-    return AerosolDistribution(3; name,
+    return AerosolDistribution(
+        3; name,
         N_vals = [726.0 * 1.0e6, 114.0 * 1.0e6, 0.178 * 1.0e6],
         D_g_vals = [0.002e-6, 0.038e-6, 21.6e-6],
-        logσ_vals = [0.247, 0.77, 0.438])
+        logσ_vals = [0.247, 0.77, 0.438]
+    )
 end

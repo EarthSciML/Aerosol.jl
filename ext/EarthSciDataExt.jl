@@ -12,19 +12,15 @@ function EarthSciMLBase.couple2(
     @constants(
         MW_C = 12.011e-3,
         [unit = u"kg/mol", description = "Carbon molar mass"],
-        MW_air = 28.97e-3,
-        [unit = u"kg/mol", description = "Dry air molar mass"],
         nmolpermol = 1.0e9,
         [unit = u"ppb", description = "nmol/mol, Conversion factor from mol to nmol"],
+        MW_Air = 28.97e-3,
+        [unit = u"kg/mol", description = "Molar mass of air"],
     )
 
-    # In EarthSciData v0.15, emissions are in units of "kg/kg/s" (mass mixing ratio per second).
-    # To convert to "ppb/s" (= nmol/mol/s):
-    #   ppb/s = (kg_EC/kg_air/s) × (MW_air/MW_C) × nmolpermol
-    # MW_air/MW_C converts mass mixing ratio to molar mixing ratio,
-    # and nmolpermol (=1e9) converts mol/mol to nmol/mol (=ppb).
-    uconv = nmolpermol * MW_air / MW_C
-    return operator_compose(c, e, Dict(c.EC => e.PEC => uconv))
+    # Emissions are in units of "kg/kg air/s" and need to be converted to "ppb/s" or "nmol/mol/s".
+    uconv = nmolpermol * MW_Air # Conversion factor with MW factored out.
+    return operator_compose(c, e, Dict(c.EC => e.PEC => uconv / MW_C))
 end
 
 function EarthSciMLBase.couple2(

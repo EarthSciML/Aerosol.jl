@@ -132,18 +132,32 @@ function eval_eq(sys, var, param_vals)
     # Get all variables that appear in the RHS
     rhs_vars = Symbolics.get_variables(eq.rhs)
 
-    # Build substitution dict by matching RHS variables with:
-    # 1. System defaults (for constants like π_c, ln10)
-    # 2. User-provided values (matching by string representation)
+    # Build substitution dict from defaults and user-provided values
     subs = Dict{Any, Any}()
-    defs = ModelingToolkit.defaults(sys)
+
+    # Collect defaults from parameters (includes constants in MTK v11)
+    # Expand array parameters into indexed entries (e.g., D_g => [a,b,c] becomes D_g[1]=>a, D_g[2]=>b, D_g[3]=>c)
+    defs = Dict{String, Any}()
+    for s in parameters(sys)
+        if ModelingToolkit.hasdefault(s)
+            v = ModelingToolkit.getdefault(s)
+            v = v isa Irrational ? Float64(v) : v
+            k_str = string(s)
+            if v isa AbstractVector
+                for (i, vi) in enumerate(v)
+                    defs["$(k_str)[$i]"] = vi
+                end
+            else
+                defs[k_str] = v
+            end
+        end
+    end
 
     for rv in rhs_vars
         rv_str = string(rv)
 
         # Check system defaults
-        for (k, v) in defs
-            k_str = string(k)
+        for (k_str, v) in defs
             if rv_str == k_str || endswith(k_str, "₊" * rv_str)
                 subs[rv] = v
             end
@@ -159,7 +173,7 @@ function eval_eq(sys, var, param_vals)
     end
 
     result = Symbolics.substitute(eq.rhs, subs)
-    return Float64(result)
+    return Float64(eval(Symbolics.toexpr(result)))
 end
 nothing # hide
 ```
@@ -182,19 +196,19 @@ end
 
 # Also evaluate individual mode contributions using single-mode systems
 mode_contributions = [zeros(length(D_p_range)) for _ in 1:3]
-defs = ModelingToolkit.defaults(urban)
+# Get default values for the urban distribution parameters
+urban_N = ModelingToolkit.getdefault(urban.N)
+urban_D_g = ModelingToolkit.getdefault(urban.D_g)
+urban_logσ = ModelingToolkit.getdefault(urban.logσ)
 for i in 1:3
-    n_key = only(filter(k -> contains(string(k), "N[$i]"), collect(keys(defs))))
-    d_key = only(filter(k -> contains(string(k), "D_g[$i]"), collect(keys(defs))))
-    s_key = only(filter(k -> contains(string(k), "logσ[$i]"), collect(keys(defs))))
     mode_sys = AerosolDistribution(1; name = Symbol("mode_$i"))
     for (j, D_p_val) in enumerate(D_p_range)
         mode_contributions[i][j] = eval_eq(mode_sys,
             mode_sys.n_N_o,
             Dict(
-                mode_sys.N[1] => defs[n_key],
-                mode_sys.D_g[1] => defs[d_key],
-                mode_sys.logσ[1] => defs[s_key],
+                mode_sys.N[1] => urban_N[i],
+                mode_sys.D_g[1] => urban_D_g[i],
+                mode_sys.logσ[1] => urban_logσ[i],
                 mode_sys.D_p => D_p_val
             ))
     end
