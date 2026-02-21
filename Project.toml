@@ -1,6 +1,6 @@
 name = "Aerosol"
 uuid = "8510b696-cc45-4a64-84d0-47f429ca1505"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["EarthSciML authors and contributors"]
 
 [deps]
