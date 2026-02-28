@@ -56,9 +56,9 @@ category integrals evaluated using a linear distribution function approximation
 (Eq. 11-13) and positivity constraints (Eq. 15a,b).
 
 The implementation uses symbolic array operations (`@arrayop` and `@makearray` from
-SymbolicUtils.jl) for closure relations, linear distribution parameters, shifted arrays,
-and summation reductions, with helper functions enabling complex logic within a single
-@arrayop nesting level.
+SymbolicUtils.jl) for all computations: closure relations, linear distribution parameters,
+shifted arrays, and summation reductions. Rate assembly uses level-2 `@arrayop` with
+`ifelse` masks for variable-bound sums and the `ifelse(i==1, ...)` trick for per-k terms.
 
 ## Kernel Types
 
@@ -77,9 +77,6 @@ and summation reductions, with helper functions enabling complex logic within a 
     I::Int=36, x1::Float64=1.6e-14,
     kernel_type::Symbol=:constant,
     kernel_params::Dict=Dict(:K0 => 1e-10))
-
-    # ---- Category boundaries (Eq. 2, p=2) ----
-    xb = [x1 * 2.0^(k - 1) for k in 1:(I+1)]
 
     # ---- Validate kernel ----
     if kernel_type == :constant
@@ -103,8 +100,6 @@ and summation reductions, with helper functions enabling complex logic within a 
         Mk(t)[1:I], [description = "Mass concentration in category k", unit = u"kg*m^-3"]
     end
 
-    x = xb[1:I]  # category lower boundaries
-
     # ---- Closure relations via @arrayop (level 1) ----
     Z_arr = @arrayop (k,) _sce_Z(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), XI_P) k in 1:I
     Q_arr = @arrayop (k,) _sce_Q(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), XI_P) k in 1:I
@@ -124,152 +119,137 @@ and summation reductions, with helper functions enabling complex logic within a 
         M_prev_arr[2:I] => @arrayop (k,) Mk[k] * (one_m3 / one_kg) k in 1:I-1
     end
 
-    # ---- Tail sums via @arrayop (level 1) ----
-    N_upper_arr = @arrayop (k,) ifelse(i >= k + 1, Nk[i] * one_m3, 0.0) k in 1:I i in 1:I
-    M_lower_arr = @arrayop (k,) ifelse(i <= k - 1, Mk[i] * (one_m3 / one_kg), 0.0) k in 1:I i in 1:I
-
-    # ---- Scalarize level-1 results for use in rate assembly ----
-    N_dl_s = Symbolics.scalarize(@arrayop (k,) Nk[k] * one_m3 k in 1:I)
-    M_dl_s = Symbolics.scalarize(@arrayop (k,) Mk[k] * (one_m3 / one_kg) k in 1:I)
-    Z = Symbolics.scalarize(Z_arr)
-    Q = Symbolics.scalarize(Q_arr)
-    f = Symbolics.scalarize(f_arr)
-    ψ = Symbolics.scalarize(ψ_arr)
-    α = Symbolics.scalarize(α_arr)
-    N_prev = Symbolics.scalarize(N_prev_arr)
-    M_prev = Symbolics.scalarize(M_prev_arr)
-    N_upper = Symbolics.scalarize(N_upper_arr)
-    M_lower = Symbolics.scalarize(M_lower_arr)
-
-    # ---- Kernel-specific rate computation ----
-    if kernel_type == :constant
-        dN_dl, dM_dl = _sce_rates_constant(N_dl_s, M_dl_s, Z, Q, f, ψ, α,
-            N_prev, M_prev, N_upper, M_lower, x, I, K0_val)
-    else  # :golovin
-        R = Symbolics.scalarize(@arrayop (k,) _sce_R(Nk[k] * one_m3,
-            Mk[k] * (one_m3 / one_kg), XI_P) k in 1:I)
-        M_upper = Symbolics.scalarize(
-            @arrayop (k,) ifelse(i >= k + 1, Mk[i] * (one_m3 / one_kg), 0.0) k in 1:I i in 1:I)
-        Z_lower = Symbolics.scalarize(
-            @arrayop (k,) ifelse(i <= k - 1,
-                _sce_Z(Nk[i] * one_m3, Mk[i] * (one_m3 / one_kg), XI_P),
-                0.0) k in 1:I i in 1:I)
-        dN_dl, dM_dl = _sce_rates_golovin(N_dl_s, M_dl_s, Z, Q, R, f, ψ, α,
-            N_prev, M_prev, N_upper, M_upper, M_lower, Z_lower, x, I, C_val)
+    ψ_prev_arr = @makearray ψ_prev_arr[1:I] begin
+        ψ_prev_arr[1:1] => [0.0]
+        ψ_prev_arr[2:I] => @arrayop (k,) _sce_psi(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I-1
+    end
+    α_prev_arr = @makearray α_prev_arr[1:I] begin
+        α_prev_arr[1:1] => [0.0]
+        α_prev_arr[2:I] => @arrayop (k,) _sce_alpha(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I-1
+    end
+    f_prev_arr = @makearray f_prev_arr[1:I] begin
+        f_prev_arr[1:1] => [0.0]
+        f_prev_arr[2:I] => @arrayop (k,) _sce_f(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I-1
     end
 
-    # ---- Build equations with proper units ----
+    # ---- Kernel-specific rate computation via level-2 @arrayop ----
+    if kernel_type == :constant
+        # dN: Eq. 9a with K = K0
+        dN_arr = @arrayop (k,) (
+            # Per-k terms (Terms 1+3), gated to fire once via i==1
+            ifelse(i == 1,
+                K0_val / 2 * N_prev_arr[k]^2 - K0_val * (Nk[k] * one_m3)^2,
+                0.0) +
+            # Term 2: sum_{i=1}^{k-2} with k-1 shifted params
+            ifelse(i <= k - 2,
+                K0_val * (ψ_prev_arr[k] * (Mk[i] * (one_m3 / one_kg)) + α_prev_arr[k] * Z_arr[i]),
+                0.0) +
+            # Term 4: -sum_{i=1}^{k-1}
+            ifelse(i <= k - 1,
+                -K0_val * (ψ_arr[k] * (Mk[i] * (one_m3 / one_kg)) + α_arr[k] * Z_arr[i]),
+                0.0) +
+            # Folded -N_dl[k]*N_upper[k]
+            ifelse(i >= k + 1,
+                -K0_val * (Nk[k] * one_m3) * (Nk[i] * one_m3),
+                0.0)
+        ) k in 1:I i in 1:I
+
+        # dM: Eq. 9b with K = K0
+        dM_arr = @arrayop (k,) (
+            # Per-k terms (Terms 1+3)
+            ifelse(i == 1,
+                K0_val * N_prev_arr[k] * M_prev_arr[k]
+                - K0_val * (Nk[k] * one_m3) * (Mk[k] * (one_m3 / one_kg)),
+                0.0) +
+            # Term 2: sum_{i=1}^{k-2} with shifted coefficients inlined
+            ifelse(i <= k - 2,
+                K0_val * (2 * x1 * 2.0^(k - 2) * ψ_prev_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                        + f_prev_arr[k] / 2 * Z_arr[i]
+                        + α_prev_arr[k] * Q_arr[i]),
+                0.0) +
+            # Terms 4+5 combined (same mask i<=k-1): -sum + folded M_lower
+            ifelse(i <= k - 1,
+                -K0_val * (2 * x1 * 2.0^(k - 1) * ψ_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                         + f_arr[k] / 2 * Z_arr[i]
+                         + α_arr[k] * Q_arr[i])
+                + K0_val * (Nk[k] * one_m3) * (Mk[i] * (one_m3 / one_kg)),
+                0.0) +
+            # Folded -M_dl[k]*N_upper[k]
+            ifelse(i >= k + 1,
+                -K0_val * (Mk[k] * (one_m3 / one_kg)) * (Nk[i] * one_m3),
+                0.0)
+        ) k in 1:I i in 1:I
+
+    else  # :golovin
+        R_arr = @arrayop (k,) _sce_R(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), XI_P) k in 1:I
+
+        Z_prev_arr = @makearray Z_prev_arr[1:I] begin
+            Z_prev_arr[1:1] => [0.0]
+            Z_prev_arr[2:I] => @arrayop (k,) _sce_Z(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), XI_P) k in 1:I-1
+        end
+
+        # dN: Eq. 9a with K = C(x+y)
+        dN_arr = @arrayop (k,) (
+            # Per-k terms
+            ifelse(i == 1,
+                C_val * N_prev_arr[k] * M_prev_arr[k]
+                - 2 * C_val * (Nk[k] * one_m3) * (Mk[k] * (one_m3 / one_kg)),
+                0.0) +
+            # Term 2: sum_{i=1}^{k-2} with shifted coefficients
+            ifelse(i <= k - 2,
+                C_val * (2 * x1 * 2.0^(k - 2) * ψ_prev_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                       + f_prev_arr[k] / 2 * Z_arr[i]
+                       + α_prev_arr[k] * Q_arr[i]),
+                0.0) +
+            # Term 4: -sum_{i=1}^{k-1}
+            ifelse(i <= k - 1,
+                -C_val * (2 * x1 * 2.0^(k - 1) * ψ_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                        + f_arr[k] / 2 * Z_arr[i]
+                        + α_arr[k] * Q_arr[i]),
+                0.0) +
+            # Folded -M_dl[k]*N_upper[k] - N_dl[k]*M_upper[k]
+            ifelse(i >= k + 1,
+                -C_val * ((Mk[k] * (one_m3 / one_kg)) * (Nk[i] * one_m3)
+                        + (Nk[k] * one_m3) * (Mk[i] * (one_m3 / one_kg))),
+                0.0)
+        ) k in 1:I i in 1:I
+
+        # dM: Eq. 9b with K = C(x+y)
+        dM_arr = @arrayop (k,) (
+            # Per-k terms
+            ifelse(i == 1,
+                C_val * (N_prev_arr[k] * Z_prev_arr[k] + M_prev_arr[k]^2)
+                - C_val * ((Nk[k] * one_m3) * Z_arr[k] + (Mk[k] * (one_m3 / one_kg))^2),
+                0.0) +
+            # Term 2: sum_{i=1}^{k-2} with shifted coefficients
+            ifelse(i <= k - 2,
+                C_val * (4 * (x1 * 2.0^(k - 2))^2 * ψ_prev_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                       + x1 * 2.0^(k - 2) * (f_prev_arr[k] / 2 + 2 * ψ_prev_arr[k]) * Z_arr[i]
+                       + (f_prev_arr[k] - ψ_prev_arr[k]) * Q_arr[i]
+                       + α_prev_arr[k] * R_arr[i]),
+                0.0) +
+            # Terms 4+5+6 combined (mask i<=k-1): -term4 + M_lower + Z_lower folded
+            ifelse(i <= k - 1,
+                -C_val * (4 * (x1 * 2.0^(k - 1))^2 * ψ_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                        + x1 * 2.0^(k - 1) * (f_arr[k] / 2 + 2 * ψ_arr[k]) * Z_arr[i]
+                        + (f_arr[k] - ψ_arr[k]) * Q_arr[i]
+                        + α_arr[k] * R_arr[i])
+                + C_val * (Mk[k] * (one_m3 / one_kg)) * (Mk[i] * (one_m3 / one_kg))
+                + C_val * (Nk[k] * one_m3) * Z_arr[i],
+                0.0) +
+            # Folded -Z[k]*N_upper[k] - M_dl[k]*M_upper[k]
+            ifelse(i >= k + 1,
+                -C_val * (Z_arr[k] * (Nk[i] * one_m3)
+                        + (Mk[k] * (one_m3 / one_kg)) * (Mk[i] * (one_m3 / one_kg))),
+                0.0)
+        ) k in 1:I i in 1:I
+    end
+
+    # ---- Build equations with proper units (using symbolic array indexing, no scalarize) ----
     eqs = vcat(
-        [D(Nk[k]) ~ dN_dl[k] / (one_m3 * one_s) for k in 1:I],               # m⁻³ s⁻¹
-        [D(Mk[k]) ~ dM_dl[k] * one_kg / (one_m3 * one_s) for k in 1:I],  # kg m⁻³ s⁻¹
+        [D(Nk[k]) ~ dN_arr[k] / (one_m3 * one_s) for k in 1:I],               # m⁻³ s⁻¹
+        [D(Mk[k]) ~ dM_arr[k] * one_kg / (one_m3 * one_s) for k in 1:I],  # kg m⁻³ s⁻¹
     )
 
     return System(eqs, t; name, checks=ModelingToolkit.CheckComponents)
-end
-
-# ============================================================================
-# RHS for constant kernel K(x,y) = K0
-# Implements Eq. (9a,b) with K constant.
-# ============================================================================
-function _sce_rates_constant(N_dl, M_dl, Z, Q, f, ψ, α,
-    N_prev, M_prev, N_upper, M_lower, x, I, K0)
-    # S1+yS0 coefficients: a = 2xψ, b = f/2
-    a_coeff = [2 * x[k] * ψ[k] for k in 1:I]
-    b_coeff = [f[k] / 2 for k in 1:I]
-
-    dN_dl = Vector{Any}(undef, I)
-    dM_dl = Vector{Any}(undef, I)
-
-    for k in 1:I
-        # Shifted (k-1) quantities
-        ψ_prev_k = k >= 2 ? ψ[k-1] : 0.0
-        α_prev_k = k >= 2 ? α[k-1] : 0.0
-        a_prev_k = k >= 2 ? a_coeff[k-1] : 0.0
-        b_prev_k = k >= 2 ? b_coeff[k-1] : 0.0
-
-        # ---- dN_k/dt (Eq. 9a) ----
-
-        # Term 2: Σ_{i=1}^{k-2} S0(k-1 params, M[i], Z[i])
-        term2_N = sum((ψ_prev_k * M_dl[i] + α_prev_k * Z[i]) for i in 1:max(k-2, 0); init=0.0)
-
-        # Term 4: Σ_{i=1}^{k-1} S0(k params, M[i], Z[i])
-        term4_N = sum((ψ[k] * M_dl[i] + α[k] * Z[i]) for i in 1:max(k-1, 0); init=0.0)
-
-        # Assemble dN (N_upper and N_prev from @arrayop/@makearray)
-        dN_dl[k] = K0 / 2 * N_prev[k]^2 + K0 * term2_N -
-                   K0 * N_dl[k]^2 - K0 * term4_N -
-                   K0 * N_dl[k] * N_upper[k]
-
-        # ---- dM_k/dt (Eq. 9b) ----
-
-        # Term 2: Σ_{i=1}^{k-2} (S1+yS0) using k-1 params
-        term2_M = sum((a_prev_k * M_dl[i] + b_prev_k * Z[i] + α_prev_k * Q[i]) for i in 1:max(k-2, 0); init=0.0)
-
-        # Term 4: Σ_{i=1}^{k-1} (S1+yS0) using k params
-        term4_M = sum((a_coeff[k] * M_dl[i] + b_coeff[k] * Z[i] + α[k] * Q[i]) for i in 1:max(k-1, 0); init=0.0)
-
-        # Assemble dM (M_lower, M_prev, N_upper from @arrayop/@makearray)
-        dM_dl[k] = K0 * N_prev[k] * M_prev[k] + K0 * term2_M -
-                   K0 * N_dl[k] * M_dl[k] - K0 * term4_M +
-                   K0 * N_dl[k] * M_lower[k] - K0 * M_dl[k] * N_upper[k]
-    end
-
-    return dN_dl, dM_dl
-end
-
-# ============================================================================
-# RHS for Golovin kernel K(x,y) = C*(x+y)
-# Implements Eq. (9a,b) with K = C(x+y).
-# ============================================================================
-function _sce_rates_golovin(N_dl, M_dl, Z, Q, R, f, ψ, α,
-    N_prev, M_prev, N_upper, M_upper, M_lower, Z_lower, x, I, C)
-    # Coefficients
-    a_coeff = [2 * x[k] * ψ[k] for k in 1:I]
-    b_coeff = [f[k] / 2 for k in 1:I]
-    d_coeff = [4 * x[k]^2 * ψ[k] for k in 1:I]
-    e_coeff = [x[k] * f[k] / 2 + 2 * x[k] * ψ[k] for k in 1:I]
-    g_coeff = [f[k] - ψ[k] for k in 1:I]
-
-    dN_dl = Vector{Any}(undef, I)
-    dM_dl = Vector{Any}(undef, I)
-
-    for k in 1:I
-        # Shifted (k-1) quantities
-        Z_prev_k = k >= 2 ? Z[k-1] : 0.0
-        a_prev_k = k >= 2 ? a_coeff[k-1] : 0.0
-        b_prev_k = k >= 2 ? b_coeff[k-1] : 0.0
-        α_prev_k = k >= 2 ? α[k-1] : 0.0
-        d_prev_k = k >= 2 ? d_coeff[k-1] : 0.0
-        e_prev_k = k >= 2 ? e_coeff[k-1] : 0.0
-        g_prev_k = k >= 2 ? g_coeff[k-1] : 0.0
-
-        # ---- dN_k/dt (Eq. 9a with K=C(x+y)) ----
-
-        # Term 2: Σ_{i=1}^{k-2} (S1+yS0) using k-1 params
-        term2_gN = sum((a_prev_k * M_dl[i] + b_prev_k * Z[i] + α_prev_k * Q[i]) for i in 1:max(k-2, 0); init=0.0)
-
-        # Term 4: Σ_{i=1}^{k-1} (S1+yS0) using k params
-        term4_gN = sum((a_coeff[k] * M_dl[i] + b_coeff[k] * Z[i] + α[k] * Q[i]) for i in 1:max(k-1, 0); init=0.0)
-
-        # Assemble dN (N_prev, M_prev, N_upper, M_upper from @arrayop/@makearray)
-        dN_dl[k] = C * N_prev[k] * M_prev[k] + C * term2_gN -
-                   2 * C * N_dl[k] * M_dl[k] - C * term4_gN -
-                   C * M_dl[k] * N_upper[k] - C * N_dl[k] * M_upper[k]
-
-        # ---- dM_k/dt (Eq. 9b with K=C(x+y)) ----
-
-        # Term 2: Σ_{i=1}^{k-2} (S2+yS1+y²S0) using k-1 params
-        term2_gM = sum((d_prev_k * M_dl[i] + e_prev_k * Z[i] + g_prev_k * Q[i] + α_prev_k * R[i]) for i in 1:max(k-2, 0); init=0.0)
-
-        # Term 4: Σ_{i=1}^{k-1} (S2+yS1+y²S0) using k params
-        term4_gM = sum((d_coeff[k] * M_dl[i] + e_coeff[k] * Z[i] + g_coeff[k] * Q[i] + α[k] * R[i]) for i in 1:max(k-1, 0); init=0.0)
-
-        # Assemble dM (N_prev, M_prev, Z_prev from @makearray/@arrayop; M_lower, Z_lower, N_upper, M_upper from @arrayop)
-        dM_dl[k] = C * (N_prev[k] * Z_prev_k + M_prev[k]^2) + C * term2_gM -
-                   C * (N_dl[k] * Z[k] + M_dl[k]^2) - C * term4_gM +
-                   C * (M_dl[k] * M_lower[k] + N_dl[k] * Z_lower[k]) -
-                   C * (Z[k] * N_upper[k] + M_dl[k] * M_upper[k])
-    end
-
-    return dN_dl, dM_dl
 end
