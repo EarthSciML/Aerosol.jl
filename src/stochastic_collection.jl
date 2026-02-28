@@ -40,9 +40,9 @@ end
 Solve the stochastic collection equation (SCE) for cloud droplet coalescence using
 a two-moment method in discrete mass categories with `p = 2` (mass-doubling categories).
 
-**Reference**: Tzivion, S., Feingold, G., and Levin, Z. (1987)
-"An Efficient Numerical Solution to the Stochastic Collection Equation",
-*Journal of the Atmospheric Sciences*, 44(21), 3139-3149.
+**Reference**: Tzivion, S., Feingold, G., and Levin, Z. (1989)
+"The Evolution of Raindrop Spectra. Part II: Collisional Collection/Breakup and Evaporation in a Rainshaft",
+*Journal of the Atmospheric Sciences*, 46(21), 3312-3327.
 
 The SCE describes the evolution of a drop size distribution due to gravitational
 coalescence (collection). The continuous spectrum is divided into `I` discrete mass
@@ -87,9 +87,9 @@ shifted arrays, and summation reductions. Rate assembly uses level-2 `@arrayop` 
         error("Unsupported kernel_type: $kernel_type. Use :constant or :golovin.")
     end
 
-    XI_P = 1.0625  # Closure parameter (Eq. 7, B10): 1 ≤ ξ_p ≤ 9/8, mean ≈ 1.0625
-
     @constants begin
+        XI_P = 1.0625, [description = "Closure parameter ξ_p for relating higher-order moments (dimensionless)", unit = u"1"]
+        p = 2.0, [description = "Mass doubling factor for geometric category spacing (dimensionless)", unit = u"1"]
         one_m3 = 1.0, [description = "Unit volume for dimensional analysis", unit = u"m^3"]
         one_kg = 1.0, [description = "Unit mass for dimensional analysis", unit = u"kg"]
         one_s = 1.0, [description = "Unit time for dimensional analysis", unit = u"s"]
@@ -105,9 +105,9 @@ shifted arrays, and summation reductions. Rate assembly uses level-2 `@arrayop` 
     Q_arr = @arrayop (k,) _sce_Q(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), XI_P) k in 1:I
 
     # ---- Linear distribution parameters via @arrayop (level 1, Eq. 13a,b + Eq. 15a,b) ----
-    f_arr = @arrayop (k,) _sce_f(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I
-    ψ_arr = @arrayop (k,) _sce_psi(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I
-    α_arr = @arrayop (k,) _sce_alpha(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I
+    f_arr = @arrayop (k,) _sce_f(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * p^(k - 1)) k in 1:I
+    ψ_arr = @arrayop (k,) _sce_psi(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * p^(k - 1)) k in 1:I
+    α_arr = @arrayop (k,) _sce_alpha(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * p^(k - 1)) k in 1:I
 
     # ---- Shifted arrays via @makearray (level 1) ----
     N_prev_arr = @makearray N_prev_arr[1:I] begin
@@ -121,15 +121,15 @@ shifted arrays, and summation reductions. Rate assembly uses level-2 `@arrayop` 
 
     ψ_prev_arr = @makearray ψ_prev_arr[1:I] begin
         ψ_prev_arr[1:1] => [0.0]
-        ψ_prev_arr[2:I] => @arrayop (k,) _sce_psi(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I-1
+        ψ_prev_arr[2:I] => @arrayop (k,) _sce_psi(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * p^(k - 1)) k in 1:I-1
     end
     α_prev_arr = @makearray α_prev_arr[1:I] begin
         α_prev_arr[1:1] => [0.0]
-        α_prev_arr[2:I] => @arrayop (k,) _sce_alpha(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I-1
+        α_prev_arr[2:I] => @arrayop (k,) _sce_alpha(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * p^(k - 1)) k in 1:I-1
     end
     f_prev_arr = @makearray f_prev_arr[1:I] begin
         f_prev_arr[1:1] => [0.0]
-        f_prev_arr[2:I] => @arrayop (k,) _sce_f(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I-1
+        f_prev_arr[2:I] => @arrayop (k,) _sce_f(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * p^(k - 1)) k in 1:I-1
     end
 
     # ---- Kernel-specific rate computation via level-2 @arrayop ----
@@ -163,13 +163,13 @@ shifted arrays, and summation reductions. Rate assembly uses level-2 `@arrayop` 
                 0.0) +
             # Term 2: sum_{i=1}^{k-2} with shifted coefficients inlined
             ifelse(i <= k - 2,
-                K0_val * (2 * x1 * 2.0^(k - 2) * ψ_prev_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                K0_val * (2 * x1 * p^(k - 2) * ψ_prev_arr[k] * (Mk[i] * (one_m3 / one_kg))
                         + f_prev_arr[k] / 2 * Z_arr[i]
                         + α_prev_arr[k] * Q_arr[i]),
                 0.0) +
             # Terms 4+5 combined (same mask i<=k-1): -sum + folded M_lower
             ifelse(i <= k - 1,
-                -K0_val * (2 * x1 * 2.0^(k - 1) * ψ_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                -K0_val * (2 * x1 * p^(k - 1) * ψ_arr[k] * (Mk[i] * (one_m3 / one_kg))
                          + f_arr[k] / 2 * Z_arr[i]
                          + α_arr[k] * Q_arr[i])
                 + K0_val * (Nk[k] * one_m3) * (Mk[i] * (one_m3 / one_kg)),
@@ -197,13 +197,13 @@ shifted arrays, and summation reductions. Rate assembly uses level-2 `@arrayop` 
                 0.0) +
             # Term 2: sum_{i=1}^{k-2} with shifted coefficients
             ifelse(i <= k - 2,
-                C_val * (2 * x1 * 2.0^(k - 2) * ψ_prev_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                C_val * (2 * x1 * p^(k - 2) * ψ_prev_arr[k] * (Mk[i] * (one_m3 / one_kg))
                        + f_prev_arr[k] / 2 * Z_arr[i]
                        + α_prev_arr[k] * Q_arr[i]),
                 0.0) +
             # Term 4: -sum_{i=1}^{k-1}
             ifelse(i <= k - 1,
-                -C_val * (2 * x1 * 2.0^(k - 1) * ψ_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                -C_val * (2 * x1 * p^(k - 1) * ψ_arr[k] * (Mk[i] * (one_m3 / one_kg))
                         + f_arr[k] / 2 * Z_arr[i]
                         + α_arr[k] * Q_arr[i]),
                 0.0) +
@@ -223,15 +223,15 @@ shifted arrays, and summation reductions. Rate assembly uses level-2 `@arrayop` 
                 0.0) +
             # Term 2: sum_{i=1}^{k-2} with shifted coefficients
             ifelse(i <= k - 2,
-                C_val * (4 * (x1 * 2.0^(k - 2))^2 * ψ_prev_arr[k] * (Mk[i] * (one_m3 / one_kg))
-                       + x1 * 2.0^(k - 2) * (f_prev_arr[k] / 2 + 2 * ψ_prev_arr[k]) * Z_arr[i]
+                C_val * (4 * (x1 * p^(k - 2))^2 * ψ_prev_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                       + x1 * p^(k - 2) * (f_prev_arr[k] / 2 + 2 * ψ_prev_arr[k]) * Z_arr[i]
                        + (f_prev_arr[k] - ψ_prev_arr[k]) * Q_arr[i]
                        + α_prev_arr[k] * R_arr[i]),
                 0.0) +
             # Terms 4+5+6 combined (mask i<=k-1): -term4 + M_lower + Z_lower folded
             ifelse(i <= k - 1,
-                -C_val * (4 * (x1 * 2.0^(k - 1))^2 * ψ_arr[k] * (Mk[i] * (one_m3 / one_kg))
-                        + x1 * 2.0^(k - 1) * (f_arr[k] / 2 + 2 * ψ_arr[k]) * Z_arr[i]
+                -C_val * (4 * (x1 * p^(k - 1))^2 * ψ_arr[k] * (Mk[i] * (one_m3 / one_kg))
+                        + x1 * p^(k - 1) * (f_arr[k] / 2 + 2 * ψ_arr[k]) * Z_arr[i]
                         + (f_arr[k] - ψ_arr[k]) * Q_arr[i]
                         + α_arr[k] * R_arr[i])
                 + C_val * (Mk[k] * (one_m3 / one_kg)) * (Mk[i] * (one_m3 / one_kg))
