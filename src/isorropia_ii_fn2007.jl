@@ -16,14 +16,9 @@
 # Part 1: Thermodynamic Data
 # =============================================================================
 
-# Reference temperature for all thermodynamic data
+# Reference temperature for helper functions (needed at module level)
+# Main thermodynamic constants moved to @constants inside component
 const _ISO2_T0 = 298.15  # K
-
-# Gas constant in atm-based units (for partial pressure calculations)
-const _ISO2_R_ATM = 82.0567e-6  # atm·m³/(mol·K)
-
-# Conversion: 1 atm = 101325 Pa
-const _ISO2_ATM_TO_PA = 101325.0
 
 # --------------------------------------------------------------------------
 # Equilibrium constants at 298.15K with temperature dependence parameters
@@ -33,34 +28,11 @@ const _ISO2_ATM_TO_PA = 101325.0
 # Format: (K0, A, B)
 # --------------------------------------------------------------------------
 
-# Aqueous equilibria
-const _ISO2_K1 = (1.015e-2, 8.85, 25.14)    # HSO4⁻ ↔ H⁺ + SO4²⁻ (mol/kg)
-const _ISO2_K21 = (57.639, 13.79, -5.393)   # NH3(g) ↔ NH3(aq) (mol·kg⁻¹·atm⁻¹)
-const _ISO2_K22 = (1.805e-5, -1.5, 26.92)    # NH3(aq) ↔ NH4⁺ + OH⁻ (mol/kg)
-const _ISO2_K3 = (1.971e6, 30.2, 19.91)    # HCl(g) ↔ H⁺ + Cl⁻ (mol²·kg⁻²·atm⁻¹)
-const _ISO2_K4 = (2.511e6, 29.17, 16.83)    # HNO3(g) ↔ H⁺ + NO3⁻ (mol²·kg⁻²·atm⁻¹)
-const _ISO2_KW = (1.01e-14, -22.52, 26.92)    # H2O ↔ H⁺ + OH⁻ (mol²/kg²)
+# Equilibrium constants moved inside component to use @constants
+# These define van't Hoff parameters: (K0, A, B) where A = ΔH°/(R·T₀), B = Δcₚ°/R
 
-# Solid salt dissolution (not used in metastable, but included for completeness)
-const _ISO2_K5 = (0.4799, 0.98, 39.5)    # Na2SO4(s) ↔ 2Na⁺ + SO4²⁻
-const _ISO2_K7 = (1.817, -2.65, 38.57)    # (NH4)2SO4(s) ↔ 2NH4⁺ + SO4²⁻
-const _ISO2_K8 = (37.661, -1.56, 16.9)    # NaCl(s) ↔ Na⁺ + Cl⁻
-const _ISO2_K9 = (11.977, -8.22, 16.01)    # NaNO3(s) ↔ Na⁺ + NO3⁻
-const _ISO2_K10 = (4.199e-17, -74.735, 6.025)   # NH4NO3(s) ↔ NH3(g) + HNO3(g)
-const _ISO2_K11 = (2.413e4, 0.79, 14.746)   # NaHSO4(s) ↔ Na⁺ + HSO4⁻
-const _ISO2_K12 = (1.382e2, -2.87, 15.83)    # NH4HSO4(s) ↔ NH4⁺ + HSO4⁻
-const _ISO2_K13 = (29.268, -5.19, 54.4)    # (NH4)3H(SO4)2(s) ↔ 3NH4⁺ + HSO4⁻ + SO4²⁻
-const _ISO2_K14 = (22.05, 24.55, 16.9)    # NH4Cl(s) ↔ NH4⁺ + Cl⁻
-const _ISO2_K6 = (1.086e-16, -71.0, 2.4)     # NH4Cl(s) ↔ NH3(g) + HCl(g)
-const _ISO2_K15 = (6.067e5, 0.0, 0.0)      # Ca(NO3)2(s) ↔ Ca²⁺ + 2NO3⁻
-const _ISO2_K16 = (7.974e11, 0.0, 0.0)      # CaCl2(s) ↔ Ca²⁺ + 2Cl⁻
-const _ISO2_K17 = (1.569e-2, -9.585, 45.81)    # K2SO4(s) ↔ 2K⁺ + SO4²⁻
-const _ISO2_K18 = (24.016, -8.423, 17.96)    # KHSO4(s) ↔ K⁺ + HSO4⁻
-const _ISO2_K19 = (0.872, -14.08, 19.39)    # KNO3(s) ↔ K⁺ + NO3⁻
-const _ISO2_K20 = (8.68, -6.902, 19.95)    # KCl(s) ↔ K⁺ + Cl⁻
-const _ISO2_K23 = (1.079e5, 0.0, 0.0)      # MgSO4(s) ↔ Mg²⁺ + SO4²⁻
-const _ISO2_K24 = (2.507e15, 0.0, 0.0)      # Mg(NO3)2(s) ↔ Mg²⁺ + 2NO3⁻
-const _ISO2_K25 = (9.557e21, 0.0, 0.0)      # MgCl2(s) ↔ Mg²⁺ + 2Cl⁻
+# Solid salt dissolution constants (not used in metastable implementation)
+# These would be needed for stable solution branches - included in constants below
 
 # --------------------------------------------------------------------------
 # Kusik-Meissner Q parameters for binary activity coefficients (Table 4)
@@ -647,12 +619,48 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     # Constants
     # ------------------------------------------------------------------
     @constants begin
+        # Reference quantities for nondimensionalization
         c_ref = 1.0, [description = "Reference concentration for nondimensionalization", unit = u"mol/m^3"]
         W_ref = 1.0, [description = "Reference water content for nondimensionalization", unit = u"kg/m^3"]
         m_ref = 1.0, [description = "Reference molality for nondimensionalization", unit = u"mol/kg"]
         p_ref = 101325.0, [description = "Reference pressure (1 atm)", unit = u"Pa"]
         R_gas_si = 8.314462, [description = "Gas constant (SI)", unit = u"Pa*m^3/mol/K"]
         T_ref_K = 1.0, [description = "Reference temperature unit (1 K)", unit = u"K"]
+
+        # Thermodynamic reference temperature (Table 2)
+        T_0 = 298.15, [description = "Reference temperature for thermodynamic data", unit = u"K"]
+
+        # Equilibrium constant parameters (K0, A, B) from Table 2, Eq. 5
+        # Van't Hoff: K(T) = K₀ × exp[A×(T₀/T - 1) + B×(1 + ln(T₀/T) - T₀/T)]
+        # HSO4⁻ ↔ H⁺ + SO4²⁻
+        K1_0 = 1.015e-2, [description = "HSO4 dissociation equilibrium constant at T0 (dimensionless)"]
+        K1_A = 8.85, [description = "HSO4 dissociation enthalpy parameter (dimensionless)"]
+        K1_B = 25.14, [description = "HSO4 dissociation heat capacity parameter (dimensionless)"]
+
+        # NH3(g) ↔ NH3(aq)
+        K21_0 = 57.639, [description = "NH3 dissolution equilibrium constant at T0 (dimensionless)"]
+        K21_A = 13.79, [description = "NH3 dissolution enthalpy parameter (dimensionless)"]
+        K21_B = -5.393, [description = "NH3 dissolution heat capacity parameter (dimensionless)"]
+
+        # NH3(aq) ↔ NH4⁺ + OH⁻
+        K22_0 = 1.805e-5, [description = "NH3 dissociation equilibrium constant at T0 (dimensionless)"]
+        K22_A = -1.5, [description = "NH3 dissociation enthalpy parameter (dimensionless)"]
+        K22_B = 26.92, [description = "NH3 dissociation heat capacity parameter (dimensionless)"]
+
+        # HCl(g) ↔ H⁺ + Cl⁻
+        K3_0 = 1.971e6, [description = "HCl gas-liquid equilibrium constant at T0 (dimensionless)"]
+        K3_A = 30.2, [description = "HCl gas-liquid enthalpy parameter (dimensionless)"]
+        K3_B = 19.91, [description = "HCl gas-liquid heat capacity parameter (dimensionless)"]
+
+        # HNO3(g) ↔ H⁺ + NO3⁻
+        K4_0 = 2.511e6, [description = "HNO3 gas-liquid equilibrium constant at T0 (dimensionless)"]
+        K4_A = 29.17, [description = "HNO3 gas-liquid enthalpy parameter (dimensionless)"]
+        K4_B = 16.83, [description = "HNO3 gas-liquid heat capacity parameter (dimensionless)"]
+
+        # H2O ↔ H⁺ + OH⁻
+        Kw_0 = 1.01e-14, [description = "Water dissociation equilibrium constant at T0 (dimensionless)"]
+        Kw_A = -22.52, [description = "Water dissociation enthalpy parameter (dimensionless)"]
+        Kw_B = 26.92, [description = "Water dissociation heat capacity parameter (dimensionless)"]
     end
 
     # ------------------------------------------------------------------
@@ -720,12 +728,12 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     # Equilibrium constants at ambient temperature (Eq. 5, Table 2)
     # These are dimensionless numbers representing K in the units given in Table 2:
     #   K1: mol/kg, K21: mol/(kg·atm), K22: mol/kg, K3/K4: mol²/(kg²·atm), Kw: mol²/kg²
-    K1 = _iso2_eq_const(_ISO2_K1[1], _ISO2_K1[2], _ISO2_K1[3], T_dimless)
-    K21 = _iso2_eq_const(_ISO2_K21[1], _ISO2_K21[2], _ISO2_K21[3], T_dimless)
-    K22 = _iso2_eq_const(_ISO2_K22[1], _ISO2_K22[2], _ISO2_K22[3], T_dimless)
-    K3 = _iso2_eq_const(_ISO2_K3[1], _ISO2_K3[2], _ISO2_K3[3], T_dimless)
-    K4 = _iso2_eq_const(_ISO2_K4[1], _ISO2_K4[2], _ISO2_K4[3], T_dimless)
-    Kw = _iso2_eq_const(_ISO2_KW[1], _ISO2_KW[2], _ISO2_KW[3], T_dimless)
+    K1 = _iso2_eq_const(K1_0, K1_A, K1_B, T_dimless)
+    K21 = _iso2_eq_const(K21_0, K21_A, K21_B, T_dimless)
+    K22 = _iso2_eq_const(K22_0, K22_A, K22_B, T_dimless)
+    K3 = _iso2_eq_const(K3_0, K3_A, K3_B, T_dimless)
+    K4 = _iso2_eq_const(K4_0, K4_A, K4_B, T_dimless)
+    Kw = _iso2_eq_const(Kw_0, Kw_A, Kw_B, T_dimless)
     # Combined NH3 equilibrium: K2 = K21 × K22
     # K21 units: mol/(kg·atm), K22 units: mol/kg → K2 units: mol²/(kg²·atm)
     K2 = K21 * K22
@@ -826,33 +834,33 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         # --- Activity coefficients (Kusik-Meissner, Eqs. 9-13, with T correction Eq. 14) ---
         # Registered functions expect dimensionless I (mol/kg value) and T (K value)
 
-        # 17. γ±(H2SO4)
+        # 17. γ±(H2SO4) - KM parameters: q=-0.1, z=2 (Table 7)
         γ_H2SO4 ~ _iso2_gamma_T(
-            _iso2_km_gamma(_ISO2_KM_PARAMS[:H2SO4][1], _ISO2_KM_PARAMS[:H2SO4][2], I_dimless),
+            _iso2_km_gamma(-0.1, 2, I_dimless),
             I_dimless, T_dimless
         ),
 
-        # 18. γ±(H-HSO4)
+        # 18. γ±(H-HSO4) - KM parameters: q=8.0, z=1 (Table 7)
         γ_HHSO4 ~ _iso2_gamma_T(
-            _iso2_km_gamma(_ISO2_KM_PARAMS[:HHSO4][1], _ISO2_KM_PARAMS[:HHSO4][2], I_dimless),
+            _iso2_km_gamma(8.0, 1, I_dimless),
             I_dimless, T_dimless
         ),
 
-        # 19. γ±(HNO3)
+        # 19. γ±(HNO3) - KM parameters: q=2.6, z=1 (Table 7)
         γ_HNO3 ~ _iso2_gamma_T(
-            _iso2_km_gamma(_ISO2_KM_PARAMS[:HNO3][1], _ISO2_KM_PARAMS[:HNO3][2], I_dimless),
+            _iso2_km_gamma(2.6, 1, I_dimless),
             I_dimless, T_dimless
         ),
 
-        # 20. γ±(HCl)
+        # 20. γ±(HCl) - KM parameters: q=6.0, z=1 (Table 7)
         γ_HCl ~ _iso2_gamma_T(
-            _iso2_km_gamma(_ISO2_KM_PARAMS[:HCl][1], _ISO2_KM_PARAMS[:HCl][2], I_dimless),
+            _iso2_km_gamma(6.0, 1, I_dimless),
             I_dimless, T_dimless
         ),
 
-        # 21. γ±(NH4Cl)
+        # 21. γ±(NH4Cl) - KM parameters: q=0.82, z=1 (Table 7)
         γ_NH4Cl ~ _iso2_gamma_T(
-            _iso2_km_gamma(_ISO2_KM_PARAMS[:NH4Cl][1], _ISO2_KM_PARAMS[:NH4Cl][2], I_dimless),
+            _iso2_km_gamma(0.82, 1, I_dimless),
             I_dimless, T_dimless
         ),
     ]
