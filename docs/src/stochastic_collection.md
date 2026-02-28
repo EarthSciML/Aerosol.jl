@@ -6,7 +6,17 @@ This module implements the two-moment method for solving the stochastic collecti
 
 The method conserves two moments per mass category: number concentration ``N_k`` and mass concentration ``M_k``. Closure is achieved using a nondimensional parameter ``\bar{\xi}_p`` that relates higher-order moments to these two tracked moments, avoiding the need for weighting functions. The approach is more accurate and computationally efficient than single-moment methods such as Bleck's (1970) algorithm.
 
-**Reference**: Tzivion, S., Feingold, G., and Levin, Z. (1987) "A Numerical Solution of the Kinetic Collection Equation", *Journal of the Atmospheric Sciences*, 44(24), 3827-3844; and Tzivion, S., Feingold, G., and Levin, Z. (1989) "The Evolution of Raindrop Spectra. Part II: Collisional Collection/Breakup and Evaporation in a Rainshaft", *Journal of the Atmospheric Sciences*, 46(21), 3312-3327.
+**Reference**: Tzivion, S., Feingold, G., and Levin, Z. (1989) "The Evolution of Raindrop Spectra. Part II: Collisional Collection/Breakup and Evaporation in a Rainshaft", *Journal of the Atmospheric Sciences*, 46(21), 3312-3327.
+
+## Implementation Scope and Limitations
+
+This implementation covers only the **collisional collection** process described in the 1989 paper. The following processes from the paper are **not yet implemented**:
+
+- **Breakup processes**: Critical for realistic evolution of larger raindrops (>2-3 mm diameter)
+- **Evaporation processes**: Important for smaller droplets and subsaturated environments
+- **Sedimentation processes**: Affects vertical distribution and spectral evolution with altitude
+
+For a complete reproduction of the paper's results, these additional physics processes would need to be implemented and coupled with the collection equation.
 
 ```@docs
 StochasticCollectionCoalescence
