@@ -48,9 +48,7 @@ end
 Solve the stochastic collection equation (SCE) for cloud droplet coalescence using
 a two-moment method in discrete mass categories with `p = 2` (mass-doubling categories).
 
-**Reference**: Tzivion, S., Feingold, G., and Levin, Z. (1989)
-"The Evolution of Raindrop Spectra. Part II: Collisional Collection/Breakup and Evaporation in a Rainshaft",
-*Journal of the Atmospheric Sciences*, 46(21), 3312-3327.
+**Reference**: Tzivion, S., Feingold, G., and Levin, Z. (1987) "A Numerical Solution of the Kinetic Collection Equation", *Journal of the Atmospheric Sciences*, 44(24), 3827-3844; and Tzivion, S., Feingold, G., and Levin, Z. (1989) "The Evolution of Raindrop Spectra. Part II: Collisional Collection/Breakup and Evaporation in a Rainshaft", *Journal of the Atmospheric Sciences*, 46(21), 3312-3327.
 
 The SCE describes the evolution of a drop size distribution due to gravitational
 coalescence (collection). The continuous spectrum is divided into `I` discrete mass
