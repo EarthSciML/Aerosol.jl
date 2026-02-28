@@ -632,33 +632,34 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
 
         # Equilibrium constant parameters (K0, A, B) from Table 2, Eq. 5
         # Van't Hoff: K(T) = K₀ × exp[A×(T₀/T - 1) + B×(1 + ln(T₀/T) - T₀/T)]
-        # HSO4⁻ ↔ H⁺ + SO4²⁻
-        K1_0 = 1.015e-2, [description = "HSO4 dissociation equilibrium constant at T0 (dimensionless)"]
+        # where A = ΔH°/(R·T₀) and B = Δcₚ°/R are dimensionless
+        # HSO4⁻ ↔ H⁺ + SO4²⁻ (Table 2: mol/kg)
+        K1_0 = 1.015e-2, [description = "HSO4 dissociation equilibrium constant at T0", unit = u"mol/kg"]
         K1_A = 8.85, [description = "HSO4 dissociation enthalpy parameter (dimensionless)"]
         K1_B = 25.14, [description = "HSO4 dissociation heat capacity parameter (dimensionless)"]
 
-        # NH3(g) ↔ NH3(aq)
-        K21_0 = 57.639, [description = "NH3 dissolution equilibrium constant at T0 (dimensionless)"]
+        # NH3(g) ↔ NH3(aq) (Table 2: mol/(kg·atm))
+        K21_0 = 57.639, [description = "NH3 dissolution equilibrium constant at T0", unit = u"mol/(kg*atm)"]
         K21_A = 13.79, [description = "NH3 dissolution enthalpy parameter (dimensionless)"]
         K21_B = -5.393, [description = "NH3 dissolution heat capacity parameter (dimensionless)"]
 
-        # NH3(aq) ↔ NH4⁺ + OH⁻
-        K22_0 = 1.805e-5, [description = "NH3 dissociation equilibrium constant at T0 (dimensionless)"]
+        # NH3(aq) ↔ NH4⁺ + OH⁻ (Table 2: mol/kg)
+        K22_0 = 1.805e-5, [description = "NH3 dissociation equilibrium constant at T0", unit = u"mol/kg"]
         K22_A = -1.5, [description = "NH3 dissociation enthalpy parameter (dimensionless)"]
         K22_B = 26.92, [description = "NH3 dissociation heat capacity parameter (dimensionless)"]
 
-        # HCl(g) ↔ H⁺ + Cl⁻
-        K3_0 = 1.971e6, [description = "HCl gas-liquid equilibrium constant at T0 (dimensionless)"]
+        # HCl(g) ↔ H⁺ + Cl⁻ (Table 2: mol²/(kg²·atm))
+        K3_0 = 1.971e6, [description = "HCl gas-liquid equilibrium constant at T0", unit = u"mol^2/(kg^2*atm)"]
         K3_A = 30.2, [description = "HCl gas-liquid enthalpy parameter (dimensionless)"]
         K3_B = 19.91, [description = "HCl gas-liquid heat capacity parameter (dimensionless)"]
 
-        # HNO3(g) ↔ H⁺ + NO3⁻
-        K4_0 = 2.511e6, [description = "HNO3 gas-liquid equilibrium constant at T0 (dimensionless)"]
+        # HNO3(g) ↔ H⁺ + NO3⁻ (Table 2: mol²/(kg²·atm))
+        K4_0 = 2.511e6, [description = "HNO3 gas-liquid equilibrium constant at T0", unit = u"mol^2/(kg^2*atm)"]
         K4_A = 29.17, [description = "HNO3 gas-liquid enthalpy parameter (dimensionless)"]
         K4_B = 16.83, [description = "HNO3 gas-liquid heat capacity parameter (dimensionless)"]
 
-        # H2O ↔ H⁺ + OH⁻
-        Kw_0 = 1.01e-14, [description = "Water dissociation equilibrium constant at T0 (dimensionless)"]
+        # H2O ↔ H⁺ + OH⁻ (Table 2: mol²/kg²)
+        Kw_0 = 1.01e-14, [description = "Water dissociation equilibrium constant at T0", unit = u"mol^2/kg^2"]
         Kw_A = -22.52, [description = "Water dissociation enthalpy parameter (dimensionless)"]
         Kw_B = 26.92, [description = "Water dissociation heat capacity parameter (dimensionless)"]
     end
@@ -726,7 +727,7 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     I_dimless = I_s / m_ref
 
     # Equilibrium constants at ambient temperature (Eq. 5, Table 2)
-    # These are dimensionless numbers representing K in the units given in Table 2:
+    # These maintain their physical units as given in Table 2:
     #   K1: mol/kg, K21: mol/(kg·atm), K22: mol/kg, K3/K4: mol²/(kg²·atm), Kw: mol²/kg²
     K1 = _iso2_eq_const(K1_0, K1_A, K1_B, T_dimless)
     K21 = _iso2_eq_const(K21_0, K21_A, K21_B, T_dimless)

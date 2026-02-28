@@ -734,9 +734,11 @@ end
         W_water = sol[compiled.W_w]  # kg/m³
 
         # Estimate salt mass (simplified calculation)
-        salt_mass = (sol[compiled.c_Na] * 22.99e-3 +  # kg/m³
-                     sol[compiled.c_Ca] * 40.08e-3 +
-                     sol[compiled.c_NO3] * 62.0e-3)
+        salt_mass = (
+            sol[compiled.c_Na] * 22.99e-3 +  # kg/m³
+                sol[compiled.c_Ca] * 40.08e-3 +
+                sol[compiled.c_NO3] * 62.0e-3
+        )
 
         water_mass_fraction = W_water / (W_water + salt_mass)
 
@@ -759,7 +761,7 @@ end
     expected_K22 = 1.805e-5     # mol/kg
     expected_K3 = 1.971e6       # mol²/(kg²·atm)
     expected_K4 = 2.511e6       # mol²/(kg²·atm)
-    expected_Kw = 1.010e-14     # mol²/kg²
+    expected_Kw = 1.01e-14     # mol²/kg²
 
     # Test our implementation
     K1_calc = Aerosol._iso2_eq_const(1.015e-2, 8.85, 25.14, T_ref)
@@ -770,10 +772,10 @@ end
     Kw_calc = Aerosol._iso2_eq_const(1.01e-14, -22.52, 26.92, T_ref)
 
     # Should match exactly at reference temperature
-    @test K1_calc ≈ expected_K1 rtol=1e-10
-    @test K21_calc ≈ expected_K21 rtol=1e-6  # Note: 57.639 vs 57.64 precision
-    @test K22_calc ≈ expected_K22 rtol=1e-10
-    @test K3_calc ≈ expected_K3 rtol=1e-10
-    @test K4_calc ≈ expected_K4 rtol=1e-10
-    @test Kw_calc ≈ expected_Kw rtol=1e-10
+    @test K1_calc ≈ expected_K1 rtol = 1.0e-10
+    @test K21_calc ≈ expected_K21 rtol = 1.0e-6  # Note: 57.639 vs 57.64 precision
+    @test K22_calc ≈ expected_K22 rtol = 1.0e-10
+    @test K3_calc ≈ expected_K3 rtol = 1.0e-10
+    @test K4_calc ≈ expected_K4 rtol = 1.0e-10
+    @test Kw_calc ≈ expected_Kw rtol = 1.0e-10
 end
