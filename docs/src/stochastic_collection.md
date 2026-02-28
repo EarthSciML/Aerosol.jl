@@ -133,6 +133,21 @@ plot!(p, 1:I, frac_mass_gol_30, label="30 min", marker=:square, lw=2)
 p
 ```
 
+### Golovin Kernel — Number Concentration (cf. Figure 2b)
+
+Category number concentrations ``N_k`` for the Golovin kernel at ``t = 0`` and ``t = 30`` min of collection, showing how coalescence redistributes particles among size categories.
+
+```@example sce
+Nk_gol_0 = [sol_gol[compiled_gol.Nk[k]][1] for k in 1:I]
+Nk_gol_30 = [sol_gol[compiled_gol.Nk[k]][end] for k in 1:I]
+
+p = plot(1:I, Nk_gol_0, label="0 min", xlabel="Category (k)",
+    ylabel="Nₖ (m⁻³)", title="Golovin Kernel: Number Concentration",
+    marker=:circle, lw=2, yscale=:log10)
+plot!(p, 1:I, Nk_gol_30, label="30 min", marker=:square, lw=2)
+p
+```
+
 ### Mass Conservation
 
 A key advantage of the two-moment method is conservation of both number and mass. The following shows mass conservation over time for both kernels:
