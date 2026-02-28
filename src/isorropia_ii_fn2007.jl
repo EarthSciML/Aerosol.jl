@@ -626,6 +626,7 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         W_ref = 1.0, [description = "Reference water content for nondimensionalization", unit = u"kg/m^3"]
         m_ref = 1.0, [description = "Reference molality for nondimensionalization", unit = u"mol/kg"]
         p_ref = 101325.0, [description = "Reference pressure (1 atm)", unit = u"Pa"]
+        atm_to_pa = 101325.0, [description = "Conversion factor from atm to Pa", unit = u"Pa"]
         R_gas_si = 8.314462, [description = "Gas constant (SI)", unit = u"Pa*m^3/mol/K"]
         T_ref_K = 1.0, [description = "Reference temperature unit (1 K)", unit = u"K"]
 
@@ -640,8 +641,8 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K1_A = 8.85, [description = "HSO4 dissociation enthalpy parameter (dimensionless)"]
         K1_B = 25.14, [description = "HSO4 dissociation heat capacity parameter (dimensionless)"]
 
-        # NH3(g) ↔ NH3(aq) (Table 2: mol/(kg·atm))
-        K21_0 = 57.639, [description = "NH3 dissolution equilibrium constant at T0", unit = u"mol/(kg*atm)"]
+        # NH3(g) ↔ NH3(aq) (Table 2: mol/(kg·atm) converted to SI)
+        K21_0 = 57.639 / 101325.0, [description = "NH3 dissolution equilibrium constant at T0", unit = u"mol/(kg*Pa)"]
         K21_A = 13.79, [description = "NH3 dissolution enthalpy parameter (dimensionless)"]
         K21_B = -5.393, [description = "NH3 dissolution heat capacity parameter (dimensionless)"]
 
@@ -650,13 +651,13 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K22_A = -1.5, [description = "NH3 dissociation enthalpy parameter (dimensionless)"]
         K22_B = 26.92, [description = "NH3 dissociation heat capacity parameter (dimensionless)"]
 
-        # HCl(g) ↔ H⁺ + Cl⁻ (Table 2: mol²/(kg²·atm))
-        K3_0 = 1.971e6, [description = "HCl gas-liquid equilibrium constant at T0", unit = u"mol^2/(kg^2*atm)"]
+        # HCl(g) ↔ H⁺ + Cl⁻ (Table 2: mol²/(kg²·atm) converted to SI)
+        K3_0 = 1.971e6 / 101325.0, [description = "HCl gas-liquid equilibrium constant at T0", unit = u"mol^2/(kg^2*Pa)"]
         K3_A = 30.2, [description = "HCl gas-liquid enthalpy parameter (dimensionless)"]
         K3_B = 19.91, [description = "HCl gas-liquid heat capacity parameter (dimensionless)"]
 
-        # HNO3(g) ↔ H⁺ + NO3⁻ (Table 2: mol²/(kg²·atm))
-        K4_0 = 2.511e6, [description = "HNO3 gas-liquid equilibrium constant at T0", unit = u"mol^2/(kg^2*atm)"]
+        # HNO3(g) ↔ H⁺ + NO3⁻ (Table 2: mol²/(kg²·atm) converted to SI)
+        K4_0 = 2.511e6 / 101325.0, [description = "HNO3 gas-liquid equilibrium constant at T0", unit = u"mol^2/(kg^2*Pa)"]
         K4_A = 29.17, [description = "HNO3 gas-liquid enthalpy parameter (dimensionless)"]
         K4_B = 16.83, [description = "HNO3 gas-liquid heat capacity parameter (dimensionless)"]
 
@@ -729,8 +730,8 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     I_dimless = I_s / m_ref
 
     # Equilibrium constants at ambient temperature (Eq. 5, Table 2)
-    # These maintain their physical units as given in Table 2:
-    #   K1: mol/kg, K21: mol/(kg·atm), K22: mol/kg, K3/K4: mol²/(kg²·atm), Kw: mol²/kg²
+    # These maintain their physical units converted to SI:
+    #   K1: mol/kg, K21: mol/(kg·Pa), K22: mol/kg, K3/K4: mol²/(kg²·Pa), Kw: mol²/kg²
     K1 = _iso2_eq_const(K1_0, K1_A, K1_B, T_dimless)
     K21 = _iso2_eq_const(K21_0, K21_A, K21_B, T_dimless)
     K22 = _iso2_eq_const(K22_0, K22_A, K22_B, T_dimless)
@@ -738,7 +739,7 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     K4 = _iso2_eq_const(K4_0, K4_A, K4_B, T_dimless)
     Kw = _iso2_eq_const(Kw_0, Kw_A, Kw_B, T_dimless)
     # Combined NH3 equilibrium: K2 = K21 × K22
-    # K21 units: mol/(kg·atm), K22 units: mol/kg → K2 units: mol²/(kg²·atm)
+    # K21 units: mol/(kg·Pa), K22 units: mol/kg → K2 units: mol²/(kg²·Pa)
     K2 = K21 * K22
 
     # ------------------------------------------------------------------
@@ -746,10 +747,10 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     # ------------------------------------------------------------------
     # Nondimensionalization conventions:
     #   Dimensionless molality: c_i / (W_w * m_ref) [= molality / (1 mol/kg)]
-    #   Dimensionless pressure: g_j * R_gas_si * T_env / p_ref [= partial pressure / 1 atm]
+    #   Dimensionless pressure: g_j * R_gas_si * T_env / p_ref [= partial pressure / 1 Pa]
     #   Mass/charge balances: divide by c_ref
     #   Registered functions return dimensionless values representing physical quantities
-    #   in their natural units (mol/kg for K1, mol²/(kg²·atm) for K2/K3/K4, mol²/kg² for Kw)
+    #   in their natural SI units (mol/kg for K1, mol²/(kg²·Pa) for K2/K3/K4, mol²/kg² for Kw)
     eqs = [
         # --- Mass balances (Eqs. for conservation of each element) ---
         # 1. Sodium (non-volatile)
@@ -792,23 +793,23 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
             K1 * (c_HSO4 / (W_w * m_ref)) * γ_HHSO4^2,
 
         # 11. NH₃(g) + H₂O ↔ NH₄⁺ + OH⁻ (K2 = K21×K22, Table 2)
-        # K2 [mol²/(kg²·atm)] = m_NH4 × m_OH × γ_NH4 / (p_NH3 × aᵤ)
+        # K2 [mol²/(kg²·Pa)] = m_NH4 × m_OH × γ_NH4 / (p_NH3 × aᵤ)
         # γ_NH4 = γ±(NH4Cl)² / γ±(HCl)² (derived from γ_H=1 convention)
         # Nondim: m̃_NH4 × m̃_OH × (γ_NH4Cl/γ_HCl)² = K2_dimless × aᵤ × p̃_NH3
         0 ~ (c_NH4 / (W_w * m_ref)) * (c_OH / (W_w * m_ref)) * (γ_NH4Cl / γ_HCl)^2 -
-            K2 * RH * (g_NH3 * R_gas_si * T_env / p_ref),
+            K2 * RH * (g_NH3 * R_gas_si * T_env / atm_to_pa),
 
         # 12. HNO₃(g) ↔ H⁺ + NO₃⁻ (K4, Table 2)
-        # K4 [mol²/(kg²·atm)] = m_H × m_NO3 × γ±(HNO3)² / p_HNO3
+        # K4 [mol²/(kg²·Pa)] = m_H × m_NO3 × γ±(HNO3)² / p_HNO3
         # Nondim: m̃_H × m̃_NO3 × γ² = K4_dimless × p̃_HNO3
         0 ~ (c_H / (W_w * m_ref)) * (c_NO3 / (W_w * m_ref)) * γ_HNO3^2 -
-            K4 * (g_HNO3 * R_gas_si * T_env / p_ref),
+            K4 * (g_HNO3 * R_gas_si * T_env / atm_to_pa),
 
         # 13. HCl(g) ↔ H⁺ + Cl⁻ (K3, Table 2)
-        # K3 [mol²/(kg²·atm)] = m_H × m_Cl × γ±(HCl)² / p_HCl
+        # K3 [mol²/(kg²·Pa)] = m_H × m_Cl × γ±(HCl)² / p_HCl
         # Nondim: m̃_H × m̃_Cl × γ² = K3_dimless × p̃_HCl
         0 ~ (c_H / (W_w * m_ref)) * (c_Cl / (W_w * m_ref)) * γ_HCl^2 -
-            K3 * (g_HCl * R_gas_si * T_env / p_ref),
+            K3 * (g_HCl * R_gas_si * T_env / atm_to_pa),
 
         # 14. H₂O ↔ H⁺ + OH⁻ (Kw, Table 2)
         # Kw [mol²/kg²] = m_H × m_OH / aᵤ
