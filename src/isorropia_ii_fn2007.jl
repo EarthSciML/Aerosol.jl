@@ -732,16 +732,15 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     I_dimless = I_s / m_ref
 
     # Equilibrium constants at ambient temperature (Eq. 5, Table 2)
-    # These maintain their physical units converted to SI:
-    #   K1: mol/kg, K21: mol/(kg·Pa), K22: mol/kg, K3/K4: mol²/(kg²·Pa), Kw: mol²/kg²
-    K1 = _iso2_eq_const(K1_0, K1_A, K1_B, T_dimless)
-    K21 = _iso2_eq_const(K21_0, K21_A, K21_B, T_dimless)
-    K22 = _iso2_eq_const(K22_0, K22_A, K22_B, T_dimless)
-    K3 = _iso2_eq_const(K3_0, K3_A, K3_B, T_dimless)
-    K4 = _iso2_eq_const(K4_0, K4_A, K4_B, T_dimless)
-    Kw = _iso2_eq_const(Kw_0, Kw_A, Kw_B, T_dimless)
-    # Combined NH3 equilibrium: K2 = K21 × K22
-    # K21 units: mol/(kg·Pa), K22 units: mol/kg → K2 units: mol²/(kg²·Pa)
+    # Make equilibrium constants dimensionless for use in nondimensional expressions:
+    #   Divide by appropriate reference quantities to match the nondimensional formulation
+    K1 = _iso2_eq_const(K1_0, K1_A, K1_B, T_dimless) / m_ref  # [mol/kg] / [mol/kg] = dimensionless
+    K21 = _iso2_eq_const(K21_0, K21_A, K21_B, T_dimless) / (m_ref / p_ref)  # [mol/(kg·Pa)] / [mol/(kg·Pa)] = dimensionless
+    K22 = _iso2_eq_const(K22_0, K22_A, K22_B, T_dimless) / m_ref  # [mol/kg] / [mol/kg] = dimensionless
+    K3 = _iso2_eq_const(K3_0, K3_A, K3_B, T_dimless) / (m_ref^2 / p_ref)  # [mol²/(kg²·Pa)] / [mol²/(kg²·Pa)] = dimensionless
+    K4 = _iso2_eq_const(K4_0, K4_A, K4_B, T_dimless) / (m_ref^2 / p_ref)  # [mol²/(kg²·Pa)] / [mol²/(kg²·Pa)] = dimensionless
+    Kw = _iso2_eq_const(Kw_0, Kw_A, Kw_B, T_dimless) / m_ref^2  # [mol²/kg²] / [mol²/kg²] = dimensionless
+    # Combined NH3 equilibrium: K2 = K21 × K22 (both dimensionless → K2 dimensionless)
     K2 = K21 * K22
 
     # ------------------------------------------------------------------
