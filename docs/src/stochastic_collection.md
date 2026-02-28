@@ -6,7 +6,11 @@ This module implements the two-moment method for solving the stochastic collecti
 
 The method conserves two moments per mass category: number concentration ``N_k`` and mass concentration ``M_k``. Closure is achieved using a nondimensional parameter ``\bar{\xi}_p`` that relates higher-order moments to these two tracked moments, avoiding the need for weighting functions. The approach is more accurate and computationally efficient than single-moment methods such as Bleck's (1970) algorithm.
 
-**Reference**: Tzivion, S., Feingold, G., and Levin, Z. (1989) "The Evolution of Raindrop Spectra. Part II: Collisional Collection/Breakup and Evaporation in a Rainshaft", *Journal of the Atmospheric Sciences*, 46(21), 3312-3327.
+**References**:
+- Tzivion, S., Feingold, G., and Levin, Z. (1987) "An Efficient Numerical Solution to the Stochastic Collection Equation", *Journal of the Atmospheric Sciences*, 44(21), 3139-3149.
+- Tzivion, S., Feingold, G., and Levin, Z. (1989) "The Evolution of Raindrop Spectra. Part II: Collisional Collection/Breakup and Evaporation in a Rainshaft", *Journal of the Atmospheric Sciences*, 46(21), 3312-3327.
+
+**Note**: This implementation is based primarily on the 1987 paper's two-moment method for the stochastic collection equation, with reference to the 1989 paper for additional context on the complete physical system.
 
 ## Implementation Scope and Limitations
 
