@@ -871,7 +871,7 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         ),
     ]
 
-    return System(eqs, t; name, checks=false)
+    return System(eqs, t; name)
 end
 
 export IsorropiaEquilibrium
