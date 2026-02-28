@@ -2,6 +2,38 @@ export StochasticCollectionCoalescence
 
 using SymbolicUtils: @arrayop, @makearray
 
+# Helper functions for @arrayop — take scalar symbolic arguments, return symbolic expressions.
+
+function _sce_Z(n_dl, m_dl, xi_p)
+    ifelse(n_dl > 0, xi_p * m_dl^2 / n_dl, 0.0)
+end
+
+function _sce_Q(n_dl, m_dl, xi_p)
+    ifelse(n_dl > 0, xi_p^2 * m_dl^3 / n_dl^2, 0.0)
+end
+
+function _sce_R(n_dl, m_dl, xi_p)
+    ifelse(n_dl > 0, xi_p^3 * m_dl^4 / n_dl^3, 0.0)
+end
+
+function _sce_f(n_dl, m_dl, xk)  # Eq. 13a + positivity Eq. 15
+    xb = ifelse(n_dl > 0, m_dl / n_dl, xk)
+    ifelse(xb < xk, 0.0,
+        ifelse(xb > 2 * xk, 2 * n_dl / xk,
+               4 * n_dl / xk - 2 * m_dl / xk^2))
+end
+
+function _sce_psi(n_dl, m_dl, xk)  # Eq. 13b + positivity Eq. 15
+    xb = ifelse(n_dl > 0, m_dl / n_dl, xk)
+    ifelse(xb < xk, 2 * n_dl / xk,
+        ifelse(xb > 2 * xk, 0.0,
+               2 * m_dl / xk^2 - 2 * n_dl / xk))
+end
+
+function _sce_alpha(n_dl, m_dl, xk)
+    (_sce_f(n_dl, m_dl, xk) - _sce_psi(n_dl, m_dl, xk)) / (2 * xk)
+end
+
 """
     StochasticCollectionCoalescence(; name=:StochasticCollectionCoalescence, I=36, x1=1.6e-14, kernel_type=:constant, kernel_params=Dict(:K0 => 1e-10))
 
@@ -24,9 +56,9 @@ category integrals evaluated using a linear distribution function approximation
 (Eq. 11-13) and positivity constraints (Eq. 15a,b).
 
 The implementation uses symbolic array operations (`@arrayop` and `@makearray` from
-SymbolicUtils.jl) for dimensionless transformations, closure relations, shifted arrays,
-and simple summation reductions. Higher-level expressions use comprehensions to stay
-within the @arrayop nesting depth limit.
+SymbolicUtils.jl) for closure relations, linear distribution parameters, shifted arrays,
+and summation reductions, with helper functions enabling complex logic within a single
+@arrayop nesting level.
 
 ## Kernel Types
 
@@ -73,64 +105,54 @@ within the @arrayop nesting depth limit.
 
     x = xb[1:I]  # category lower boundaries
 
-    # ---- Dimensionless quantities via @arrayop (level 1) ----
-    N_dl = @arrayop (k,) Nk[k] * one_m3 k in 1:I
-    M_dl = @arrayop (k,) Mk[k] * (one_m3 / one_kg) k in 1:I
+    # ---- Closure relations via @arrayop (level 1) ----
+    Z_arr = @arrayop (k,) _sce_Z(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), XI_P) k in 1:I
+    Q_arr = @arrayop (k,) _sce_Q(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), XI_P) k in 1:I
 
-    # ---- Closure relations via @arrayop (level 2, indexes N_dl/M_dl) ----
-    Z_arr = @arrayop (k,) ifelse(N_dl[k] > 0, XI_P * M_dl[k]^2 / N_dl[k], 0.0) k in 1:I
-    Q_arr = @arrayop (k,) ifelse(N_dl[k] > 0, XI_P^2 * M_dl[k]^3 / N_dl[k]^2, 0.0) k in 1:I
-    x_bar_arr = @arrayop (k,) ifelse(N_dl[k] > 0, M_dl[k] / N_dl[k],
-        x1 * 2.0^(k - 1)) k in 1:I
+    # ---- Linear distribution parameters via @arrayop (level 1, Eq. 13a,b + Eq. 15a,b) ----
+    f_arr = @arrayop (k,) _sce_f(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I
+    ψ_arr = @arrayop (k,) _sce_psi(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I
+    α_arr = @arrayop (k,) _sce_alpha(Nk[k] * one_m3, Mk[k] * (one_m3 / one_kg), x1 * 2.0^(k - 1)) k in 1:I
 
-    # ---- Shifted arrays via @makearray (level 2, shifted N_dl/M_dl) ----
+    # ---- Shifted arrays via @makearray (level 1) ----
     N_prev_arr = @makearray N_prev_arr[1:I] begin
         N_prev_arr[1:1] => [0.0]
-        N_prev_arr[2:I] => @arrayop (k,) N_dl[k] k in 1:I-1
+        N_prev_arr[2:I] => @arrayop (k,) Nk[k] * one_m3 k in 1:I-1
     end
     M_prev_arr = @makearray M_prev_arr[1:I] begin
         M_prev_arr[1:1] => [0.0]
-        M_prev_arr[2:I] => @arrayop (k,) M_dl[k] k in 1:I-1
+        M_prev_arr[2:I] => @arrayop (k,) Mk[k] * (one_m3 / one_kg) k in 1:I-1
     end
 
-    # ---- Simple tail sums via @arrayop (level 2, indexes N_dl/M_dl) ----
-    N_upper_arr = @arrayop (k,) ifelse(i >= k + 1, N_dl[i], 0.0) k in 1:I i in 1:I
-    M_lower_arr = @arrayop (k,) ifelse(i <= k - 1, M_dl[i], 0.0) k in 1:I i in 1:I
+    # ---- Tail sums via @arrayop (level 1) ----
+    N_upper_arr = @arrayop (k,) ifelse(i >= k + 1, Nk[i] * one_m3, 0.0) k in 1:I i in 1:I
+    M_lower_arr = @arrayop (k,) ifelse(i <= k - 1, Mk[i] * (one_m3 / one_kg), 0.0) k in 1:I i in 1:I
 
-    # ---- Scalarize level-2 results for use in comprehensions ----
-    N_dl_s = Symbolics.scalarize(N_dl)
-    M_dl_s = Symbolics.scalarize(M_dl)
+    # ---- Scalarize level-1 results for use in rate assembly ----
+    N_dl_s = Symbolics.scalarize(@arrayop (k,) Nk[k] * one_m3 k in 1:I)
+    M_dl_s = Symbolics.scalarize(@arrayop (k,) Mk[k] * (one_m3 / one_kg) k in 1:I)
     Z = Symbolics.scalarize(Z_arr)
     Q = Symbolics.scalarize(Q_arr)
-    x_bar = Symbolics.scalarize(x_bar_arr)
+    f = Symbolics.scalarize(f_arr)
+    ψ = Symbolics.scalarize(ψ_arr)
+    α = Symbolics.scalarize(α_arr)
     N_prev = Symbolics.scalarize(N_prev_arr)
     M_prev = Symbolics.scalarize(M_prev_arr)
     N_upper = Symbolics.scalarize(N_upper_arr)
     M_lower = Symbolics.scalarize(M_lower_arr)
-
-    # ---- Linear parameters (Eq. 13a,b with positivity Eq. 15a,b) ----
-    f = [ifelse(x_bar[k] < x[k], 0.0,
-          ifelse(x_bar[k] > 2 * x[k], 2 * N_dl_s[k] / x[k],
-                 4 * N_dl_s[k] / x[k] - 2 * M_dl_s[k] / x[k]^2)) for k in 1:I]
-    ψ = [ifelse(x_bar[k] < x[k], 2 * N_dl_s[k] / x[k],
-          ifelse(x_bar[k] > 2 * x[k], 0.0,
-                 2 * M_dl_s[k] / x[k]^2 - 2 * N_dl_s[k] / x[k])) for k in 1:I]
-
-    # ---- S0 coefficient: α = (f-ψ)/(2x) ----
-    α = [(f[k] - ψ[k]) / (2 * x[k]) for k in 1:I]
 
     # ---- Kernel-specific rate computation ----
     if kernel_type == :constant
         dN_dl, dM_dl = _sce_rates_constant(N_dl_s, M_dl_s, Z, Q, f, ψ, α,
             N_prev, M_prev, N_upper, M_lower, x, I, K0_val)
     else  # :golovin
-        R = Symbolics.scalarize(@arrayop (k,) ifelse(N_dl[k] > 0,
-            XI_P^3 * M_dl[k]^4 / N_dl[k]^3, 0.0) k in 1:I)
+        R = Symbolics.scalarize(@arrayop (k,) _sce_R(Nk[k] * one_m3,
+            Mk[k] * (one_m3 / one_kg), XI_P) k in 1:I)
         M_upper = Symbolics.scalarize(
-            @arrayop (k,) ifelse(i >= k + 1, M_dl[i], 0.0) k in 1:I i in 1:I)
+            @arrayop (k,) ifelse(i >= k + 1, Mk[i] * (one_m3 / one_kg), 0.0) k in 1:I i in 1:I)
         Z_lower = Symbolics.scalarize(
             @arrayop (k,) ifelse(i <= k - 1,
-                ifelse(N_dl[i] > 0, XI_P * M_dl[i]^2 / N_dl[i], 0.0),
+                _sce_Z(Nk[i] * one_m3, Mk[i] * (one_m3 / one_kg), XI_P),
                 0.0) k in 1:I i in 1:I)
         dN_dl, dM_dl = _sce_rates_golovin(N_dl_s, M_dl_s, Z, Q, R, f, ψ, α,
             N_prev, M_prev, N_upper, M_upper, M_lower, Z_lower, x, I, C_val)
