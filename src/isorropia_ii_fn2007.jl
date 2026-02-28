@@ -16,7 +16,7 @@
 # Part 1: Thermodynamic Data
 # =============================================================================
 
-# Reference temperature for helper functions (needed at module level)
+# Reference temperature for helper functions (needed at module level for @register_symbolic)
 # Main thermodynamic constants moved to @constants inside component
 const _ISO2_T0 = 298.15  # K
 
@@ -28,15 +28,16 @@ const _ISO2_T0 = 298.15  # K
 # Format: (K0, A, B)
 # --------------------------------------------------------------------------
 
-# Equilibrium constants moved inside component to use @constants
-# These define van't Hoff parameters: (K0, A, B) where A = ΔH°/(R·T₀), B = Δcₚ°/R
+# van't Hoff equilibrium constant parameters: (K0, A, B) where A = ΔH°/(R·T₀), B = Δcₚ°/R
+# Values are moved to @constants inside component following ModelingToolkit standards
 
 # Solid salt dissolution constants (not used in metastable implementation)
 # These would be needed for stable solution branches - included in constants below
 
 # --------------------------------------------------------------------------
-# Kusik-Meissner Q parameters for binary activity coefficients (Table 4)
+# Kusik-Meissner Q parameters for binary activity coefficients (from CMAQ isocom.f)
 # Format: (q_parameter, charge_product_z)
+# Note: Module-level const needed for @register_symbolic functions
 # --------------------------------------------------------------------------
 const _ISO2_KM_PARAMS = Dict(
     :NaCl => (2.23, 1),
@@ -64,6 +65,7 @@ const _ISO2_KM_PARAMS = Dict(
 # 100 entries from aw = 0.01 to 1.00 (index i → aw ≈ i/100)
 # Values are molality (mol/kg water) at the given water activity
 # Source: CMAQ isocom.f BLOCK DATA BLKISO (AIM Model III database)
+# Note: These are module-level constants for performance (used in registered functions)
 # --------------------------------------------------------------------------
 
 # (NH4)2SO4 - AWAS
