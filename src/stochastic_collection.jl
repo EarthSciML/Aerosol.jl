@@ -1,7 +1,6 @@
 export StochasticCollectionCoalescence
 
-using Einsum
-using ModelingToolkit.Symbolics: @register_array_symbolic
+using SymbolicUtils: @arrayop, @makearray
 
 """
     StochasticCollectionCoalescence(; name=:StochasticCollectionCoalescence, I=36, x1=1.6e-14, kernel_type=:constant, kernel_params=Dict(:K0 => 1e-10))
@@ -24,8 +23,9 @@ The equations for each category follow Eq. (9a,b) in the paper, with incomplete
 category integrals evaluated using a linear distribution function approximation
 (Eq. 11-13) and positivity constraints (Eq. 15a,b).
 
-The implementation uses registered array symbolic functions to keep symbolic
-expressions compact and avoid memory blowup for large numbers of categories.
+The implementation uses symbolic array operations (`@arrayop` and `@makearray` from
+SymbolicUtils.jl) to build transparent symbolic equations that the ModelingToolkit
+system can fully analyze.
 
 ## Kernel Types
 
@@ -51,15 +51,13 @@ expressions compact and avoid memory blowup for large numbers of categories.
     # ---- Validate kernel ----
     if kernel_type == :constant
         K0_val = Float64(kernel_params[:K0])
-        kernel_flag = 1.0  # constant kernel
-        kernel_coeff = K0_val
     elseif kernel_type == :golovin
         C_val = Float64(kernel_params[:C])
-        kernel_flag = 2.0  # Golovin kernel
-        kernel_coeff = C_val
     else
         error("Unsupported kernel_type: $kernel_type. Use :constant or :golovin.")
     end
+
+    XI_P = 1.0625  # Closure parameter (Eq. 7, B10): 1 ≤ ξ_p ≤ 9/8, mean ≈ 1.0625
 
     @constants begin
         one_m3 = 1.0, [description = "Unit volume for dimensional analysis", unit = u"m^3"]
@@ -72,251 +70,164 @@ expressions compact and avoid memory blowup for large numbers of categories.
         Mk(t)[1:I], [description = "Mass concentration in category k", unit = u"kg*m^-3"]
     end
 
-    # Build dimensionless state vector for the registered function.
-    # The registered function operates on dimensionless quantities to avoid
-    # unit-related issues in the symbolic system.
-    N_dimless = Symbolics.scalarize(Nk .* one_m3)              # dimensionless
-    M_dimless = Symbolics.scalarize(Mk .* (one_m3 / one_kg))   # dimensionless
-    state = vcat(N_dimless, M_dimless)
+    x = xb[1:I]  # category lower boundaries
 
-    # Call the registered RHS function (returns dimensionless rates in s⁻¹ equivalents)
-    result = _sce_rhs(state, xb, kernel_flag, kernel_coeff)
+    # ---- Dimensionless quantities ----
+    N_dl = Symbolics.scalarize(Nk .* one_m3)              # dimensionless
+    M_dl = Symbolics.scalarize(Mk .* (one_m3 / one_kg))   # dimensionless
 
-    # Build equations with proper units
+    # ---- Closure relations (Eq. 8a,b) ----
+    Z = [ifelse(N_dl[k] > 0, XI_P * M_dl[k]^2 / N_dl[k], 0.0) for k in 1:I]
+    Q = [ifelse(N_dl[k] > 0, XI_P^2 * M_dl[k]^3 / N_dl[k]^2, 0.0) for k in 1:I]
+
+    # ---- Linear parameters (Eq. 13a,b with positivity Eq. 15a,b) ----
+    x_bar = [ifelse(N_dl[k] > 0, M_dl[k] / N_dl[k], x[k]) for k in 1:I]
+    f = [ifelse(x_bar[k] < x[k], 0.0,
+          ifelse(x_bar[k] > 2 * x[k], 2 * N_dl[k] / x[k],
+                 4 * N_dl[k] / x[k] - 2 * M_dl[k] / x[k]^2)) for k in 1:I]
+    ψ = [ifelse(x_bar[k] < x[k], 2 * N_dl[k] / x[k],
+          ifelse(x_bar[k] > 2 * x[k], 0.0,
+                 2 * M_dl[k] / x[k]^2 - 2 * N_dl[k] / x[k])) for k in 1:I]
+
+    # ---- S0 coefficient: α = (f-ψ)/(2x) ----
+    α = [(f[k] - ψ[k]) / (2 * x[k]) for k in 1:I]
+
+    # ---- Kernel-specific rate computation ----
+    if kernel_type == :constant
+        dN_dl, dM_dl = _sce_symbolic_constant(N_dl, M_dl, Z, Q, f, ψ, α, x, I, K0_val)
+    else  # :golovin
+        R = [ifelse(N_dl[k] > 0, XI_P^3 * M_dl[k]^4 / N_dl[k]^3, 0.0) for k in 1:I]
+        dN_dl, dM_dl = _sce_symbolic_golovin(N_dl, M_dl, Z, Q, R, f, ψ, α, x, I, C_val)
+    end
+
+    # ---- Build equations with proper units ----
     eqs = vcat(
-        map(k -> D(Nk[k]) ~ result[k] / (one_m3 * one_s), 1:I),               # m⁻³ s⁻¹
-        map(k -> D(Mk[k]) ~ result[I + k] * one_kg / (one_m3 * one_s), 1:I),  # kg m⁻³ s⁻¹
+        [D(Nk[k]) ~ dN_dl[k] / (one_m3 * one_s) for k in 1:I],               # m⁻³ s⁻¹
+        [D(Mk[k]) ~ dM_dl[k] * one_kg / (one_m3 * one_s) for k in 1:I],  # kg m⁻³ s⁻¹
     )
 
-    # Use CheckComponents to skip unit checking for registered array functions.
-    # The unit checker cannot trace through opaque registered functions, but the
-    # dimensional analysis is correct by construction (tested numerically).
     return System(eqs, t; name, checks=ModelingToolkit.CheckComponents)
 end
 
 # ============================================================================
-# Registered array function for SCE right-hand side.
-# Takes a state vector [N₁...Nᵢ, M₁...Mᵢ] (all dimensionless) plus
-# category boundaries and kernel parameters.
-# Returns [dN₁/dt...dNᵢ/dt, dM₁/dt...dMᵢ/dt] (dimensionless rates).
+# Symbolic RHS for constant kernel K(x,y) = K0
+# Implements Eq. (9a,b) with K constant, using symbolic array operations.
 # ============================================================================
-function _sce_rhs(state::AbstractVector, xb::Vector{Float64},
-                  kernel_flag::Float64, kernel_coeff::Float64)
-    n = length(state) ÷ 2
-    N = collect(state[1:n])
-    M = collect(state[n+1:2n])
-    dN = zeros(eltype(state), n)
-    dM = zeros(eltype(state), n)
+function _sce_symbolic_constant(N_dl, M_dl, Z, Q, f, ψ, α, x, I, K0)
+    # S1+yS0 coefficients: a = 2xψ, b = f/2
+    a_coeff = [2 * x[k] * ψ[k] for k in 1:I]
+    b_coeff = [f[k] / 2 for k in 1:I]
 
-    if kernel_flag == 1.0
-        _sce_constant_rhs!(dN, dM, N, M, n, xb, kernel_coeff)
-    elseif kernel_flag == 2.0
-        _sce_golovin_rhs!(dN, dM, N, M, n, xb, kernel_coeff)
+    dN_dl = Vector{Any}(undef, I)
+    dM_dl = Vector{Any}(undef, I)
+
+    for k in 1:I
+        # Shifted (k-1) quantities
+        N_prev_k = k >= 2 ? N_dl[k-1] : 0.0
+        M_prev_k = k >= 2 ? M_dl[k-1] : 0.0
+        ψ_prev_k = k >= 2 ? ψ[k-1] : 0.0
+        α_prev_k = k >= 2 ? α[k-1] : 0.0
+        a_prev_k = k >= 2 ? a_coeff[k-1] : 0.0
+        b_prev_k = k >= 2 ? b_coeff[k-1] : 0.0
+
+        # ---- dN_k/dt (Eq. 9a) ----
+
+        # Term 2: Cross-coag gain, Σ_{i=1}^{k-2} S0(f[k-1],ψ[k-1],x[k-1], M[i], Z[i])
+        term2_N = sum((ψ_prev_k * M_dl[i] + α_prev_k * Z[i]) for i in 1:max(k-2, 0); init=0.0)
+
+        # Term 4: Cross-coag loss, Σ_{i=1}^{k-1} S0(f[k],ψ[k],x[k], M[i], Z[i])
+        term4_N = sum((ψ[k] * M_dl[i] + α[k] * Z[i]) for i in 1:max(k-1, 0); init=0.0)
+
+        # Term 6: Upper tail sum, Σ_{i=k+1}^{I} N[i]
+        N_upper = sum(N_dl[i] for i in (k+1):I; init=0.0)
+
+        # Assemble dN: Terms 3+5 combined as -K0*N[k]^2
+        dN_dl[k] = K0 / 2 * N_prev_k^2 + K0 * term2_N -
+                   K0 * N_dl[k]^2 - K0 * term4_N -
+                   K0 * N_dl[k] * N_upper
+
+        # ---- dM_k/dt (Eq. 9b) ----
+
+        # Term 2: Cross-coag mass gain, Σ_{i=1}^{k-2} (S1+yS0) using k-1 params
+        term2_M = sum((a_prev_k * M_dl[i] + b_prev_k * Z[i] + α_prev_k * Q[i]) for i in 1:max(k-2, 0); init=0.0)
+
+        # Term 4: Cross-coag mass loss, Σ_{i=1}^{k-1} (S1+yS0) using k params
+        term4_M = sum((a_coeff[k] * M_dl[i] + b_coeff[k] * Z[i] + α[k] * Q[i]) for i in 1:max(k-1, 0); init=0.0)
+
+        # Term 5: Lower cumulative sum of M, Σ_{i=1}^{k-1} M[i]
+        M_lower = sum(M_dl[i] for i in 1:max(k-1, 0); init=0.0)
+
+        # Assemble dM
+        dM_dl[k] = K0 * N_prev_k * M_prev_k + K0 * term2_M -
+                   K0 * N_dl[k] * M_dl[k] - K0 * term4_M +
+                   K0 * N_dl[k] * M_lower - K0 * M_dl[k] * N_upper
     end
 
-    return vcat(dN, dM)
-end
-
-@register_array_symbolic _sce_rhs(state::AbstractVector, xb::Vector{Float64},
-                                  kernel_flag::Float64, kernel_coeff::Float64) begin
-    size = (length(state),)
-    eltype = Real
-    ndims = 1
+    return dN_dl, dM_dl
 end
 
 # ============================================================================
-# Closure parameter (Eq. 7, B10)
-# For p=2: 1 ≤ ξ_p ≤ 9/8. Mean value ≈ 1.0625.
+# Symbolic RHS for Golovin kernel K(x,y) = C*(x+y)
+# Implements Eq. (9a,b) with K = C(x+y), using symbolic array operations.
 # ============================================================================
-const _SCE_XI_P = 1.0625
+function _sce_symbolic_golovin(N_dl, M_dl, Z, Q, R, f, ψ, α, x, I, C)
+    # Coefficients
+    a_coeff = [2 * x[k] * ψ[k] for k in 1:I]
+    b_coeff = [f[k] / 2 for k in 1:I]
+    d_coeff = [4 * x[k]^2 * ψ[k] for k in 1:I]
+    e_coeff = [x[k] * f[k] / 2 + 2 * x[k] * ψ[k] for k in 1:I]
+    g_coeff = [f[k] - ψ[k] for k in 1:I]
 
-# ============================================================================
-# Linear approximation parameters (Eq. 13a,b with positivity Eq. 15a,b)
-# Returns (fk, ψk) for the linear distribution function approximation
-# in category k with lower boundary xk.
-# ============================================================================
-function _sce_linear_params(Nk_val, Mk_val, xk)
-    # x̄_k = Mk/Nk (mean mass in category k)
-    x_bar = Nk_val > 0 ? Mk_val / Nk_val : xk
+    dN_dl = Vector{Any}(undef, I)
+    dM_dl = Vector{Any}(undef, I)
 
-    if x_bar < xk  # Eq. 15b: x̄_k < x_k → set fk=0 for positivity
-        fk = 0.0
-        ψk = 2 * Nk_val / xk
-    elseif x_bar > 2 * xk  # Eq. 15a: x̄_k > x_{k+1} → set ψk=0 for positivity
-        fk = 2 * Nk_val / xk
-        ψk = 0.0
-    else  # Normal case: Eq. 13a,b expanded
-        # fk = (2Nk/xk)(2 - x̄k/xk) = 4Nk/xk - 2Mk/xk²
-        fk = 4 * Nk_val / xk - 2 * Mk_val / xk^2
-        # ψk = (2Nk/xk)(x̄k/xk - 1) = 2Mk/xk² - 2Nk/xk
-        ψk = 2 * Mk_val / xk^2 - 2 * Nk_val / xk
+    for k in 1:I
+        # Shifted (k-1) quantities
+        N_prev_k = k >= 2 ? N_dl[k-1] : 0.0
+        M_prev_k = k >= 2 ? M_dl[k-1] : 0.0
+        Z_prev_k = k >= 2 ? Z[k-1] : 0.0
+        a_prev_k = k >= 2 ? a_coeff[k-1] : 0.0
+        b_prev_k = k >= 2 ? b_coeff[k-1] : 0.0
+        α_prev_k = k >= 2 ? α[k-1] : 0.0
+        d_prev_k = k >= 2 ? d_coeff[k-1] : 0.0
+        e_prev_k = k >= 2 ? e_coeff[k-1] : 0.0
+        g_prev_k = k >= 2 ? g_coeff[k-1] : 0.0
+
+        # ---- dN_k/dt (Eq. 9a with K=C(x+y)) ----
+
+        # Term 2: cross-coag gain, Σ_{i=1}^{k-2} (S1+yS0) using k-1 params
+        term2_gN = sum((a_prev_k * M_dl[i] + b_prev_k * Z[i] + α_prev_k * Q[i]) for i in 1:max(k-2, 0); init=0.0)
+
+        # Term 4: cross-coag loss, Σ_{i=1}^{k-1} (S1+yS0) using k params
+        term4_gN = sum((a_coeff[k] * M_dl[i] + b_coeff[k] * Z[i] + α[k] * Q[i]) for i in 1:max(k-1, 0); init=0.0)
+
+        # Upper tail sums
+        N_upper = sum(N_dl[i] for i in (k+1):I; init=0.0)
+        M_upper = sum(M_dl[i] for i in (k+1):I; init=0.0)
+
+        # Assemble dN
+        dN_dl[k] = C * N_prev_k * M_prev_k + C * term2_gN -
+                   2 * C * N_dl[k] * M_dl[k] - C * term4_gN -
+                   C * M_dl[k] * N_upper - C * N_dl[k] * M_upper
+
+        # ---- dM_k/dt (Eq. 9b with K=C(x+y)) ----
+
+        # Term 2: cross-coag mass gain, Σ_{i=1}^{k-2} (S2+yS1+y²S0) using k-1 params
+        term2_gM = sum((d_prev_k * M_dl[i] + e_prev_k * Z[i] + g_prev_k * Q[i] + α_prev_k * R[i]) for i in 1:max(k-2, 0); init=0.0)
+
+        # Term 4: cross-coag mass loss, Σ_{i=1}^{k-1} (S2+yS1+y²S0) using k params
+        term4_gM = sum((d_coeff[k] * M_dl[i] + e_coeff[k] * Z[i] + g_coeff[k] * Q[i] + α[k] * R[i]) for i in 1:max(k-1, 0); init=0.0)
+
+        # Lower sums
+        M_lower = sum(M_dl[i] for i in 1:max(k-1, 0); init=0.0)
+        Z_lower = sum(Z[i] for i in 1:max(k-1, 0); init=0.0)
+
+        # Assemble dM
+        dM_dl[k] = C * (N_prev_k * Z_prev_k + M_prev_k^2) + C * term2_gM -
+                   C * (N_dl[k] * Z[k] + M_dl[k]^2) - C * term4_gM +
+                   C * (M_dl[k] * M_lower + N_dl[k] * Z_lower) -
+                   C * (Z[k] * N_upper + M_dl[k] * M_upper)
     end
-    return fk, ψk
-end
 
-# ============================================================================
-# Closure relations (Eq. 8a,b)
-# Z = ξ_p * M² / N  (second moment proxy)
-# Q = ξ_p² * M³ / N²  (third moment proxy)
-# R = ξ_p³ * M⁴ / N³  (fourth moment proxy, needed for Golovin mass eqs)
-# ============================================================================
-@inline _sce_Z(Mk, Nk) = Nk > 0 ? _SCE_XI_P * Mk^2 / Nk : 0.0
-@inline _sce_Q(Mk, Nk) = Nk > 0 ? _SCE_XI_P^2 * Mk^3 / Nk^2 : 0.0
-@inline _sce_R(Mk, Nk) = Nk > 0 ? _SCE_XI_P^3 * Mk^4 / Nk^3 : 0.0
-
-# ============================================================================
-# Incomplete integrals (Eq. 12) for linear approximation
-# S0 = ∫_{x_{k+1}-y}^{x_{k+1}} n_m(x) dx  (number over incomplete interval)
-# S1 = ∫ x·n_m(x) dx  (mass over incomplete interval)
-# yS0 = ∫ y·n_m(x) dx  (y-weighted number over incomplete interval)
-# ============================================================================
-@inline _sce_S0(fm, ψm, xm, Mi, Zi) = ψm * Mi + (fm - ψm) / (2 * xm) * Zi
-@inline _sce_S1(fm, ψm, xm, Mi, Zi) = 2 * xm * ψm * Mi + (fm - 2 * ψm) / 2 * Zi
-@inline _sce_yS0(fm, ψm, xm, Zi, Qi) = ψm * Zi + (fm - ψm) / (2 * xm) * Qi
-
-# ============================================================================
-# Numerical RHS for constant kernel K(x,y) = K0
-# Implements Eq. (9a,b) with K constant, using einsum array operations.
-# ============================================================================
-function _sce_constant_rhs!(dN, dM, N, M, I, xb, K0)
-    T = eltype(N)
-    x = xb[1:I]  # category lower boundaries
-
-    # Precompute closure relations (Eq. 8a,b)
-    @einsum Z[k] := _sce_Z(M[k], N[k])
-    @einsum Q[k] := _sce_Q(M[k], N[k])
-
-    # Linear params (Eq. 13/15) - broadcasting for tuple return
-    fψ = _sce_linear_params.(N, M, x)
-    f = getindex.(fψ, 1)
-    ψ = getindex.(fψ, 2)
-
-    # S0 coefficients: S0(f,ψ,x,Mi,Zi) = ψ*Mi + α*Zi where α = (f-ψ)/(2x)
-    @einsum α[k] := (f[k] - ψ[k]) / (2 * x[k])
-
-    # S1+yS0 coefficients: a*Mi + b*Zi + c*Qi where a=2xψ, b=f/2, c=α
-    @einsum a_coeff[k] := 2 * x[k] * ψ[k]
-    @einsum b_coeff[k] := f[k] / 2
-
-    # Shifted (k-1) quantities for Term 2, which uses params from category k-1
-    N_prev = vcat([zero(T)], N[1:I-1])
-    M_prev = vcat([zero(T)], M[1:I-1])
-    ψ_prev = vcat([zero(T)], ψ[1:I-1])
-    α_prev = vcat([zero(T)], α[1:I-1])
-    a_prev = vcat([zero(T)], a_coeff[1:I-1])
-    b_prev = vcat([zero(T)], b_coeff[1:I-1])
-
-    # Triangular mask matrices for index-bounded sums
-    mask_lt2 = [i <= k - 2 ? one(T) : zero(T) for k in 1:I, i in 1:I]  # i=1..k-2
-    mask_lt1 = [i <= k - 1 ? one(T) : zero(T) for k in 1:I, i in 1:I]  # i=1..k-1
-    mask_gt  = [i >= k + 1 ? one(T) : zero(T) for k in 1:I, i in 1:I]  # i=k+1..I
-
-    # ---- dN_k/dt (Eq. 9a) ----
-
-    # Term 2: Cross-coag gain, Σ_{i=1}^{k-2} S0(f[k-1],ψ[k-1],x[k-1], M[i], Z[i])
-    @einsum term2_N[k] := mask_lt2[k, i] * (ψ_prev[k] * M[i] + α_prev[k] * Z[i])
-
-    # Term 4: Cross-coag loss, Σ_{i=1}^{k-1} S0(f[k],ψ[k],x[k], M[i], Z[i])
-    @einsum term4_N[k] := mask_lt1[k, i] * (ψ[k] * M[i] + α[k] * Z[i])
-
-    # Term 6: Upper tail sum, Σ_{i=k+1}^{I} N[i]
-    @einsum N_upper[k] := mask_gt[k, i] * N[i]
-
-    # Assemble dN: Terms 3+5 combined as -K0*N[k]^2
-    @einsum dN[k] = (K0 / 2) * N_prev[k]^2 + K0 * term2_N[k] - K0 * N[k]^2 - K0 * term4_N[k] - K0 * N[k] * N_upper[k]
-
-    # ---- dM_k/dt (Eq. 9b) ----
-
-    # Term 2: Cross-coag mass gain, Σ_{i=1}^{k-2} (S1+yS0) using k-1 params
-    @einsum term2_M[k] := mask_lt2[k, i] * (a_prev[k] * M[i] + b_prev[k] * Z[i] + α_prev[k] * Q[i])
-
-    # Term 4: Cross-coag mass loss, Σ_{i=1}^{k-1} (S1+yS0) using k params
-    @einsum term4_M[k] := mask_lt1[k, i] * (a_coeff[k] * M[i] + b_coeff[k] * Z[i] + α[k] * Q[i])
-
-    # Term 5: Lower cumulative sum of M, Σ_{i=1}^{k-1} M[i]
-    @einsum M_lower[k] := mask_lt1[k, i] * M[i]
-
-    # Assemble dM
-    @einsum dM[k] = K0 * N_prev[k] * M_prev[k] + K0 * term2_M[k] - K0 * N[k] * M[k] - K0 * term4_M[k] + K0 * N[k] * M_lower[k] - K0 * M[k] * N_upper[k]
-
-    return nothing
-end
-
-# ============================================================================
-# Numerical RHS for Golovin kernel K(x,y) = C*(x+y)
-# Implements Eq. (9a,b) with K = C(x+y), using einsum array operations.
-# ============================================================================
-function _sce_golovin_rhs!(dN, dM, N, M, I, xb, C)
-    T = eltype(N)
-    x = xb[1:I]  # category lower boundaries
-
-    # Precompute closure relations (Eq. 8a,b)
-    @einsum Z[k] := _sce_Z(M[k], N[k])
-    @einsum Q[k] := _sce_Q(M[k], N[k])
-    @einsum R[k] := _sce_R(M[k], N[k])
-
-    # Linear params (Eq. 13/15) - broadcasting for tuple return
-    fψ = _sce_linear_params.(N, M, x)
-    f = getindex.(fψ, 1)
-    ψ = getindex.(fψ, 2)
-
-    # S0 coefficient: α = (f-ψ)/(2x)
-    @einsum α[k] := (f[k] - ψ[k]) / (2 * x[k])
-
-    # S1+yS0 coefficients (for dN): a=2xψ, b=f/2, c=α
-    @einsum a_coeff[k] := 2 * x[k] * ψ[k]
-    @einsum b_coeff[k] := f[k] / 2
-
-    # S2+yS1+y2S0 coefficients (for dM): d=4x²ψ, e=xf/2+2xψ, g=f-ψ, h=α
-    @einsum d_coeff[k] := 4 * x[k]^2 * ψ[k]
-    @einsum e_coeff[k] := x[k] * f[k] / 2 + 2 * x[k] * ψ[k]
-    @einsum g_coeff[k] := f[k] - ψ[k]
-
-    # Shifted (k-1) quantities for Term 2
-    N_prev = vcat([zero(T)], N[1:I-1])
-    M_prev = vcat([zero(T)], M[1:I-1])
-    Z_prev = vcat([zero(T)], Z[1:I-1])
-    a_prev = vcat([zero(T)], a_coeff[1:I-1])
-    b_prev = vcat([zero(T)], b_coeff[1:I-1])
-    α_prev = vcat([zero(T)], α[1:I-1])
-    d_prev = vcat([zero(T)], d_coeff[1:I-1])
-    e_prev = vcat([zero(T)], e_coeff[1:I-1])
-    g_prev = vcat([zero(T)], g_coeff[1:I-1])
-
-    # Triangular mask matrices for index-bounded sums
-    mask_lt2 = [i <= k - 2 ? one(T) : zero(T) for k in 1:I, i in 1:I]  # i=1..k-2
-    mask_lt1 = [i <= k - 1 ? one(T) : zero(T) for k in 1:I, i in 1:I]  # i=1..k-1
-    mask_gt  = [i >= k + 1 ? one(T) : zero(T) for k in 1:I, i in 1:I]  # i=k+1..I
-
-    # ---- dN_k/dt (Eq. 9a with K=C(x+y)) ----
-
-    # Term 2: cross-coag gain, Σ_{i=1}^{k-2} (S1+yS0) using k-1 params
-    @einsum term2_gN[k] := mask_lt2[k, i] * (a_prev[k] * M[i] + b_prev[k] * Z[i] + α_prev[k] * Q[i])
-
-    # Term 4: cross-coag loss, Σ_{i=1}^{k-1} (S1+yS0) using k params
-    @einsum term4_gN[k] := mask_lt1[k, i] * (a_coeff[k] * M[i] + b_coeff[k] * Z[i] + α[k] * Q[i])
-
-    # Upper tail sums for Term 6
-    @einsum N_upper[k] := mask_gt[k, i] * N[i]
-    @einsum M_upper[k] := mask_gt[k, i] * M[i]
-
-    # Assemble dN: Terms 3+5 combined as -2C*N[k]*M[k]
-    @einsum dN[k] = C * N_prev[k] * M_prev[k] + C * term2_gN[k] - 2 * C * N[k] * M[k] - C * term4_gN[k] - C * M[k] * N_upper[k] - C * N[k] * M_upper[k]
-
-    # ---- dM_k/dt (Eq. 9b with K=C(x+y)) ----
-
-    # Term 2: cross-coag mass gain, Σ_{i=1}^{k-2} (S2+yS1+y2S0) using k-1 params
-    @einsum term2_gM[k] := mask_lt2[k, i] * (d_prev[k] * M[i] + e_prev[k] * Z[i] + g_prev[k] * Q[i] + α_prev[k] * R[i])
-
-    # Term 4: cross-coag mass loss, Σ_{i=1}^{k-1} (S2+yS1+y2S0) using k params
-    @einsum term4_gM[k] := mask_lt1[k, i] * (d_coeff[k] * M[i] + e_coeff[k] * Z[i] + g_coeff[k] * Q[i] + α[k] * R[i])
-
-    # Lower sums for Term 5
-    @einsum M_lower[k] := mask_lt1[k, i] * M[i]
-    @einsum Z_lower[k] := mask_lt1[k, i] * Z[i]
-
-    # Assemble dM
-    @einsum dM[k] = C * (N_prev[k] * Z_prev[k] + M_prev[k]^2) + C * term2_gM[k] - C * (N[k] * Z[k] + M[k]^2) - C * term4_gM[k] + C * (M[k] * M_lower[k] + N[k] * Z_lower[k]) - C * (Z[k] * N_upper[k] + M[k] * M_upper[k])
-
-    return nothing
+    return dN_dl, dM_dl
 end
