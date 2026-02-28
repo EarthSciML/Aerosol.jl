@@ -51,11 +51,10 @@ a two-moment method in discrete mass categories with `p = 2` (mass-doubling cate
 This implements the collection-only component from Tzivion et al. (1989). The breakup,
 evaporation, and sedimentation processes from the full paper are not included.
 
-**References**:
-- Tzivion, S., Feingold, G., and Levin, Z. (1987) "An Efficient Numerical Solution to the Stochastic Collection Equation", *Journal of the Atmospheric Sciences*, 44(21), 3139-3149.
+**Reference**:
 - Tzivion, S., Feingold, G., and Levin, Z. (1989) "The Evolution of Raindrop Spectra. Part II: Collisional Collection/Breakup and Evaporation in a Rainshaft", *Journal of the Atmospheric Sciences*, 46(21), 3312-3327.
 
-**Implementation Note**: This implementation is based primarily on the two-moment method described in the 1987 paper, with reference to the 1989 paper for additional physical context. Only the collisional collection process is implemented. The breakup, evaporation, and sedimentation processes from the 1989 paper are not yet implemented.
+**Implementation Note**: This implementation covers only the **collisional collection** component from the 1989 paper. The complete physical system described in the paper also includes breakup, evaporation, and sedimentation processes, which are not yet implemented. The two-moment method uses geometrically doubling mass categories and closure via the nondimensional parameter ξ_p.
 
 The SCE describes the evolution of a drop size distribution due to gravitational
 coalescence (collection). The continuous spectrum is divided into `I` discrete mass
@@ -102,7 +101,7 @@ shifted arrays, and summation reductions. Rate assembly uses level-2 `@arrayop` 
     end
 
     @constants begin
-        XI_P = 1.0625, [description = "Closure parameter ξ_p for relating higher-order moments (dimensionless)", unit = u"1"]
+        XI_P = 1.0625, [description = "Closure parameter ξ_p for relating higher-order moments (= 17/16, dimensionless)", unit = u"1"]
         p = 2.0, [description = "Mass doubling factor for geometric category spacing (dimensionless)", unit = u"1"]
     end
 
