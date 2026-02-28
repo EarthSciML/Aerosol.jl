@@ -765,7 +765,7 @@ end
 
     # Test our implementation
     K1_calc = Aerosol._iso2_eq_const(1.015e-2, 8.85, 25.14, T_ref)
-    K21_calc = Aerosol._iso2_eq_const(57.639, 13.79, -5.393, T_ref)
+    K21_calc = Aerosol._iso2_eq_const(5.764e1, 13.79, -5.393, T_ref)
     K22_calc = Aerosol._iso2_eq_const(1.805e-5, -1.5, 26.92, T_ref)
     K3_calc = Aerosol._iso2_eq_const(1.971e6, 30.2, 19.91, T_ref)
     K4_calc = Aerosol._iso2_eq_const(2.511e6, 29.17, 16.83, T_ref)
