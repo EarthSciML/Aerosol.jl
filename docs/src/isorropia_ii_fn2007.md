@@ -4,10 +4,11 @@
 
 ISORROPIA II is an inorganic aerosol thermodynamic equilibrium model for the
 K⁺–Ca²⁺–Mg²⁺–NH₄⁺–Na⁺–SO₄²⁻–NO₃⁻–Cl⁻–H₂O system. It computes the equilibrium
-partitioning of semi-volatile inorganic species between gas and aqueous phases.
+partitioning of semi-volatile inorganic species between gas, aqueous, and solid phases.
 
-This implementation focuses on the **metastable state** (no solid precipitation),
-where the aerosol is assumed to be a liquid solution at all relative humidities.
+The implementation supports two solution modes via the `stable` parameter:
+- **Metastable** (`stable=0`, default): No solid precipitation — the aerosol is assumed to be a liquid solution at all relative humidities.
+- **Stable** (`stable=1`): Solid precipitation is allowed — salts crystallize when the solution becomes supersaturated, following the deliquescence relative humidity (DRH) for each salt.
 
 **Reference**: Fountoukis, C. and Nenes, A.: ISORROPIA II: a computationally
 efficient thermodynamic equilibrium model for
@@ -20,13 +21,19 @@ IsorropiaEquilibrium
 
 ## Implementation
 
-The model solves a system of 21 coupled algebraic equations:
-- 8 mass balance equations (Na, SO₄, NH₃/NH₄, NO₃/HNO₃, Cl/HCl, Ca, K, Mg)
+The model solves a system of 51 coupled algebraic equations:
+- 8 mass balance equations with solid stoichiometric contributions
 - 1 electroneutrality (charge balance) equation
-- 5 equilibrium expressions (HSO₄⁻ dissociation, NH₃ gas-liquid, HNO₃ gas-liquid, HCl gas-liquid, water dissociation)
+- 5 aqueous equilibrium expressions (HSO₄⁻, NH₃, HNO₃, HCl, H₂O)
 - 1 ZSR water content equation (Eq. 16)
 - 1 ionic strength definition
-- 5 activity coefficient equations (Kusik-Meissner, Eqs. 9-13, with temperature correction Eq. 14)
+- 16 activity coefficient equations (Kusik-Meissner, Eqs. 9-13, with temperature correction Eq. 14)
+- 19 solid precipitation equations using Fischer-Burmeister NCP complementarity
+
+The solid precipitation uses a smooth complementarity formulation: for each solid salt,
+either its amount is zero (undersaturated) or the ion activity product equals the
+solubility product (at dissolution equilibrium). In metastable mode (`stable=0`),
+all solid equations reduce to s = 0.
 
 ### State Variables
 
@@ -184,8 +191,8 @@ p
 
 The following figures reproduce Figures 6–9 from Fountoukis and Nenes (2007), showing
 equilibrium aerosol composition vs. relative humidity for four representative cases from
-Table 8. Input concentrations are converted from µg/m³ to mol/m³. Only the metastable
-solution is shown (this implementation does not include the stable/deliquescent branch).
+Table 8. Input concentrations are converted from µg/m³ to mol/m³. The metastable
+solution is shown (set `stable=1` to include solid precipitation).
 
 ```@example iso2
 # Helper: sweep RH from high to low using continuation for solver convergence
@@ -331,8 +338,8 @@ plot(p8a, p8b, p8c, layout=(1,3), size=(900,350),
 
 Aerosol composition vs. RH for a remote continental case (R₁ ≈ 2):
 Na=0, H₂SO₄=10.0, NH₃=4.25, HNO₃=0.145, HCl=0, Ca=0.08, K=0.09, Mg=0 µg/m³.
-Panels show (a) aerosol water and (b) K⁺. The paper shows both stable and metastable
-branches; only the metastable branch is shown here.
+Panels show (a) aerosol water and (b) K⁺. The metastable branch is shown; set `stable=1`
+to compute the stable (solid-forming) branch.
 
 ```@example iso2
 # Case 13 (Remote Continental) from Table 8
