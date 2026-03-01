@@ -211,14 +211,14 @@ end
     )
     @test sol.retcode == SciMLBase.ReturnCode.Success
 
-    # All concentrations should be non-negative
-    @test sol[compiled.c_H] ≥ 0
-    @test sol[compiled.c_NH4] ≥ 0
-    @test sol[compiled.c_SO4] ≥ 0
-    @test sol[compiled.c_HSO4] ≥ 0
-    @test sol[compiled.c_NO3] ≥ 0
-    @test sol[compiled.g_NH3] ≥ 0
-    @test sol[compiled.g_HNO3] ≥ 0
+    # All concentrations should be non-negative (allowing for numerical precision)
+    @test sol[compiled.c_H] ≥ -1.0e-15
+    @test sol[compiled.c_NH4] ≥ -1.0e-15
+    @test sol[compiled.c_SO4] ≥ -1.0e-15
+    @test sol[compiled.c_HSO4] ≥ -1.0e-15
+    @test sol[compiled.c_NO3] ≥ -1.0e-15
+    @test sol[compiled.g_NH3] ≥ -1.0e-15
+    @test sol[compiled.g_HNO3] ≥ -1.0e-15
     @test sol[compiled.W_w] > 0
     @test sol[compiled.I_s] > 0
 
@@ -234,7 +234,7 @@ end
 
     # In sulfate-poor conditions with excess ammonia:
     @test sol[compiled.c_SO4] > sol[compiled.c_HSO4]
-    @test sol[compiled.g_NH3] > 0
+    @test max(sol[compiled.g_NH3], 0.0) > 1.0e-15  # Allow for numerical precision
 end
 
 @testitem "ISO2: Sulfate-rich equilibrium (R₁ < 2)" setup = [Iso2Setup] tags = [:iso2] begin
@@ -600,7 +600,7 @@ end
         # At least some high-RH point should have more water than some low-RH point
         max_W_high = maximum(W[i] for i in eachindex(RH) if RH[i] >= 0.7)
         min_W_low = minimum(W[i] for i in eachindex(RH) if RH[i] <= 0.6)
-        @test_broken max_W_high > min_W_low
+        @test max_W_high > min_W_low
     end
 end
 
