@@ -1155,6 +1155,8 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         0 ~ m_H * m_SO4 * γ_H2SO4^3 - K1 * m_HSO4 * γ_HHSO4^2,
 
         # 11. NH₃(g) + H₂O ↔ NH₄⁺ + OH⁻ (K2 = K21×K22)
+        # Note: Should use water activity (aw) instead of RH for concentrated solutions
+        # Activity coefficient ratio approximates the mean ionic activity coefficient
         0 ~ m_NH4 * m_OH * (γ_NH4Cl / γ_HCl)^2 - K2 * RH * p_NH3,
 
         # 12. HNO₃(g) ↔ H⁺ + NO₃⁻ (K4)
@@ -1164,6 +1166,8 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         0 ~ m_H * m_Cl * γ_HCl^2 - K3 * p_HCl,
 
         # 14. H₂O ↔ H⁺ + OH⁻ (Kw)
+        # Note: Should use water activity (aw) instead of RH for concentrated solutions
+        # For dilute solutions: aw ≈ RH, but for concentrated aerosols this approximation has limitations
         0 ~ m_H * m_OH - Kw * RH,
 
         # === Water content with MDRH cutoff (ZSR, Eqs. 15-18, 22) ===
