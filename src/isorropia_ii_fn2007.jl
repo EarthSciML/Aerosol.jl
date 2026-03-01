@@ -344,6 +344,48 @@ const _ISO2_ZSR_TABLES = Dict(
     23 => _ISO2_ZSR_MgCl2,
 )
 
+# --------------------------------------------------------------------------
+# DRH values at 298.15K and temperature correction coefficients (Table 4, Eq. 17)
+# DRH(T) = DRH(T₀) × exp(coeff × (1/T - 1/T₀))
+# Format: (DRH_at_298K, temperature_correction_coefficient_in_K)
+# --------------------------------------------------------------------------
+const _ISO2_DRH = Dict(
+    :NH42SO4 => (0.7997, 80.0),
+    :NH4HSO4 => (0.4, 384.0),
+    :LC => (0.69, 186.0),
+    :NH4NO3 => (0.6183, 852.0),
+    :NH4Cl => (0.771, 239.0),
+    :NaCl => (0.7528, 25.0),
+    :Na2SO4 => (0.93, 80.0),
+    :NaNO3 => (0.7379, 304.0),
+    :NaHSO4 => (0.52, -45.0),
+    :CaSO4 => (0.97, 0.0),
+    :CaNO32 => (0.4906, 509.4),
+    :CaCl2 => (0.283, 551.1),
+    :K2SO4 => (0.9751, 35.6),
+    :KHSO4 => (0.86, 0.0),
+    :KNO3 => (0.9248, 0.0),
+    :KCl => (0.8426, 158.9),
+    :MgSO4 => (0.8613, -714.5),
+    :MgNO32 => (0.54, 230.2),
+    :MgCl2 => (0.3284, 42.23),
+)
+
+# --------------------------------------------------------------------------
+# Mutual Deliquescence Relative Humidity (MDRH) for salt mixtures (Table 5)
+# Indexed by composition regime identifier
+# --------------------------------------------------------------------------
+const _ISO2_MDRH = Dict(
+    # Sulfate-poor, crustal+Na rich (R₁ > 2, crustal+Na present)
+    :A => 0.2,  # Full system with crustal species
+    :B => 0.363,  # Sulfate-poor, Na present, no crustal
+    :C => 0.54,  # Sulfate-poor, NH4 only (no Na, no crustal)
+    # Sulfate-rich (R₁ < 2)
+    :D => 0.4,  # NH4HSO4 + LC + (NH4)2SO4
+    :E => 0.363,  # Na + NH4 sulfate rich
+    :F => 0.2,  # Full system sulfate rich with crustal
+)
+
 # =============================================================================
 # Part 2: Computational Functions
 # =============================================================================
@@ -607,6 +649,67 @@ function _iso2_smooth_min(a, b)
 end
 @register_symbolic _iso2_smooth_min(a, b)
 
+"""
+    _iso2_drh_T(drh0, coeff, T)
+
+Compute temperature-dependent deliquescence relative humidity (Eq. 17, Table 4).
+DRH(T) = DRH(T₀) × exp(coeff × (1/T - 1/T₀))
+Result is clamped to [0, 1].
+"""
+function _iso2_drh_T(drh0, coeff, T)
+    return clamp(drh0 * exp(coeff * (1.0 / T - 1.0 / _ISO2_T0)), 0.0, 1.0)
+end
+@register_symbolic _iso2_drh_T(drh0, coeff, T)
+
+"""
+    _iso2_smooth_step(x)
+
+Smooth logistic step function: σ(x) = 1/(1 + exp(-clamp(x, -20, 20))).
+Returns ≈0 for x ≪ 0 and ≈1 for x ≫ 0, with smooth transition near x=0.
+"""
+function _iso2_smooth_step(x)
+    x_safe = clamp(x, -20.0, 20.0)
+    return 1.0 / (1.0 + exp(-x_safe))
+end
+@register_symbolic _iso2_smooth_step(x)
+
+"""
+    _iso2_compute_mdrh(Na, SO4, NH3, NO3, Cl, Ca, K, Mg)
+
+Compute the Mutual Deliquescence Relative Humidity (MDRH) from total composition
+(all in mol/m³). Uses sulfate ratio R₁ and presence of crustal/Na species to
+select the appropriate MDRH from Table 5.
+"""
+function _iso2_compute_mdrh(Na, SO4, NH3, NO3, Cl, Ca, K, Mg)
+    # Sulfate ratio R₁ = (NH3 + Na + 2Ca + K + 2Mg) / SO4
+    SO4_safe = max(SO4, 1.0e-30)
+    R1 = (NH3 + Na + 2.0 * Ca + K + 2.0 * Mg) / SO4_safe
+
+    has_crustal = (Ca + K + Mg) > 1.0e-20
+    has_Na = Na > 1.0e-20
+
+    return if R1 >= 2.0
+        # Sulfate-poor regime
+        if has_crustal
+            return 0.2  # Table 5: full system with crustal
+        elseif has_Na
+            return 0.363  # Table 5: Na present, no crustal
+        else
+            return 0.54  # Table 5: NH4-only system
+        end
+    else
+        # Sulfate-rich regime
+        if has_crustal
+            return 0.2  # Table 5: sulfate-rich with crustal
+        elseif has_Na
+            return 0.363  # Table 5: Na + NH4 sulfate rich
+        else
+            return 0.4  # Table 5: NH4HSO4 + LC + (NH4)2SO4
+        end
+    end
+end
+@register_symbolic _iso2_compute_mdrh(Na, SO4, NH3, NO3, Cl, Ca, K, Mg)
+
 # =============================================================================
 # Part 3: ModelingToolkit Component
 # =============================================================================
@@ -620,18 +723,24 @@ K⁺–Ca²⁺–Mg²⁺–NH₄⁺–Na⁺–SO₄²⁻–NO₃⁻–Cl⁻–H�
 Supports both **metastable** (no solids) and **stable** (with solid precipitation)
 solution modes, controlled by the `stable` parameter (0=metastable, 1=stable).
 
-The model solves 50 coupled algebraic equations:
+The model solves 51 coupled algebraic equations:
 - 8 mass balance equations (with solid stoichiometric contributions in stable mode)
 - 1 charge balance (electroneutrality)
 - 5 aqueous equilibrium expressions (HSO₄⁻, NH₃, HNO₃, HCl, H₂O)
-- 1 ZSR water content equation (Eq. 16)
+- 1 ZSR water content equation with MDRH cutoff (Eqs. 16-18, 22)
 - 1 ionic strength definition
 - 16 activity coefficient equations (Kusik-Meissner, Eqs. 9-13)
-- 18 solid precipitation equations (Fischer-Burmeister NCP complementarity)
+- 19 solid precipitation equations (Fischer-Burmeister NCP complementarity)
 
 In stable mode, solid salts precipitate when the solution becomes supersaturated.
 Each solid equilibrium uses a smooth complementarity formulation:
 either the solid amount is zero, or the solution is exactly at saturation.
+
+**Deliquescence**: Temperature-dependent DRH values are computed for each salt
+using Eq. 17 and Table 4. The mutual deliquescence relative humidity (MDRH)
+from Table 5 is enforced in stable mode: below the MDRH, the aerosol water
+content is driven to zero, producing a completely dry (crystalline) aerosol.
+In metastable mode, the MDRH cutoff is not applied.
 
 Activity coefficients are computed using the Kusik-Meissner binary relationship
 (Eqs. 9-13) with temperature correction (Eq. 14).
@@ -942,6 +1051,17 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     p_HNO3 = g_HNO3 * R_gas_si * T_env / p_ref
     p_HCl = g_HCl * R_gas_si * T_env / p_ref
 
+    # Compute MDRH from composition (Table 5) — uses total inputs
+    MDRH = _iso2_compute_mdrh(
+        W_Na_total / c_ref, W_SO4_total / c_ref, W_NH3_total / c_ref,
+        W_NO3_total / c_ref, W_Cl_total / c_ref,
+        W_Ca_total / c_ref, W_K_total / c_ref, W_Mg_total / c_ref
+    )
+
+    # MDRH factor: smooth transition from dry (0) to wet (1) around MDRH
+    # Scale factor 100 gives transition width ~0.02 in RH
+    mdrh_factor = _iso2_smooth_step(100.0 * (RH - MDRH))
+
     # Derived activity coefficients (from cross-relations)
     # γ_KHSO4 = √(γ_HHSO4 × γ_KCl / γ_HCl)
     γ_KHSO4_derived = sqrt(γ_HHSO4 * γ_KCl / γ_HCl)
@@ -1050,8 +1170,13 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         # 14. H₂O ↔ H⁺ + OH⁻ (Kw)
         0 ~ m_H * m_OH - Kw * RH,
 
-        # === Water content (ZSR, Eq. 15) ===
+        # === Water content with MDRH cutoff (ZSR, Eqs. 15-18, 22) ===
+        # Factor (1 - stable*(1 - mdrh_factor)):
+        #   Metastable (stable=0): factor = 1.0 → ZSR water unchanged
+        #   Stable, RH > MDRH: factor ≈ 1.0 → normal water content
+        #   Stable, RH < MDRH: factor ≈ 0.0 → dry particle (W_w → tiny)
         0 ~ W_w / W_ref -
+            (1.0 - stable * (1.0 - mdrh_factor)) *
             _iso2_zsr_water(
             RH, c_Na / c_ref, c_NH4 / c_ref, c_SO4 / c_ref,
             c_HSO4 / c_ref, c_NO3 / c_ref, c_Cl / c_ref,

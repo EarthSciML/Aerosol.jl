@@ -8,7 +8,7 @@ partitioning of semi-volatile inorganic species between gas, aqueous, and solid 
 
 The implementation supports two solution modes via the `stable` parameter:
 - **Metastable** (`stable=0`, default): No solid precipitation — the aerosol is assumed to be a liquid solution at all relative humidities.
-- **Stable** (`stable=1`): Solid precipitation is allowed — salts crystallize when the solution becomes supersaturated, following the deliquescence relative humidity (DRH) for each salt.
+- **Stable** (`stable=1`): Solid precipitation is allowed — salts crystallize when the solution becomes supersaturated. The mutual deliquescence relative humidity (MDRH) from Table 5 is enforced: below the MDRH for the given salt mixture, the aerosol is completely dry (crystalline). Temperature-dependent DRH values follow Eq. 17 and Table 4.
 
 **Reference**: Fountoukis, C. and Nenes, A.: ISORROPIA II: a computationally
 efficient thermodynamic equilibrium model for
@@ -144,6 +144,52 @@ plot!(p, RH_range, W_nacl, label="NaCl")
 p
 ```
 
+### DRH vs Temperature (cf. Figure 2, Eq. 17, Table 4)
+
+Deliquescence relative humidity (DRH) for individual salts as a function of temperature.
+DRH(T) = DRH(T₀) × exp(coeff × (1/T - 1/T₀)) where T₀ = 298.15 K. Salts with
+large positive coefficients (e.g., NH₄NO₃, Ca(NO₃)₂) show strong temperature
+dependence, while salts with near-zero coefficients (e.g., CaSO₄, KHSO₄, KNO₃)
+are essentially temperature-independent.
+
+```@example iso2
+T_drh = collect(250.0:1.0:320.0)
+
+# Select representative salts spanning different behaviors
+salts = [
+    (:NH42SO4, "(NH₄)₂SO₄"), (:NH4NO3, "NH₄NO₃"), (:NaCl, "NaCl"),
+    (:Na2SO4, "Na₂SO₄"), (:NH4HSO4, "NH₄HSO₄"), (:CaNO32, "Ca(NO₃)₂"),
+    (:K2SO4, "K₂SO₄"), (:MgSO4, "MgSO₄"), (:KCl, "KCl"),
+]
+
+p = plot(xlabel="Temperature (K)", ylabel="DRH",
+    title="Deliquescence RH vs Temperature (Eq. 17, Table 4)",
+    legend=:outerright, size=(800, 450))
+for (sym, label) in salts
+    drh0, coeff = Aerosol._ISO2_DRH[sym]
+    drh_vals = [Aerosol._iso2_drh_T(drh0, coeff, T) for T in T_drh]
+    plot!(p, T_drh, drh_vals, label=label)
+end
+p
+```
+
+### MDRH: Mutual Deliquescence (Table 5)
+
+The mutual deliquescence relative humidity (MDRH) is the minimum RH at which any
+aqueous phase can exist for a mixture of salts. Below MDRH, the aerosol is completely
+crystalline. The MDRH depends on the salt mixture composition (sulfate ratio R₁ and
+presence of crustal/sodium species). In stable mode, the water content is smoothly
+driven to zero below MDRH using a logistic transition function.
+
+| Composition Regime | MDRH |
+|---|---|
+| Crustal species present | 0.200 |
+| Na present, no crustal (sulfate-poor) | 0.363 |
+| NH₄-only (sulfate-poor) | 0.540 |
+| NH₄-only (sulfate-rich) | 0.400 |
+| Na present (sulfate-rich) | 0.363 |
+| Crustal species present (sulfate-rich) | 0.200 |
+
 ### Equilibrium Partitioning: Gas-Aerosol Split
 
 The fraction of semi-volatile species in the aerosol phase as a function of RH,
@@ -158,7 +204,7 @@ NH4_frac = Float64[]
 NO3_frac = Float64[]
 
 for rh in RH_vals
-    prob = NonlinearProblem(compiled, [
+    op = Pair{Symbolics.Num, Float64}[
         compiled.RH => rh,
         compiled.W_SO4_total => 1e-7,
         compiled.W_NH3_total => 3e-7,
@@ -169,7 +215,18 @@ for rh in RH_vals
         compiled.c_H => 1e-11,
         compiled.c_OH => 1e-14,
         compiled.I_s => 10.0,
-    ])
+    ]
+    # Fill in default guesses for unknowns not explicitly set
+    op_keys = Set(first.(op))
+    for u in unknowns(compiled)
+        if !(u in op_keys)
+            g_val = ModelingToolkit.getguess(u)
+            if g_val !== nothing
+                push!(op, u => Float64(g_val))
+            end
+        end
+    end
+    prob = NonlinearProblem(compiled, op)
     sol = solve(prob, RobustMultiNewton(); maxiters=10000)
     if sol.retcode == SciMLBase.ReturnCode.Success
         push!(NH4_frac, sol[compiled.c_NH4] / 3e-7)
@@ -237,7 +294,18 @@ function solve_iso2_sweep(compiled, Na, SO4, NH3, NO3, Cl, Ca, K, Mg;
             end
         end
 
-        prob = NonlinearProblem(compiled, vcat(params, guesses))
+        # Fill in default guesses for any unknowns not explicitly set
+        op = vcat(params, guesses)
+        op_keys = Set(first.(op))
+        for u in unknowns(compiled)
+            if !(u in op_keys)
+                g_val = ModelingToolkit.getguess(u)
+                if g_val !== nothing
+                    push!(op, u => Float64(g_val))
+                end
+            end
+        end
+        prob = NonlinearProblem(compiled, op)
         sol = solve(prob, RobustMultiNewton(); maxiters=10000)
 
         if sol.retcode == SciMLBase.ReturnCode.Success
