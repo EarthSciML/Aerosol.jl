@@ -756,9 +756,13 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     # Constants
     # ------------------------------------------------------------------
     @constants begin
-        # Physical constants
+        # Reference quantities for nondimensionalization
+        c_ref = 1.0, [description = "Reference concentration for nondimensionalization", unit = u"mol/m^3"]
+        W_ref = 1.0, [description = "Reference water content for nondimensionalization", unit = u"kg/m^3"]
+        m_ref = 1.0, [description = "Reference molality for nondimensionalization", unit = u"mol/kg"]
         p_ref = 101325.0, [description = "Reference pressure (1 atm)", unit = u"Pa"]
         R_gas_si = 8.314462, [description = "Gas constant (SI)", unit = u"Pa*m^3/mol/K"]
+        T_ref_K = 1.0, [description = "Reference temperature unit (1 K)", unit = u"K"]
 
         # Thermodynamic reference temperature (Table 2)
         T_0 = 298.15, [description = "Reference temperature for thermodynamic data", unit = u"K"]
@@ -772,9 +776,8 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K1_B = 25.14, [description = "HSO4 dissociation heat capacity parameter (dimensionless)"]
 
         # NH3(g) ↔ NH3(aq) (Table 2: mol/(kg·atm) converted to SI)
-        # Standard atmosphere = 101325 Pa, so K21_SI = K21_atm / 101325
-        K21_0_atm = 5.764e1, [description = "NH3 dissolution equilibrium constant at T0 in atm units", unit = u"mol/kg/Constants.atm"]
-        K21_0 = K21_0_atm * 9.86923e-6, [description = "NH3 dissolution equilibrium constant at T0 in SI units", unit = u"mol/(kg*Pa)"]
+        K21_0_atm = 5.764e1, [description = "NH3 dissolution equilibrium constant at T0", unit = u"mol/(kg*Constants.atm)"]
+        K21_0 = K21_0_atm / p_ref, [description = "NH3 dissolution equilibrium constant at T0 in SI units", unit = u"mol/(kg*Pa)"]
         K21_A = 13.79, [description = "NH3 dissolution enthalpy parameter (dimensionless)"]
         K21_B = -5.393, [description = "NH3 dissolution heat capacity parameter (dimensionless)"]
 
@@ -784,16 +787,14 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K22_B = 26.92, [description = "NH3 dissociation heat capacity parameter (dimensionless)"]
 
         # HCl(g) ↔ H⁺ + Cl⁻ (Table 2: mol²/(kg²·atm) converted to SI)
-        # K3_SI = K3_atm / (1 atm) = K3_atm / 101325 Pa
-        K3_0_atm = 1.971e6, [description = "HCl gas-liquid equilibrium constant at T0 in atm units", unit = u"mol^2/kg^2/Constants.atm"]
-        K3_0 = K3_0_atm * 9.86923e-6, [description = "HCl gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
+        K3_0_atm = 1.971e6, [description = "HCl gas-liquid equilibrium constant at T0", unit = u"mol^2/(kg^2*Constants.atm)"]
+        K3_0 = K3_0_atm / p_ref, [description = "HCl gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
         K3_A = 30.2, [description = "HCl gas-liquid enthalpy parameter (dimensionless)"]
         K3_B = 19.91, [description = "HCl gas-liquid heat capacity parameter (dimensionless)"]
 
         # HNO3(g) ↔ H⁺ + NO3⁻ (Table 2: mol²/(kg²·atm) converted to SI)
-        # K4_SI = K4_atm / (1 atm) = K4_atm / 101325 Pa
-        K4_0_atm = 2.511e6, [description = "HNO3 gas-liquid equilibrium constant at T0 in atm units", unit = u"mol^2/kg^2/Constants.atm"]
-        K4_0 = K4_0_atm * 9.86923e-6, [description = "HNO3 gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
+        K4_0_atm = 2.511e6, [description = "HNO3 gas-liquid equilibrium constant at T0", unit = u"mol^2/(kg^2*Constants.atm)"]
+        K4_0 = K4_0_atm / p_ref, [description = "HNO3 gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
         K4_A = 29.17, [description = "HNO3 gas-liquid enthalpy parameter (dimensionless)"]
         K4_B = 16.83, [description = "HNO3 gas-liquid heat capacity parameter (dimensionless)"]
 
@@ -821,17 +822,15 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K7_A = -5.19, [description = "Letovicite dissolution A (dimensionless)"]
         K7_B = 54.4, [description = "Letovicite dissolution B (dimensionless)"]
 
-        # NH4NO3(s) ↔ NH3(g) + HNO3(g) (K8, Table 2: atm² converted to Pa²)
-        # K8_SI = K8_atm² × (101325 Pa/atm)² = K8_atm² × 1.0269e10
+        # NH4NO3(s) ↔ NH3(g) + HNO3(g) (K8, Table 2: Pa²)
         K8_0_atm2 = 4.3559e-17, [description = "NH4NO3 dissolution K0 in atm²", unit = u"Constants.atm^2"]
-        K8_0 = K8_0_atm2 * 1.0269e10, [description = "NH4NO3 dissolution K0 in SI", unit = u"Pa^2"]
+        K8_0 = K8_0_atm2 / p_ref^2, [description = "NH4NO3 dissolution K0 in SI", unit = u"Pa^2/Pa^2"]
         K8_A = -74.38, [description = "NH4NO3 dissolution A (dimensionless)"]
         K8_B = 6.12, [description = "NH4NO3 dissolution B (dimensionless)"]
 
-        # NH4Cl(s) ↔ NH3(g) + HCl(g) (K9, Table 2: atm² converted to Pa²)
-        # K9_SI = K9_atm² × (101325 Pa/atm)² = K9_atm² × 1.0269e10
+        # NH4Cl(s) ↔ NH3(g) + HCl(g) (K9, Table 2: Pa²)
         K9_0_atm2 = 1.086e-16, [description = "NH4Cl dissolution K0 in atm²", unit = u"Constants.atm^2"]
-        K9_0 = K9_0_atm2 * 1.0269e10, [description = "NH4Cl dissolution K0 in SI", unit = u"Pa^2"]
+        K9_0 = K9_0_atm2 / p_ref^2, [description = "NH4Cl dissolution K0 in SI", unit = u"Pa^2/Pa^2"]
         K9_A = -71.0, [description = "NH4Cl dissolution A (dimensionless)"]
         K9_B = 2.4, [description = "NH4Cl dissolution B (dimensionless)"]
 
@@ -998,22 +997,27 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     # Intermediate computations
     # ------------------------------------------------------------------
 
+    # Dimensionless temperature (numerical value in K) for registered functions
+    T_dimless = T_env / T_ref_K
+
+    # Dimensionless ionic strength (numerical value in mol/kg) for registered functions
+    I_dimless = I_s / m_ref
+
     # Aqueous equilibrium constants at ambient temperature (Eq. 5, Table 2)
-    # Use proper units throughout per project standards
-    K1 = _iso2_eq_const(K1_0, K1_A, K1_B, T_env)
-    K21 = _iso2_eq_const(K21_0, K21_A, K21_B, T_env)
-    K22 = _iso2_eq_const(K22_0, K22_A, K22_B, T_env)
-    K3 = _iso2_eq_const(K3_0, K3_A, K3_B, T_env)
-    K4 = _iso2_eq_const(K4_0, K4_A, K4_B, T_env)
-    Kw = _iso2_eq_const(Kw_0, Kw_A, Kw_B, T_env)
+    K1 = _iso2_eq_const(K1_0, K1_A, K1_B, T_dimless) / m_ref
+    K21 = _iso2_eq_const(K21_0, K21_A, K21_B, T_dimless) / (m_ref / p_ref)
+    K22 = _iso2_eq_const(K22_0, K22_A, K22_B, T_dimless) / m_ref
+    K3 = _iso2_eq_const(K3_0, K3_A, K3_B, T_dimless) / (m_ref^2 / p_ref)
+    K4 = _iso2_eq_const(K4_0, K4_A, K4_B, T_dimless) / (m_ref^2 / p_ref)
+    Kw = _iso2_eq_const(Kw_0, Kw_A, Kw_B, T_dimless) / m_ref^2
     K2 = K21 * K22
 
-    # Solid dissolution equilibrium constants at ambient temperature
-    Ksp5 = _iso2_eq_const(K5_0, K5_A, K5_B, T_env)       # (NH4)2SO4 [mol³/kg³]
-    Ksp6 = _iso2_eq_const(K6_0, K6_A, K6_B, T_env)       # NH4HSO4 [mol³/kg³]
-    Ksp7 = _iso2_eq_const(K7_0, K7_A, K7_B, T_env)       # Letovicite [mol⁵/kg⁵]
-    Ksp8 = _iso2_eq_const(K8_0, K8_A, K8_B, T_env)       # NH4NO3 [Pa²]
-    Ksp9 = _iso2_eq_const(K9_0, K9_A, K9_B, T_env)       # NH4Cl [Pa²]
+    # Solid dissolution equilibrium constants at ambient temperature (dimensionless)
+    Ksp5 = _iso2_eq_const(K5_0, K5_A, K5_B, T_dimless) / m_ref^3       # (NH4)2SO4 [mol³/kg³]
+    Ksp6 = _iso2_eq_const(K6_0, K6_A, K6_B, T_dimless) / m_ref^3       # NH4HSO4 [mol³/kg³]
+    Ksp7 = _iso2_eq_const(K7_0, K7_A, K7_B, T_dimless) / m_ref^5       # Letovicite [mol⁵/kg⁵]
+    Ksp8 = _iso2_eq_const(K8_0, K8_A, K8_B, T_dimless)                  # NH4NO3 [Pa²/Pa²] already dimless
+    Ksp9 = _iso2_eq_const(K9_0, K9_A, K9_B, T_dimless)                  # NH4Cl [Pa²/Pa²] already dimless
     Ksp10 = _iso2_eq_const(K10_0, K10_A, K10_B, T_dimless) / m_ref^3   # Na2SO4 [mol³/kg³]
     Ksp11 = _iso2_eq_const(K11_0, K11_A, K11_B, T_dimless) / m_ref^3   # NaHSO4 [mol³/kg³]
     Ksp12 = _iso2_eq_const(K12_0, K12_A, K12_B, T_dimless) / m_ref^2   # NaNO3 [mol²/kg²]
@@ -1029,29 +1033,29 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     Ksp22s = _iso2_eq_const(K22s_0, K22s_A, K22s_B, T_dimless) / m_ref^3 # Mg(NO3)2 [mol³/kg³]
     Ksp23 = _iso2_eq_const(K23_0, K23_A, K23_B, T_dimless) / m_ref^3   # MgCl2 [mol³/kg³]
 
-    # Molalities (mol/kg) - proper units maintained per project standards
-    m_H = c_H / W_w
-    m_Na = c_Na / W_w
-    m_NH4 = c_NH4 / W_w
-    m_SO4 = c_SO4 / W_w
-    m_HSO4 = c_HSO4 / W_w
-    m_NO3 = c_NO3 / W_w
-    m_Cl = c_Cl / W_w
-    m_Ca = c_Ca / W_w
-    m_K = c_K / W_w
-    m_Mg = c_Mg / W_w
-    m_OH = c_OH / W_w
+    # Dimensionless molalities (shorthand)
+    m_H = c_H / (W_w * m_ref)
+    m_Na = c_Na / (W_w * m_ref)
+    m_NH4 = c_NH4 / (W_w * m_ref)
+    m_SO4 = c_SO4 / (W_w * m_ref)
+    m_HSO4 = c_HSO4 / (W_w * m_ref)
+    m_NO3 = c_NO3 / (W_w * m_ref)
+    m_Cl = c_Cl / (W_w * m_ref)
+    m_Ca = c_Ca / (W_w * m_ref)
+    m_K = c_K / (W_w * m_ref)
+    m_Mg = c_Mg / (W_w * m_ref)
+    m_OH = c_OH / (W_w * m_ref)
 
-    # Partial pressures (Pa) - from ideal gas law: p = c * R * T
-    p_NH3 = g_NH3 * R_gas_si * T_env
-    p_HNO3 = g_HNO3 * R_gas_si * T_env
-    p_HCl = g_HCl * R_gas_si * T_env
+    # Dimensionless partial pressures
+    p_NH3 = g_NH3 * R_gas_si * T_env / p_ref
+    p_HNO3 = g_HNO3 * R_gas_si * T_env / p_ref
+    p_HCl = g_HCl * R_gas_si * T_env / p_ref
 
     # Compute MDRH from composition (Table 5) — uses total inputs
     MDRH = _iso2_compute_mdrh(
-        W_Na_total, W_SO4_total, W_NH3_total,
-        W_NO3_total, W_Cl_total,
-        W_Ca_total, W_K_total, W_Mg_total
+        W_Na_total / c_ref, W_SO4_total / c_ref, W_NH3_total / c_ref,
+        W_NO3_total / c_ref, W_Cl_total / c_ref,
+        W_Ca_total / c_ref, W_K_total / c_ref, W_Mg_total / c_ref
     )
 
     # MDRH factor: smooth transition from dry (0) to wet (1) around MDRH
@@ -1099,56 +1103,56 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     eqs = [
         # === Mass balances with solid stoichiometric contributions (Eqs. 1-8) ===
         # 1. Sodium: c_Na + 2*s_Na2SO4 + s_NaHSO4 + s_NaNO3 + s_NaCl = W_Na_total
-        0 ~ (c_Na + 2 * s_Na2SO4 + s_NaHSO4 + s_NaNO3 + s_NaCl) -
-            W_Na_total,
+        0 ~ (c_Na + 2 * s_Na2SO4 + s_NaHSO4 + s_NaNO3 + s_NaCl) / c_ref -
+            W_Na_total / c_ref,
 
         # 2. Sulfate: c_SO4 + c_HSO4 + s_CaSO4 + s_K2SO4 + s_KHSO4 + s_Na2SO4 + s_NaHSO4
         #            + s_NH42SO4 + s_NH4HSO4 + 2*s_LC + s_MgSO4 = W_SO4_total
         0 ~ (
             c_SO4 + c_HSO4 + s_CaSO4 + s_K2SO4 + s_KHSO4 + s_Na2SO4 + s_NaHSO4 +
                 s_NH42SO4 + s_NH4HSO4 + 2 * s_LC + s_MgSO4
-        ) -
-            W_SO4_total,
+        ) / c_ref -
+            W_SO4_total / c_ref,
 
         # 3. Ammonia/ammonium: c_NH4 + g_NH3 + 2*s_NH42SO4 + s_NH4HSO4 + 3*s_LC
         #                      + s_NH4NO3 + s_NH4Cl = W_NH3_total
         0 ~ (
             c_NH4 + g_NH3 + 2 * s_NH42SO4 + s_NH4HSO4 + 3 * s_LC +
                 s_NH4NO3 + s_NH4Cl
-        ) -
-            W_NH3_total,
+        ) / c_ref -
+            W_NH3_total / c_ref,
 
         # 4. Nitrate: c_NO3 + g_HNO3 + 2*s_CaNO32 + s_KNO3 + s_NaNO3
         #            + 2*s_MgNO32 + s_NH4NO3 = W_NO3_total
         0 ~ (
             c_NO3 + g_HNO3 + 2 * s_CaNO32 + s_KNO3 + s_NaNO3 +
                 2 * s_MgNO32 + s_NH4NO3
-        ) -
-            W_NO3_total,
+        ) / c_ref -
+            W_NO3_total / c_ref,
 
         # 5. Chloride: c_Cl + g_HCl + 2*s_CaCl2 + s_KCl + s_NaCl
         #             + 2*s_MgCl2 + s_NH4Cl = W_Cl_total
         0 ~ (
             c_Cl + g_HCl + 2 * s_CaCl2 + s_KCl + s_NaCl +
                 2 * s_MgCl2 + s_NH4Cl
-        ) -
-            W_Cl_total,
+        ) / c_ref -
+            W_Cl_total / c_ref,
 
         # 6. Calcium: c_Ca + s_CaSO4 + s_CaNO32 + s_CaCl2 = W_Ca_total
-        0 ~ (c_Ca + s_CaSO4 + s_CaNO32 + s_CaCl2) -
-            W_Ca_total,
+        0 ~ (c_Ca + s_CaSO4 + s_CaNO32 + s_CaCl2) / c_ref -
+            W_Ca_total / c_ref,
 
         # 7. Potassium: c_K + 2*s_K2SO4 + s_KHSO4 + s_KNO3 + s_KCl = W_K_total
-        0 ~ (c_K + 2 * s_K2SO4 + s_KHSO4 + s_KNO3 + s_KCl) -
-            W_K_total,
+        0 ~ (c_K + 2 * s_K2SO4 + s_KHSO4 + s_KNO3 + s_KCl) / c_ref -
+            W_K_total / c_ref,
 
         # 8. Magnesium: c_Mg + s_MgSO4 + s_MgNO32 + s_MgCl2 = W_Mg_total
-        0 ~ (c_Mg + s_MgSO4 + s_MgNO32 + s_MgCl2) -
-            W_Mg_total,
+        0 ~ (c_Mg + s_MgSO4 + s_MgNO32 + s_MgCl2) / c_ref -
+            W_Mg_total / c_ref,
 
         # === Charge balance (Eq. 9) ===
-        0 ~ (c_H + c_Na + c_NH4 + 2 * c_Ca + c_K + 2 * c_Mg) -
-            (c_Cl + 2 * c_SO4 + c_HSO4 + c_NO3 + c_OH),
+        0 ~ (c_H + c_Na + c_NH4 + 2 * c_Ca + c_K + 2 * c_Mg) / c_ref -
+            (c_Cl + 2 * c_SO4 + c_HSO4 + c_NO3 + c_OH) / c_ref,
 
         # === Aqueous equilibrium expressions (Eqs. 10-14) ===
         # 10. HSO4⁻ ↔ H⁺ + SO4²⁻ (K1)
@@ -1171,121 +1175,122 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         #   Metastable (stable=0): factor = 1.0 → ZSR water unchanged
         #   Stable, RH > MDRH: factor ≈ 1.0 → normal water content
         #   Stable, RH < MDRH: factor ≈ 0.0 → dry particle (W_w → tiny)
-        0 ~ W_w -
+        0 ~ W_w / W_ref -
             (1.0 - stable * (1.0 - mdrh_factor)) *
             _iso2_zsr_water(
-            RH, c_Na, c_NH4, c_SO4,
-            c_HSO4, c_NO3, c_Cl,
-            c_Ca, c_K, c_Mg
+            RH, c_Na / c_ref, c_NH4 / c_ref, c_SO4 / c_ref,
+            c_HSO4 / c_ref, c_NO3 / c_ref, c_Cl / c_ref,
+            c_Ca / c_ref, c_K / c_ref, c_Mg / c_ref
         ),
 
         # === Ionic strength (Eq. 16) ===
-        0 ~ I_s - 0.5 * (
-            m_H + m_Na + m_NH4 + m_Cl + 4 * m_SO4 + m_HSO4 +
-                m_NO3 + 4 * m_Ca + m_K + 4 * m_Mg + m_OH
-        ),
+        0 ~ I_s * W_w / c_ref -
+            0.5 * (
+            c_H + c_Na + c_NH4 + c_Cl + 4 * c_SO4 + c_HSO4 +
+                c_NO3 + 4 * c_Ca + c_K + 4 * c_Mg + c_OH
+        ) / c_ref,
 
         # === Activity coefficients — original 5 (Eqs. 17-21) ===
-        γ_H2SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.1, 2, I_s), I_s, T_env),
-        γ_HHSO4 ~ _iso2_gamma_T(_iso2_km_gamma(8.0, 1, I_s), I_s, T_env),
-        γ_HNO3 ~ _iso2_gamma_T(_iso2_km_gamma(2.6, 1, I_s), I_s, T_env),
-        γ_HCl ~ _iso2_gamma_T(_iso2_km_gamma(6.0, 1, I_s), I_s, T_env),
-        γ_NH4Cl ~ _iso2_gamma_T(_iso2_km_gamma(0.82, 1, I_s), I_s, T_env),
+        γ_H2SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.1, 2, I_dimless), I_dimless, T_dimless),
+        γ_HHSO4 ~ _iso2_gamma_T(_iso2_km_gamma(8.0, 1, I_dimless), I_dimless, T_dimless),
+        γ_HNO3 ~ _iso2_gamma_T(_iso2_km_gamma(2.6, 1, I_dimless), I_dimless, T_dimless),
+        γ_HCl ~ _iso2_gamma_T(_iso2_km_gamma(6.0, 1, I_dimless), I_dimless, T_dimless),
+        γ_NH4Cl ~ _iso2_gamma_T(_iso2_km_gamma(0.82, 1, I_dimless), I_dimless, T_dimless),
 
         # === Activity coefficients — additional 11 (Eqs. 22-32) ===
-        γ_NaCl ~ _iso2_gamma_T(_iso2_km_gamma(2.23, 1, I_s), I_s, T_env),
-        γ_NaNO3 ~ _iso2_gamma_T(_iso2_km_gamma(-0.39, 1, I_s), I_s, T_env),
-        γ_Na2SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.19, 2, I_s), I_s, T_env),
-        γ_NH42SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.25, 2, I_s), I_s, T_env),
-        γ_CaNO32 ~ _iso2_gamma_T(_iso2_km_gamma(0.93, 2, I_s), I_s, T_env),
-        γ_CaCl2 ~ _iso2_gamma_T(_iso2_km_gamma(2.4, 2, I_s), I_s, T_env),
-        γ_K2SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.25, 2, I_s), I_s, T_env),
-        γ_KNO3 ~ _iso2_gamma_T(_iso2_km_gamma(-2.33, 1, I_s), I_s, T_env),
-        γ_KCl ~ _iso2_gamma_T(_iso2_km_gamma(0.92, 1, I_s), I_s, T_env),
-        γ_MgNO32 ~ _iso2_gamma_T(_iso2_km_gamma(2.32, 2, I_s), I_s, T_env),
-        γ_MgCl2 ~ _iso2_gamma_T(_iso2_km_gamma(2.9, 2, I_s), I_s, T_env),
+        γ_NaCl ~ _iso2_gamma_T(_iso2_km_gamma(2.23, 1, I_dimless), I_dimless, T_dimless),
+        γ_NaNO3 ~ _iso2_gamma_T(_iso2_km_gamma(-0.39, 1, I_dimless), I_dimless, T_dimless),
+        γ_Na2SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.19, 2, I_dimless), I_dimless, T_dimless),
+        γ_NH42SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.25, 2, I_dimless), I_dimless, T_dimless),
+        γ_CaNO32 ~ _iso2_gamma_T(_iso2_km_gamma(0.93, 2, I_dimless), I_dimless, T_dimless),
+        γ_CaCl2 ~ _iso2_gamma_T(_iso2_km_gamma(2.4, 2, I_dimless), I_dimless, T_dimless),
+        γ_K2SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.25, 2, I_dimless), I_dimless, T_dimless),
+        γ_KNO3 ~ _iso2_gamma_T(_iso2_km_gamma(-2.33, 1, I_dimless), I_dimless, T_dimless),
+        γ_KCl ~ _iso2_gamma_T(_iso2_km_gamma(0.92, 1, I_dimless), I_dimless, T_dimless),
+        γ_MgNO32 ~ _iso2_gamma_T(_iso2_km_gamma(2.32, 2, I_dimless), I_dimless, T_dimless),
+        γ_MgCl2 ~ _iso2_gamma_T(_iso2_km_gamma(2.9, 2, I_dimless), I_dimless, T_dimless),
 
         # === Solid precipitation NCP equations (Eqs. 33-50) ===
-        # Each: stable * FB(s, 1 - SR) + (1-stable) * s = 0
+        # Each: stable * FB(s/c_ref, 1 - SR) + (1-stable) * s/c_ref = 0
         # When stable=0 (metastable): s = 0 for all solids
         # When stable=1: either s=0 or SR=1 (at saturation)
 
         # 33. CaSO4 — always insoluble (Table 4 footnote a), handled as smooth min constraint
-        0 ~ stable * _iso2_fb_ncp(s_CaSO4, 1 - SR_CaSO4) +
-            (1 - stable) * s_CaSO4,
+        0 ~ stable * _iso2_fb_ncp(s_CaSO4 / c_ref, 1 - SR_CaSO4) +
+            (1 - stable) * s_CaSO4 / c_ref,
 
         # 34. Ca(NO3)2
-        0 ~ stable * _iso2_fb_ncp(s_CaNO32, 1 - SR_CaNO32) +
-            (1 - stable) * s_CaNO32,
+        0 ~ stable * _iso2_fb_ncp(s_CaNO32 / c_ref, 1 - SR_CaNO32) +
+            (1 - stable) * s_CaNO32 / c_ref,
 
         # 35. CaCl2
-        0 ~ stable * _iso2_fb_ncp(s_CaCl2, 1 - SR_CaCl2) +
-            (1 - stable) * s_CaCl2,
+        0 ~ stable * _iso2_fb_ncp(s_CaCl2 / c_ref, 1 - SR_CaCl2) +
+            (1 - stable) * s_CaCl2 / c_ref,
 
         # 36. K2SO4
-        0 ~ stable * _iso2_fb_ncp(s_K2SO4, 1 - SR_K2SO4) +
-            (1 - stable) * s_K2SO4,
+        0 ~ stable * _iso2_fb_ncp(s_K2SO4 / c_ref, 1 - SR_K2SO4) +
+            (1 - stable) * s_K2SO4 / c_ref,
 
         # 37. KHSO4
-        0 ~ stable * _iso2_fb_ncp(s_KHSO4, 1 - SR_KHSO4) +
-            (1 - stable) * s_KHSO4,
+        0 ~ stable * _iso2_fb_ncp(s_KHSO4 / c_ref, 1 - SR_KHSO4) +
+            (1 - stable) * s_KHSO4 / c_ref,
 
         # 38. KNO3
-        0 ~ stable * _iso2_fb_ncp(s_KNO3, 1 - SR_KNO3) +
-            (1 - stable) * s_KNO3,
+        0 ~ stable * _iso2_fb_ncp(s_KNO3 / c_ref, 1 - SR_KNO3) +
+            (1 - stable) * s_KNO3 / c_ref,
 
         # 39. KCl
-        0 ~ stable * _iso2_fb_ncp(s_KCl, 1 - SR_KCl) +
-            (1 - stable) * s_KCl,
+        0 ~ stable * _iso2_fb_ncp(s_KCl / c_ref, 1 - SR_KCl) +
+            (1 - stable) * s_KCl / c_ref,
 
         # 40. MgSO4
-        0 ~ stable * _iso2_fb_ncp(s_MgSO4, 1 - SR_MgSO4) +
-            (1 - stable) * s_MgSO4,
+        0 ~ stable * _iso2_fb_ncp(s_MgSO4 / c_ref, 1 - SR_MgSO4) +
+            (1 - stable) * s_MgSO4 / c_ref,
 
         # 41. Mg(NO3)2
-        0 ~ stable * _iso2_fb_ncp(s_MgNO32, 1 - SR_MgNO32) +
-            (1 - stable) * s_MgNO32,
+        0 ~ stable * _iso2_fb_ncp(s_MgNO32 / c_ref, 1 - SR_MgNO32) +
+            (1 - stable) * s_MgNO32 / c_ref,
 
         # 42. MgCl2
-        0 ~ stable * _iso2_fb_ncp(s_MgCl2, 1 - SR_MgCl2) +
-            (1 - stable) * s_MgCl2,
+        0 ~ stable * _iso2_fb_ncp(s_MgCl2 / c_ref, 1 - SR_MgCl2) +
+            (1 - stable) * s_MgCl2 / c_ref,
 
         # 43. Na2SO4
-        0 ~ stable * _iso2_fb_ncp(s_Na2SO4, 1 - SR_Na2SO4) +
-            (1 - stable) * s_Na2SO4,
+        0 ~ stable * _iso2_fb_ncp(s_Na2SO4 / c_ref, 1 - SR_Na2SO4) +
+            (1 - stable) * s_Na2SO4 / c_ref,
 
         # 44. NaHSO4
-        0 ~ stable * _iso2_fb_ncp(s_NaHSO4, 1 - SR_NaHSO4) +
-            (1 - stable) * s_NaHSO4,
+        0 ~ stable * _iso2_fb_ncp(s_NaHSO4 / c_ref, 1 - SR_NaHSO4) +
+            (1 - stable) * s_NaHSO4 / c_ref,
 
         # 45. NaNO3
-        0 ~ stable * _iso2_fb_ncp(s_NaNO3, 1 - SR_NaNO3) +
-            (1 - stable) * s_NaNO3,
+        0 ~ stable * _iso2_fb_ncp(s_NaNO3 / c_ref, 1 - SR_NaNO3) +
+            (1 - stable) * s_NaNO3 / c_ref,
 
         # 46. NaCl
-        0 ~ stable * _iso2_fb_ncp(s_NaCl, 1 - SR_NaCl) +
-            (1 - stable) * s_NaCl,
+        0 ~ stable * _iso2_fb_ncp(s_NaCl / c_ref, 1 - SR_NaCl) +
+            (1 - stable) * s_NaCl / c_ref,
 
         # 47. (NH4)2SO4
-        0 ~ stable * _iso2_fb_ncp(s_NH42SO4, 1 - SR_NH42SO4) +
-            (1 - stable) * s_NH42SO4,
+        0 ~ stable * _iso2_fb_ncp(s_NH42SO4 / c_ref, 1 - SR_NH42SO4) +
+            (1 - stable) * s_NH42SO4 / c_ref,
 
         # 48. NH4HSO4
-        0 ~ stable * _iso2_fb_ncp(s_NH4HSO4, 1 - SR_NH4HSO4) +
-            (1 - stable) * s_NH4HSO4,
+        0 ~ stable * _iso2_fb_ncp(s_NH4HSO4 / c_ref, 1 - SR_NH4HSO4) +
+            (1 - stable) * s_NH4HSO4 / c_ref,
 
         # 49. Letovicite (NH4)3H(SO4)2
-        0 ~ stable * _iso2_fb_ncp(s_LC, 1 - SR_LC) +
-            (1 - stable) * s_LC,
+        0 ~ stable * _iso2_fb_ncp(s_LC / c_ref, 1 - SR_LC) +
+            (1 - stable) * s_LC / c_ref,
 
         # 50. NH4NO3 (gas-solid equilibrium)
-        0 ~ stable * _iso2_fb_ncp(s_NH4NO3, 1 - SR_NH4NO3) +
-            (1 - stable) * s_NH4NO3,
+        0 ~ stable * _iso2_fb_ncp(s_NH4NO3 / c_ref, 1 - SR_NH4NO3) +
+            (1 - stable) * s_NH4NO3 / c_ref,
 
         # 51 → renumbered as Eq. 50 in the 50-equation system
         # NH4Cl (gas-solid equilibrium)
-        0 ~ stable * _iso2_fb_ncp(s_NH4Cl, 1 - SR_NH4Cl) +
-            (1 - stable) * s_NH4Cl,
+        0 ~ stable * _iso2_fb_ncp(s_NH4Cl / c_ref, 1 - SR_NH4Cl) +
+            (1 - stable) * s_NH4Cl / c_ref,
     ]
 
     return System(eqs, t; name)
