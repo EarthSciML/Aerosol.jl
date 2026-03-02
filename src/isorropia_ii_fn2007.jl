@@ -1097,7 +1097,7 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     SR_NH4Cl = p_NH3 * p_HCl / Ksp9
 
     # ------------------------------------------------------------------
-    # Equations (50 total)
+    # Equations (21 total for metastable, 40+ total for stable)
     # ------------------------------------------------------------------
     eqs = [
         # === Mass balances with solid stoichiometric contributions (Eqs. 1-8) ===

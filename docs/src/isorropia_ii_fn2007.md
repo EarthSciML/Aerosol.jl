@@ -21,14 +21,18 @@ IsorropiaEquilibrium
 
 ## Implementation
 
-The model solves a system of 51 coupled algebraic equations:
-- 8 mass balance equations with solid stoichiometric contributions
+The model solves a system of coupled algebraic equations that depends on the solution mode:
+
+**Metastable mode** (`stable=0`, default): 21 equations total
+- 8 mass balance equations (no solid terms)
 - 1 electroneutrality (charge balance) equation
 - 5 aqueous equilibrium expressions (HSO₄⁻, NH₃, HNO₃, HCl, H₂O)
 - 1 ZSR water content equation (Eq. 16)
 - 1 ionic strength definition
-- 16 activity coefficient equations (Kusik-Meissner, Eqs. 9-13, with temperature correction Eq. 14)
-- 19 solid precipitation equations using Fischer-Burmeister NCP complementarity
+- 5 activity coefficient equations (Kusik-Meissner, Eqs. 9-13, with temperature correction Eq. 14)
+
+**Stable mode** (`stable=1`): Additional equations for solid precipitation
+- All metastable equations plus 19+ solid equilibrium equations using complementarity constraints
 
 The solid precipitation uses a smooth complementarity formulation: for each solid salt,
 either its amount is zero (undersaturated) or the ion activity product equals the
