@@ -456,6 +456,7 @@ function _iso2_zsr_m0(table::Vector{Float64}, RH)
     frac = idx_real - idx_lo
     return table[idx_lo] * (1.0 - frac) + table[idx_hi] * frac
 end
+@register_symbolic _iso2_zsr_m0(table, RH)
 
 """
     _iso2_zsr_water(RH, c_Na, c_NH4, c_SO4, c_HSO4, c_NO3, c_Cl, c_Ca, c_K, c_Mg)
@@ -1002,35 +1003,40 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     # ------------------------------------------------------------------
 
     # Aqueous equilibrium constants at ambient temperature (Eq. 5, Table 2)
-    # Use proper units throughout per project standards
-    K1 = _iso2_eq_const(K1_0, K1_A, K1_B, T_env)
-    K21 = _iso2_eq_const(K21_0, K21_A, K21_B, T_env)
-    K22 = _iso2_eq_const(K22_0, K22_A, K22_B, T_env)
-    K3 = _iso2_eq_const(K3_0, K3_A, K3_B, T_env)
-    K4 = _iso2_eq_const(K4_0, K4_A, K4_B, T_env)
-    Kw = _iso2_eq_const(Kw_0, Kw_A, Kw_B, T_env)
-    K2 = K21 * K22
+    # Van't Hoff equation: K(T) = K₀ × exp(A×(T₀/T - 1) + B×(1 + ln(T₀/T) - T₀/T))
+    # Expanded inline to avoid unit propagation issues with registered functions
+    T0T = T_0 / T_env
+    coef_term = 1.0 + log(T0T) - T0T
+
+    K1 = K1_0 * exp(K1_A * (T0T - 1.0) + K1_B * coef_term)
+    K21 = K21_0 * exp(K21_A * (T0T - 1.0) + K21_B * coef_term)
+    K22 = K22_0 * exp(K22_A * (T0T - 1.0) + K22_B * coef_term)
+    K3 = K3_0 * exp(K3_A * (T0T - 1.0) + K3_B * coef_term)
+    K4 = K4_0 * exp(K4_A * (T0T - 1.0) + K4_B * coef_term)
+    Kw = Kw_0 * exp(Kw_A * (T0T - 1.0) + Kw_B * coef_term)
+    K2 = K21 * K22  # Units: mol/(kg*Pa) * mol/kg = mol²/(kg²*Pa)
 
     # Solid dissolution equilibrium constants at ambient temperature
-    Ksp5 = _iso2_eq_const(K5_0, K5_A, K5_B, T_env)       # (NH4)2SO4 [mol³/kg³]
-    Ksp6 = _iso2_eq_const(K6_0, K6_A, K6_B, T_env)       # NH4HSO4 [mol³/kg³]
-    Ksp7 = _iso2_eq_const(K7_0, K7_A, K7_B, T_env)       # Letovicite [mol⁵/kg⁵]
-    Ksp8 = _iso2_eq_const(K8_0, K8_A, K8_B, T_env)       # NH4NO3 [Pa²]
-    Ksp9 = _iso2_eq_const(K9_0, K9_A, K9_B, T_env)       # NH4Cl [Pa²]
-    Ksp10 = _iso2_eq_const(K10_0, K10_A, K10_B, T_env) / m_ref^3   # Na2SO4 [mol³/kg³]
-    Ksp11 = _iso2_eq_const(K11_0, K11_A, K11_B, T_env) / m_ref^3   # NaHSO4 [mol³/kg³]
-    Ksp12 = _iso2_eq_const(K12_0, K12_A, K12_B, T_env) / m_ref^2   # NaNO3 [mol²/kg²]
-    Ksp13 = _iso2_eq_const(K13_0, K13_A, K13_B, T_env) / m_ref^2   # NaCl [mol²/kg²]
-    Ksp14 = _iso2_eq_const(K14_0, K14_A, K14_B, T_env) / m_ref^2   # CaSO4 [mol²/kg²]
-    Ksp15 = _iso2_eq_const(K15_0, K15_A, K15_B, T_env) / m_ref^3   # Ca(NO3)2 [mol³/kg³]
-    Ksp16 = _iso2_eq_const(K16_0, K16_A, K16_B, T_env) / m_ref^3   # CaCl2 [mol³/kg³]
-    Ksp17 = _iso2_eq_const(K17_0, K17_A, K17_B, T_env) / m_ref^3   # K2SO4 [mol³/kg³]
-    Ksp18 = _iso2_eq_const(K18_0, K18_A, K18_B, T_env) / m_ref^3   # KHSO4 [mol³/kg³]
-    Ksp19 = _iso2_eq_const(K19_0, K19_A, K19_B, T_env) / m_ref^2   # KNO3 [mol²/kg²]
-    Ksp20 = _iso2_eq_const(K20_0, K20_A, K20_B, T_env) / m_ref^2   # KCl [mol²/kg²]
-    Ksp21s = _iso2_eq_const(K21s_0, K21s_A, K21s_B, T_env) / m_ref^2 # MgSO4 [mol²/kg²]
-    Ksp22s = _iso2_eq_const(K22s_0, K22s_A, K22s_B, T_env) / m_ref^3 # Mg(NO3)2 [mol³/kg³]
-    Ksp23 = _iso2_eq_const(K23_0, K23_A, K23_B, T_env) / m_ref^3   # MgCl2 [mol³/kg³]
+    # Using inline calculations to avoid unit propagation issues
+    Ksp5 = K5_0 * exp(K5_A * (T0T - 1.0) + K5_B * coef_term)       # (NH4)2SO4 [mol³/kg³]
+    Ksp6 = K6_0 * exp(K6_A * (T0T - 1.0) + K6_B * coef_term)       # NH4HSO4 [mol³/kg³]
+    Ksp7 = K7_0 * exp(K7_A * (T0T - 1.0) + K7_B * coef_term)       # Letovicite [mol⁵/kg⁵]
+    Ksp8 = K8_0 * exp(K8_A * (T0T - 1.0) + K8_B * coef_term)       # NH4NO3 [Pa²]
+    Ksp9 = K9_0 * exp(K9_A * (T0T - 1.0) + K9_B * coef_term)       # NH4Cl [Pa²]
+    Ksp10 = K10_0 * exp(K10_A * (T0T - 1.0) + K10_B * coef_term)   # Na2SO4 [mol³/kg³]
+    Ksp11 = K11_0 * exp(K11_A * (T0T - 1.0) + K11_B * coef_term)   # NaHSO4 [mol³/kg³]
+    Ksp12 = K12_0 * exp(K12_A * (T0T - 1.0) + K12_B * coef_term)   # NaNO3 [mol²/kg²]
+    Ksp13 = K13_0 * exp(K13_A * (T0T - 1.0) + K13_B * coef_term)   # NaCl [mol²/kg²]
+    Ksp14 = K14_0 * exp(K14_A * (T0T - 1.0) + K14_B * coef_term)   # CaSO4 [mol²/kg²]
+    Ksp15 = K15_0 * exp(K15_A * (T0T - 1.0) + K15_B * coef_term)   # Ca(NO3)2 [mol³/kg³]
+    Ksp16 = K16_0 * exp(K16_A * (T0T - 1.0) + K16_B * coef_term)   # CaCl2 [mol³/kg³]
+    Ksp17 = K17_0 * exp(K17_A * (T0T - 1.0) + K17_B * coef_term)   # K2SO4 [mol³/kg³]
+    Ksp18 = K18_0 * exp(K18_A * (T0T - 1.0) + K18_B * coef_term)   # KHSO4 [mol³/kg³]
+    Ksp19 = K19_0 * exp(K19_A * (T0T - 1.0) + K19_B * coef_term)   # KNO3 [mol²/kg²]
+    Ksp20 = K20_0 * exp(K20_A * (T0T - 1.0) + K20_B * coef_term)   # KCl [mol²/kg²]
+    Ksp21s = K21s_0 * exp(K21s_A * (T0T - 1.0) + K21s_B * coef_term) # MgSO4 [mol²/kg²]
+    Ksp22s = K22s_0 * exp(K22s_A * (T0T - 1.0) + K22s_B * coef_term) # Mg(NO3)2 [mol³/kg³]
+    Ksp23 = K23_0 * exp(K23_A * (T0T - 1.0) + K23_B * coef_term)   # MgCl2 [mol³/kg³]
 
     # Molalities (mol/kg) - proper units maintained per project standards
     m_H = c_H / W_w
