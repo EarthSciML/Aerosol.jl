@@ -711,6 +711,66 @@ function _iso2_compute_mdrh(Na, SO4, NH3, NO3, Cl, Ca, K, Mg)
 end
 @register_symbolic _iso2_compute_mdrh(Na, SO4, NH3, NO3, Cl, Ca, K, Mg)
 
+# --------------------------------------------------------------------------
+# Unit metadata for registered functions (see ModelingToolkit Validation docs)
+# Tells the unit checker what units each registered function returns,
+# bypassing evaluation with Quantity arguments that would fail.
+# --------------------------------------------------------------------------
+const _ISO2_UNITLESS = ModelingToolkit.get_unit(1.0)
+
+# Van't Hoff equilibrium constant: returns same unit as K0 (first arg)
+function ModelingToolkit.get_unit(::typeof(_iso2_eq_const), args)
+    return ModelingToolkit.get_unit(args[1])
+end
+
+# Kusik-Meissner activity coefficient: returns dimensionless
+function ModelingToolkit.get_unit(::typeof(_iso2_km_gamma), args)
+    return _ISO2_UNITLESS
+end
+
+# Temperature-corrected activity coefficient: returns dimensionless
+function ModelingToolkit.get_unit(::typeof(_iso2_gamma_T), args)
+    return _ISO2_UNITLESS
+end
+
+# ZSR binary molality lookup: returns dimensionless (raw molality number)
+function ModelingToolkit.get_unit(::typeof(_iso2_zsr_m0), args)
+    return _ISO2_UNITLESS
+end
+
+# ZSR water content: inputs are (RH, mol/m³ ions...), returns kg/m³
+# Physically: W = Σ (c_i [mol/m³]) / (m0_i [mol/kg]) = [kg/m³]
+function ModelingToolkit.get_unit(::typeof(_iso2_zsr_water), args)
+    # Return unit of c_Na (args[2]) divided by mol/kg = kg/m³
+    # Since all c_X have the same unit, use any concentration arg
+    return ModelingToolkit.get_unit(args[2]) / ModelingToolkit.get_unit(u"mol/kg")
+end
+
+# Fischer-Burmeister NCP function: returns same unit as first argument
+function ModelingToolkit.get_unit(::typeof(_iso2_fb_ncp), args)
+    return ModelingToolkit.get_unit(args[1])
+end
+
+# Smooth min: returns same unit as arguments
+function ModelingToolkit.get_unit(::typeof(_iso2_smooth_min), args)
+    return ModelingToolkit.get_unit(args[1])
+end
+
+# DRH temperature correction: returns dimensionless (relative humidity)
+function ModelingToolkit.get_unit(::typeof(_iso2_drh_T), args)
+    return _ISO2_UNITLESS
+end
+
+# Smooth step function: returns dimensionless
+function ModelingToolkit.get_unit(::typeof(_iso2_smooth_step), args)
+    return _ISO2_UNITLESS
+end
+
+# MDRH computation: returns dimensionless (relative humidity)
+function ModelingToolkit.get_unit(::typeof(_iso2_compute_mdrh), args)
+    return _ISO2_UNITLESS
+end
+
 # =============================================================================
 # Part 3: ModelingToolkit Component
 # =============================================================================
@@ -1114,48 +1174,54 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     # ------------------------------------------------------------------
     eqs = [
         # === Mass balances with solid stoichiometric contributions (Eqs. 1-8) ===
-        # 1. Sodium: c_Na + (solid terms only if stable mode) = W_Na_total
-        0 ~ (c_Na + stable * (2 * s_Na2SO4 + s_NaHSO4 + s_NaNO3 + s_NaCl)) -
+        # Solid terms are always included in mass balances. The NCP equations
+        # (below) enforce s_X = 0 in metastable mode (stable=0).
+        # Note: solid terms must NOT be multiplied by `stable` here, because
+        # structural simplification would divide by `stable` when solving for
+        # observed solid variables, producing NaN when stable=0.
+
+        # 1. Sodium mass balance
+        0 ~ (c_Na + 2 * s_Na2SO4 + s_NaHSO4 + s_NaNO3 + s_NaCl) -
             W_Na_total,
 
-        # 2. Sulfate: c_SO4 + c_HSO4 + (solid terms only if stable mode) = W_SO4_total
+        # 2. Sulfate mass balance
         0 ~ (
-            c_SO4 + c_HSO4 + stable * (s_CaSO4 + s_K2SO4 + s_KHSO4 + s_Na2SO4 + s_NaHSO4 +
-                s_NH42SO4 + s_NH4HSO4 + 2 * s_LC + s_MgSO4)
+            c_SO4 + c_HSO4 + s_CaSO4 + s_K2SO4 + s_KHSO4 + s_Na2SO4 + s_NaHSO4 +
+                s_NH42SO4 + s_NH4HSO4 + 2 * s_LC + s_MgSO4
         ) -
             W_SO4_total,
 
-        # 3. Ammonia/ammonium: c_NH4 + g_NH3 + (solid terms only if stable mode) = W_NH3_total
+        # 3. Ammonia/ammonium mass balance
         0 ~ (
-            c_NH4 + g_NH3 + stable * (2 * s_NH42SO4 + s_NH4HSO4 + 3 * s_LC +
-                s_NH4NO3 + s_NH4Cl)
+            c_NH4 + g_NH3 + 2 * s_NH42SO4 + s_NH4HSO4 + 3 * s_LC +
+                s_NH4NO3 + s_NH4Cl
         ) -
             W_NH3_total,
 
-        # 4. Nitrate: c_NO3 + g_HNO3 + (solid terms only if stable mode) = W_NO3_total
+        # 4. Nitrate mass balance
         0 ~ (
-            c_NO3 + g_HNO3 + stable * (2 * s_CaNO32 + s_KNO3 + s_NaNO3 +
-                2 * s_MgNO32 + s_NH4NO3)
+            c_NO3 + g_HNO3 + 2 * s_CaNO32 + s_KNO3 + s_NaNO3 +
+                2 * s_MgNO32 + s_NH4NO3
         ) -
             W_NO3_total,
 
-        # 5. Chloride: c_Cl + g_HCl + (solid terms only if stable mode) = W_Cl_total
+        # 5. Chloride mass balance
         0 ~ (
-            c_Cl + g_HCl + stable * (2 * s_CaCl2 + s_KCl + s_NaCl +
-                2 * s_MgCl2 + s_NH4Cl)
+            c_Cl + g_HCl + 2 * s_CaCl2 + s_KCl + s_NaCl +
+                2 * s_MgCl2 + s_NH4Cl
         ) -
             W_Cl_total,
 
-        # 6. Calcium: c_Ca + (solid terms only if stable mode) = W_Ca_total
-        0 ~ (c_Ca + stable * (s_CaSO4 + s_CaNO32 + s_CaCl2)) -
+        # 6. Calcium mass balance
+        0 ~ (c_Ca + s_CaSO4 + s_CaNO32 + s_CaCl2) -
             W_Ca_total,
 
-        # 7. Potassium: c_K + (solid terms only if stable mode) = W_K_total
-        0 ~ (c_K + stable * (2 * s_K2SO4 + s_KHSO4 + s_KNO3 + s_KCl)) -
+        # 7. Potassium mass balance
+        0 ~ (c_K + 2 * s_K2SO4 + s_KHSO4 + s_KNO3 + s_KCl) -
             W_K_total,
 
-        # 8. Magnesium: c_Mg + (solid terms only if stable mode) = W_Mg_total
-        0 ~ (c_Mg + stable * (s_MgSO4 + s_MgNO32 + s_MgCl2)) -
+        # 8. Magnesium mass balance
+        0 ~ (c_Mg + s_MgSO4 + s_MgNO32 + s_MgCl2) -
             W_Mg_total,
 
         # === Charge balance (Eq. 9) ===
