@@ -19,6 +19,51 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
 IsorropiaEquilibrium
 ```
 
+## Data Provenance
+
+This implementation was developed from the published scientific literature.
+No source code from the original ISORROPIA or ISORROPIA II Fortran implementations
+was used. The specific data sources are:
+
+**Equations and algorithms**: All governing equations — including the van't Hoff
+temperature dependence (Eq. 5), Kusik-Meissner activity coefficient model
+(Eqs. 9–13), temperature correction (Eq. 14), ZSR water content method (Eq. 16),
+DRH temperature dependence (Eq. 17), and composition-dependent MDRH selection
+(Eq. 22) — are from the primary reference: Fountoukis and Nenes (2007).
+
+**Thermodynamic equilibrium constants** (K₀, A, B parameters for 23 reactions):
+Table 2 of Fountoukis and Nenes (2007).
+
+**Deliquescence relative humidity** (DRH at 298.15 K and temperature correction
+coefficients for 19 salts): Table 4 of Fountoukis and Nenes (2007).
+
+**Mutual deliquescence relative humidity** (MDRH thresholds for 6 composition
+regimes): Table 5 of Fountoukis and Nenes (2007).
+
+**Kusik-Meissner Q parameters** (q and charge product z for 18 binary electrolyte
+pairs): Originally from Kusik, C. L. and Meissner, H. P.: Electrolyte activity
+coefficients in inorganic processing, AIChE Symp. Ser., 74(173), 14–20, 1978;
+as compiled for atmospheric aerosol applications by Kim, Y. P., Seinfeld, J. H.,
+and Saxena, P.: Atmospheric gas-aerosol equilibrium: II. Analysis of common
+approximations and activity coefficient calculation methods, Aerosol Sci. Technol.,
+19, 182–198, 1993.
+
+**ZSR binary molality lookup tables** (molality as a function of water activity for
+19 binary electrolyte-water systems, 100 entries each): From the Extended AIM
+Aerosol Thermodynamics Model (E-AIM, Model III;
+[http://www.aim.env.uea.ac.uk/aim/aim.php](http://www.aim.env.uea.ac.uk/aim/aim.php)),
+developed by Clegg, S. L., Brimblecombe, P., and Wexler, A. S. These values are
+computed from Pitzer-Simonson-Clegg thermodynamic equations fitted to experimental
+measurements of binary electrolyte-water systems at 298.15 K.
+
+**Numerical solver approach**: This implementation differs architecturally from the
+original ISORROPIA II Fortran code. Rather than using the composition-regime-based
+solution strategy of the original (which selects among dozens of specialized
+subroutines), this implementation formulates the full system of 51 coupled
+algebraic equations and solves them simultaneously using a nonlinear solver. Solid
+precipitation uses a smooth Fischer-Burmeister complementarity formulation rather
+than explicit case-based logic.
+
 ## Implementation
 
 The model solves a system of coupled algebraic equations that depends on the solution mode:

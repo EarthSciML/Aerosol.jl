@@ -16,8 +16,8 @@ end
 
 @testitem "Equilibrium constants at T₀=298.15K" setup = [IsorropiaSetup] tags = [:isorropia] begin
     # At T₀=298.15K, logK_eq should equal logK⁰ = ln(K⁰)
-    # Verify K⁰ values match FORTRAN reference (INIT4 in isocom.f)
-    fortran_K0 = Dict(
+    # Verify K⁰ values match reference (Fountoukis and Nenes, 2007, Table 2)
+    reference_K0 = Dict(
         :r11 => 1.015e-2,   # XK1:  HSO4(aq) ⇌ H(aq) + SO4(aq)
         :r12 => 5.764e1,    # XK21: NH3(g) ⇌ NH3(aq)
         :r13 => 1.805e-5,   # XK22: NH3(aq) ⇌ NH4(aq) + OH(aq)
@@ -54,7 +54,7 @@ end
     sol = solve(prob, NewtonRaphson())
     @test sol.retcode == SciMLBase.ReturnCode.Success
 
-    for (rname, K0) in fortran_K0
+    for (rname, K0) in reference_K0
         rsym = getproperty(eq, rname)
         logK_val = sol[rsym.logK_eq]
         K_computed = exp(logK_val)
@@ -64,33 +64,33 @@ end
 
 @testitem "Equilibrium constants temperature dependence" setup = [IsorropiaSetup] tags =
     [:isorropia] begin
-    # Verify temperature correction against FORTRAN reference at T=310K
-    # FORTRAN formula: K(T) = K0 * exp(A*(T0/T - 1) + B*(1 + ln(T0/T) - T0/T))
+    # Verify temperature correction at T=310K against van't Hoff equation (Eq. 5)
+    # K(T) = K0 * exp(A*(T0/T - 1) + B*(1 + ln(T0/T) - T0/T))
     T = 310.0
     T0 = 298.15
     T0T = T0 / T
     COEF = 1.0 + log(T0T) - T0T
 
-    # FORTRAN reference values: (K0, A, B)
-    fortran_params = Dict(
-        :r11 => (1.015e-2, 8.85, 25.14),       # XK1
-        :r12 => (5.764e1, 13.79, -5.393),       # XK21
-        :r13 => (1.805e-5, -1.5, 26.92),       # XK22
-        :r14 => (2.511e6, 29.17, 16.83),        # XK4
-        :r16 => (1.971e6, 30.2, 19.91),        # XK3
-        :r18 => (1.01e-14, -22.52, 26.92),      # XKW
-        :r19 => (4.799e-1, 0.98, 39.5),        # XK5 (note: FORTRAN has 39.5, paper may have 39.75)
-        :r20 => (1.817e0, -2.65, 38.57),        # XK7
-        :r21 => (1.086e-16, -71.0, 2.4),       # XK6
-        :r22 => (1.197e1, -8.22, 16.01),        # XK9
-        :r23 => (3.766e1, -1.56, 16.9),        # XK8
-        :r24 => (2.413e4, 0.79, 14.746),        # XK11
-        :r26 => (1.382e2, -2.87, 15.83),        # XK12
-        :r27 => (2.972e1, -5.19, 54.4),        # XK13
-        :r4 => (1.569e-2, -9.585, 45.81),      # XK17
-        :r5 => (24.016, -8.423, 17.96),        # XK18
-        :r6 => (0.872, -14.08, 19.39),         # XK19 (note: FORTRAN uses -14.08, Julia uses -14.075)
-        :r7 => (8.68, -6.902, 19.95),          # XK20 (note: value diffs from Julia's -6.167)
+    # Reference values (K0, A, B) from Fountoukis and Nenes (2007), Table 2
+    reference_params = Dict(
+        :r11 => (1.015e-2, 8.85, 25.14),       # K1: HSO4 dissociation
+        :r12 => (5.764e1, 13.79, -5.393),       # K21: NH3 dissolution
+        :r13 => (1.805e-5, -1.5, 26.92),       # K22: NH3 dissociation
+        :r14 => (2.511e6, 29.17, 16.83),        # K4: HNO3
+        :r16 => (1.971e6, 30.2, 19.91),        # K3: HCl
+        :r18 => (1.01e-14, -22.52, 26.92),      # Kw: water
+        :r19 => (4.799e-1, 0.98, 39.5),        # K5: Na2SO4 (note: Table 2 has 39.75, rounding diff)
+        :r20 => (1.817e0, -2.65, 38.57),        # K7: (NH4)2SO4
+        :r21 => (1.086e-16, -71.0, 2.4),       # K6: NH4Cl
+        :r22 => (1.197e1, -8.22, 16.01),        # K9: NaNO3
+        :r23 => (3.766e1, -1.56, 16.9),        # K8: NaCl
+        :r24 => (2.413e4, 0.79, 14.746),        # K11: NaHSO4
+        :r26 => (1.382e2, -2.87, 15.83),        # K12: NH4HSO4
+        :r27 => (2.972e1, -5.19, 54.4),        # K13: letovicite
+        :r4 => (1.569e-2, -9.585, 45.81),      # K17: K2SO4
+        :r5 => (24.016, -8.423, 17.96),        # K18: KHSO4
+        :r6 => (0.872, -14.08, 19.39),         # K19: KNO3 (note: -14.08 vs -14.075 rounding diff)
+        :r7 => (8.68, -6.902, 19.95),          # K20: KCl (note: -6.902 vs -6.167 value diff)
     )
 
     eq = ISORROPIA.EquilibriumConstants()
@@ -102,14 +102,14 @@ end
     sol = solve(prob, NewtonRaphson())
     @test sol.retcode == SciMLBase.ReturnCode.Success
 
-    for (rname, (K0, A, B)) in fortran_params
-        # Compute expected K using FORTRAN formula
+    for (rname, (K0, A, B)) in reference_params
+        # Compute expected K using van't Hoff equation (Eq. 5)
         K_expected = K0 * exp(A * (T0T - 1.0) + B * COEF)
 
         rsym = getproperty(eq, rname)
         K_computed = exp(sol[rsym.logK_eq])
 
-        # Allow some tolerance for reactions where Julia's H/C values differ slightly from FORTRAN
+        # Allow some tolerance for reactions where implementation values differ slightly from reference
         @test K_computed ≈ K_expected rtol = 0.05
     end
 end

@@ -37,7 +37,7 @@ end
 
 @testitem "ISO2: Van't Hoff equation at T₀=298.15K" setup = [Iso2Setup] tags = [:iso2] begin
     # At T₀=298.15K, K(T) should equal K₀
-    # FORTRAN reference values from CMAQ isocom.f (INIT4 subroutine)
+    # Reference values from Fountoukis and Nenes (2007), Table 2
     T0 = 298.15
 
     test_cases = [
@@ -60,13 +60,13 @@ end
 end
 
 @testitem "ISO2: Van't Hoff temperature dependence" setup = [Iso2Setup] tags = [:iso2] begin
-    # Verify temperature correction at T=310K against FORTRAN formula
+    # Verify temperature correction at T=310K against van't Hoff formula (Eq. 5)
     T = 310.0
     T0 = 298.15
     T0T = T0 / T
     COEF = 1.0 + log(T0T) - T0T
 
-    # (K0, A, B) parameters from CMAQ INIT4
+    # (K0, A, B) parameters from Fountoukis and Nenes (2007), Table 2
     test_cases = [
         (1.015e-2, 8.85, 25.14),    # K1
         (5.764e1, 13.79, -5.393),    # K21

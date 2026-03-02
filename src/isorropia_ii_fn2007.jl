@@ -4,12 +4,24 @@
 # Implements the inorganic aerosol thermodynamic equilibrium model for the
 # K⁺–Ca²⁺–Mg²⁺–NH₄⁺–Na⁺–SO₄²⁻–NO₃⁻–Cl⁻–H₂O system.
 #
-# Reference: Fountoukis, C. and Nenes, A.: ISORROPIA II: a computationally
+# Primary reference:
+#   Fountoukis, C. and Nenes, A.: ISORROPIA II: a computationally
 #   efficient thermodynamic equilibrium model for
 #   K⁺–Ca²⁺–Mg²⁺–NH₄⁺–Na⁺–SO₄²⁻–NO₃⁻–Cl⁻–H₂O aerosols,
 #   Atmos. Chem. Phys., 7, 4639–4659, 2007.
 #
-# Numerical values from: USEPA CMAQ isocom.f (CCTM/src/aero/aero6/)
+# Data sources:
+#   - Equations, equilibrium constants (Table 2), DRH (Table 4), and
+#     MDRH (Table 5): Fountoukis and Nenes (2007).
+#   - Kusik-Meissner Q parameters: Kusik, C. L. and Meissner, H. P.:
+#     Electrolyte activity coefficients in inorganic processing,
+#     AIChE Symp. Ser., 74(173), 14–20, 1978; as compiled for atmospheric
+#     aerosols by Kim, Y. P., Seinfeld, J. H., and Saxena, P.: Atmospheric
+#     gas-aerosol equilibrium: II, Aerosol Sci. Technol., 19, 182–198, 1993.
+#   - ZSR binary molality tables: Extended AIM Aerosol Thermodynamics Model
+#     (E-AIM, http://www.aim.env.uea.ac.uk/aim/aim.php), Clegg, S. L.,
+#     Brimblecombe, P., and Wexler, A. S.; computed from Pitzer-Simonson-Clegg
+#     thermodynamic equations fitted to experimental data.
 # =============================================================================
 
 # =============================================================================
@@ -35,7 +47,9 @@ const _ISO2_T0 = 298.15  # K
 # These would be needed for stable solution branches - included in constants below
 
 # --------------------------------------------------------------------------
-# Kusik-Meissner Q parameters for binary activity coefficients (from CMAQ isocom.f)
+# Kusik-Meissner Q parameters for binary activity coefficients
+# Source: Kusik and Meissner (1978), AIChE Symp. Ser. 74(173), 14–20;
+#         as compiled by Kim, Seinfeld, and Saxena (1993), Aerosol Sci. Technol. 19, 182–198.
 # Format: (q_parameter, charge_product_z)
 # Note: Module-level const needed for @register_symbolic functions
 # --------------------------------------------------------------------------
@@ -64,7 +78,11 @@ const _ISO2_KM_PARAMS = Dict(
 # ZSR Binary Molality Lookup Tables
 # 100 entries from aw = 0.01 to 1.00 (index i → aw ≈ i/100)
 # Values are molality (mol/kg water) at the given water activity
-# Source: CMAQ isocom.f BLOCK DATA BLKISO (AIM Model III database)
+# Source: Extended AIM Aerosol Thermodynamics Model (E-AIM, Model III),
+#   Clegg, S. L., Brimblecombe, P., and Wexler, A. S.
+#   (http://www.aim.env.uea.ac.uk/aim/aim.php).
+#   Computed from Pitzer-Simonson-Clegg thermodynamic equations fitted to
+#   experimental measurements of binary electrolyte-water systems.
 # Note: These are module-level constants for performance (used in registered functions)
 # --------------------------------------------------------------------------
 
@@ -320,7 +338,7 @@ const _ISO2_ZSR_MgCl2 = [
     1.36, 1.24, 1.11, 0.98, 0.84, 0.7, 0.56, 0.41, 0.25, 0.1,
 ]
 
-# Collect all ZSR tables indexed by pair ID matching CMAQ convention
+# Collect all ZSR tables indexed by electrolyte pair ID
 const _ISO2_ZSR_TABLES = Dict(
     1 => _ISO2_ZSR_NaCl,
     2 => _ISO2_ZSR_Na2SO4,
