@@ -10,7 +10,8 @@ makedocs(;
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://aerosol.earthsci.dev",
-        assets = String[],        #size_threshold=10000000,
+        assets = String[],
+        size_threshold = 500 * 2^10, # 500 KiB
     ),
     repo = Remotes.GitHub("EarthSciML", "Aerosol.jl"),
     pages = [
