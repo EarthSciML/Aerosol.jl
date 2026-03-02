@@ -763,6 +763,9 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         # Thermodynamic reference temperature (Table 2)
         T_0 = 298.15, [description = "Reference temperature for thermodynamic data", unit = u"K"]
 
+        # Reference molality for unit conversions
+        m_ref = 1.0, [description = "Reference molality for dimensionless ratios", unit = u"mol/kg"]
+
         # Equilibrium constant parameters (K0, A, B) from Table 2, Eq. 5
         # Van't Hoff: K(T) = K₀ × exp[A×(T₀/T - 1) + B×(1 + ln(T₀/T) - T₀/T)]
         # where A = ΔH°/(R·T₀) and B = Δcₚ°/R are dimensionless
@@ -1014,20 +1017,20 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     Ksp7 = _iso2_eq_const(K7_0, K7_A, K7_B, T_env)       # Letovicite [mol⁵/kg⁵]
     Ksp8 = _iso2_eq_const(K8_0, K8_A, K8_B, T_env)       # NH4NO3 [Pa²]
     Ksp9 = _iso2_eq_const(K9_0, K9_A, K9_B, T_env)       # NH4Cl [Pa²]
-    Ksp10 = _iso2_eq_const(K10_0, K10_A, K10_B, T_dimless) / m_ref^3   # Na2SO4 [mol³/kg³]
-    Ksp11 = _iso2_eq_const(K11_0, K11_A, K11_B, T_dimless) / m_ref^3   # NaHSO4 [mol³/kg³]
-    Ksp12 = _iso2_eq_const(K12_0, K12_A, K12_B, T_dimless) / m_ref^2   # NaNO3 [mol²/kg²]
-    Ksp13 = _iso2_eq_const(K13_0, K13_A, K13_B, T_dimless) / m_ref^2   # NaCl [mol²/kg²]
-    Ksp14 = _iso2_eq_const(K14_0, K14_A, K14_B, T_dimless) / m_ref^2   # CaSO4 [mol²/kg²]
-    Ksp15 = _iso2_eq_const(K15_0, K15_A, K15_B, T_dimless) / m_ref^3   # Ca(NO3)2 [mol³/kg³]
-    Ksp16 = _iso2_eq_const(K16_0, K16_A, K16_B, T_dimless) / m_ref^3   # CaCl2 [mol³/kg³]
-    Ksp17 = _iso2_eq_const(K17_0, K17_A, K17_B, T_dimless) / m_ref^3   # K2SO4 [mol³/kg³]
-    Ksp18 = _iso2_eq_const(K18_0, K18_A, K18_B, T_dimless) / m_ref^3   # KHSO4 [mol³/kg³]
-    Ksp19 = _iso2_eq_const(K19_0, K19_A, K19_B, T_dimless) / m_ref^2   # KNO3 [mol²/kg²]
-    Ksp20 = _iso2_eq_const(K20_0, K20_A, K20_B, T_dimless) / m_ref^2   # KCl [mol²/kg²]
-    Ksp21s = _iso2_eq_const(K21s_0, K21s_A, K21s_B, T_dimless) / m_ref^2 # MgSO4 [mol²/kg²]
-    Ksp22s = _iso2_eq_const(K22s_0, K22s_A, K22s_B, T_dimless) / m_ref^3 # Mg(NO3)2 [mol³/kg³]
-    Ksp23 = _iso2_eq_const(K23_0, K23_A, K23_B, T_dimless) / m_ref^3   # MgCl2 [mol³/kg³]
+    Ksp10 = _iso2_eq_const(K10_0, K10_A, K10_B, T_env) / m_ref^3   # Na2SO4 [mol³/kg³]
+    Ksp11 = _iso2_eq_const(K11_0, K11_A, K11_B, T_env) / m_ref^3   # NaHSO4 [mol³/kg³]
+    Ksp12 = _iso2_eq_const(K12_0, K12_A, K12_B, T_env) / m_ref^2   # NaNO3 [mol²/kg²]
+    Ksp13 = _iso2_eq_const(K13_0, K13_A, K13_B, T_env) / m_ref^2   # NaCl [mol²/kg²]
+    Ksp14 = _iso2_eq_const(K14_0, K14_A, K14_B, T_env) / m_ref^2   # CaSO4 [mol²/kg²]
+    Ksp15 = _iso2_eq_const(K15_0, K15_A, K15_B, T_env) / m_ref^3   # Ca(NO3)2 [mol³/kg³]
+    Ksp16 = _iso2_eq_const(K16_0, K16_A, K16_B, T_env) / m_ref^3   # CaCl2 [mol³/kg³]
+    Ksp17 = _iso2_eq_const(K17_0, K17_A, K17_B, T_env) / m_ref^3   # K2SO4 [mol³/kg³]
+    Ksp18 = _iso2_eq_const(K18_0, K18_A, K18_B, T_env) / m_ref^3   # KHSO4 [mol³/kg³]
+    Ksp19 = _iso2_eq_const(K19_0, K19_A, K19_B, T_env) / m_ref^2   # KNO3 [mol²/kg²]
+    Ksp20 = _iso2_eq_const(K20_0, K20_A, K20_B, T_env) / m_ref^2   # KCl [mol²/kg²]
+    Ksp21s = _iso2_eq_const(K21s_0, K21s_A, K21s_B, T_env) / m_ref^2 # MgSO4 [mol²/kg²]
+    Ksp22s = _iso2_eq_const(K22s_0, K22s_A, K22s_B, T_env) / m_ref^3 # Mg(NO3)2 [mol³/kg³]
+    Ksp23 = _iso2_eq_const(K23_0, K23_A, K23_B, T_env) / m_ref^3   # MgCl2 [mol³/kg³]
 
     # Molalities (mol/kg) - proper units maintained per project standards
     m_H = c_H / W_w
@@ -1098,52 +1101,48 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     # ------------------------------------------------------------------
     eqs = [
         # === Mass balances with solid stoichiometric contributions (Eqs. 1-8) ===
-        # 1. Sodium: c_Na + 2*s_Na2SO4 + s_NaHSO4 + s_NaNO3 + s_NaCl = W_Na_total
-        0 ~ (c_Na + 2 * s_Na2SO4 + s_NaHSO4 + s_NaNO3 + s_NaCl) -
+        # 1. Sodium: c_Na + (solid terms only if stable mode) = W_Na_total
+        0 ~ (c_Na + stable * (2 * s_Na2SO4 + s_NaHSO4 + s_NaNO3 + s_NaCl)) -
             W_Na_total,
 
-        # 2. Sulfate: c_SO4 + c_HSO4 + s_CaSO4 + s_K2SO4 + s_KHSO4 + s_Na2SO4 + s_NaHSO4
-        #            + s_NH42SO4 + s_NH4HSO4 + 2*s_LC + s_MgSO4 = W_SO4_total
+        # 2. Sulfate: c_SO4 + c_HSO4 + (solid terms only if stable mode) = W_SO4_total
         0 ~ (
-            c_SO4 + c_HSO4 + s_CaSO4 + s_K2SO4 + s_KHSO4 + s_Na2SO4 + s_NaHSO4 +
-                s_NH42SO4 + s_NH4HSO4 + 2 * s_LC + s_MgSO4
+            c_SO4 + c_HSO4 + stable * (s_CaSO4 + s_K2SO4 + s_KHSO4 + s_Na2SO4 + s_NaHSO4 +
+                s_NH42SO4 + s_NH4HSO4 + 2 * s_LC + s_MgSO4)
         ) -
             W_SO4_total,
 
-        # 3. Ammonia/ammonium: c_NH4 + g_NH3 + 2*s_NH42SO4 + s_NH4HSO4 + 3*s_LC
-        #                      + s_NH4NO3 + s_NH4Cl = W_NH3_total
+        # 3. Ammonia/ammonium: c_NH4 + g_NH3 + (solid terms only if stable mode) = W_NH3_total
         0 ~ (
-            c_NH4 + g_NH3 + 2 * s_NH42SO4 + s_NH4HSO4 + 3 * s_LC +
-                s_NH4NO3 + s_NH4Cl
+            c_NH4 + g_NH3 + stable * (2 * s_NH42SO4 + s_NH4HSO4 + 3 * s_LC +
+                s_NH4NO3 + s_NH4Cl)
         ) -
             W_NH3_total,
 
-        # 4. Nitrate: c_NO3 + g_HNO3 + 2*s_CaNO32 + s_KNO3 + s_NaNO3
-        #            + 2*s_MgNO32 + s_NH4NO3 = W_NO3_total
+        # 4. Nitrate: c_NO3 + g_HNO3 + (solid terms only if stable mode) = W_NO3_total
         0 ~ (
-            c_NO3 + g_HNO3 + 2 * s_CaNO32 + s_KNO3 + s_NaNO3 +
-                2 * s_MgNO32 + s_NH4NO3
+            c_NO3 + g_HNO3 + stable * (2 * s_CaNO32 + s_KNO3 + s_NaNO3 +
+                2 * s_MgNO32 + s_NH4NO3)
         ) -
             W_NO3_total,
 
-        # 5. Chloride: c_Cl + g_HCl + 2*s_CaCl2 + s_KCl + s_NaCl
-        #             + 2*s_MgCl2 + s_NH4Cl = W_Cl_total
+        # 5. Chloride: c_Cl + g_HCl + (solid terms only if stable mode) = W_Cl_total
         0 ~ (
-            c_Cl + g_HCl + 2 * s_CaCl2 + s_KCl + s_NaCl +
-                2 * s_MgCl2 + s_NH4Cl
+            c_Cl + g_HCl + stable * (2 * s_CaCl2 + s_KCl + s_NaCl +
+                2 * s_MgCl2 + s_NH4Cl)
         ) -
             W_Cl_total,
 
-        # 6. Calcium: c_Ca + s_CaSO4 + s_CaNO32 + s_CaCl2 = W_Ca_total
-        0 ~ (c_Ca + s_CaSO4 + s_CaNO32 + s_CaCl2) -
+        # 6. Calcium: c_Ca + (solid terms only if stable mode) = W_Ca_total
+        0 ~ (c_Ca + stable * (s_CaSO4 + s_CaNO32 + s_CaCl2)) -
             W_Ca_total,
 
-        # 7. Potassium: c_K + 2*s_K2SO4 + s_KHSO4 + s_KNO3 + s_KCl = W_K_total
-        0 ~ (c_K + 2 * s_K2SO4 + s_KHSO4 + s_KNO3 + s_KCl) -
+        # 7. Potassium: c_K + (solid terms only if stable mode) = W_K_total
+        0 ~ (c_K + stable * (2 * s_K2SO4 + s_KHSO4 + s_KNO3 + s_KCl)) -
             W_K_total,
 
-        # 8. Magnesium: c_Mg + s_MgSO4 + s_MgNO32 + s_MgCl2 = W_Mg_total
-        0 ~ (c_Mg + s_MgSO4 + s_MgNO32 + s_MgCl2) -
+        # 8. Magnesium: c_Mg + (solid terms only if stable mode) = W_Mg_total
+        0 ~ (c_Mg + stable * (s_MgSO4 + s_MgNO32 + s_MgCl2)) -
             W_Mg_total,
 
         # === Charge balance (Eq. 9) ===
