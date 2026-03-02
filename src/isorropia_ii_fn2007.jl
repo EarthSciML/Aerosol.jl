@@ -767,6 +767,13 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         # Reference molality for unit conversions
         m_ref = 1.0, [description = "Reference molality for dimensionless ratios", unit = u"mol/kg"]
 
+        # Reference concentration for dimensionless solid species calculations
+        c_ref = 1.0, [description = "Reference concentration for dimensionless ratios", unit = u"mol/m^3"]
+
+        # Dimensionless constants for unit-consistent operations
+        unity = 1.0, [description = "Dimensionless unity constant", unit = u"1"]
+        half = 0.5, [description = "Dimensionless half constant", unit = u"1"]
+
         # Equilibrium constant parameters (K0, A, B) from Table 2, Eq. 5
         # Van't Hoff: K(T) = K₀ × exp[A×(T₀/T - 1) + B×(1 + ln(T₀/T) - T₀/T)]
         # where A = ΔH°/(R·T₀) and B = Δcₚ°/R are dimensionless
@@ -917,7 +924,7 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     @parameters begin
         T_env = 298.15, [description = "Ambient temperature", unit = u"K"]
         RH = 0.8, [description = "Ambient relative humidity (dimensionless)"]
-        stable = 0, [description = "Solution mode: 0=metastable (no solids), 1=stable (with solids) (dimensionless)"]
+        stable = 0, [description = "Solution mode: 0=metastable (no solids), 1=stable (with solids)", unit = u"1"]
         W_Na_total = 0.0, [description = "Total sodium concentration", unit = u"mol/m^3"]
         W_SO4_total = 1.0e-7, [description = "Total sulfate concentration", unit = u"mol/m^3"]
         W_NH3_total = 2.0e-7, [description = "Total ammonia + ammonium concentration", unit = u"mol/m^3"]
@@ -1181,7 +1188,7 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         #   Stable, RH > MDRH: factor ≈ 1.0 → normal water content
         #   Stable, RH < MDRH: factor ≈ 0.0 → dry particle (W_w → tiny)
         0 ~ W_w -
-            (1.0 - stable * (1.0 - mdrh_factor)) *
+            (unity - stable * (unity - mdrh_factor)) *
             _iso2_zsr_water(
             RH, c_Na, c_NH4, c_SO4,
             c_HSO4, c_NO3, c_Cl,
@@ -1189,7 +1196,7 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         ),
 
         # === Ionic strength (Eq. 16) ===
-        0 ~ I_s - 0.5 * (
+        0 ~ I_s - half * (
             m_H + m_Na + m_NH4 + m_Cl + 4 * m_SO4 + m_HSO4 +
                 m_NO3 + 4 * m_Ca + m_K + 4 * m_Mg + m_OH
         ),
@@ -1220,81 +1227,81 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         # When stable=1: either s=0 or SR=1 (at saturation)
 
         # 33. CaSO4 — always insoluble (Table 4 footnote a), handled as smooth min constraint
-        0 ~ stable * _iso2_fb_ncp(s_CaSO4, 1 - SR_CaSO4) +
-            (1 - stable) * s_CaSO4,
+        0 ~ stable * _iso2_fb_ncp(s_CaSO4, unity - SR_CaSO4) +
+            (unity - stable) * s_CaSO4,
 
         # 34. Ca(NO3)2
-        0 ~ stable * _iso2_fb_ncp(s_CaNO32, 1 - SR_CaNO32) +
-            (1 - stable) * s_CaNO32,
+        0 ~ stable * _iso2_fb_ncp(s_CaNO32, unity - SR_CaNO32) +
+            (unity - stable) * s_CaNO32,
 
         # 35. CaCl2
-        0 ~ stable * _iso2_fb_ncp(s_CaCl2, 1 - SR_CaCl2) +
-            (1 - stable) * s_CaCl2,
+        0 ~ stable * _iso2_fb_ncp(s_CaCl2, unity - SR_CaCl2) +
+            (unity - stable) * s_CaCl2,
 
         # 36. K2SO4
-        0 ~ stable * _iso2_fb_ncp(s_K2SO4, 1 - SR_K2SO4) +
-            (1 - stable) * s_K2SO4,
+        0 ~ stable * _iso2_fb_ncp(s_K2SO4, unity - SR_K2SO4) +
+            (unity - stable) * s_K2SO4,
 
         # 37. KHSO4
-        0 ~ stable * _iso2_fb_ncp(s_KHSO4, 1 - SR_KHSO4) +
-            (1 - stable) * s_KHSO4,
+        0 ~ stable * _iso2_fb_ncp(s_KHSO4, unity - SR_KHSO4) +
+            (unity - stable) * s_KHSO4,
 
         # 38. KNO3
-        0 ~ stable * _iso2_fb_ncp(s_KNO3, 1 - SR_KNO3) +
-            (1 - stable) * s_KNO3,
+        0 ~ stable * _iso2_fb_ncp(s_KNO3, unity - SR_KNO3) +
+            (unity - stable) * s_KNO3,
 
         # 39. KCl
-        0 ~ stable * _iso2_fb_ncp(s_KCl, 1 - SR_KCl) +
-            (1 - stable) * s_KCl,
+        0 ~ stable * _iso2_fb_ncp(s_KCl, unity - SR_KCl) +
+            (unity - stable) * s_KCl,
 
         # 40. MgSO4
-        0 ~ stable * _iso2_fb_ncp(s_MgSO4, 1 - SR_MgSO4) +
-            (1 - stable) * s_MgSO4,
+        0 ~ stable * _iso2_fb_ncp(s_MgSO4, unity - SR_MgSO4) +
+            (unity - stable) * s_MgSO4,
 
         # 41. Mg(NO3)2
-        0 ~ stable * _iso2_fb_ncp(s_MgNO32, 1 - SR_MgNO32) +
-            (1 - stable) * s_MgNO32,
+        0 ~ stable * _iso2_fb_ncp(s_MgNO32, unity - SR_MgNO32) +
+            (unity - stable) * s_MgNO32,
 
         # 42. MgCl2
-        0 ~ stable * _iso2_fb_ncp(s_MgCl2, 1 - SR_MgCl2) +
-            (1 - stable) * s_MgCl2,
+        0 ~ stable * _iso2_fb_ncp(s_MgCl2, unity - SR_MgCl2) +
+            (unity - stable) * s_MgCl2,
 
         # 43. Na2SO4
-        0 ~ stable * _iso2_fb_ncp(s_Na2SO4, 1 - SR_Na2SO4) +
-            (1 - stable) * s_Na2SO4,
+        0 ~ stable * _iso2_fb_ncp(s_Na2SO4, unity - SR_Na2SO4) +
+            (unity - stable) * s_Na2SO4,
 
         # 44. NaHSO4
-        0 ~ stable * _iso2_fb_ncp(s_NaHSO4, 1 - SR_NaHSO4) +
-            (1 - stable) * s_NaHSO4,
+        0 ~ stable * _iso2_fb_ncp(s_NaHSO4, unity - SR_NaHSO4) +
+            (unity - stable) * s_NaHSO4,
 
         # 45. NaNO3
-        0 ~ stable * _iso2_fb_ncp(s_NaNO3, 1 - SR_NaNO3) +
-            (1 - stable) * s_NaNO3,
+        0 ~ stable * _iso2_fb_ncp(s_NaNO3, unity - SR_NaNO3) +
+            (unity - stable) * s_NaNO3,
 
         # 46. NaCl
-        0 ~ stable * _iso2_fb_ncp(s_NaCl, 1 - SR_NaCl) +
-            (1 - stable) * s_NaCl,
+        0 ~ stable * _iso2_fb_ncp(s_NaCl, unity - SR_NaCl) +
+            (unity - stable) * s_NaCl,
 
         # 47. (NH4)2SO4
-        0 ~ stable * _iso2_fb_ncp(s_NH42SO4, 1 - SR_NH42SO4) +
-            (1 - stable) * s_NH42SO4,
+        0 ~ stable * _iso2_fb_ncp(s_NH42SO4, unity - SR_NH42SO4) +
+            (unity - stable) * s_NH42SO4,
 
         # 48. NH4HSO4
-        0 ~ stable * _iso2_fb_ncp(s_NH4HSO4, 1 - SR_NH4HSO4) +
-            (1 - stable) * s_NH4HSO4,
+        0 ~ stable * _iso2_fb_ncp(s_NH4HSO4, unity - SR_NH4HSO4) +
+            (unity - stable) * s_NH4HSO4,
 
         # 49. Letovicite (NH4)3H(SO4)2
-        0 ~ stable * _iso2_fb_ncp(s_LC, 1 - SR_LC) +
-            (1 - stable) * s_LC,
+        0 ~ stable * _iso2_fb_ncp(s_LC, unity - SR_LC) +
+            (unity - stable) * s_LC,
 
         # 50. NH4NO3 (gas-solid equilibrium)
-        0 ~ stable * _iso2_fb_ncp(s_NH4NO3, 1 - SR_NH4NO3) +
-            (1 - stable) * s_NH4NO3,
+        0 ~ stable * _iso2_fb_ncp(s_NH4NO3, unity - SR_NH4NO3) +
+            (unity - stable) * s_NH4NO3,
 
         # 51 → renumbered as Eq. 50 in the 50-equation system
         # NH4Cl (gas-solid equilibrium)
-        0 ~ stable * _iso2_fb_ncp(s_NH4Cl, 1 - SR_NH4Cl) +
-            (1 - stable) * s_NH4Cl,
+        0 ~ stable * _iso2_fb_ncp(s_NH4Cl, unity - SR_NH4Cl) +
+            (unity - stable) * s_NH4Cl,
     ]
 
     return System(eqs, t; name)
