@@ -255,7 +255,18 @@ equilibrium aerosol composition vs. relative humidity for four representative ca
 Table 8. Input concentrations are converted from µg/m³ to mol/m³. The metastable
 solution is shown (set `stable=1` to include solid precipitation).
 
+
+### Figure 6: Urban Aerosol — Sulfate Rich (Case 3, Table 8)
+
+Aerosol composition vs. RH for an urban sulfate-rich case (1 < R₁ < 2):
+Na=0, H₂SO₄=15.0, NH₃=2.0, HNO₃=10.0, HCl=0, Ca=0.9, K=1.0, Mg=0 µg/m³.
+Panels show (a) aerosol water, (b) K⁺, (c) NH₄⁺, and (d) NO₃⁻, all in µg/m³.
+
 ```@example iso2
+# Re-create system for this block
+sys = IsorropiaEquilibrium()
+compiled = mtkcompile(sys)
+
 # Helper: sweep RH from high to low using continuation for solver convergence
 function solve_iso2_sweep(compiled, Na, SO4, NH3, NO3, Cl, Ca, K, Mg;
                           RH_range=0.95:-0.01:0.30)
@@ -332,16 +343,7 @@ function solve_iso2_sweep(compiled, Na, SO4, NH3, NO3, Cl, Ca, K, Mg;
     for v in values(g); reverse!(v); end
     return RH_ok, W_vals, c, g
 end
-nothing # hide
-```
 
-### Figure 6: Urban Aerosol — Sulfate Rich (Case 3, Table 8)
-
-Aerosol composition vs. RH for an urban sulfate-rich case (1 < R₁ < 2):
-Na=0, H₂SO₄=15.0, NH₃=2.0, HNO₃=10.0, HCl=0, Ca=0.9, K=1.0, Mg=0 µg/m³.
-Panels show (a) aerosol water, (b) K⁺, (c) NH₄⁺, and (d) NO₃⁻, all in µg/m³.
-
-```@example iso2
 # Case 3 (Urban, sulfate rich) from Table 8
 RH6, W6, c6, g6 = solve_iso2_sweep(compiled,
     0.0, 15.0e-6/98.08, 2.0e-6/17.03, 10.0e-6/63.01, 0.0,
@@ -367,6 +369,82 @@ Panels show (a) aerosol water, (b) K⁺, (c) Na⁺ (metastable — no NaCl solid
 (d) Mg²⁺. The original Fig. 7(c) shows NaCl(s), which is zero in the metastable state.
 
 ```@example iso2
+# Re-create system for this block
+sys = IsorropiaEquilibrium()
+compiled = mtkcompile(sys)
+
+# Helper function
+function solve_iso2_sweep(compiled, Na, SO4, NH3, NO3, Cl, Ca, K, Mg;
+                          RH_range=0.95:-0.01:0.30)
+    RH_ok, W_vals = Float64[], Float64[]
+    c = Dict(s => Float64[] for s in [:Na,:NH4,:SO4,:HSO4,:NO3,:Cl,:Ca,:K,:Mg,:H,:OH])
+    g = Dict(s => Float64[] for s in [:NH3,:HNO3,:HCl])
+    prev = nothing
+    for rh in RH_range
+        params = [compiled.RH => rh, compiled.W_Na_total => Na,
+                  compiled.W_SO4_total => SO4, compiled.W_NH3_total => NH3,
+                  compiled.W_NO3_total => NO3, compiled.W_Cl_total => Cl,
+                  compiled.W_Ca_total => Ca, compiled.W_K_total => K,
+                  compiled.W_Mg_total => Mg]
+        if prev !== nothing
+            guesses = [compiled.c_SO4 => prev[:SO4], compiled.c_HSO4 => prev[:HSO4],
+                       compiled.c_NH4 => prev[:NH4], compiled.c_NO3 => prev[:NO3],
+                       compiled.c_Cl => prev[:Cl], compiled.c_H => prev[:H],
+                       compiled.c_OH => prev[:OH], compiled.I_s => prev[:I],
+                       compiled.W_w => prev[:W]]
+        else
+            R1 = SO4 > 0 ? (NH3 + Na + 2*Ca + K + 2*Mg) / SO4 : 100.0
+            if R1 < 2
+                guesses = [compiled.c_SO4 => max(0.5*SO4, 1e-20),
+                           compiled.c_HSO4 => max(0.5*SO4, 1e-20),
+                           compiled.c_NH4 => max(0.99*NH3, 1e-20),
+                           compiled.c_NO3 => 1e-10, compiled.c_Cl => 1e-20,
+                           compiled.c_H => 1e-7, compiled.c_OH => 1e-18,
+                           compiled.I_s => 15.0, compiled.W_w => 1e-7,
+                           compiled.g_NH3 => 1e-10, compiled.g_HNO3 => max(0.99*NO3, 1e-20)]
+            else
+                guesses = [compiled.c_SO4 => max(0.85*SO4, 1e-20),
+                           compiled.c_HSO4 => max(0.15*SO4, 1e-20),
+                           compiled.c_NH4 => max(min(NH3, 2*SO4)*0.8, 1e-20),
+                           compiled.c_NO3 => max(0.3*NO3, 1e-20),
+                           compiled.c_Cl => max(0.3*Cl, 1e-20),
+                           compiled.c_H => 1e-10, compiled.c_OH => 1e-13,
+                           compiled.I_s => 10.0]
+            end
+        end
+        op = vcat(params, guesses)
+        op_keys = Set(first.(op))
+        for u in unknowns(compiled)
+            if !(u in op_keys)
+                g_val = ModelingToolkit.getguess(u)
+                if g_val !== nothing
+                    push!(op, u => Float64(g_val))
+                end
+            end
+        end
+        prob = NonlinearProblem(compiled, op)
+        sol = solve(prob, RobustMultiNewton(); maxiters=10000)
+        if sol.retcode == SciMLBase.ReturnCode.Success
+            push!(RH_ok, rh); push!(W_vals, sol[compiled.W_w])
+            for s in [:Na,:NH4,:SO4,:HSO4,:NO3,:Cl,:Ca,:K,:Mg,:H,:OH]
+                push!(c[s], sol[getproperty(compiled, Symbol(:c_, s))])
+            end
+            push!(g[:NH3], sol[compiled.g_NH3])
+            push!(g[:HNO3], sol[compiled.g_HNO3])
+            push!(g[:HCl], sol[compiled.g_HCl])
+            prev = Dict(:SO4=>sol[compiled.c_SO4], :HSO4=>sol[compiled.c_HSO4],
+                        :NH4=>sol[compiled.c_NH4], :NO3=>sol[compiled.c_NO3],
+                        :Cl=>sol[compiled.c_Cl], :H=>sol[compiled.c_H],
+                        :OH=>sol[compiled.c_OH], :I=>sol[compiled.I_s],
+                        :W=>sol[compiled.W_w])
+        end
+    end
+    reverse!(RH_ok); reverse!(W_vals)
+    for v in values(c); reverse!(v); end
+    for v in values(g); reverse!(v); end
+    return RH_ok, W_vals, c, g
+end
+
 # Case 12 (Marine) from Table 8
 RH7, W7, c7, g7 = solve_iso2_sweep(compiled,
     3.0e-6/22.99, 3.0e-6/98.08, 0.020e-6/17.03, 2.0e-6/63.01, 3.121e-6/36.46,
@@ -391,6 +469,82 @@ Na=0.2, H₂SO₄=2.0, NH₃=8.0, HNO₃=12.0, HCl=0.2, Ca=0.12, K=0.18, Mg=0 µ
 Panels show (a) aerosol water, (b) NO₃⁻, and (c) NH₄⁺.
 
 ```@example iso2
+# Re-create system for this block
+sys = IsorropiaEquilibrium()
+compiled = mtkcompile(sys)
+
+# Helper function
+function solve_iso2_sweep(compiled, Na, SO4, NH3, NO3, Cl, Ca, K, Mg;
+                          RH_range=0.95:-0.01:0.30)
+    RH_ok, W_vals = Float64[], Float64[]
+    c = Dict(s => Float64[] for s in [:Na,:NH4,:SO4,:HSO4,:NO3,:Cl,:Ca,:K,:Mg,:H,:OH])
+    g = Dict(s => Float64[] for s in [:NH3,:HNO3,:HCl])
+    prev = nothing
+    for rh in RH_range
+        params = [compiled.RH => rh, compiled.W_Na_total => Na,
+                  compiled.W_SO4_total => SO4, compiled.W_NH3_total => NH3,
+                  compiled.W_NO3_total => NO3, compiled.W_Cl_total => Cl,
+                  compiled.W_Ca_total => Ca, compiled.W_K_total => K,
+                  compiled.W_Mg_total => Mg]
+        if prev !== nothing
+            guesses = [compiled.c_SO4 => prev[:SO4], compiled.c_HSO4 => prev[:HSO4],
+                       compiled.c_NH4 => prev[:NH4], compiled.c_NO3 => prev[:NO3],
+                       compiled.c_Cl => prev[:Cl], compiled.c_H => prev[:H],
+                       compiled.c_OH => prev[:OH], compiled.I_s => prev[:I],
+                       compiled.W_w => prev[:W]]
+        else
+            R1 = SO4 > 0 ? (NH3 + Na + 2*Ca + K + 2*Mg) / SO4 : 100.0
+            if R1 < 2
+                guesses = [compiled.c_SO4 => max(0.5*SO4, 1e-20),
+                           compiled.c_HSO4 => max(0.5*SO4, 1e-20),
+                           compiled.c_NH4 => max(0.99*NH3, 1e-20),
+                           compiled.c_NO3 => 1e-10, compiled.c_Cl => 1e-20,
+                           compiled.c_H => 1e-7, compiled.c_OH => 1e-18,
+                           compiled.I_s => 15.0, compiled.W_w => 1e-7,
+                           compiled.g_NH3 => 1e-10, compiled.g_HNO3 => max(0.99*NO3, 1e-20)]
+            else
+                guesses = [compiled.c_SO4 => max(0.85*SO4, 1e-20),
+                           compiled.c_HSO4 => max(0.15*SO4, 1e-20),
+                           compiled.c_NH4 => max(min(NH3, 2*SO4)*0.8, 1e-20),
+                           compiled.c_NO3 => max(0.3*NO3, 1e-20),
+                           compiled.c_Cl => max(0.3*Cl, 1e-20),
+                           compiled.c_H => 1e-10, compiled.c_OH => 1e-13,
+                           compiled.I_s => 10.0]
+            end
+        end
+        op = vcat(params, guesses)
+        op_keys = Set(first.(op))
+        for u in unknowns(compiled)
+            if !(u in op_keys)
+                g_val = ModelingToolkit.getguess(u)
+                if g_val !== nothing
+                    push!(op, u => Float64(g_val))
+                end
+            end
+        end
+        prob = NonlinearProblem(compiled, op)
+        sol = solve(prob, RobustMultiNewton(); maxiters=10000)
+        if sol.retcode == SciMLBase.ReturnCode.Success
+            push!(RH_ok, rh); push!(W_vals, sol[compiled.W_w])
+            for s in [:Na,:NH4,:SO4,:HSO4,:NO3,:Cl,:Ca,:K,:Mg,:H,:OH]
+                push!(c[s], sol[getproperty(compiled, Symbol(:c_, s))])
+            end
+            push!(g[:NH3], sol[compiled.g_NH3])
+            push!(g[:HNO3], sol[compiled.g_HNO3])
+            push!(g[:HCl], sol[compiled.g_HCl])
+            prev = Dict(:SO4=>sol[compiled.c_SO4], :HSO4=>sol[compiled.c_HSO4],
+                        :NH4=>sol[compiled.c_NH4], :NO3=>sol[compiled.c_NO3],
+                        :Cl=>sol[compiled.c_Cl], :H=>sol[compiled.c_H],
+                        :OH=>sol[compiled.c_OH], :I=>sol[compiled.I_s],
+                        :W=>sol[compiled.W_w])
+        end
+    end
+    reverse!(RH_ok); reverse!(W_vals)
+    for v in values(c); reverse!(v); end
+    for v in values(g); reverse!(v); end
+    return RH_ok, W_vals, c, g
+end
+
 # Case 5 (Non-urban Continental) from Table 8
 RH8, W8, c8, g8 = solve_iso2_sweep(compiled,
     0.2e-6/22.99, 2.0e-6/98.08, 8.0e-6/17.03, 12.0e-6/63.01, 0.2e-6/36.46,
@@ -414,6 +568,82 @@ Panels show (a) aerosol water and (b) K⁺. The metastable branch is shown; set 
 to compute the stable (solid-forming) branch.
 
 ```@example iso2
+# Re-create system for this block
+sys = IsorropiaEquilibrium()
+compiled = mtkcompile(sys)
+
+# Helper function
+function solve_iso2_sweep(compiled, Na, SO4, NH3, NO3, Cl, Ca, K, Mg;
+                          RH_range=0.95:-0.01:0.30)
+    RH_ok, W_vals = Float64[], Float64[]
+    c = Dict(s => Float64[] for s in [:Na,:NH4,:SO4,:HSO4,:NO3,:Cl,:Ca,:K,:Mg,:H,:OH])
+    g = Dict(s => Float64[] for s in [:NH3,:HNO3,:HCl])
+    prev = nothing
+    for rh in RH_range
+        params = [compiled.RH => rh, compiled.W_Na_total => Na,
+                  compiled.W_SO4_total => SO4, compiled.W_NH3_total => NH3,
+                  compiled.W_NO3_total => NO3, compiled.W_Cl_total => Cl,
+                  compiled.W_Ca_total => Ca, compiled.W_K_total => K,
+                  compiled.W_Mg_total => Mg]
+        if prev !== nothing
+            guesses = [compiled.c_SO4 => prev[:SO4], compiled.c_HSO4 => prev[:HSO4],
+                       compiled.c_NH4 => prev[:NH4], compiled.c_NO3 => prev[:NO3],
+                       compiled.c_Cl => prev[:Cl], compiled.c_H => prev[:H],
+                       compiled.c_OH => prev[:OH], compiled.I_s => prev[:I],
+                       compiled.W_w => prev[:W]]
+        else
+            R1 = SO4 > 0 ? (NH3 + Na + 2*Ca + K + 2*Mg) / SO4 : 100.0
+            if R1 < 2
+                guesses = [compiled.c_SO4 => max(0.5*SO4, 1e-20),
+                           compiled.c_HSO4 => max(0.5*SO4, 1e-20),
+                           compiled.c_NH4 => max(0.99*NH3, 1e-20),
+                           compiled.c_NO3 => 1e-10, compiled.c_Cl => 1e-20,
+                           compiled.c_H => 1e-7, compiled.c_OH => 1e-18,
+                           compiled.I_s => 15.0, compiled.W_w => 1e-7,
+                           compiled.g_NH3 => 1e-10, compiled.g_HNO3 => max(0.99*NO3, 1e-20)]
+            else
+                guesses = [compiled.c_SO4 => max(0.85*SO4, 1e-20),
+                           compiled.c_HSO4 => max(0.15*SO4, 1e-20),
+                           compiled.c_NH4 => max(min(NH3, 2*SO4)*0.8, 1e-20),
+                           compiled.c_NO3 => max(0.3*NO3, 1e-20),
+                           compiled.c_Cl => max(0.3*Cl, 1e-20),
+                           compiled.c_H => 1e-10, compiled.c_OH => 1e-13,
+                           compiled.I_s => 10.0]
+            end
+        end
+        op = vcat(params, guesses)
+        op_keys = Set(first.(op))
+        for u in unknowns(compiled)
+            if !(u in op_keys)
+                g_val = ModelingToolkit.getguess(u)
+                if g_val !== nothing
+                    push!(op, u => Float64(g_val))
+                end
+            end
+        end
+        prob = NonlinearProblem(compiled, op)
+        sol = solve(prob, RobustMultiNewton(); maxiters=10000)
+        if sol.retcode == SciMLBase.ReturnCode.Success
+            push!(RH_ok, rh); push!(W_vals, sol[compiled.W_w])
+            for s in [:Na,:NH4,:SO4,:HSO4,:NO3,:Cl,:Ca,:K,:Mg,:H,:OH]
+                push!(c[s], sol[getproperty(compiled, Symbol(:c_, s))])
+            end
+            push!(g[:NH3], sol[compiled.g_NH3])
+            push!(g[:HNO3], sol[compiled.g_HNO3])
+            push!(g[:HCl], sol[compiled.g_HCl])
+            prev = Dict(:SO4=>sol[compiled.c_SO4], :HSO4=>sol[compiled.c_HSO4],
+                        :NH4=>sol[compiled.c_NH4], :NO3=>sol[compiled.c_NO3],
+                        :Cl=>sol[compiled.c_Cl], :H=>sol[compiled.c_H],
+                        :OH=>sol[compiled.c_OH], :I=>sol[compiled.I_s],
+                        :W=>sol[compiled.W_w])
+        end
+    end
+    reverse!(RH_ok); reverse!(W_vals)
+    for v in values(c); reverse!(v); end
+    for v in values(g); reverse!(v); end
+    return RH_ok, W_vals, c, g
+end
+
 # Case 13 (Remote Continental) from Table 8
 RH9, W9, c9, g9 = solve_iso2_sweep(compiled,
     0.0, 10.0e-6/98.08, 4.25e-6/17.03, 0.145e-6/63.01, 0.0,
