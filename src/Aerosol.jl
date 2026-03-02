@@ -21,6 +21,7 @@ include("aqueous_transport.jl")
 include("single_particle_dynamics.jl")
 include("nucleation.jl")
 include("size_distribution.jl")
+include("stochastic_collection.jl")
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA
 include("seinfeld_pandis_ch10/seinfeld_pandis_ch10.jl")
@@ -40,6 +41,9 @@ export SulfateFormationO3, SulfateFormationH2O2
 export SulfateFormationFe, SulfateFormationMn, SulfateFormationFeMn
 export SulfateFormation
 export CloudChemistry, CloudChemistryFixedpH, CloudChemistryODE
+
+# Export stochastic collection
+export StochasticCollectionCoalescence
 
 # Export aqueous chemistry utility functions
 export effective_henrys_constant, aqueous_fraction, distribution_factor
