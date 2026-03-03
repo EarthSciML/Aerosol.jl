@@ -10,7 +10,8 @@ makedocs(;
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://aerosol.earthsci.dev",
-        assets = String[],        #size_threshold=10000000,
+        assets = String[],
+        size_threshold = 500 * 2^10, # 500 KiB
     ),
     repo = Remotes.GitHub("EarthSciML", "Aerosol.jl"),
     pages = [
@@ -28,6 +29,7 @@ makedocs(;
         "Aqueous Chemistry" => "aqueous_chemistry.md",
         "Thermodynamics" => [
             "ISORROPIA" => "isorropia.md",
+            "ISORROPIA II (FN2007)" => "isorropia_ii_fn2007.md",
             "Seinfeld & Pandis Ch. 10" => "seinfeld_pandis_ch10.md",
         ],
         "Stochastic Collection" => "stochastic_collection.md",
