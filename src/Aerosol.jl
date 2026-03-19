@@ -21,6 +21,7 @@ include("aqueous_transport.jl")
 include("single_particle_dynamics.jl")
 include("nucleation.jl")
 include("size_distribution.jl")
+# include("stochastic_collection.jl")  # TODO: requires SymbolicUtils.@arrayop
 include("isorropia/isorropia.jl")
 @reexport using .ISORROPIA
 include("seinfeld_pandis_ch10/seinfeld_pandis_ch10.jl")
@@ -41,6 +42,9 @@ export SulfateFormationFe, SulfateFormationMn, SulfateFormationFeMn
 export SulfateFormation
 export CloudChemistry, CloudChemistryFixedpH, CloudChemistryODE
 
+# Export stochastic collection
+export StochasticCollectionCoalescence
+
 # Export aqueous chemistry utility functions
 export effective_henrys_constant, aqueous_fraction, distribution_factor
 export henrys_constant_at_T
@@ -51,6 +55,10 @@ export ATM_TO_PA, R_GAS_PA, R_GAS_J
 export HENRY_CONSTANTS_298, DELTA_H_DISSOLUTION
 export K_W_298, K_C1_298, K_C2_298, K_S1_298, K_S2_298, K_A1_298
 export K0_O3, K1_O3, K2_O3, K_H2O2, K_MN_SIV, K_FE_SIV, K_FEMN_SIV
+
+# ISORROPIA II metastable equilibrium (Fountoukis & Nenes, 2007)
+include("isorropia_ii_fn2007.jl")
+export IsorropiaEquilibrium
 
 # Aerosol radiative forcing (Seinfeld & Pandis Chapter 24)
 include("aerosol_radiative_forcing.jl")
