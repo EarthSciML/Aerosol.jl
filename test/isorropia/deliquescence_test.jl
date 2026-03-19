@@ -8,12 +8,12 @@ active_salts = collect(values(salts))
 
 @test ModelingToolkit.substitute(
     ModelingToolkit.subs_constants(ISORROPIA.drh(salts[:CaNO32])),
-    ISORROPIA.T => 298.15
+    ISORROPIA.T => 298.15,
 ) == salts[:CaNO32].drh
 
 @test ModelingToolkit.substitute(
     ModelingToolkit.subs_constants(ISORROPIA.drh(salts[:CaNO32])),
-    ISORROPIA.T => 320
+    ISORROPIA.T => 320,
 ) ≈ 0.5513060522349494
 
 @test ModelingToolkit.get_unit(ISORROPIA.drh(salts[:CaNO32])) isa
@@ -40,7 +40,7 @@ active_salts = collect(values(salts))
                 ModelingToolkit.subs_constants(
                     ISORROPIA.solution_mdrh_recurrent(1, active_salts, salts, ions),
                 ),
-                u
+                u,
             )
             if i ∈ [3, 5, 9, 10, 11, 12, 13, 14]
                 @test_broken x == ISORROPIA.mdrhs[i][2]

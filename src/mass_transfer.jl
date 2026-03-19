@@ -1,4 +1,4 @@
-export MassTransfer, MeanMolecularSpeed, KnudsenNumber
+export MassTransfer, MeanMolecularSpeed, KnudsenNumber, MeanFreePathMassTransfer
 export FuchsSutugin, Dahneke, MaxwellianFlux, ParticleGrowthRate
 export MassTransferCoefficient, UptakeCoefficient
 
@@ -36,13 +36,13 @@ Reference: Seinfeld & Pandis (2006) Chapter 12, Eq. 12.24
 end
 
 """
-    MeanFreePath(; name=:MeanFreePath)
+    MeanFreePathMassTransfer(; name=:MeanFreePathMassTransfer)
 
 Calculate the mean free path of gas molecules in air.
 
 Reference: Seinfeld & Pandis (2006) Chapter 12, Section 12.1.3
 """
-@component function MeanFreePath(; name = :MeanFreePath)
+@component function MeanFreePathMassTransfer(; name = :MeanFreePathMassTransfer)
     @parameters begin
         T = 298.15, [description = "Temperature", unit = u"K"]
         P = 101325.0, [description = "Pressure", unit = u"Pa"]

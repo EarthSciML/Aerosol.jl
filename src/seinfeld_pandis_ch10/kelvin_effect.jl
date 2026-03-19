@@ -45,7 +45,7 @@ where:
 
 ```julia
 using ModelingToolkit, Aerosol
-@mtkbuild sys = KelvinEffect()
+sys = mtkcompile(KelvinEffect())
 ```
 """
 @component function KelvinEffect(; name = :KelvinEffect)

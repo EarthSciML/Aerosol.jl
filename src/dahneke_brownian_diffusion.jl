@@ -158,6 +158,10 @@ These are related through the conservation equation:
     mass_corr = DahnekeMassTransportCorrection(; name = :mass_corr)
     heat_corr = DahnekeHeatTransportCorrection(; name = :heat_corr)
 
+    # Convert shared parameters to variables so they can be connected via equations
+    mass_corr = param_to_var(mass_corr, :r, :D_v, :T)
+    heat_corr = param_to_var(heat_corr, :r, :κ)
+
     @parameters begin
         T_inf = 298.15, [description = "Gas temperature at infinity", unit = u"K"]
         T_o = 293.15, [description = "Droplet surface temperature", unit = u"K"]

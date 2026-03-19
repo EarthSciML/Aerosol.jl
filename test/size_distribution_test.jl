@@ -16,6 +16,21 @@
     end
 
     """
+    Helper to get all parameter/constant defaults from a system.
+    In MTK v11, defaults are stored as metadata on individual symbols.
+    """
+    function get_defaults(sys)
+        defs = Dict{Any, Any}()
+        for p in parameters(sys)
+            try
+                defs[p] = ModelingToolkit.getdefault(p)
+            catch
+            end
+        end
+        return defs
+    end
+
+    """
     Helper to evaluate a system equation's RHS by substituting parameter values.
     Returns the numerical result of the RHS for the equation whose LHS matches `var`.
 
@@ -36,21 +51,17 @@
         rhs_vars = Symbolics.get_variables(eq.rhs)
 
         # Build substitution dict by matching RHS variables with:
-        # 1. System defaults (for constants like π_c, ln10)
+        # 1. Parameter defaults (for constants like π_c, ln10)
         # 2. User-provided values (matching by string representation)
         subs = Dict{Any, Any}()
-        defs = ModelingToolkit.defaults(sys)
 
         for rv in rhs_vars
             rv_str = string(rv)
 
-            # Check system defaults
-            for (k, v) in defs
-                k_str = string(k)
-                # Match if rv equals k, or k is namespaced version of rv
-                if rv_str == k_str || endswith(k_str, "₊" * rv_str)
-                    subs[rv] = v
-                end
+            # Check parameter defaults
+            try
+                subs[rv] = ModelingToolkit.getdefault(rv)
+            catch
             end
 
             # Check user-provided values (these override defaults)
@@ -64,7 +75,7 @@
         end
 
         result = Symbolics.substitute(eq.rhs, subs)
-        return Float64(result)
+        return Float64(eval(Symbolics.toexpr(result)))
     end
 end
 
@@ -118,17 +129,15 @@ end
     for dist_fn in distributions
         sys = dist_fn()
         @test length(equations(sys)) == 10
-        defs = ModelingToolkit.defaults(sys)
+        defs = get_defaults(sys)
         @test length(defs) > 0
     end
 
     # Verify specific default values (Table 8.3 — Urban)
     urban = UrbanAerosol()
-    defs = ModelingToolkit.defaults(urban)
 
-    # Find the N parameter defaults (converted from cm^-3 to m^-3)
-    n_keys = filter(k -> contains(string(k), "N["), collect(keys(defs)))
-    n_vals = sort([defs[k] for k in n_keys], rev = true)
+    # Check N parameter defaults (converted from cm^-3 to m^-3)
+    n_vals = sort(ModelingToolkit.getdefault(urban.N), rev = true)
     @test n_vals[1] ≈ 9.93e4 * 1.0e6  # Mode 1 N
     @test n_vals[2] ≈ 3.64e4 * 1.0e6  # Mode 3 N
     @test n_vals[3] ≈ 1.11e3 * 1.0e6  # Mode 2 N
@@ -353,27 +362,25 @@ end
 
     for (env_type, dist_fn) in distributions
         sys = dist_fn()
-        defs = ModelingToolkit.defaults(sys)
 
         # Check that N, D_g, logσ defaults exist and are physical
+        N_defs = ModelingToolkit.getdefault(sys.N)
+        D_g_defs = ModelingToolkit.getdefault(sys.D_g)
+        logσ_defs = ModelingToolkit.getdefault(sys.logσ)
+        @test length(N_defs) == 3
+        @test length(D_g_defs) == 3
+        @test length(logσ_defs) == 3
         for i in 1:3
-            n_keys = filter(k -> contains(string(k), "N[$i]"), collect(keys(defs)))
-            d_keys = filter(k -> contains(string(k), "D_g[$i]"), collect(keys(defs)))
-            s_keys = filter(k -> contains(string(k), "logσ[$i]"), collect(keys(defs)))
-            @test length(n_keys) == 1
-            @test length(d_keys) == 1
-            @test length(s_keys) == 1
-            @test defs[n_keys[1]] > 0       # Positive concentrations
-            @test defs[d_keys[1]] > 0       # Positive diameters
-            @test defs[s_keys[1]] > 0       # Positive spread
-            @test defs[s_keys[1]] < 1.0     # Reasonable spread (σ_g < 10)
+            @test N_defs[i] > 0       # Positive concentrations
+            @test D_g_defs[i] > 0     # Positive diameters
+            @test logσ_defs[i] > 0    # Positive spread
+            @test logσ_defs[i] < 1.0  # Reasonable spread (σ_g < 10)
         end
 
         # Verify N_t evaluates to the sum of mode N values
         params = Dict(sys.D_p => 1.0e-7)
         N_t_result = eval_eq(sys, sys.N_t, params)
-        n_keys = filter(k -> contains(string(k), "N["), collect(keys(defs)))
-        N_sum = sum(defs[k] for k in n_keys)
+        N_sum = sum(N_defs)
         @test N_t_result ≈ N_sum rtol = 1.0e-10
     end
 end
