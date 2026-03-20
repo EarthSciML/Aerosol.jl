@@ -893,9 +893,8 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K1_B = 25.14, [description = "HSO4 dissociation heat capacity parameter (dimensionless)"]
 
         # NH3(g) ↔ NH3(aq) (Table 2: mol/(kg·atm) converted to SI)
-        # Standard atmosphere = 101325 Pa, so K21_SI = K21_atm / 101325
-        K21_0_atm = 5.764e1, [description = "NH3 dissolution equilibrium constant at T0 in atm units", unit = u"mol/kg/Constants.atm"]
-        K21_0 = K21_0_atm * 9.86923e-6, [description = "NH3 dissolution equilibrium constant at T0 in SI units", unit = u"mol/(kg*Pa)"]
+        # K21_0 = 5.764e1 mol/(kg·atm) × (1 atm / 101325 Pa) = 5.68862e-4 mol/(kg·Pa)
+        K21_0 = 5.688624172e-4, [description = "NH3 dissolution equilibrium constant at T0 in SI units", unit = u"mol/(kg*Pa)"]
         K21_A = 13.79, [description = "NH3 dissolution enthalpy parameter (dimensionless)"]
         K21_B = -5.393, [description = "NH3 dissolution heat capacity parameter (dimensionless)"]
 
@@ -905,16 +904,14 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K22_B = 26.92, [description = "NH3 dissociation heat capacity parameter (dimensionless)"]
 
         # HCl(g) ↔ H⁺ + Cl⁻ (Table 2: mol²/(kg²·atm) converted to SI)
-        # K3_SI = K3_atm / (1 atm) = K3_atm / 101325 Pa
-        K3_0_atm = 1.971e6, [description = "HCl gas-liquid equilibrium constant at T0 in atm units", unit = u"mol^2/kg^2/Constants.atm"]
-        K3_0 = K3_0_atm * 9.86923e-6, [description = "HCl gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
+        # K3_0 = 1.971e6 mol²/(kg²·atm) × (1 atm / 101325 Pa) = 19.4523 mol²/(kg²·Pa)
+        K3_0 = 1.945225233e1, [description = "HCl gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
         K3_A = 30.2, [description = "HCl gas-liquid enthalpy parameter (dimensionless)"]
         K3_B = 19.91, [description = "HCl gas-liquid heat capacity parameter (dimensionless)"]
 
         # HNO3(g) ↔ H⁺ + NO3⁻ (Table 2: mol²/(kg²·atm) converted to SI)
-        # K4_SI = K4_atm / (1 atm) = K4_atm / 101325 Pa
-        K4_0_atm = 2.511e6, [description = "HNO3 gas-liquid equilibrium constant at T0 in atm units", unit = u"mol^2/kg^2/Constants.atm"]
-        K4_0 = K4_0_atm * 9.86923e-6, [description = "HNO3 gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
+        # K4_0 = 2.511e6 mol²/(kg²·atm) × (1 atm / 101325 Pa) = 24.7816 mol²/(kg²·Pa)
+        K4_0 = 2.478163653e1, [description = "HNO3 gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
         K4_A = 29.17, [description = "HNO3 gas-liquid enthalpy parameter (dimensionless)"]
         K4_B = 16.83, [description = "HNO3 gas-liquid heat capacity parameter (dimensionless)"]
 
@@ -943,16 +940,14 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K7_B = 54.4, [description = "Letovicite dissolution B (dimensionless)"]
 
         # NH4NO3(s) ↔ NH3(g) + HNO3(g) (K8, Table 2: atm² converted to Pa²)
-        # K8_SI = K8_atm² × (101325 Pa/atm)² = K8_atm² × 1.0269e10
-        K8_0_atm2 = 4.3559e-17, [description = "NH4NO3 dissolution K0 in atm²", unit = u"Constants.atm^2"]
-        K8_0 = K8_0_atm2 * 1.0269e10, [description = "NH4NO3 dissolution K0 in SI", unit = u"Pa^2"]
+        # K8_0 = 4.3559e-17 atm² × (101325 Pa/atm)² = 4.47307e-7 Pa²
+        K8_0 = 4.473073710e-7, [description = "NH4NO3 dissolution K0 in SI", unit = u"Pa^2"]
         K8_A = -74.38, [description = "NH4NO3 dissolution A (dimensionless)"]
         K8_B = 6.12, [description = "NH4NO3 dissolution B (dimensionless)"]
 
         # NH4Cl(s) ↔ NH3(g) + HCl(g) (K9, Table 2: atm² converted to Pa²)
-        # K9_SI = K9_atm² × (101325 Pa/atm)² = K9_atm² × 1.0269e10
-        K9_0_atm2 = 1.086e-16, [description = "NH4Cl dissolution K0 in atm²", unit = u"Constants.atm^2"]
-        K9_0 = K9_0_atm2 * 1.0269e10, [description = "NH4Cl dissolution K0 in SI", unit = u"Pa^2"]
+        # K9_0 = 1.086e-16 atm² × (101325 Pa/atm)² = 1.11521e-6 Pa²
+        K9_0 = 1.115213400e-6, [description = "NH4Cl dissolution K0 in SI", unit = u"Pa^2"]
         K9_A = -71.0, [description = "NH4Cl dissolution A (dimensionless)"]
         K9_B = 2.4, [description = "NH4Cl dissolution B (dimensionless)"]
 
@@ -1305,6 +1300,7 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         CH_21 * xm_Mg * (g0_MgNO32 + 2 * H_DH)
 
     # Step 4: Compute multicomponent GAMA values (log10 space)
+    # Primary and crustal subsystems are mixed independently (CMAQ/ISORROPIA convention).
     # Primary pairs: GAMA(k) = ZZ(k) * ((F1(i)/z_i + F2A(j)/z_j) / (z_i+z_j) - H)
     log10_gama_HCl = 1 * ((F1_H / 1 + F2A_Cl / 1) / (1 + 1) - H_DH)
     log10_gama_H2SO4 = 2 * ((F1_H / 1 + F2A_SO4 / 2) / (1 + 2) - H_DH)
