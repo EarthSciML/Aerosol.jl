@@ -941,13 +941,13 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
 
         # NH4NO3(s) ↔ NH3(g) + HNO3(g) (K8, Table 2: atm² converted to Pa²)
         # K8_0 = 4.3559e-17 atm² × (101325 Pa/atm)² = 4.47307e-7 Pa²
-        K8_0 = 4.473073710e-7, [description = "NH4NO3 dissolution K0 in SI", unit = u"Pa^2"]
+        K8_0 = 4.47307371e-7, [description = "NH4NO3 dissolution K0 in SI", unit = u"Pa^2"]
         K8_A = -74.38, [description = "NH4NO3 dissolution A (dimensionless)"]
         K8_B = 6.12, [description = "NH4NO3 dissolution B (dimensionless)"]
 
         # NH4Cl(s) ↔ NH3(g) + HCl(g) (K9, Table 2: atm² converted to Pa²)
         # K9_0 = 1.086e-16 atm² × (101325 Pa/atm)² = 1.11521e-6 Pa²
-        K9_0 = 1.115213400e-6, [description = "NH4Cl dissolution K0 in SI", unit = u"Pa^2"]
+        K9_0 = 1.1152134e-6, [description = "NH4Cl dissolution K0 in SI", unit = u"Pa^2"]
         K9_A = -71.0, [description = "NH4Cl dissolution A (dimensionless)"]
         K9_B = 2.4, [description = "NH4Cl dissolution B (dimensionless)"]
 
