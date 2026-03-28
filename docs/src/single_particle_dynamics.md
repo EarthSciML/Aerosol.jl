@@ -8,7 +8,7 @@ This module implements equations for the dynamics of single aerosol particles, c
 
 ```@docs
 SingleParticleDynamics
-MeanFreePath
+MeanFreePathSP
 SlipCorrection
 SettlingVelocity
 BrownianDiffusion
