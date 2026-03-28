@@ -831,6 +831,147 @@ end
 end
 
 # =============================================================================
+# Quantitative Accuracy Tests — Figures 6-9 (Fountoukis & Nenes, 2007)
+# =============================================================================
+# Compare metastable model output against digitized reference values from the
+# paper's ISORROPIA II stable solution curves. At high RH (≥80%), the stable
+# and metastable solutions converge because all salts are dissolved.
+# Reference values are in µg/m³, digitized from Figs 6-9.
+
+@testitem "ISO2: Figure 6 quantitative — Urban sulfate-rich (Case 3)" setup = [Iso2FigSetup] tags = [:iso2, :iso2_quantitative] begin
+    sys = IsorropiaEquilibrium()
+    compiled = mtkcompile(sys)
+
+    # Solve at the paper's high-RH values (stable ≈ metastable above MDRH)
+    RH, W, c, g = solve_iso2_case(
+        compiled,
+        0.0, 15.0e-6 / 98.08, 2.0e-6 / 17.03, 10.0e-6 / 63.01, 0.0,
+        0.9e-6 / 40.08, 1.0e-6 / 39.10, 0.0;
+        RH_range = [0.98, 0.90, 0.85, 0.80, 0.75, 0.70]
+    )
+    @test length(RH) ≥ 3  # need at least some high-RH points
+
+    # Reference: digitized from Fig 6, ISORROPIA II stable solution (µg/m³)
+    #            RH:  0.70  0.75  0.80  0.85  0.90  0.98
+    ref = Dict(
+        :H2O => Dict(0.70 => 10.0, 0.75 => 14.0, 0.80 => 18.0, 0.85 => 23.0, 0.90 => 30.0, 0.98 => 45.0),
+        :K   => Dict(0.70 => 0.45, 0.75 => 0.65, 0.80 => 0.85, 0.85 => 1.0, 0.90 => 1.0, 0.98 => 1.0),
+        :NH4 => Dict(0.70 => 1.7, 0.75 => 2.0, 0.80 => 2.1, 0.85 => 2.1, 0.90 => 2.1, 0.98 => 2.1),
+        :NO3 => Dict(0.70 => 0.04, 0.75 => 0.06, 0.80 => 0.09, 0.85 => 0.12, 0.90 => 0.17, 0.98 => 0.22),
+    )
+
+    for (i, rh) in enumerate(RH)
+        rh < 0.80 && continue
+        # Water content (W_w in kg/m³ → µg/m³)
+        if haskey(ref[:H2O], rh)
+            @test W[i] * 1e9 ≈ ref[:H2O][rh] rtol = 0.5
+        end
+        # K⁺ (mol/m³ → µg/m³)
+        if haskey(ref[:K], rh)
+            @test c[:K][i] * 39.1e6 ≈ ref[:K][rh] rtol = 0.3
+        end
+        # NH₄⁺
+        if haskey(ref[:NH4], rh)
+            @test c[:NH4][i] * 18.04e6 ≈ ref[:NH4][rh] rtol = 0.3
+        end
+        # NO₃⁻
+        if haskey(ref[:NO3], rh)
+            @test c[:NO3][i] * 62.0e6 ≈ ref[:NO3][rh] rtol = 0.5
+        end
+    end
+end
+
+@testitem "ISO2: Figure 7 quantitative — Marine sulfate-poor (Case 12)" setup = [Iso2FigSetup] tags = [:iso2, :iso2_quantitative] begin
+    sys = IsorropiaEquilibrium()
+    compiled = mtkcompile(sys)
+
+    RH, W, c, g = solve_iso2_case(
+        compiled,
+        3.0e-6 / 22.99, 3.0e-6 / 98.08, 0.02e-6 / 17.03, 2.0e-6 / 63.01, 3.121e-6 / 36.46,
+        0.36e-6 / 40.08, 0.45e-6 / 39.10, 0.13e-6 / 24.31;
+        RH_range = [0.98, 0.90, 0.85, 0.80, 0.75, 0.70]
+    )
+    @test length(RH) ≥ 3
+
+    # Reference: digitized from Fig 7 (µg/m³)
+    ref_H2O = Dict(0.70 => 40.0, 0.75 => 50.0, 0.80 => 65.0, 0.85 => 85.0, 0.90 => 115.0, 0.98 => 200.0)
+    ref_K   = Dict(0.80 => 0.45, 0.85 => 0.45, 0.90 => 0.45, 0.98 => 0.45)
+    ref_Mg  = Dict(0.80 => 0.13, 0.85 => 0.13, 0.90 => 0.13, 0.98 => 0.13)
+
+    for (i, rh) in enumerate(RH)
+        rh < 0.80 && continue
+        if haskey(ref_H2O, rh)
+            @test W[i] * 1e9 ≈ ref_H2O[rh] rtol = 0.5
+        end
+        if haskey(ref_K, rh)
+            @test c[:K][i] * 39.1e6 ≈ ref_K[rh] rtol = 0.15
+        end
+        if haskey(ref_Mg, rh)
+            @test c[:Mg][i] * 24.31e6 ≈ ref_Mg[rh] rtol = 0.15
+        end
+    end
+end
+
+@testitem "ISO2: Figure 8 quantitative — Continental sulfate-poor (Case 5)" setup = [Iso2FigSetup] tags = [:iso2, :iso2_quantitative] begin
+    sys = IsorropiaEquilibrium()
+    compiled = mtkcompile(sys)
+
+    RH, W, c, g = solve_iso2_case(
+        compiled,
+        0.2e-6 / 22.99, 2.0e-6 / 98.08, 8.0e-6 / 17.03, 12.0e-6 / 63.01, 0.2e-6 / 36.46,
+        0.12e-6 / 40.08, 0.18e-6 / 39.10, 0.0;
+        RH_range = [0.98, 0.90, 0.85, 0.80, 0.75, 0.70]
+    )
+    @test length(RH) ≥ 3
+
+    # Reference: digitized from Fig 8 (µg/m³)
+    ref_H2O = Dict(0.70 => 7.0, 0.75 => 12.0, 0.80 => 18.0, 0.85 => 26.0, 0.90 => 35.0, 0.98 => 45.0)
+    ref_NO3 = Dict(0.70 => 3.0, 0.75 => 5.0, 0.80 => 7.0, 0.85 => 8.5, 0.90 => 10.5, 0.98 => 12.0)
+    ref_NH4 = Dict(0.70 => 2.0, 0.75 => 2.8, 0.80 => 3.3, 0.85 => 3.6, 0.90 => 3.9, 0.98 => 4.2)
+
+    for (i, rh) in enumerate(RH)
+        rh < 0.80 && continue
+        if haskey(ref_H2O, rh)
+            @test W[i] * 1e9 ≈ ref_H2O[rh] rtol = 0.5
+        end
+        if haskey(ref_NO3, rh)
+            @test c[:NO3][i] * 62.0e6 ≈ ref_NO3[rh] rtol = 0.5
+        end
+        if haskey(ref_NH4, rh)
+            @test c[:NH4][i] * 18.04e6 ≈ ref_NH4[rh] rtol = 0.5
+        end
+    end
+end
+
+@testitem "ISO2: Figure 9 quantitative — Remote continental (Case 13)" setup = [Iso2FigSetup] tags = [:iso2, :iso2_quantitative] begin
+    sys = IsorropiaEquilibrium()
+    compiled = mtkcompile(sys)
+
+    RH, W, c, g = solve_iso2_case(
+        compiled,
+        0.0, 10.0e-6 / 98.08, 4.25e-6 / 17.03, 0.145e-6 / 63.01, 0.0,
+        0.08e-6 / 40.08, 0.09e-6 / 39.10, 0.0;
+        RH_range = [0.98, 0.90, 0.85, 0.80, 0.75, 0.70]
+    )
+    @test length(RH) ≥ 3
+
+    # Reference: digitized from Fig 9 (µg/m³)
+    # Stable solution values (converge with metastable at RH ≥ 75%)
+    ref_H2O = Dict(0.75 => 11.0, 0.80 => 14.0, 0.85 => 18.0, 0.90 => 24.0, 0.98 => 32.0)
+    ref_K   = Dict(0.75 => 0.09, 0.80 => 0.09, 0.85 => 0.09, 0.90 => 0.09, 0.98 => 0.09)
+
+    for (i, rh) in enumerate(RH)
+        rh < 0.80 && continue
+        if haskey(ref_H2O, rh)
+            @test W[i] * 1e9 ≈ ref_H2O[rh] rtol = 0.5
+        end
+        if haskey(ref_K, rh)
+            @test c[:K][i] * 39.1e6 ≈ ref_K[rh] rtol = 0.15
+        end
+    end
+end
+
+# =============================================================================
 # Stable Solution Tests (solid precipitation)
 # =============================================================================
 
