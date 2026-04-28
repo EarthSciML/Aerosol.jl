@@ -1,6 +1,6 @@
 name = "Aerosol"
 uuid = "8510b696-cc45-4a64-84d0-47f429ca1505"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["EarthSciML authors and contributors"]
 
 [deps]
@@ -31,7 +31,7 @@ EarthSciDataExt = "EarthSciData"
 BracketingNonlinearSolve = "1.5"
 Dates = "1"
 DynamicQuantities = "1.4.0"
-EarthSciData = "0.15"
+EarthSciData = "0.15, 0.16"
 EarthSciMLBase = "0.25"
 LinearAlgebra = "1"
 ModelingToolkit = "11"
