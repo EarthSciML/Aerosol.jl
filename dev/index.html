@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Home · Aerosol.jl</title><meta name="title" content="Home · Aerosol.jl"/><meta property="og:title" content="Home · Aerosol.jl"/><meta property="twitter:title" content="Home · Aerosol.jl"/><meta name="description" content="Documentation for Aerosol.jl."/><meta property="og:description" content="Documentation for Aerosol.jl."/><meta property="twitter:description" content="Documentation for Aerosol.jl."/><meta property="og:url" content="https://aerosol.earthsci.dev/"/><meta property="twitter:url" content="https://aerosol.earthsci.dev/"/><link rel="canonical" href="https://aerosol.earthsci.dev/"/><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href>Aerosol.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Home</a><ul class="internal"><li><a class="tocitem" href="#Installation"><span>Installation</span></a></li><li><a class="tocitem" href="#Features"><span>Features</span></a></li><li><a class="tocitem" href="#Contributing"><span>Contributing</span></a></li><li><a class="tocitem" href="#Reproducibility"><span>Reproducibility</span></a></li></ul></li><li><a class="tocitem" href="cloud_physics/">Cloud Physics</a></li><li><a class="tocitem" href="dynamics/">Population Dynamics</a></li><li><a class="tocitem" href="single_particle_dynamics/">Single Particle Dynamics</a></li><li><a class="tocitem" href="size_distribution/">Size Distribution</a></li><li><a class="tocitem" href="VBS/">VBS</a></li><li><a class="tocitem" href="mie_scattering/">Optical Properties</a></li><li><a class="tocitem" href="organic_aerosol/">Organic Aerosol</a></li><li><a class="tocitem" href="mass_transfer/">Mass Transfer</a></li><li><a class="tocitem" href="dahneke_brownian_diffusion/">Brownian Diffusion (Dahneke 1983)</a></li><li><a class="tocitem" href="nucleation/">Nucleation</a></li><li><a class="tocitem" href="aqueous_chemistry/">Aqueous Chemistry</a></li><li><span class="tocitem">Thermodynamics</span><ul><li><a class="tocitem" href="isorropia/">ISORROPIA</a></li><li><a class="tocitem" href="isorropia_ii_fn2007/">ISORROPIA II (FN2007)</a></li><li><a class="tocitem" href="seinfeld_pandis_ch10/">Seinfeld &amp; Pandis Ch. 10</a></li></ul></li><li><a class="tocitem" href="stochastic_collection/">Stochastic Collection</a></li><li><a class="tocitem" href="aerosol_radiative_forcing/">Radiative Forcing</a></li><li><a class="tocitem" href="api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Home</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Home</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/EarthSciML/Aerosol.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/EarthSciML/Aerosol.jl/blob/main/docs/src/index.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Aerosol.jl:-Symbolic-equation-based-aerosol-modeling"><a class="docs-heading-anchor" href="#Aerosol.jl:-Symbolic-equation-based-aerosol-modeling">Aerosol.jl: Symbolic equation-based aerosol modeling</a><a id="Aerosol.jl:-Symbolic-equation-based-aerosol-modeling-1"></a><a class="docs-heading-anchor-permalink" href="#Aerosol.jl:-Symbolic-equation-based-aerosol-modeling" title="Permalink"></a></h1><p>Documentation for <a href="https://github.com/EarthSciML/Aerosol.jl">Aerosol</a>.</p><h2 id="Installation"><a class="docs-heading-anchor" href="#Installation">Installation</a><a id="Installation-1"></a><a class="docs-heading-anchor-permalink" href="#Installation" title="Permalink"></a></h2><p>To install Aerosol.jl, use the Julia package manager:</p><pre><code class="language-julia hljs">using Pkg
 Pkg.add(&quot;Aerosol&quot;)</code></pre><h2 id="Features"><a class="docs-heading-anchor" href="#Features">Features</a><a id="Features-1"></a><a class="docs-heading-anchor-permalink" href="#Features" title="Permalink"></a></h2><p>We are currently working on an implementation of the <a href="isorropia/">ISORROPIA aerosol thermodynamics model</a>, which is still in progress.</p><h2 id="Contributing"><a class="docs-heading-anchor" href="#Contributing">Contributing</a><a id="Contributing-1"></a><a class="docs-heading-anchor-permalink" href="#Contributing" title="Permalink"></a></h2><p>...coming soon</p><h2 id="Reproducibility"><a class="docs-heading-anchor" href="#Reproducibility">Reproducibility</a><a id="Reproducibility-1"></a><a class="docs-heading-anchor-permalink" href="#Reproducibility" title="Permalink"></a></h2><details><summary>The documentation of this EarthSciML package was built using these direct dependencies,</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/Aerosol.jl/Aerosol.jl/docs/Project.toml`
-  [8510b696] Aerosol v0.4.0 `~/work/Aerosol.jl/Aerosol.jl`
+  [8510b696] Aerosol v0.4.1 `~/work/Aerosol.jl/Aerosol.jl`
   [a93c6f00] DataFrames v1.8.2
   [e30172f5] Documenter v1.17.0
   [06fc5a27] DynamicQuantities v1.12.3
-  [e53f1632] EarthSciMLBase v0.25.6
+  [e53f1632] EarthSciMLBase v0.25.8
   [23fbe1c1] Latexify v0.16.10
-  [961ee093] ModelingToolkit v11.22.0
-  [8913a72c] NonlinearSolve v4.18.0
-  [1dea7af3] OrdinaryDiffEq v6.111.0
+  [961ee093] ModelingToolkit v11.24.0
+  [8913a72c] NonlinearSolve v4.19.0
+⌃ [1dea7af3] OrdinaryDiffEq v6.111.0
   [91a5bcdd] Plots v1.41.6
-⌅ [0bca4576] SciMLBase v2.155.0
-  [0c5d862f] Symbolics v7.19.0
+⌅ [0bca4576] SciMLBase v2.155.1
+  [0c5d862f] Symbolics v7.20.0
   [1986cc42] Unitful v1.28.0
   [b77e0a4c] InteractiveUtils v1.11.0
   [d6f4376e] Markdown v1.11.0
   [fa267f1f] TOML v1.0.3
-Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`</code></pre></details><details><summary>and using this machine and Julia version.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Julia Version 1.12.6
+Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`</code></pre></details><details><summary>and using this machine and Julia version.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Julia Version 1.12.6
 Commit 15346901f00 (2026-04-09 19:20 UTC)
 Build Info:
   Official https://julialang.org release
@@ -30,14 +30,14 @@ Platform Info:
 Threads: 1 default, 1 interactive, 1 GC (on 4 virtual cores)
 Environment:
   JULIA_NO_VERIFY_HOSTS = gaftp.epa.gov</code></pre></details><details><summary>A more complete overview of all dependencies and their versions is also provided.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/Aerosol.jl/Aerosol.jl/docs/Manifest.toml`
-  [47edcb42] ADTypes v1.21.0
+  [47edcb42] ADTypes v1.22.0
   [a4c015fc] ANSIColoredPrinters v0.0.1
   [6e696c72] AbstractPlutoDingetjes v1.3.2
   [1520ce14] AbstractTrees v0.4.5
   [6a4ca0a5] AcceleratedKernels v0.4.3
   [7d9f7c33] Accessors v0.1.44
   [79e6a3ab] Adapt v4.5.2
-  [8510b696] Aerosol v0.4.0 `~/work/Aerosol.jl/Aerosol.jl`
+  [8510b696] Aerosol v0.4.1 `~/work/Aerosol.jl/Aerosol.jl`
   [66dad0bd] AliasTables v1.1.3
   [dce04be8] ArgCheck v2.5.0
   [ec485272] ArnoldiMethod v0.4.0
@@ -81,7 +81,7 @@ Environment:
   [8bb1440f] DelimitedFiles v1.9.1
   [85a47980] Dictionaries v0.4.6
 ⌅ [2b5f629d] DiffEqBase v6.218.0
-  [459566f4] DiffEqCallbacks v4.16.0
+  [459566f4] DiffEqCallbacks v4.17.0
   [163ba53b] DiffResults v1.1.0
   [b552c78f] DiffRules v1.15.1
   [a0c0ee7d] DifferentiationInterface v0.7.16
@@ -91,7 +91,7 @@ Environment:
 ⌅ [5b8099bc] DomainSets v0.7.18
   [7c1d4256] DynamicPolynomials v0.6.6
   [06fc5a27] DynamicQuantities v1.12.3
-  [e53f1632] EarthSciMLBase v0.25.6
+  [e53f1632] EarthSciMLBase v0.25.8
   [4e289a0a] EnumX v1.0.7
   [f151be2c] EnzymeCore v0.8.19
   [460bff9d] ExceptionUnwrapping v0.1.11
@@ -99,7 +99,7 @@ Environment:
   [e2ba6199] ExprTools v0.1.10
   [55351af7] ExproniconLite v0.10.14
   [c87230d0] FFMPEG v0.4.5
-  [7034ab61] FastBroadcast v1.3.1
+  [7034ab61] FastBroadcast v1.3.2
   [9aa1b823] FastClosures v0.3.2
   [442a2c76] FastGaussQuadrature v1.1.0
   [a4df4552] FastPower v1.3.1
@@ -121,7 +121,7 @@ Environment:
   [cd3eb016] HTTP v1.11.0
   [b5f81e59] IOCapture v1.0.0
   [615f187c] IfElse v0.1.1
-  [3263718b] ImplicitDiscreteSolve v1.11.0
+⌃ [3263718b] ImplicitDiscreteSolve v1.11.0
   [313cdc1a] Indexing v1.1.1
   [d25df0c9] Inflate v0.1.5
   [22cec73e] InitialValues v0.3.1
@@ -134,10 +134,10 @@ Environment:
   [82899510] IteratorInterfaceExtensions v1.0.0
   [1019f520] JLFzf v0.1.11
   [692b3bcd] JLLWrappers v1.7.1
-  [682c06a0] JSON v1.5.0
+  [682c06a0] JSON v1.5.1
   [ae98c720] Jieko v0.2.1
   [70703baa] JuliaSyntax v1.0.2
-  [ccbc3e58] JumpProcesses v9.26.0
+  [ccbc3e58] JumpProcesses v9.27.0
   [63c18a36] KernelAbstractions v0.9.41
   [ba0b0d4f] Krylov v0.10.6
   [b964fa9f] LaTeXStrings v1.4.0
@@ -158,8 +158,8 @@ Environment:
   [fa8bd995] MetaGraphsNext v0.8.0
   [128add7d] MicroCollections v0.2.0
   [e1d29d7a] Missings v1.2.0
-  [961ee093] ModelingToolkit v11.22.0
-  [7771a370] ModelingToolkitBase v1.31.0
+  [961ee093] ModelingToolkit v11.24.0
+  [7771a370] ModelingToolkitBase v1.33.0
   [6bb917b9] ModelingToolkitTearing v1.13.0
   [2e0e35c7] Moshi v0.3.7
   [46d2c3a1] MuladdMacro v0.2.4
@@ -167,7 +167,7 @@ Environment:
   [d8a4904e] MutableArithmetics v1.7.1
   [d41bc354] NLSolversBase v8.0.0
   [77ba4419] NaNMath v1.1.3
-  [8913a72c] NonlinearSolve v4.18.0
+  [8913a72c] NonlinearSolve v4.19.0
   [be0214bd] NonlinearSolveBase v2.25.0
   [5959db7a] NonlinearSolveFirstOrder v2.1.1
   [9a2c21bd] NonlinearSolveQuasiNewton v1.13.1
@@ -175,38 +175,38 @@ Environment:
   [6fe1bfb0] OffsetArrays v1.17.0
   [4d8831e6] OpenSSL v1.6.1
   [bac558e1] OrderedCollections v1.8.1
-  [1dea7af3] OrdinaryDiffEq v6.111.0
-  [89bda076] OrdinaryDiffEqAdamsBashforthMoulton v1.11.0
-  [6ad6398a] OrdinaryDiffEqBDF v1.26.0
+⌃ [1dea7af3] OrdinaryDiffEq v6.111.0
+⌅ [89bda076] OrdinaryDiffEqAdamsBashforthMoulton v1.11.0
+⌅ [6ad6398a] OrdinaryDiffEqBDF v1.26.0
 ⌅ [bbf590c4] OrdinaryDiffEqCore v3.33.1
-  [50262376] OrdinaryDiffEqDefault v1.14.0
-  [4302a76b] OrdinaryDiffEqDifferentiation v2.9.0
-  [9286f039] OrdinaryDiffEqExplicitRK v1.12.0
-  [e0540318] OrdinaryDiffEqExponentialRK v1.15.0
-  [becaefa8] OrdinaryDiffEqExtrapolation v1.18.0
-  [5960d6e9] OrdinaryDiffEqFIRK v1.26.0
-  [101fe9f7] OrdinaryDiffEqFeagin v1.10.0
-  [d3585ca7] OrdinaryDiffEqFunctionMap v1.11.0
-  [d28bc4f8] OrdinaryDiffEqHighOrderRK v1.12.0
-  [9f002381] OrdinaryDiffEqIMEXMultistep v1.14.0
-  [521117fe] OrdinaryDiffEqLinear v1.12.0
-  [1344f307] OrdinaryDiffEqLowOrderRK v1.13.0
-  [b0944070] OrdinaryDiffEqLowStorageRK v1.15.0
-  [127b3ac7] OrdinaryDiffEqNonlinearSolve v1.28.0
-  [c9986a66] OrdinaryDiffEqNordsieck v1.11.0
-  [5dd0a6cf] OrdinaryDiffEqPDIRK v1.14.0
-  [5b33eab2] OrdinaryDiffEqPRK v1.10.0
-  [04162be5] OrdinaryDiffEqQPRK v1.10.0
-  [af6ede74] OrdinaryDiffEqRKN v1.12.0
-  [43230ef6] OrdinaryDiffEqRosenbrock v1.31.1
-  [2d112036] OrdinaryDiffEqSDIRK v1.14.0
-  [669c94d9] OrdinaryDiffEqSSPRK v1.14.0
-  [e3e12d00] OrdinaryDiffEqStabilizedIRK v1.14.0
-  [358294b1] OrdinaryDiffEqStabilizedRK v1.11.1
-  [fa646aed] OrdinaryDiffEqSymplecticRK v1.13.0
-  [b1df2697] OrdinaryDiffEqTsit5 v1.12.0
-  [79d7bb75] OrdinaryDiffEqVerner v1.14.0
-  [69de0a69] Parsers v2.8.3
+⌅ [50262376] OrdinaryDiffEqDefault v1.14.0
+⌅ [4302a76b] OrdinaryDiffEqDifferentiation v2.8.0
+⌅ [9286f039] OrdinaryDiffEqExplicitRK v1.12.0
+⌅ [e0540318] OrdinaryDiffEqExponentialRK v1.15.0
+⌅ [becaefa8] OrdinaryDiffEqExtrapolation v1.18.0
+⌅ [5960d6e9] OrdinaryDiffEqFIRK v1.26.0
+⌅ [101fe9f7] OrdinaryDiffEqFeagin v1.10.0
+⌅ [d3585ca7] OrdinaryDiffEqFunctionMap v1.11.0
+⌅ [d28bc4f8] OrdinaryDiffEqHighOrderRK v1.12.0
+⌅ [9f002381] OrdinaryDiffEqIMEXMultistep v1.14.0
+⌅ [521117fe] OrdinaryDiffEqLinear v1.12.0
+⌅ [1344f307] OrdinaryDiffEqLowOrderRK v1.13.0
+⌅ [b0944070] OrdinaryDiffEqLowStorageRK v1.15.0
+⌅ [127b3ac7] OrdinaryDiffEqNonlinearSolve v1.28.0
+⌅ [c9986a66] OrdinaryDiffEqNordsieck v1.11.0
+⌅ [5dd0a6cf] OrdinaryDiffEqPDIRK v1.14.0
+⌅ [5b33eab2] OrdinaryDiffEqPRK v1.10.0
+⌅ [04162be5] OrdinaryDiffEqQPRK v1.10.0
+⌅ [af6ede74] OrdinaryDiffEqRKN v1.12.0
+⌅ [43230ef6] OrdinaryDiffEqRosenbrock v1.31.1
+⌅ [2d112036] OrdinaryDiffEqSDIRK v1.14.0
+⌅ [669c94d9] OrdinaryDiffEqSSPRK v1.14.0
+⌅ [e3e12d00] OrdinaryDiffEqStabilizedIRK v1.14.0
+⌅ [358294b1] OrdinaryDiffEqStabilizedRK v1.11.1
+⌅ [fa646aed] OrdinaryDiffEqSymplecticRK v1.13.0
+⌅ [b1df2697] OrdinaryDiffEqTsit5 v1.12.0
+⌅ [79d7bb75] OrdinaryDiffEqVerner v1.14.0
+  [69de0a69] Parsers v2.8.4
   [ccf2f8ad] PlotThemes v3.3.0
   [995b91a9] PlotUtils v1.4.4
   [91a5bcdd] Plots v1.41.6
@@ -234,7 +234,7 @@ Environment:
   [7e49a35a] RuntimeGeneratedFunctions v0.5.18
   [9dfe8606] SCCNonlinearSolve v1.13.0
   [94e857df] SIMDTypes v0.1.0
-⌅ [0bca4576] SciMLBase v2.155.0
+⌅ [0bca4576] SciMLBase v2.155.1
   [19f34311] SciMLJacobianOperators v0.1.13
   [a6db7da4] SciMLLogging v1.9.1
   [c0aeaf25] SciMLOperators v1.17.0
@@ -261,14 +261,14 @@ Environment:
   [10745b16] Statistics v1.11.1
   [82ae8749] StatsAPI v1.8.0
   [2913bbd2] StatsBase v0.34.10
-  [9672c7b4] SteadyStateDiffEq v2.10.1
+  [9672c7b4] SteadyStateDiffEq v2.11.0
   [7792a7ef] StrideArraysCore v0.5.8
   [892a3eda] StringManipulation v0.4.4
   [ec057cc2] StructUtils v2.8.0
   [2efcf032] SymbolicIndexingInterface v0.3.46
   [19f23fe9] SymbolicLimits v1.1.0
-  [d1185830] SymbolicUtils v4.24.2
-  [0c5d862f] Symbolics v7.19.0
+  [d1185830] SymbolicUtils v4.25.2
+  [0c5d862f] Symbolics v7.20.0
   [3783bdb8] TableTraits v1.0.1
   [bd369af6] Tables v1.12.1
   [ed4db957] TaskLocalValues v0.1.3
@@ -293,7 +293,7 @@ Environment:
   [83423d85] Cairo_jll v1.18.6+0
   [ee1fde0b] Dbus_jll v1.16.2+0
   [2702e6a9] EpollShim_jll v0.0.20230411+1
-  [2e619515] Expat_jll v2.7.5+0
+  [2e619515] Expat_jll v2.8.0+0
   [b22a6f82] FFMPEG_jll v8.1.0+0
   [a3f928ae] Fontconfig_jll v2.17.1+0
   [d7e528f0] FreeType2_jll v2.14.3+1
@@ -346,7 +346,7 @@ Environment:
   [d1454406] Xorg_libXinerama_jll v1.1.7+0
   [ec84b674] Xorg_libXrandr_jll v1.5.6+0
   [ea2f1a96] Xorg_libXrender_jll v0.9.12+0
-  [a65dc6b1] Xorg_libpciaccess_jll v0.18.1+0
+  [a65dc6b1] Xorg_libpciaccess_jll v0.19.0+0
   [c7cfdc94] Xorg_libxcb_jll v1.17.1+0
   [cc61e674] Xorg_libxkbfile_jll v1.2.0+0
   [e920d4aa] Xorg_xcb_util_cursor_jll v0.1.6+0
@@ -356,7 +356,7 @@ Environment:
   [0d47668e] Xorg_xcb_util_renderutil_jll v0.3.10+0
   [c22f9ab0] Xorg_xcb_util_wm_jll v0.4.2+0
   [35661453] Xorg_xkbcomp_jll v1.4.7+0
-  [33bec58e] Xorg_xkeyboard_config_jll v2.44.0+0
+  [33bec58e] Xorg_xkeyboard_config_jll v2.47.0+0
   [c5fb5394] Xorg_xtrans_jll v1.6.0+0
   [3161d3a3] Zstd_jll v1.5.7+1
   [35ca27e7] eudev_jll v3.2.14+0
@@ -423,4 +423,4 @@ Environment:
   [8e850b90] libblastrampoline_jll v5.15.0+0
   [8e850ede] nghttp2_jll v1.64.0+1
   [3f19e933] p7zip_jll v17.7.0+0
-Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated -m`</code></pre></details><p>You can also download the <a href="https://github.com/EarthSciML/Aerosol.jl/tree/gh-pages/v0.4.0/assets/Manifest.toml">manifest</a> file and the <a href="https://github.com/EarthSciML/Aerosol.jl/tree/gh-pages/v0.4.0/assets/Project.toml">project</a> file.</p></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="cloud_physics/">Cloud Physics »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Friday 24 April 2026 05:39">Friday 24 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated -m`</code></pre></details><p>You can also download the <a href="https://github.com/EarthSciML/Aerosol.jl/tree/gh-pages/v0.4.1/assets/Manifest.toml">manifest</a> file and the <a href="https://github.com/EarthSciML/Aerosol.jl/tree/gh-pages/v0.4.1/assets/Project.toml">project</a> file.</p></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="cloud_physics/">Cloud Physics »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 28 April 2026 18:03">Tuesday 28 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
