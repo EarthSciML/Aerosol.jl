@@ -499,7 +499,12 @@ function _iso2_zsr_water(RH, c_Na, c_NH4, c_SO4, c_HSO4, c_NO3, c_Cl, c_Ca, c_K,
 
     W = 0.0
 
-    # --- Crustal cation pairs (prioritize with sulfate, then nitrate, then chloride) ---
+    # --- Crustal cation pairs (prioritize with sulfate per compositional invariance) ---
+    # CaSO4 — always insoluble, remove Ca-SO4 pairs from available pools (no water contribution)
+    pair = min(Ca_r, SO4_r)
+    Ca_r -= pair
+    SO4_r -= pair
+
     # Ca(NO3)2
     pair = min(Ca_r, NO3_r / 2.0)
     if pair > 1.0e-30
@@ -729,6 +734,28 @@ function _iso2_compute_mdrh(Na, SO4, NH3, NO3, Cl, Ca, K, Mg)
 end
 @register_symbolic _iso2_compute_mdrh(Na, SO4, NH3, NO3, Cl, Ca, K, Mg)
 
+"""
+    _iso2_binary_log_gamma(q, z, I, T)
+
+Compute binary Kusik-Meissner log10(γ±) with temperature correction.
+Uses Eqs. 9-14 from Fountoukis & Nenes (2007).
+"""
+function _iso2_binary_log_gamma(q, z, I, T)
+    I_safe = max(I, 1.0e-20)
+    B_param = 0.75 - 0.065 * q
+    sI = sqrt(I_safe)
+    C_param = I_safe < 6.0 ? 1.0 + 0.055 * q * exp(-0.023 * I_safe^3) : 1.0
+    XX = -0.5107 * sI / (1.0 + C_param * sI)
+    inner = max(1.0 + B_param * (1.0 + 0.1 * I_safe)^q - B_param, 1.0e-30)
+    g0 = z * (log10(inner) + XX)
+    # Temperature correction (Eq. 14) with z factor
+    TI = T - 273.15
+    CF1 = 1.125 - 0.005 * TI
+    CF2 = (0.125 - 0.005 * TI) * (-0.41 * sI / (1.0 + sI) + 0.039 * I_safe^0.92)
+    return CF1 * g0 - CF2 * z
+end
+@register_symbolic _iso2_binary_log_gamma(q, z, I, T)
+
 # --------------------------------------------------------------------------
 # Unit metadata for registered functions (see ModelingToolkit Validation docs)
 # Tells the unit checker what units each registered function returns,
@@ -789,6 +816,11 @@ function ModelingToolkit.get_unit(::typeof(_iso2_compute_mdrh), args)
     return _ISO2_UNITLESS
 end
 
+# Binary KM log10(γ±) with temperature correction: returns dimensionless
+function ModelingToolkit.get_unit(::typeof(_iso2_binary_log_gamma), args)
+    return _ISO2_UNITLESS
+end
+
 # =============================================================================
 # Part 3: ModelingToolkit Component
 # =============================================================================
@@ -802,13 +834,13 @@ K⁺–Ca²⁺–Mg²⁺–NH₄⁺–Na⁺–SO₄²⁻–NO₃⁻–Cl⁻–H�
 Supports both **metastable** (no solids) and **stable** (with solid precipitation)
 solution modes, controlled by the `stable` parameter (0=metastable, 1=stable).
 
-The model solves 51 coupled algebraic equations:
+The model solves 52 coupled algebraic equations:
 - 8 mass balance equations (with solid stoichiometric contributions in stable mode)
 - 1 charge balance (electroneutrality)
 - 5 aqueous equilibrium expressions (HSO₄⁻, NH₃, HNO₃, HCl, H₂O)
 - 1 ZSR water content equation with MDRH cutoff (Eqs. 16-18, 22)
 - 1 ionic strength definition
-- 16 activity coefficient equations (Kusik-Meissner, Eqs. 9-13)
+- 17 activity coefficient equations (Bromley multicomponent mixing, Eqs. 6-14)
 - 19 solid precipitation equations (Fischer-Burmeister NCP complementarity)
 
 In stable mode, solid salts precipitate when the solution becomes supersaturated.
@@ -821,8 +853,8 @@ from Table 5 is enforced in stable mode: below the MDRH, the aerosol water
 content is driven to zero, producing a completely dry (crystalline) aerosol.
 In metastable mode, the MDRH cutoff is not applied.
 
-Activity coefficients are computed using the Kusik-Meissner binary relationship
-(Eqs. 9-13) with temperature correction (Eq. 14).
+Activity coefficients are computed using Bromley multicomponent mixing with
+Kusik-Meissner binary parameters (Eqs. 6-14) including temperature correction.
 
 **Reference**: Fountoukis, C. and Nenes, A.: ISORROPIA II: a computationally
 efficient thermodynamic equilibrium model for
@@ -861,9 +893,8 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K1_B = 25.14, [description = "HSO4 dissociation heat capacity parameter (dimensionless)"]
 
         # NH3(g) ↔ NH3(aq) (Table 2: mol/(kg·atm) converted to SI)
-        # Standard atmosphere = 101325 Pa, so K21_SI = K21_atm / 101325
-        K21_0_atm = 5.764e1, [description = "NH3 dissolution equilibrium constant at T0 in atm units", unit = u"mol/kg/Constants.atm"]
-        K21_0 = K21_0_atm * 9.86923e-6, [description = "NH3 dissolution equilibrium constant at T0 in SI units", unit = u"mol/(kg*Pa)"]
+        # K21_0 = 5.764e1 mol/(kg·atm) × (1 atm / 101325 Pa) = 5.68862e-4 mol/(kg·Pa)
+        K21_0 = 5.688624172e-4, [description = "NH3 dissolution equilibrium constant at T0 in SI units", unit = u"mol/(kg*Pa)"]
         K21_A = 13.79, [description = "NH3 dissolution enthalpy parameter (dimensionless)"]
         K21_B = -5.393, [description = "NH3 dissolution heat capacity parameter (dimensionless)"]
 
@@ -873,16 +904,14 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K22_B = 26.92, [description = "NH3 dissociation heat capacity parameter (dimensionless)"]
 
         # HCl(g) ↔ H⁺ + Cl⁻ (Table 2: mol²/(kg²·atm) converted to SI)
-        # K3_SI = K3_atm / (1 atm) = K3_atm / 101325 Pa
-        K3_0_atm = 1.971e6, [description = "HCl gas-liquid equilibrium constant at T0 in atm units", unit = u"mol^2/kg^2/Constants.atm"]
-        K3_0 = K3_0_atm * 9.86923e-6, [description = "HCl gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
+        # K3_0 = 1.971e6 mol²/(kg²·atm) × (1 atm / 101325 Pa) = 19.4523 mol²/(kg²·Pa)
+        K3_0 = 1.945225233e1, [description = "HCl gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
         K3_A = 30.2, [description = "HCl gas-liquid enthalpy parameter (dimensionless)"]
         K3_B = 19.91, [description = "HCl gas-liquid heat capacity parameter (dimensionless)"]
 
         # HNO3(g) ↔ H⁺ + NO3⁻ (Table 2: mol²/(kg²·atm) converted to SI)
-        # K4_SI = K4_atm / (1 atm) = K4_atm / 101325 Pa
-        K4_0_atm = 2.511e6, [description = "HNO3 gas-liquid equilibrium constant at T0 in atm units", unit = u"mol^2/kg^2/Constants.atm"]
-        K4_0 = K4_0_atm * 9.86923e-6, [description = "HNO3 gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
+        # K4_0 = 2.511e6 mol²/(kg²·atm) × (1 atm / 101325 Pa) = 24.7816 mol²/(kg²·Pa)
+        K4_0 = 2.478163653e1, [description = "HNO3 gas-liquid equilibrium constant at T0 in SI units", unit = u"mol^2/(kg^2*Pa)"]
         K4_A = 29.17, [description = "HNO3 gas-liquid enthalpy parameter (dimensionless)"]
         K4_B = 16.83, [description = "HNO3 gas-liquid heat capacity parameter (dimensionless)"]
 
@@ -900,8 +929,8 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K5_A = -2.65, [description = "(NH4)2SO4 dissolution A (dimensionless)"]
         K5_B = 38.57, [description = "(NH4)2SO4 dissolution B (dimensionless)"]
 
-        # NH4HSO4(s) ↔ NH4+ + H+ + SO4²⁻ (K6, Table 2: mol³/kg³)
-        K6_0 = 1.383e2, [description = "NH4HSO4 dissolution K0", unit = u"mol^3/kg^3"]
+        # NH4HSO4(s) ↔ NH4⁺ + HSO4⁻ (K6, Table 2: mol²/kg²)
+        K6_0 = 1.383e2, [description = "NH4HSO4 dissolution K0", unit = u"mol^2/kg^2"]
         K6_A = -2.87, [description = "NH4HSO4 dissolution A (dimensionless)"]
         K6_B = 15.83, [description = "NH4HSO4 dissolution B (dimensionless)"]
 
@@ -911,16 +940,14 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K7_B = 54.4, [description = "Letovicite dissolution B (dimensionless)"]
 
         # NH4NO3(s) ↔ NH3(g) + HNO3(g) (K8, Table 2: atm² converted to Pa²)
-        # K8_SI = K8_atm² × (101325 Pa/atm)² = K8_atm² × 1.0269e10
-        K8_0_atm2 = 4.3559e-17, [description = "NH4NO3 dissolution K0 in atm²", unit = u"Constants.atm^2"]
-        K8_0 = K8_0_atm2 * 1.0269e10, [description = "NH4NO3 dissolution K0 in SI", unit = u"Pa^2"]
+        # K8_0 = 4.3559e-17 atm² × (101325 Pa/atm)² = 4.47307e-7 Pa²
+        K8_0 = 4.47307371e-7, [description = "NH4NO3 dissolution K0 in SI", unit = u"Pa^2"]
         K8_A = -74.38, [description = "NH4NO3 dissolution A (dimensionless)"]
         K8_B = 6.12, [description = "NH4NO3 dissolution B (dimensionless)"]
 
         # NH4Cl(s) ↔ NH3(g) + HCl(g) (K9, Table 2: atm² converted to Pa²)
-        # K9_SI = K9_atm² × (101325 Pa/atm)² = K9_atm² × 1.0269e10
-        K9_0_atm2 = 1.086e-16, [description = "NH4Cl dissolution K0 in atm²", unit = u"Constants.atm^2"]
-        K9_0 = K9_0_atm2 * 1.0269e10, [description = "NH4Cl dissolution K0 in SI", unit = u"Pa^2"]
+        # K9_0 = 1.086e-16 atm² × (101325 Pa/atm)² = 1.11521e-6 Pa²
+        K9_0 = 1.1152134e-6, [description = "NH4Cl dissolution K0 in SI", unit = u"Pa^2"]
         K9_A = -71.0, [description = "NH4Cl dissolution A (dimensionless)"]
         K9_B = 2.4, [description = "NH4Cl dissolution B (dimensionless)"]
 
@@ -929,8 +956,8 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K10_A = 0.98, [description = "Na2SO4 dissolution A (dimensionless)"]
         K10_B = 39.75, [description = "Na2SO4 dissolution B (dimensionless)"]
 
-        # NaHSO4(s) ↔ Na+ + H+ + SO4²⁻ (K11, Table 2: mol³/kg³)
-        K11_0 = 2.413e4, [description = "NaHSO4 dissolution K0", unit = u"mol^3/kg^3"]
+        # NaHSO4(s) ↔ Na⁺ + HSO4⁻ (K11, Table 2: mol²/kg²)
+        K11_0 = 2.413e4, [description = "NaHSO4 dissolution K0", unit = u"mol^2/kg^2"]
         K11_A = 0.79, [description = "NaHSO4 dissolution A (dimensionless)"]
         K11_B = 14.75, [description = "NaHSO4 dissolution B (dimensionless)"]
 
@@ -964,8 +991,8 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         K17_A = -9.585, [description = "K2SO4 dissolution A (dimensionless)"]
         K17_B = 45.81, [description = "K2SO4 dissolution B (dimensionless)"]
 
-        # KHSO4(s) ↔ K+ + H+ + SO4²⁻ (K18, Table 2: mol³/kg³)
-        K18_0 = 24.016, [description = "KHSO4 dissolution K0", unit = u"mol^3/kg^3"]
+        # KHSO4(s) ↔ K⁺ + HSO4⁻ (K18, Table 2: mol²/kg²)
+        K18_0 = 24.016, [description = "KHSO4 dissolution K0", unit = u"mol^2/kg^2"]
         K18_A = -8.423, [description = "KHSO4 dissolution A (dimensionless)"]
         K18_B = 17.96, [description = "KHSO4 dissolution B (dimensionless)"]
 
@@ -1060,6 +1087,7 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
         γ_KCl(t), [description = "Mean activity coeff. KCl (dimensionless)", guess = 1.0]
         γ_MgNO32(t), [description = "Mean activity coeff. Mg(NO₃)₂ (dimensionless)", guess = 1.0]
         γ_MgCl2(t), [description = "Mean activity coeff. MgCl₂ (dimensionless)", guess = 1.0]
+        γ_NH4NO3(t), [description = "Mean activity coeff. NH₄NO₃ (dimensionless)", guess = 1.0]
 
         # Solid species concentrations (mol/m³ air) — zero in metastable mode
         s_CaSO4(t), [description = "Solid CaSO₄ concentration", unit = u"mol/m^3", guess = 0.0]
@@ -1104,19 +1132,19 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     # Solid dissolution equilibrium constants at ambient temperature
     # Using inline calculations to avoid unit propagation issues
     Ksp5 = K5_0 * exp(K5_A * (T0T - 1.0) + K5_B * coef_term)       # (NH4)2SO4 [mol³/kg³]
-    Ksp6 = K6_0 * exp(K6_A * (T0T - 1.0) + K6_B * coef_term)       # NH4HSO4 [mol³/kg³]
+    Ksp6 = K6_0 * exp(K6_A * (T0T - 1.0) + K6_B * coef_term)       # NH4HSO4 [mol²/kg²]
     Ksp7 = K7_0 * exp(K7_A * (T0T - 1.0) + K7_B * coef_term)       # Letovicite [mol⁵/kg⁵]
     Ksp8 = K8_0 * exp(K8_A * (T0T - 1.0) + K8_B * coef_term)       # NH4NO3 [Pa²]
     Ksp9 = K9_0 * exp(K9_A * (T0T - 1.0) + K9_B * coef_term)       # NH4Cl [Pa²]
     Ksp10 = K10_0 * exp(K10_A * (T0T - 1.0) + K10_B * coef_term)   # Na2SO4 [mol³/kg³]
-    Ksp11 = K11_0 * exp(K11_A * (T0T - 1.0) + K11_B * coef_term)   # NaHSO4 [mol³/kg³]
+    Ksp11 = K11_0 * exp(K11_A * (T0T - 1.0) + K11_B * coef_term)   # NaHSO4 [mol²/kg²]
     Ksp12 = K12_0 * exp(K12_A * (T0T - 1.0) + K12_B * coef_term)   # NaNO3 [mol²/kg²]
     Ksp13 = K13_0 * exp(K13_A * (T0T - 1.0) + K13_B * coef_term)   # NaCl [mol²/kg²]
     Ksp14 = K14_0 * exp(K14_A * (T0T - 1.0) + K14_B * coef_term)   # CaSO4 [mol²/kg²]
     Ksp15 = K15_0 * exp(K15_A * (T0T - 1.0) + K15_B * coef_term)   # Ca(NO3)2 [mol³/kg³]
     Ksp16 = K16_0 * exp(K16_A * (T0T - 1.0) + K16_B * coef_term)   # CaCl2 [mol³/kg³]
     Ksp17 = K17_0 * exp(K17_A * (T0T - 1.0) + K17_B * coef_term)   # K2SO4 [mol³/kg³]
-    Ksp18 = K18_0 * exp(K18_A * (T0T - 1.0) + K18_B * coef_term)   # KHSO4 [mol³/kg³]
+    Ksp18 = K18_0 * exp(K18_A * (T0T - 1.0) + K18_B * coef_term)   # KHSO4 [mol²/kg²]
     Ksp19 = K19_0 * exp(K19_A * (T0T - 1.0) + K19_B * coef_term)   # KNO3 [mol²/kg²]
     Ksp20 = K20_0 * exp(K20_A * (T0T - 1.0) + K20_B * coef_term)   # KCl [mol²/kg²]
     Ksp21s = K21s_0 * exp(K21s_A * (T0T - 1.0) + K21s_B * coef_term) # MgSO4 [mol²/kg²]
@@ -1152,32 +1180,200 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     # Scale factor 100 gives transition width ~0.02 in RH
     mdrh_factor = _iso2_smooth_step(100.0 * (RH - MDRH))
 
-    # Derived activity coefficients (from cross-relations)
-    # γ_KHSO4 = √(γ_HHSO4 × γ_KCl / γ_HCl)
-    γ_KHSO4_derived = sqrt(γ_HHSO4 * γ_KCl / γ_HCl)
-    # γ_NaHSO4 = √(γ_HHSO4 × γ_NaCl / γ_HCl)
-    γ_NaHSO4_derived = sqrt(γ_HHSO4 * γ_NaCl / γ_HCl)
-    # γ_NH4HSO4 = √(γ_HHSO4 × γ_NH4Cl / γ_HCl)
-    γ_NH4HSO4_derived = sqrt(γ_HHSO4 * γ_NH4Cl / γ_HCl)
-    # γ_LC = (γ_NH42SO4³ × γ_NH4HSO4)^0.2
-    γ_LC_derived = (γ_NH42SO4^3 * γ_NH4HSO4_derived)^0.2
-    # γ_MgSO4 = γ_Na2SO4 (approximate, from ISORROPIA convention)
-    γ_MgSO4_derived = γ_Na2SO4
+    # === Bromley multicomponent activity coefficients (Eqs. 6-14) ===
+    # Step 1: Binary KM log10(γ±) with temperature correction
+    I_dimless = I_s / m_ref  # dimensionless ionic strength for KM functions
+
+    g0_HCl = _iso2_binary_log_gamma(6.0, 1, I_dimless, T_env)
+    g0_H2SO4 = _iso2_binary_log_gamma(-0.1, 2, I_dimless, T_env)
+    g0_HHSO4 = _iso2_binary_log_gamma(8.0, 1, I_dimless, T_env)
+    g0_HNO3 = _iso2_binary_log_gamma(2.6, 1, I_dimless, T_env)
+    g0_NaCl = _iso2_binary_log_gamma(2.23, 1, I_dimless, T_env)
+    g0_Na2SO4 = _iso2_binary_log_gamma(-0.19, 2, I_dimless, T_env)
+    g0_NaNO3 = _iso2_binary_log_gamma(-0.39, 1, I_dimless, T_env)
+    g0_NH4Cl = _iso2_binary_log_gamma(0.82, 1, I_dimless, T_env)
+    g0_NH42SO4 = _iso2_binary_log_gamma(-0.25, 2, I_dimless, T_env)
+    g0_NH4NO3 = _iso2_binary_log_gamma(-1.15, 1, I_dimless, T_env)
+    g0_CaNO32 = _iso2_binary_log_gamma(0.93, 2, I_dimless, T_env)
+    g0_CaCl2 = _iso2_binary_log_gamma(2.4, 2, I_dimless, T_env)
+    g0_K2SO4 = _iso2_binary_log_gamma(-0.25, 2, I_dimless, T_env)
+    g0_KNO3 = _iso2_binary_log_gamma(-2.33, 1, I_dimless, T_env)
+    g0_KCl = _iso2_binary_log_gamma(0.92, 1, I_dimless, T_env)
+    g0_MgSO4 = _iso2_binary_log_gamma(0.15, 4, I_dimless, T_env)
+    g0_MgNO32 = _iso2_binary_log_gamma(2.32, 2, I_dimless, T_env)
+    g0_MgCl2 = _iso2_binary_log_gamma(2.9, 2, I_dimless, T_env)
+
+    # Derived bisulfate coefficients (in log10 space, following CMAQ convention)
+    g0_NH4HSO4 = g0_NH4Cl + g0_HHSO4 - g0_HCl
+    g0_NaHSO4 = g0_NaCl + g0_HHSO4 - g0_HCl
+    g0_KHSO4 = g0_HHSO4 + g0_KCl - g0_HCl
+
+    # Step 2: Debye-Hückel term
+    A_DH = 0.511 * (T_0 / T_env)^1.5
+    sI_brom = sqrt(max(I_dimless, 1.0e-20))
+    H_DH = A_DH * sI_brom / (unity + sI_brom)
+
+    # Step 3: Bromley mixing (Eqs. 6-8)
+    # Dimensionless molalities for Bromley weights
+    xm_H = m_H / m_ref
+    xm_Na = m_Na / m_ref
+    xm_NH4 = m_NH4 / m_ref
+    xm_Cl = m_Cl / m_ref
+    xm_SO4 = m_SO4 / m_ref
+    xm_HSO4 = m_HSO4 / m_ref
+    xm_NO3 = m_NO3 / m_ref
+    xm_Ca = m_Ca / m_ref
+    xm_K = m_K / m_ref
+    xm_Mg = m_Mg / m_ref
+
+    I_brom = max(I_dimless, 1.0e-20)
+
+    # CH factors: 0.25*(z_i + z_j)^2 / I
+    CH_11 = 1.0 / I_brom       # z_i=1, z_j=1: (1+1)^2/4 = 1
+    CH_12 = 2.25 / I_brom      # z_i=1, z_j=2: (1+2)^2/4 = 2.25
+    CH_21 = 2.25 / I_brom      # z_i=2, z_j=1
+    CH_22 = 4.0 / I_brom       # z_i=2, z_j=2: (2+2)^2/4 = 4
+
+    # F1 sums for primary cations (H+, Na+, NH4+) — each z=1
+    F1_H = CH_11 * xm_Cl * (g0_HCl + H_DH) +
+        CH_12 * xm_SO4 * (g0_H2SO4 + 2 * H_DH) +
+        CH_11 * xm_HSO4 * (g0_HHSO4 + H_DH) +
+        CH_11 * xm_NO3 * (g0_HNO3 + H_DH)
+
+    F1_Na = CH_11 * xm_Cl * (g0_NaCl + H_DH) +
+        CH_12 * xm_SO4 * (g0_Na2SO4 + 2 * H_DH) +
+        CH_11 * xm_HSO4 * (g0_NaHSO4 + H_DH) +
+        CH_11 * xm_NO3 * (g0_NaNO3 + H_DH)
+
+    F1_NH4 = CH_11 * xm_Cl * (g0_NH4Cl + H_DH) +
+        CH_12 * xm_SO4 * (g0_NH42SO4 + 2 * H_DH) +
+        CH_11 * xm_HSO4 * (g0_NH4HSO4 + H_DH) +
+        CH_11 * xm_NO3 * (g0_NH4NO3 + H_DH)
+
+    # F2A sums for anions (from primary cations only)
+    F2A_Cl = CH_11 * xm_H * (g0_HCl + H_DH) +
+        CH_11 * xm_Na * (g0_NaCl + H_DH) +
+        CH_11 * xm_NH4 * (g0_NH4Cl + H_DH)
+
+    F2A_SO4 = CH_12 * xm_H * (g0_H2SO4 + 2 * H_DH) +
+        CH_12 * xm_Na * (g0_Na2SO4 + 2 * H_DH) +
+        CH_12 * xm_NH4 * (g0_NH42SO4 + 2 * H_DH)
+
+    F2A_HSO4 = CH_11 * xm_H * (g0_HHSO4 + H_DH) +
+        CH_11 * xm_Na * (g0_NaHSO4 + H_DH) +
+        CH_11 * xm_NH4 * (g0_NH4HSO4 + H_DH)
+
+    F2A_NO3 = CH_11 * xm_H * (g0_HNO3 + H_DH) +
+        CH_11 * xm_Na * (g0_NaNO3 + H_DH) +
+        CH_11 * xm_NH4 * (g0_NH4NO3 + H_DH)
+
+    # F1 sums for crustal cations
+    # Ca2+ (z=2): skip HSO4 pair
+    F1_Ca = CH_21 * xm_Cl * (g0_CaCl2 + 2 * H_DH) +
+        CH_22 * xm_SO4 * (g0_CaNO32 + 4 * H_DH) +   # Use CaNO32 as proxy for CaSO4
+        CH_21 * xm_NO3 * (g0_CaNO32 + 2 * H_DH)
+
+    # K+ (z=1): include all 4 anions
+    F1_K = CH_11 * xm_Cl * (g0_KCl + H_DH) +
+        CH_12 * xm_SO4 * (g0_K2SO4 + 2 * H_DH) +
+        CH_11 * xm_HSO4 * (g0_KHSO4 + H_DH) +
+        CH_11 * xm_NO3 * (g0_KNO3 + H_DH)
+
+    # Mg2+ (z=2): skip HSO4 pair
+    F1_Mg = CH_21 * xm_Cl * (g0_MgCl2 + 2 * H_DH) +
+        CH_22 * xm_SO4 * (g0_MgSO4 + 4 * H_DH) +
+        CH_21 * xm_NO3 * (g0_MgNO32 + 2 * H_DH)
+
+    # F2B sums for anions (from crustal cations only)
+    F2B_Cl = CH_21 * xm_Ca * (g0_CaCl2 + 2 * H_DH) +
+        CH_11 * xm_K * (g0_KCl + H_DH) +
+        CH_21 * xm_Mg * (g0_MgCl2 + 2 * H_DH)
+
+    F2B_SO4 = CH_22 * xm_Ca * (g0_CaNO32 + 4 * H_DH) +  # CaNO32 proxy for CaSO4
+        CH_12 * xm_K * (g0_K2SO4 + 2 * H_DH) +
+        CH_22 * xm_Mg * (g0_MgSO4 + 4 * H_DH)
+
+    F2B_HSO4 = CH_11 * xm_K * (g0_KHSO4 + H_DH)  # Only K contributes
+
+    F2B_NO3 = CH_21 * xm_Ca * (g0_CaNO32 + 2 * H_DH) +
+        CH_11 * xm_K * (g0_KNO3 + H_DH) +
+        CH_21 * xm_Mg * (g0_MgNO32 + 2 * H_DH)
+
+    # Step 4: Compute multicomponent GAMA values (log10 space)
+    # Primary and crustal subsystems are mixed independently (CMAQ/ISORROPIA convention).
+    # Primary pairs: GAMA(k) = ZZ(k) * ((F1(i)/z_i + F2A(j)/z_j) / (z_i+z_j) - H)
+    log10_gama_HCl = 1 * ((F1_H / 1 + F2A_Cl / 1) / (1 + 1) - H_DH)
+    log10_gama_H2SO4 = 2 * ((F1_H / 1 + F2A_SO4 / 2) / (1 + 2) - H_DH)
+    log10_gama_HHSO4 = 1 * ((F1_H / 1 + F2A_HSO4 / 1) / (1 + 1) - H_DH)
+    log10_gama_HNO3 = 1 * ((F1_H / 1 + F2A_NO3 / 1) / (1 + 1) - H_DH)
+    log10_gama_NaCl = 1 * ((F1_Na / 1 + F2A_Cl / 1) / (1 + 1) - H_DH)
+    log10_gama_Na2SO4 = 2 * ((F1_Na / 1 + F2A_SO4 / 2) / (1 + 2) - H_DH)
+    log10_gama_NaHSO4_brom = 1 * ((F1_Na / 1 + F2A_HSO4 / 1) / (1 + 1) - H_DH)
+    log10_gama_NaNO3 = 1 * ((F1_Na / 1 + F2A_NO3 / 1) / (1 + 1) - H_DH)
+    log10_gama_NH4Cl = 1 * ((F1_NH4 / 1 + F2A_Cl / 1) / (1 + 1) - H_DH)
+    log10_gama_NH42SO4 = 2 * ((F1_NH4 / 1 + F2A_SO4 / 2) / (1 + 2) - H_DH)
+    log10_gama_NH4HSO4_brom = 1 * ((F1_NH4 / 1 + F2A_HSO4 / 1) / (1 + 1) - H_DH)
+    log10_gama_NH4NO3 = 1 * ((F1_NH4 / 1 + F2A_NO3 / 1) / (1 + 1) - H_DH)
+
+    # Letovicite: special formula (SCAPE approximation)
+    log10_gama_LC = 0.2 * (3 * log10_gama_NH42SO4 + 2 * log10_gama_NH4HSO4_brom)
+
+    # Crustal pairs: GAMA(k) = ZZ(k) * ((F1(i)/z_i + F2B(j)/z_j) / (z_i+z_j) - H)
+    log10_gama_CaNO32 = 2 * ((F1_Ca / 2 + F2B_NO3 / 1) / (2 + 1) - H_DH)
+    log10_gama_CaCl2 = 2 * ((F1_Ca / 2 + F2B_Cl / 1) / (2 + 1) - H_DH)
+    log10_gama_K2SO4 = 2 * ((F1_K / 1 + F2B_SO4 / 2) / (1 + 2) - H_DH)
+    log10_gama_KHSO4_brom = 1 * ((F1_K / 1 + F2B_HSO4 / 1) / (1 + 1) - H_DH)
+    log10_gama_KNO3 = 1 * ((F1_K / 1 + F2B_NO3 / 1) / (1 + 1) - H_DH)
+    log10_gama_KCl = 1 * ((F1_K / 1 + F2B_Cl / 1) / (1 + 1) - H_DH)
+    log10_gama_MgSO4 = 4 * ((F1_Mg / 2 + F2B_SO4 / 2) / (2 + 2) - H_DH)
+    log10_gama_MgNO32 = 2 * ((F1_Mg / 2 + F2B_NO3 / 1) / (2 + 1) - H_DH)
+    log10_gama_MgCl2 = 2 * ((F1_Mg / 2 + F2B_Cl / 1) / (2 + 1) - H_DH)
+
+    # Convert from log10 to linear with clamping to [-5, 5]
+    brom_H2SO4 = 10.0^clamp(log10_gama_H2SO4, -5, 5)
+    brom_HHSO4 = 10.0^clamp(log10_gama_HHSO4, -5, 5)
+    brom_HNO3 = 10.0^clamp(log10_gama_HNO3, -5, 5)
+    brom_HCl = 10.0^clamp(log10_gama_HCl, -5, 5)
+    brom_NH4Cl = 10.0^clamp(log10_gama_NH4Cl, -5, 5)
+    brom_NaCl = 10.0^clamp(log10_gama_NaCl, -5, 5)
+    brom_NaNO3 = 10.0^clamp(log10_gama_NaNO3, -5, 5)
+    brom_Na2SO4 = 10.0^clamp(log10_gama_Na2SO4, -5, 5)
+    brom_NH42SO4 = 10.0^clamp(log10_gama_NH42SO4, -5, 5)
+    brom_NH4NO3 = 10.0^clamp(log10_gama_NH4NO3, -5, 5)
+    brom_CaNO32 = 10.0^clamp(log10_gama_CaNO32, -5, 5)
+    brom_CaCl2 = 10.0^clamp(log10_gama_CaCl2, -5, 5)
+    brom_K2SO4 = 10.0^clamp(log10_gama_K2SO4, -5, 5)
+    brom_KNO3 = 10.0^clamp(log10_gama_KNO3, -5, 5)
+    brom_KCl = 10.0^clamp(log10_gama_KCl, -5, 5)
+    brom_MgNO32 = 10.0^clamp(log10_gama_MgNO32, -5, 5)
+    brom_MgCl2 = 10.0^clamp(log10_gama_MgCl2, -5, 5)
+
+    # Derived activity coefficients (from Bromley multicomponent values)
+    # NH4HSO4 = NH4Cl * HHSO4 / HCl (in linear space, from log10 addition/subtraction)
+    γ_NH4HSO4_derived = brom_NH4Cl * brom_HHSO4 / brom_HCl
+    # NaHSO4 = NaCl * HHSO4 / HCl
+    γ_NaHSO4_derived = brom_NaCl * brom_HHSO4 / brom_HCl
+    # KHSO4 = HHSO4 * KCl / HCl
+    γ_KHSO4_derived = brom_HHSO4 * brom_KCl / brom_HCl
+    # LC (letovicite): from special formula
+    γ_LC_derived = 10.0^clamp(log10_gama_LC, -5, 5)
+    # MgSO4 from Bromley directly
+    γ_MgSO4_derived = 10.0^clamp(log10_gama_MgSO4, -5, 5)
 
     # Saturation ratios for each solid (IAP / Ksp)
     # Aqueous-phase dissolution: IAP = product of molalities × activity coefficients
     SR_NH42SO4 = m_NH4^2 * m_SO4 * γ_NH42SO4^3 / Ksp5
-    SR_NH4HSO4 = m_NH4 * m_H * m_SO4 * γ_NH4HSO4_derived^3 / Ksp6
+    SR_NH4HSO4 = m_NH4 * m_HSO4 * γ_NH4HSO4_derived^2 / Ksp6
     SR_LC = m_NH4^3 * m_HSO4 * m_SO4 * γ_LC_derived^5 / Ksp7
     SR_Na2SO4 = m_Na^2 * m_SO4 * γ_Na2SO4^3 / Ksp10
-    SR_NaHSO4 = m_Na * m_H * m_SO4 * γ_NaHSO4_derived^3 / Ksp11
+    SR_NaHSO4 = m_Na * m_HSO4 * γ_NaHSO4_derived^2 / Ksp11
     SR_NaNO3 = m_Na * m_NO3 * γ_NaNO3^2 / Ksp12
     SR_NaCl = m_Na * m_Cl * γ_NaCl^2 / Ksp13
-    SR_CaSO4 = m_Ca * m_SO4 * γ_CaNO32^2 / Ksp14  # Use γ_CaNO32 as proxy for Ca activity
+    SR_CaSO4 = m_Ca * m_SO4 * γ_CaNO32^4 / Ksp14  # z₁z₂=4 for Ca²⁺-SO₄²⁻; γ_CaNO32 as proxy
     SR_CaNO32 = m_Ca * m_NO3^2 * γ_CaNO32^3 / Ksp15
     SR_CaCl2 = m_Ca * m_Cl^2 * γ_CaCl2^3 / Ksp16
     SR_K2SO4 = m_K^2 * m_SO4 * γ_K2SO4^3 / Ksp17
-    SR_KHSO4 = m_K * m_H * m_SO4 * γ_KHSO4_derived^3 / Ksp18
+    SR_KHSO4 = m_K * m_HSO4 * γ_KHSO4_derived^2 / Ksp18
     SR_KNO3 = m_K * m_NO3 * γ_KNO3^2 / Ksp19
     SR_KCl = m_K * m_Cl * γ_KCl^2 / Ksp20
     SR_MgSO4 = m_Mg * m_SO4 * γ_MgSO4_derived^2 / Ksp21s
@@ -1188,7 +1384,8 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
     SR_NH4Cl = p_NH3 * p_HCl / Ksp9
 
     # ------------------------------------------------------------------
-    # Equations (21 total for metastable, 40+ total for stable)
+    # Equations (52 total: 8 mass balance + 1 charge + 5 aqueous eq +
+    #   1 ZSR water + 1 ionic strength + 17 activity coeff + 19 NCP)
     # ------------------------------------------------------------------
     eqs = [
         # === Mass balances with solid stoichiometric contributions (Eqs. 1-8) ===
@@ -1285,25 +1482,24 @@ Atmos. Chem. Phys., 7, 4639–4659, 2007.
                 m_NO3 + 4 * m_Ca + m_K + 4 * m_Mg + m_OH
         ),
 
-        # === Activity coefficients — original 5 (Eqs. 17-21) ===
-        γ_H2SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.1, 2, I_s), I_s, T_env),
-        γ_HHSO4 ~ _iso2_gamma_T(_iso2_km_gamma(8.0, 1, I_s), I_s, T_env),
-        γ_HNO3 ~ _iso2_gamma_T(_iso2_km_gamma(2.6, 1, I_s), I_s, T_env),
-        γ_HCl ~ _iso2_gamma_T(_iso2_km_gamma(6.0, 1, I_s), I_s, T_env),
-        γ_NH4Cl ~ _iso2_gamma_T(_iso2_km_gamma(0.82, 1, I_s), I_s, T_env),
-
-        # === Activity coefficients — additional 11 (Eqs. 22-32) ===
-        γ_NaCl ~ _iso2_gamma_T(_iso2_km_gamma(2.23, 1, I_s), I_s, T_env),
-        γ_NaNO3 ~ _iso2_gamma_T(_iso2_km_gamma(-0.39, 1, I_s), I_s, T_env),
-        γ_Na2SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.19, 2, I_s), I_s, T_env),
-        γ_NH42SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.25, 2, I_s), I_s, T_env),
-        γ_CaNO32 ~ _iso2_gamma_T(_iso2_km_gamma(0.93, 2, I_s), I_s, T_env),
-        γ_CaCl2 ~ _iso2_gamma_T(_iso2_km_gamma(2.4, 2, I_s), I_s, T_env),
-        γ_K2SO4 ~ _iso2_gamma_T(_iso2_km_gamma(-0.25, 2, I_s), I_s, T_env),
-        γ_KNO3 ~ _iso2_gamma_T(_iso2_km_gamma(-2.33, 1, I_s), I_s, T_env),
-        γ_KCl ~ _iso2_gamma_T(_iso2_km_gamma(0.92, 1, I_s), I_s, T_env),
-        γ_MgNO32 ~ _iso2_gamma_T(_iso2_km_gamma(2.32, 2, I_s), I_s, T_env),
-        γ_MgCl2 ~ _iso2_gamma_T(_iso2_km_gamma(2.9, 2, I_s), I_s, T_env),
+        # === Activity coefficients from Bromley multicomponent mixing (Eqs. 6-14) ===
+        γ_H2SO4 ~ brom_H2SO4,
+        γ_HHSO4 ~ brom_HHSO4,
+        γ_HNO3 ~ brom_HNO3,
+        γ_HCl ~ brom_HCl,
+        γ_NH4Cl ~ brom_NH4Cl,
+        γ_NaCl ~ brom_NaCl,
+        γ_NaNO3 ~ brom_NaNO3,
+        γ_Na2SO4 ~ brom_Na2SO4,
+        γ_NH42SO4 ~ brom_NH42SO4,
+        γ_NH4NO3 ~ brom_NH4NO3,
+        γ_CaNO32 ~ brom_CaNO32,
+        γ_CaCl2 ~ brom_CaCl2,
+        γ_K2SO4 ~ brom_K2SO4,
+        γ_KNO3 ~ brom_KNO3,
+        γ_KCl ~ brom_KCl,
+        γ_MgNO32 ~ brom_MgNO32,
+        γ_MgCl2 ~ brom_MgCl2,
 
         # === Solid precipitation NCP equations (Eqs. 33-50) ===
         # Each: stable * FB(s, 1 - SR) + (1-stable) * s = 0

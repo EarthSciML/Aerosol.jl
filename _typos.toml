@@ -1,6 +1,7 @@
 [default.extend-words]
 KNO = "KNO"
 Querry = "Querry"
+Ser = "Ser"
 aer = "aer"
 consts = "consts"
 setp = "setp"
