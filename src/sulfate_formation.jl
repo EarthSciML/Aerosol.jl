@@ -371,12 +371,14 @@ Also calculates rate conversion factors (Section 7.4):
             [description = "Percent scaling factor (dimensionless)", unit = u"1"]
     end
 
-    @parameters begin
-        L, [description = "Liquid water content", unit = u"g/m^3"]
-        xi_SO2, [description = "SO2 mixing ratio (dimensionless)", unit = u"1"]
-    end
-
     @variables begin
+        # L and xi_SO2 are coupled inputs (supplied by the host/driver), not
+        # solve-time constants, so they are variables like every other input
+        # below. This lets a parent component wire them with `child.L ~ L`, a
+        # connection equation that contains an unknown (a parameter ~ parameter
+        # connection is rejected by mtkcompile on MTK v11).
+        L(t), [description = "Liquid water content", unit = u"g/m^3"]
+        xi_SO2(t), [description = "SO2 mixing ratio (dimensionless)", unit = u"1"]
         T(t), [description = "Temperature", unit = u"K"]
         H_plus(t), [description = "Hydrogen ion concentration", unit = u"mol/m^3"]
         SO2_aq(t), [description = "Aqueous SO2 concentration [SO2.H2O]", unit = u"mol/m^3"]

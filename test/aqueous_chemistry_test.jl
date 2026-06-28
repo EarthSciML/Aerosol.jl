@@ -441,3 +441,89 @@ end
     # Synergistic term should dominate when both metals are present
     @test R_synergy > R_Fe_only + R_Mn_only
 end
+
+# =============================================================================
+# Cloud chemistry compile + solve (L and xi_SO2 must be variables, not parameters)
+# =============================================================================
+
+@testitem "Cloud chemistry L/xi_SO2 are variables (no param ~ param)" setup = [AqueousSetup] tags = [:aqueous] begin
+    # L and xi_SO2 are coupled inputs and must be unknowns (variables) in every
+    # component that wires them with `sulfate.L ~ L`, so the connection is an
+    # equation with an unknown (a parameter ~ parameter connection is rejected
+    # by mtkcompile on MTK v11).
+    for F in [SulfateFormation, CloudChemistry, CloudChemistryFixedpH, CloudChemistryODE]
+        sys = F()
+        pnames = [string(ModelingToolkit.getname(p)) for p in parameters(sys)]
+        unames = [string(ModelingToolkit.getname(u)) for u in unknowns(sys)]
+        @test "L" ∉ pnames
+        @test "xi_SO2" ∉ pnames
+        @test "L" ∈ unames
+        @test "xi_SO2" ∈ unames
+    end
+end
+
+@testsnippet CloudChemSolveSetup begin
+    using Test
+    using ModelingToolkit
+    using ModelingToolkit: t_nounits as t
+    using Aerosol
+    using NonlinearSolve
+    using SciMLBase
+    using DynamicQuantities
+
+    # Drive a CloudChemistry box at a given NH3 mixing ratio and solve for the
+    # droplet pH (electroneutrality) and the S(IV) oxidation rates.
+    function solve_cloud(nh3_ppb)
+        P = 9.0e4
+        @named cc = CloudChemistry()
+        @constants begin
+            T_c = 283.0, [unit = u"K"]
+            pCO2 = 400e-6 * P, [unit = u"Pa"]
+            pSO2 = 1e-9 * P, [unit = u"Pa"]
+            pNH3 = nh3_ppb * 1e-9 * P, [unit = u"Pa"]
+            pHNO3 = 0.5e-9 * P, [unit = u"Pa"]
+            pH2O2 = 1e-9 * P, [unit = u"Pa"]
+            pO3 = 40e-9 * P, [unit = u"Pa"]
+            Fe_c = 1.0e-6, [unit = u"mol/m^3"]
+            Mn_c = 1.0e-7, [unit = u"mol/m^3"]
+            zero_c = 0.0, [unit = u"mol/m^3"]
+            L_c = 0.5, [unit = u"g/m^3"]
+            xiSO2_c = 1.0e-9, [unit = u"1"]
+        end
+        drivers = [
+            cc.T ~ T_c, cc.p_CO2 ~ pCO2, cc.p_SO2 ~ pSO2, cc.p_NH3 ~ pNH3,
+            cc.p_HNO3 ~ pHNO3, cc.p_H2O2 ~ pH2O2, cc.p_O3 ~ pO3,
+            cc.Fe_III ~ Fe_c, cc.Mn_II ~ Mn_c,
+            cc.Cl_minus ~ zero_c, cc.SO4_2minus ~ zero_c,
+            cc.L ~ L_c, cc.xi_SO2 ~ xiSO2_c, cc.charge_balance ~ 0,
+        ]
+        @named driver = System(drivers, t; systems = [cc])
+        sys = mtkcompile(driver)
+        sol = solve(
+            NonlinearProblem(sys, [cc.H_plus => 1.0e-3]), NewtonRaphson();
+            abstol = 1.0e-12,
+        )
+        return (sol, cc, sys)
+    end
+end
+
+@testitem "CloudChemistry compiles and solves to a sane pH + S(IV) rate" setup = [CloudChemSolveSetup] tags = [:aqueous] begin
+    # A driven CloudChemistry must mtkcompile (L/xi_SO2 are variables) and solve
+    # to a physical droplet pH with the S&P Ch.7 pH dependence.
+    sol_lo, cc, sys = solve_cloud(1.0)
+    @test length(unknowns(sys)) == 1                 # only H+ is solved; rest observed
+    @test SciMLBase.successful_retcode(sol_lo)
+
+    pH_lo = sol_lo[cc.pH]
+    @test isfinite(pH_lo)
+    @test 1.0 < pH_lo < 7.0                           # physical droplet pH
+    @test sol_lo[cc.R_total] > 0
+    # At low pH, H2O2 dominates S(IV) oxidation; the O3 pathway is suppressed.
+    @test sol_lo[cc.R_H2O2] > sol_lo[cc.R_O3]
+
+    # Adding NH3 (a base) raises pH and switches the O3 pathway on.
+    sol_hi, cc_hi, _ = solve_cloud(100.0)
+    @test SciMLBase.successful_retcode(sol_hi)
+    @test sol_hi[cc_hi.pH] > pH_lo
+    @test sol_hi[cc_hi.R_O3] > sol_lo[cc.R_O3]
+end
