@@ -96,6 +96,8 @@ end
         sys = F()
         @test sys isa System
     end
+    # CloudChemistryFixedpH carries a Coupler type for EarthSciMLBase.couple.
+    @test isdefined(Aerosol, :CloudChemistryFixedpHCoupler)
 end
 
 # =============================================================================
