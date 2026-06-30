@@ -98,8 +98,11 @@ Variables:
         # Temperature dependence of K_w (van't Hoff equation)
         K_w ~ K_w_298 * exp((-dH_Kw / R_gas) * (1 / T - 1 / T_ref)),
 
-        # Eq 7.11: Water equilibrium
-        K_w ~ H_plus * OH_minus,
+        # Eq 7.11: Water equilibrium, written explicitly as OH_minus = K_w/H_plus.
+        # K_w is fixed by the van't Hoff equation above and H_plus is set by the
+        # coupling, so the explicit form lets structural simplification assign
+        # OH_minus to this equation and eliminate it as an observed variable.
+        OH_minus ~ K_w / H_plus,
 
         # Eq 7.13: pH definition (pH = -log10([H+] in mol/L) = -log10([H+] in mol/m³ / 1000))
         pH ~ -log10(H_plus / C_ref),
