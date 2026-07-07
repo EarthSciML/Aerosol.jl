@@ -441,3 +441,22 @@ end
     # Synergistic term should dominate when both metals are present
     @test R_synergy > R_Fe_only + R_Mn_only
 end
+
+
+@testitem "water equilibrium is written in explicit assignable form" tags = [:aqueous] begin
+    using ModelingToolkit
+    # Contract: every OH_minus defining equation must be the explicit
+    # OH_minus ~ K_w/H_plus form (or a pure parent<->subsystem alias) so that
+    # OH_minus is assigned and eliminated as observed. The implicit form
+    # (K_w ~ H_plus * OH_minus) leaves OH_minus an unknown with no initial
+    # condition, which the gridded init_u then KeyErrors on under MTK v11.
+    cc = Aerosol.CloudChemistryFixedpH()
+    eqs = equations(cc)
+    idxs = findall(e -> endswith(string(e.lhs), "OH_minus(t)"), eqs)
+    @test !isempty(idxs)
+    for i in idxs
+        rhs = string(eqs[i].rhs)
+        @test occursin("H_plus", rhs) || endswith(rhs, "OH_minus(t)")
+    end
+    @test !any(e -> occursin("K_w", string(e.lhs)) && occursin("OH_minus", string(e.rhs)), eqs)
+end
