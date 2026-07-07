@@ -443,3 +443,12 @@ end
     # Synergistic term should dominate when both metals are present
     @test R_synergy > R_Fe_only + R_Mn_only
 end
+
+
+@testitem "coupler metadata is mounted on the built systems" begin
+    using EarthSciMLBase
+    @test EarthSciMLBase.get_coupletype(Aerosol.CloudChemistryFixedpH()) ==
+          Aerosol.CloudChemistryFixedpHCoupler
+    @test EarthSciMLBase.get_coupletype(Aerosol.UrbanAerosol()) ==
+          Aerosol.AerosolDistributionCoupler
+end
