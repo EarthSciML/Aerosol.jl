@@ -244,6 +244,15 @@ end
 # =============================================================================
 
 """
+Coupler type for [`CloudChemistryFixedpH`](@ref), exposing the in-cloud
+S(IV)→S(VI) oxidation rates (`R_H2O2`, `R_O3`, `R_FeMn`) for coupling to a
+gas-phase mechanism via `EarthSciMLBase.couple`.
+"""
+struct CloudChemistryFixedpHCoupler
+    sys::Any
+end
+
+"""
     CloudChemistryFixedpH(; name=:CloudChemFixedpH)
 
 Simplified cloud chemistry system with pH as an input parameter.
@@ -391,7 +400,8 @@ Input Variables:
     return System(
         eqs, t;
         systems = [water_eq, co2_eq, so2_eq, nh3_eq, hno3_eq, h2o2_eq, o3_eq, sulfate],
-        name
+        name,
+        metadata = Dict(CoupleType => CloudChemistryFixedpHCoupler)
     )
 end
 
