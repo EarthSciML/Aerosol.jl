@@ -89,16 +89,16 @@ Output Variables:
             [description = "Inverse water density for LWC conversion", unit = u"m^3/g"]
     end
 
-    @parameters begin
-        L, [description = "Liquid water content", unit = u"g/m^3"]
-        xi_SO2,
+    @variables begin
+        # Primary state variables.
+        # L and xi_SO2 are coupled inputs (see SulfateFormation): variables, so
+        # `sulfate.L ~ L` is a connection equation with an unknown (a
+        # parameter ~ parameter connection is rejected by mtkcompile on MTK v11).
+        L(t), [description = "Liquid water content", unit = u"g/m^3"]
+        xi_SO2(t),
             [
                 description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1",
             ]
-    end
-
-    @variables begin
-        # Primary state variables
         T(t), [description = "Temperature", unit = u"K"]
         H_plus(t), [description = "Hydrogen ion concentration", unit = u"mol/m^3"]
         pH(t), [description = "Droplet pH (dimensionless)", unit = u"1"]
@@ -285,16 +285,16 @@ Input Variables:
             [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
     end
 
-    @parameters begin
-        L, [description = "Liquid water content", unit = u"g/m^3"]
-        xi_SO2,
+    @variables begin
+        # Primary state variables.
+        # L and xi_SO2 are coupled inputs (see SulfateFormation): variables, so
+        # `sulfate.L ~ L` is a connection equation with an unknown (a
+        # parameter ~ parameter connection is rejected by mtkcompile on MTK v11).
+        L(t), [description = "Liquid water content", unit = u"g/m^3"]
+        xi_SO2(t),
             [
                 description = "SO2 mixing ratio for lifetime calculation (dimensionless)", unit = u"1",
             ]
-    end
-
-    @variables begin
-        # Primary state variables
         T(t), [description = "Temperature", unit = u"K"]
         pH_input(t), [description = "Input pH value (dimensionless)", unit = u"1"]
         H_plus(t), [description = "Hydrogen ion concentration", unit = u"mol/m^3"]
@@ -432,12 +432,13 @@ Parameters and other variables same as CloudChemistryFixedpH.
             [description = "Reference concentration (1 M = 1000 mol/m³)", unit = u"mol/m^3"]
     end
 
-    @parameters begin
-        L, [description = "Liquid water content", unit = u"g/m^3"]
-        xi_SO2, [description = "SO2 mixing ratio (dimensionless)", unit = u"1"]
-    end
-
     @variables begin
+        # L and xi_SO2 are coupled inputs (see SulfateFormation): variables, so
+        # `sulfate.L ~ L` is a connection equation with an unknown (a
+        # parameter ~ parameter connection is rejected by mtkcompile on MTK v11).
+        L(t), [description = "Liquid water content", unit = u"g/m^3"]
+        xi_SO2(t), [description = "SO2 mixing ratio (dimensionless)", unit = u"1"]
+
         # State variable - sulfate concentration
         SO4_2minus(t), [description = "Sulfate concentration", unit = u"mol/m^3"]
 
