@@ -6,7 +6,7 @@
 end
 
 @testitem "MeanFreePath structural" setup = [SPDSetup] tags = [:spd] begin
-    sys = MeanFreePath()
+    sys = MeanFreePathSP()
     # Check that we have the equation
     @test length(equations(sys)) >= 1
     # Check variables exist
@@ -16,7 +16,7 @@ end
 
 @testitem "MeanFreePath at standard conditions" setup = [SPDSetup] tags = [:spd] begin
     # Eq. 9.7: λ_air(298K, 1atm) = 0.0651 μm = 6.51e-8 m
-    sys = MeanFreePath()
+    sys = MeanFreePathSP()
     csys = mtkcompile(sys)
 
     # Default parameters are T=298.15K, P=101325Pa, μ=1.8e-5 kg/(m·s)

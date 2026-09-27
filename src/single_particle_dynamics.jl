@@ -1,9 +1,9 @@
-export SingleParticleDynamics, MeanFreePath, SlipCorrection, SettlingVelocity,
+export SingleParticleDynamics, MeanFreePathSP, SlipCorrection, SettlingVelocity,
     BrownianDiffusion, ParticleMobility, ElectricalMobility, StokesNumber,
     AerodynamicDiameter
 
 """
-    MeanFreePath(; name=:MeanFreePath)
+    MeanFreePathSP(; name=:MeanFreePathSP)
 
 Component for calculating the mean free path of air molecules.
 
@@ -19,7 +19,7 @@ The mean free path is calculated from:
 where μ is dynamic viscosity, p is pressure, M is molecular weight, R is the gas constant,
 and T is temperature.
 """
-@component function MeanFreePath(; name = :MeanFreePath)
+@component function MeanFreePathSP(; name = :MeanFreePathSP)
     @constants begin
         R = 8.314, [unit = u"J/(mol*K)", description = "Molar gas constant"]
         M_air = 0.02897, [unit = u"kg/mol", description = "Molecular weight of air"]
