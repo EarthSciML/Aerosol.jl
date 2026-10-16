@@ -49,6 +49,7 @@ SymbolicUtils = "4.18.5"
 julia = "1"
 
 [extras]
+EarthSciMLBase = "e53f1632-a13c-4728-9402-0c66d48804b0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 EarthSciData = "a293c155-435f-439d-9c11-a083b6b47337"
 NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
@@ -59,4 +60,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestItemRunner = "f8b46487-2199-4994-9208-9a1283c18c0a"
 
 [targets]
-test = ["Test", "Dates", "EarthSciData", "NonlinearSolve", "OrdinaryDiffEq", "Statistics", "Symbolics", "TestItemRunner"]
+test = ["Test", "Dates", "EarthSciData", "NonlinearSolve", "OrdinaryDiffEq", "Statistics", "Symbolics", "TestItemRunner", "EarthSciMLBase"]

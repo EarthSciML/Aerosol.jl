@@ -3,6 +3,15 @@ export UrbanAerosol, MarineAerosol, RuralAerosol, RemoteContinentalAerosol
 export FreeTroposphereAerosol, PolarAerosol, DesertAerosol
 
 """
+Coupler type for [`AerosolDistribution`](@ref), allowing it to provide the
+total aerosol surface-area concentration `S_t` (and other distribution moments)
+to other EarthSciML systems via `EarthSciMLBase.couple`.
+"""
+struct AerosolDistributionCoupler
+    sys::Any
+end
+
+"""
     AerosolDistribution(n_modes=3; name=:AerosolDistribution)
 
 Multi-modal lognormal aerosol size distribution following the parameterization of
@@ -139,7 +148,7 @@ Default parameter values correspond to the "Urban" distribution from Table 8.3.
         M_z ~ exp(-z / H_p),
     ]
 
-    return System(eqs, t; name)
+    return System(eqs, t; name, metadata = Dict(CoupleType => AerosolDistributionCoupler))
 end
 
 # -------------------------------------------------------------------

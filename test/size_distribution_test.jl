@@ -106,6 +106,9 @@ end
     @test any(contains("z"), param_names)
     @test any(contains("H_p"), param_names)
 
+    # AerosolDistribution carries a Coupler type for EarthSciMLBase.couple.
+    @test isdefined(Aerosol, :AerosolDistributionCoupler)
+
     # Test different number of modes
     sys2 = AerosolDistribution(2)
     @test length(equations(sys2)) == 10

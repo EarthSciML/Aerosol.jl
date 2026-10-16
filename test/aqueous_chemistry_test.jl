@@ -96,6 +96,8 @@ end
         sys = F()
         @test sys isa System
     end
+    # CloudChemistryFixedpH carries a Coupler type for EarthSciMLBase.couple.
+    @test isdefined(Aerosol, :CloudChemistryFixedpHCoupler)
 end
 
 # =============================================================================
@@ -442,6 +444,14 @@ end
     @test R_synergy > R_Fe_only + R_Mn_only
 end
 
+
+@testitem "coupler metadata is mounted on the built systems" begin
+    using EarthSciMLBase
+    @test EarthSciMLBase.get_coupletype(Aerosol.CloudChemistryFixedpH()) ==
+          Aerosol.CloudChemistryFixedpHCoupler
+    @test EarthSciMLBase.get_coupletype(Aerosol.UrbanAerosol()) ==
+          Aerosol.AerosolDistributionCoupler
+end
 
 @testitem "water equilibrium is written in explicit assignable form" tags = [:aqueous] begin
     using ModelingToolkit
