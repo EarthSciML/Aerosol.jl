@@ -448,9 +448,9 @@ end
 @testitem "coupler metadata is mounted on the built systems" begin
     using EarthSciMLBase
     @test EarthSciMLBase.get_coupletype(Aerosol.CloudChemistryFixedpH()) ==
-          Aerosol.CloudChemistryFixedpHCoupler
+        Aerosol.CloudChemistryFixedpHCoupler
     @test EarthSciMLBase.get_coupletype(Aerosol.UrbanAerosol()) ==
-          Aerosol.AerosolDistributionCoupler
+        Aerosol.AerosolDistributionCoupler
 end
 
 @testitem "water equilibrium is written in explicit assignable form" tags = [:aqueous] begin
@@ -507,12 +507,12 @@ end
         @named cc = CloudChemistry()
         @constants begin
             T_c = 283.0, [unit = u"K"]
-            pCO2 = 400e-6 * P, [unit = u"Pa"]
-            pSO2 = 1e-9 * P, [unit = u"Pa"]
-            pNH3 = nh3_ppb * 1e-9 * P, [unit = u"Pa"]
+            pCO2 = 400.0e-6 * P, [unit = u"Pa"]
+            pSO2 = 1.0e-9 * P, [unit = u"Pa"]
+            pNH3 = nh3_ppb * 1.0e-9 * P, [unit = u"Pa"]
             pHNO3 = 0.5e-9 * P, [unit = u"Pa"]
-            pH2O2 = 1e-9 * P, [unit = u"Pa"]
-            pO3 = 40e-9 * P, [unit = u"Pa"]
+            pH2O2 = 1.0e-9 * P, [unit = u"Pa"]
+            pO3 = 40.0e-9 * P, [unit = u"Pa"]
             Fe_c = 1.0e-6, [unit = u"mol/m^3"]
             Mn_c = 1.0e-7, [unit = u"mol/m^3"]
             zero_c = 0.0, [unit = u"mol/m^3"]
