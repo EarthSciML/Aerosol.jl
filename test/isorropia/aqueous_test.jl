@@ -70,11 +70,11 @@ using Test
     # Check to make sure the the salts matrix corresponds to the salt chemical formulas
     derived_saltnames = [
         Symbol(
-                [
-                    r[i] > 0 ? Symbol(ions[i], r[i] > 1 ? r[i] : Symbol("")) : Symbol("")
+            [
+                r[i] > 0 ? Symbol(ions[i], r[i] > 1 ? r[i] : Symbol("")) : Symbol("")
                     for i in 1:length(ions)
-                ]...,
-            ) for r in eachrow(salts)
+            ]...,
+        ) for r in eachrow(salts)
     ]
 
     @test derived_saltnames == saltnames

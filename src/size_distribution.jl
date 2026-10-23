@@ -103,9 +103,9 @@ Default parameter values correspond to the "Urban" distribution from Table 8.3.
             π_c * N[i] * (D_g[i] * exp(2 * (logσ[i] * ln10)^2))^2 /
                 (sqrt(2 * π_c) * logσ[i]) *
                 exp(
-                    -(log10(D_p / (D_g[i] * exp(2 * (logσ[i] * ln10)^2))))^2 /
+                -(log10(D_p / (D_g[i] * exp(2 * (logσ[i] * ln10)^2))))^2 /
                     (2 * logσ[i]^2)
-                )
+            )
                 for i in 1:n_modes
         ),
 
@@ -114,9 +114,9 @@ Default parameter values correspond to the "Urban" distribution from Table 8.3.
             (π_c / 6) * N[i] * (D_g[i] * exp(3 * (logσ[i] * ln10)^2))^3 /
                 (sqrt(2 * π_c) * logσ[i]) *
                 exp(
-                    -(log10(D_p / (D_g[i] * exp(3 * (logσ[i] * ln10)^2))))^2 /
+                -(log10(D_p / (D_g[i] * exp(3 * (logσ[i] * ln10)^2))))^2 /
                     (2 * logσ[i]^2)
-                )
+            )
                 for i in 1:n_modes
         ),
 

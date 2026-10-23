@@ -22,10 +22,19 @@
     eqs = string(equations(sys))
     @test occursin("ElementalCarbon₊NEI2016MonthlyEmis_PEC(t)", eqs)
 
-    obs = string(observed(sys))
-    @test occursin(
-        "ElementalCarbon₊NEI2016MonthlyEmis_PEC(t) ~ (MW_Air*nmolpermol*NEI2016MonthlyEmis₊PEC(t)) / MW_C",
-        obs
+    # Check the terms rather than the exact string, because the order in which
+    # Symbolics prints the factors of a product varies between versions.
+    pec_eq = only(
+        filter(
+            eq -> string(eq.lhs) == "ElementalCarbon₊NEI2016MonthlyEmis_PEC(t)",
+            observed(sys)
+        )
     )
+    pec_rhs = string(pec_eq.rhs)
+    for term in ("MW_Air", "nmolpermol", "NEI2016MonthlyEmis₊PEC(t)", "MW_C")
+        @test occursin(term, pec_rhs)
+    end
+
+    obs = string(observed(sys))
     @test occursin("ElementalCarbon₊T(t) ~ GEOSFP₊I3₊T(t)", obs)
 end
